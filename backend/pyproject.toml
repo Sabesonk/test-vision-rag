@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=80.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vsir"
+description = "Vision segmentation, index and retrieval (POC Part B)"
+requires-python = ">=3.11"
+dynamic = ["version", "dependencies"]
+
+[project.scripts]
+# The only supported operational surface (Spec §4.4, §15 Factor XII).
+vsir = "vsir.cli:main"
+
+[tool.setuptools]
+packages = ["vsir"]
+
+[tool.setuptools.dynamic]
+version = { attr = "vsir.__version__" }
+# One source of truth for the pinned set (Spec §4.2); requirements.lock holds the transitive
+# resolution the image installs (§15 Factor II).
+dependencies = { file = ["requirements.txt"] }
+
+[tool.pytest.ini_options]
+# Bare `pytest` runs L0/L1 only. test-api.sh names tests/api/ and test-paid.sh names tests/paid/
+# explicitly, so no Docker-bound or paid test can be picked up by the fast layer (Spec §12.2).
+testpaths = ["tests/unit"]
+markers = [
+  "paid: calls a paid API; requires VSIR_ALLOW_PAID=1 and runs only in L4 (Spec §12.2)",
+]

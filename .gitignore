@@ -1,0 +1,25 @@
+# Config is the environment, and a real environment is never committed (§15 Factor III).
+.env
+.env.*
+!.env.example
+
+# Input documents. Generated fixtures are checked in explicitly (Spec §4.1).
+data/source/*
+!data/source/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+.pytest_cache/
+.coverage
+
+# Node / frontend (M7)
+node_modules/
+dist/
+playwright-report/
+test-results/
+
+# Loop runner output
+log/

@@ -3,6 +3,15 @@
 **Plan:** `development/cr1/plan/cr1-implementation-plan.md`
 **Release tag:** (pending — set when all units are [x])
 
+## Rollup
+
+| | |
+|---|---|
+| **Complete** | 1 / 26 units (4%) |
+| **Current milestone** | M0 — skeleton, pins, harness (1 / 2 units) |
+| **Next unit** | U002 — Qdrant test harness, probes, and conformance greps |
+| **Blocked** | none |
+
 ---
 
 ## Units
@@ -15,7 +24,7 @@
   Record the demo command's output under "Demo evidence" when a unit completes. -->
 
 ### M0 — skeleton, pins, harness (spend: none)
-- [ ] U001 Runtime skeleton, pins, and `vsir doctor`
+- [x] U001 Runtime skeleton, pins, and `vsir doctor`
 - [ ] U002 Qdrant test harness, probes, and conformance greps
 
 ### M1 — `core/` and the exact surface on synthetic text (spend: none) — the whole proof
@@ -62,11 +71,96 @@
 
 ---
 
+## Unit detail
+
+### U001 — Runtime skeleton, pins, and `vsir doctor`
+
+**Milestone:** M0 · **Spend:** none · **Status:** `[x]` Complete · **Completed:** 2026-09-09
+
+**Demo output** — `vsir doctor && VSIR_VLM_MODEL=gemini-pro-latest vsir doctor; echo "exit=$?"`
+(run after `set -a && . ./.env && set +a`; key lines, the full stream is 6 JSON events per
+invocation):
+
+```json
+{"event": "doctor_ok", "failed_checks": [], "release_id": "dev-0", "python": "3.11.15",
+ "models": {"VSIR_VLM_MODEL": "gemini-3.8-flash-001", "VSIR_EMBED_MODEL": "gemini-embedding-2"},
+ "fingerprint": {"embed_model": "gemini-embedding-2", "dim": 1536, "distance": "cosine",
+                 "composition_version": "d4-fused-v1"},
+ "fingerprint_id": "45a09c588c25422c", "pages_collection": "vsir_pages_1536",
+ "runs_collection": "vsir_runs", "dpi_index": 150, "dpi_answer": 220, "vlm": "stub", "level": "info"}
+first-exit=0
+```
+
+```json
+{"event": "boot_check_failed", "check": "model_ids_pinned", "level": "error", "release_id": "dev-0",
+ "detail": "model id ends in -latest: VSIR_VLM_MODEL=gemini-pro-latest — pin the version (§4.3, F11)",
+ "floating": {"VSIR_VLM_MODEL": "gemini-pro-latest"}, "suffix": "-latest"}
+exit=1
+```
+
+`VSIR_EMBED_MODEL=gemini-embedding-latest` refuses identically. `bash scripts/test-unit.sh` →
+**69 passed**, Layer 1 PASSED.
+
+Container facts (`docker build -t vsir:dev-0 -f backend/Dockerfile backend`):
+
+```
+id            -> uid=10001(vsir) gid=10001(vsir)
+--read-only   -> touch: cannot touch '/srv/x': Read-only file system
+image config  -> user=10001 entrypoint=[vsir] cmd=[doctor]
+in-image      -> python 3.11.16, doctor_ok, exit 0; with no env, doctor_refused, exit 1
+```
+
+**Invariants / failure rows closed:** **F11 (boot half)** — a resolved model id ending `-latest` is
+refused at boot, named, non-zero (`test_doctor_refuses_latest_model_alias`, both model variables).
+Spec §20.1 register item **B6** closed. No invariant is asserted at M0 (Spec §9 assigns none).
+
+**Notes**
+
+- **The three live-collection refusals of §4.3 are not here, by design.** Payload schema vs
+  `INDEXED`, the collection fingerprint and `phrase_matching` on `text`/`vlm_codes` all read a live
+  collection, and `core/indexed.py` is U003's deliverable — plan U003 says so explicitly
+  ("`doctor.py` — **extended**: the `--create-collection` flag and the live-schema assertion").
+  `doctor.BOOT_CHECKS` is the extension point: one ordered check list, run identically by the CLI
+  and by server start (U014), so the two cannot drift.
+- **All twelve Factor III variables are required, with no code-side default** — including
+  `VSIR_PORT`, which §15 describes as "default 8000". U001's acceptance criterion is that unsetting
+  any one of the twelve makes `doctor` exit non-zero naming it, and a default would defeat that. The
+  port number itself is documented in `.env.example`.
+- **The app does not read `.env`.** Loading a file from the working directory is the shape §15.2
+  bans, so the operator loads it (`set -a && . ./.env && set +a`) and `docker run --env-file` does
+  the same. `.env` was committed (empty) at init; it is now gitignored and untracked.
+- **`VSIR_VLM_KEY`** is the VLM credential's variable name, required only when `VSIR_VLM=gemini` so
+  replay mode (D10) runs in CI with no key. Named `VSIR_VLM_KEY` rather than `GEMINI_API_KEY` to keep
+  the interface provider-agnostic and to keep the literal `api_key=` out of the tree, which is one
+  of the §12.5 cloud-native greps U002 writes.
+- **`VSIR_VLM_MODEL=gemini-3.8-flash-001` in `.env.example` is a shape, not a verified id.** §4.2
+  names "the pinned id for Gemini 3.8 Flash" without giving the literal. Confirm the exact dated
+  suffix against Google's model list before U013's paid ingest. Boot refuses a `-latest` escape
+  hatch, so an operator cannot dodge the pin.
+- **Two extra optional variables** beyond the spec's named set, both documented in `.env.example`:
+  `VSIR_EMBED_DIM` (feeds the collection name and the fingerprint — §6.6) and
+  `VSIR_RUNS_COLLECTION` (the D9 control plane).
+- **`pytest-cov` added to `backend/requirements-dev.txt`** — test-only, and only because the
+  existing `scripts/test-unit.sh` passes `--no-cov`, which pytest rejects as an unknown flag
+  without it. Coverage stays off.
+- **`scripts/test-unit.sh` does not forward `"$@"`,** so the plan's
+  `bash scripts/test-unit.sh -k "doctor or json_log or sigterm_boot"` silently runs the whole
+  suite. Harmless here (69/69 green, strictly stronger than the filter) — **U002 owns the fix**
+  when it extends the script.
+- **`impl` is at `/Users/sabesonk/Documents/VisionRag/dilmah-engineering-solutioning/poc/vision_segmentation_index_and_retrieval/impl`** —
+  four levels up from this repo, not the three the build prompt states. U002 records it in
+  `AGENTS.md`.
+- **Local toolchain:** the machine's Python is 3.14 and the pin is 3.11, so the venv is
+  `backend/.venv` built by `uv venv --python 3.11`. Activate it before the test scripts, which call
+  a bare `python`. U002 records this in `AGENTS.md`.
+
+---
+
 ## Milestone demos (Spec §0 — a milestone with no runnable demo is not complete)
 
 | M | Demo command | Status | Evidence |
 |---|---|---|---|
-| M0 | `vsir doctor && bash scripts/test-unit.sh` | ⬜ | |
+| M0 | `vsir doctor && bash scripts/test-unit.sh` | ⬜ | U001 half green (see unit detail); pending U002 |
 | M1 | `vsir demo exact --synthetic` | ⬜ | |
 | M2a | `vsir ingest data/source/synthetic_3window.pdf --vlm stub` | ⬜ | |
 | M2b | `VSIR_ALLOW_PAID=1 vsir ingest data/source/TC1E-SF.pdf` | ⬜ | |

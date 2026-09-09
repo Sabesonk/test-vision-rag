@@ -1,0 +1,4 @@
+# Test-only dependencies (Spec §12 — the test pyramid). Never installed into the runtime image.
+-r requirements.txt
+pytest==8.4.2
+pytest-cov==7.0.0        # only so the harness's `--no-cov` is a recognised flag; coverage stays off

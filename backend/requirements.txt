@@ -1,0 +1,10 @@
+# Spec §4.2 — the versions the working system runs on. Bump deliberately, never incidentally.
+# Carried from impl/requirements.txt; PyYAML dropped because config is env-only (§15 Factor III).
+# requirements.lock holds the transitive resolution that is actually installed (Factor II).
+fastapi==0.141.1
+uvicorn[standard]==0.52.4
+python-multipart==0.0.32
+google-genai==2.22.0
+qdrant-client==1.19.0
+PyMuPDF==1.28.2
+pillow==12.3.0
