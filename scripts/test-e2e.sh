@@ -6,17 +6,20 @@
 #   ./scripts/test-e2e.sh --up     start stack only (for interactive Playwright MCP session)
 set -euo pipefail
 
+# The suite never reaches a live model: the stack runs VSIR_VLM=stub against a frozen fixture
+# (D10), so a UI assertion is deterministic and a run costs nothing.
+
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 cd "$ROOT"
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  E2E tests (Layer 3 — full Docker stack)"
+echo "  E2E tests (Playwright — full Docker stack, replayed)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 if [[ "${1:-}" == "--up" ]]; then
   echo ""
   echo "Starting full test stack (leaving running for Playwright MCP)..."
-  docker compose -f docker-compose.test.yml up -d --wait
+  docker compose --profile e2e -f docker-compose.test.yml up -d --build --wait
   echo ""
   echo "Stack is ready:"
   echo "  Frontend (test): http://localhost:5174"
@@ -26,7 +29,7 @@ if [[ "${1:-}" == "--up" ]]; then
   echo "Or run: cd e2e && npx playwright test"
   echo ""
   echo "Tear down when done:"
-  echo "  docker compose -f docker-compose.test.yml down -v"
+  echo "  docker compose --profile e2e -f docker-compose.test.yml down -v"
   exit 0
 fi
 
@@ -34,13 +37,13 @@ fi
 teardown() {
   echo ""
   echo "Tearing down test stack (wiping volumes)..."
-  docker compose -f docker-compose.test.yml down -v
+  docker compose --profile e2e -f docker-compose.test.yml down -v
 }
 trap teardown EXIT
 
 echo ""
 echo "Starting full test stack..."
-docker compose -f docker-compose.test.yml up -d --wait
+docker compose --profile e2e -f docker-compose.test.yml up -d --build --wait
 
 echo ""
 echo "── Playwright tests ─────────────────────"

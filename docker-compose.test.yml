@@ -1,72 +1,111 @@
-# docker-compose.test.yml — Isolated test stack.
-# NEVER shares state with docker-compose.yml (dev environment).
+# docker-compose.test.yml — the isolated test stack (Spec §15 Factor X, dev/prod parity).
+#
+# It runs the *same backend image as production*, differing only in environment and ports. There
+# is no test-only image, no test-only build target and no `if TESTING` branch anywhere behind it:
+# the stub VLM is selected by `VSIR_VLM=stub` (D10), so the path under test is the production path.
+#
+# Qdrant is the only store — two collections, `vsir_pages` and `vsir_runs` (§4.2, D9). There is no
+# relational database here on purpose: the Postgres service this file used to declare was scaffold
+# from the template and never described this system.
 #
 # Usage:
-#   ./scripts/test-api.sh          — Layer 2: backend + test-db only
-#   ./scripts/test-e2e.sh          — Layer 3: full stack
-#   ./scripts/test-e2e.sh --up     — start stack for interactive Playwright MCP session
+#   bash scripts/test-api.sh       Layer 2/3 — Qdrant + backend, then tests/api/
+#   bash scripts/test-e2e.sh       Playwright, with the `e2e` profile's frontend
+#   bash scripts/test-e2e.sh --up  leave the stack running for an interactive session
 #
-# Teardown always uses `down -v` to wipe volumes between runs.
+# Teardown always uses `down -v`: a test run starts from an empty collection or it is not a test.
 
 services:
 
-  # ── Database ──────────────────────────────────────────────────────────────────
-  test-db:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_USER: test          # adjust if your app expects a different user
-      POSTGRES_PASSWORD: test      # use a secrets file or CI env var in production CI
-      POSTGRES_DB: test_db         # must match DATABASE_URL in backend-test below
+  # ── Store ─────────────────────────────────────────────────────────────────────────────────────
+  test-qdrant:
+    # Pinned to the same version as dev and production: `phrase_matching` needs 1.19 (§4.2), and a
+    # store that differs between environments is a correctness difference, not a convenience.
+    image: qdrant/qdrant:v1.19.0
+    ports:
+      # 6335 on the host, never 6334 — 6334 is the dev instance's gRPC port, and colliding with it
+      # would let a test run read and wipe dev data (§4.2).
+      - "6335:6333"
     volumes:
-      - test-db-data:/var/lib/postgresql/data
+      - test-qdrant-storage:/qdrant/storage
     networks:
       - test-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U test"]
+      test: ["CMD-SHELL", "bash -c ':> /dev/tcp/127.0.0.1/6333' || exit 1"]
       interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 10s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
 
-  # ── Backend ───────────────────────────────────────────────────────────────────
+  # ── Backend ───────────────────────────────────────────────────────────────────────────────────
   backend-test:
     build:
       context: ./backend
-      dockerfile: Dockerfile        # reuse dev Dockerfile — no separate test image needed
+      dockerfile: Dockerfile
+    # Never `latest` (§15.2): the tag is the release, and here the release is the test run.
+    image: vsir:test
+    # Until U014 registers `vsir serve`, the probes are served by uvicorn directly out of the same
+    # image and the same release. The image's own ENTRYPOINT is `vsir`; this overrides the command,
+    # not the code path.
+    entrypoint: ["uvicorn", "--factory", "vsir.serve.app:create_app",
+                 "--host", "0.0.0.0", "--port", "8000"]
     environment:
-      DATABASE_URL: postgresql://test:test@test-db:5432/test_db
-      TESTING: "true"               # tells the app to skip external integrations
-      # Add any other runtime env vars your app needs:
-      # SECRET_KEY: test-secret-key-not-for-production
-      # REDIS_URL: redis://...
+      # The twelve of §15 Factor III. Boot refuses a missing one, so this list is exhaustive by
+      # construction — if it drifts, the container will not start.
+      VSIR_PORT: "8000"
+      VSIR_QDRANT_URL: "http://test-qdrant:6333"
+      VSIR_COLLECTION: "vsir_pages"
+      VSIR_VLM: "stub"
+      VSIR_VLM_MODEL: "gemini-3.8-flash-001"
+      VSIR_EMBED_MODEL: "gemini-embedding-2"
+      VSIR_PROMPT_VERSION: "s2-v1"
+      VSIR_API_TOKENS: "${VSIR_API_TOKENS:-test-only-not-a-secret}"
+      VSIR_READ_QUOTA: "10"
+      # Belt and braces: L0-L3 must never reach a paid API even if a fixture is missing.
+      VSIR_ALLOW_PAID: "0"
+      VSIR_LOG_LEVEL: "INFO"
+      VSIR_RELEASE_ID: "test"
     ports:
-      - "8001:8000"                 # 8001 on host — keeps test port separate from dev (8000)
+      - "8001:8000"        # 8001 on the host — dev keeps 8000
     networks:
       - test-net
+    # Production runs read-only with a writable tmpfs for rasters, so the test stack does too:
+    # a container that only passes with a writable root filesystem is not the one being shipped.
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=512m
     depends_on:
-      test-db:
-        condition: service_healthy  # waits for pg_isready before starting
+      test-qdrant:
+        # For test determinism, not a boot requirement: the backend starts fine without Qdrant and
+        # reports itself unready until it answers. `scripts/test-api.sh` proves exactly that.
+        condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
-      interval: 10s
+      # Liveness, not readiness — `--wait` must succeed even while Qdrant is stopped (§15.1).
+      # python, not curl: the runtime image ships no shell utilities it does not need.
+      test: ["CMD", "python", "-c",
+             "import urllib.request as u, sys; sys.exit(0 if u.urlopen('http://localhost:8000/health', timeout=2).status == 200 else 1)"]
+      interval: 5s
       timeout: 5s
       retries: 12
-      start_period: 20s
+      start_period: 5s
 
-  # ── Frontend ──────────────────────────────────────────────────────────────────
+  # ── Frontend (M7) ─────────────────────────────────────────────────────────────────────────────
   frontend-test:
+    # Behind a profile until M7 builds `frontend/`: `docker compose up -d` must not fail on a
+    # build context that does not exist yet. `scripts/test-e2e.sh` passes `--profile e2e`.
+    profiles: ["e2e"]
     build:
       context: ./frontend
-      dockerfile: Dockerfile        # must expose the Vite dev server on port 5173
+      dockerfile: Dockerfile
     environment:
-      VITE_API_URL: http://backend-test:8000   # internal Docker network URL
+      VITE_API_URL: http://backend-test:8000
     ports:
-      - "5174:5173"                 # 5174 on host — keeps test port separate from dev (5173)
+      - "5174:5173"        # 5174 on the host — dev keeps 5173
     networks:
       - test-net
     depends_on:
       backend-test:
-        condition: service_healthy  # waits for /health before starting
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:5173 || exit 1"]
       interval: 10s
@@ -77,10 +116,10 @@ services:
 networks:
   test-net:
     driver: bridge
-    # Isolated from the default dev network — test containers cannot reach
-    # dev containers or host-mapped dev ports.
+    # Isolated from the dev network: a test container cannot reach a dev container or a
+    # host-mapped dev port, so no test run can write to the dev collection.
 
 volumes:
-  test-db-data:
-    # Named volume so Postgres persists across container restarts within one
-    # test session. Always wiped by `down -v` at session teardown.
+  test-qdrant-storage:
+    # Named volume so the collection survives a container restart within one test session, and is
+    # always wiped by `down -v` at teardown.

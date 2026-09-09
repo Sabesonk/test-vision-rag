@@ -12,8 +12,12 @@ dynamic = ["version", "dependencies"]
 # The only supported operational surface (Spec §4.4, §15 Factor XII).
 vsir = "vsir.cli:main"
 
-[tool.setuptools]
-packages = ["vsir"]
+[tool.setuptools.packages.find]
+# `vsir` plus every subpackage the later milestones add (core, ingest, vlm, serve, mcp, runner).
+# An explicit list would silently ship a package short, which the container finds and the editable
+# install does not.
+where = ["."]
+include = ["vsir*"]
 
 [tool.setuptools.dynamic]
 version = { attr = "vsir.__version__" }

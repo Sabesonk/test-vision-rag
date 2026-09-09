@@ -7,9 +7,9 @@
 
 | | |
 |---|---|
-| **Complete** | 1 / 26 units (4%) |
-| **Current milestone** | M0 — skeleton, pins, harness (1 / 2 units) |
-| **Next unit** | U002 — Qdrant test harness, probes, and conformance greps |
+| **Complete** | 2 / 26 units (8%) |
+| **Current milestone** | M0 complete — M1 next (`core/` and the exact surface: the whole proof) |
+| **Next unit** | U003 — Page record, identifiers, and the `INDEXED` schema |
 | **Blocked** | none |
 
 ---
@@ -25,7 +25,7 @@
 
 ### M0 — skeleton, pins, harness (spend: none)
 - [x] U001 Runtime skeleton, pins, and `vsir doctor`
-- [ ] U002 Qdrant test harness, probes, and conformance greps
+- [x] U002 Qdrant test harness, probes, and conformance greps
 
 ### M1 — `core/` and the exact surface on synthetic text (spend: none) — the whole proof
 - [ ] U003 Page record, identifiers, and the `INDEXED` schema
@@ -153,6 +153,94 @@ Spec §20.1 register item **B6** closed. No invariant is asserted at M0 (Spec §
 - **Local toolchain:** the machine's Python is 3.14 and the pin is 3.11, so the venv is
   `backend/.venv` built by `uv venv --python 3.11`. Activate it before the test scripts, which call
   a bare `python`. U002 records this in `AGENTS.md`.
+
+---
+
+### U002 — Qdrant test harness, probes, and conformance greps
+
+**Milestone:** M0 · **Spend:** none · **Status:** `[x]` Complete · **Completed:** 2026-09-09
+
+**Demo output** — the plan's command, run in full:
+
+```
+$ docker compose -f docker-compose.test.yml up -d --build --wait test-qdrant backend-test
+ Container ...-test-qdrant-1   Healthy
+ Container ...-backend-test-1  Healthy
+$ bash scripts/test-unit.sh
+92 passed in 0.34s
+Layer 0/1 PASSED
+$ curl -s -o /dev/null -w "health=%{http_code}\n" localhost:8001/health
+health=200
+$ docker compose -f docker-compose.test.yml stop test-qdrant
+ Container ...-test-qdrant-1 Stopped
+$ curl ... /health   -> health=200          # liveness survives the outage
+$ curl ... /ready    -> ready=503           # readiness does not
+$ curl -s localhost:8001/ready
+{"status":"not_ready","release_id":"test","reason":"qdrant_unavailable",
+ "checks":{"required_env":"ok","model_ids_pinned":"ok","config_valid":"ok",
+           "python_runtime":"ok","dependencies":"ok","qdrant_reachable":"fail"}}
+```
+
+`bash scripts/test-api.sh` → **8 passed** (L2, against `qdrant/qdrant:v1.19.0` on 6335 and the
+image on 8001).
+
+Gate proofs, run at the shell as the acceptance criteria word them:
+
+```
+inject `entity_keys` in backend/vsir/serve/_scratch.py -> test-unit.sh exit=1 (5 rules fired)
+remove it                                              -> test-unit.sh exit=0
+inject `logging.FileHandler` in backend/vsir/          -> exit=1, test_the_app_never_opens_a_log_file
+add every banned string to backend/vsir/NOTES.md       -> exit=0   (markdown is out of scope)
+bash scripts/test-paid.sh                              -> exit=1, "REFUSED: VSIR_ALLOW_PAID is not 1"
+VSIR_ALLOW_PAID=1 bash scripts/test-paid.sh            -> exit=1, "REFUSED: VSIR_VLM_KEY is not set"
+```
+
+**Invariants / failure rows closed:** none owned (this unit is the mechanism by which others stay
+closed). Spec §20.1 register item **E6** — *no tests at all* — closed: 92 L0/L1 + 8 L2, and the
+§12.5 conformance set is executable.
+
+**Notes**
+
+- **The conformance suite is 24 tests, not a shell script.** Each rule names the invariant it
+  protects, so a failure explains itself. Three deliberate strengthenings beyond §12.5's literal
+  list, each commented in the file: `requirements.lock` is scanned as well as `requirements*.txt`
+  (a fuzzy library would arrive transitively, and the lock is the only file that would show it);
+  `difflib`/`SequenceMatcher`/`get_close_matches` are banned in code because the stdlib needs no
+  requirement; and an **untagged** image is treated as `latest`, because it is.
+- **The `score` grep is declaration-shaped** (`score:`, `score =`, `score = Field(`, `"score"`),
+  not the bare word — otherwise no docstring could explain why the field is banned. Same reasoning
+  for the `-latest` pattern, which requires a quoted *model id*, so `doctor.py`'s
+  `FLOATING_SUFFIX = "-latest"` (the constant that implements the refusal) is not a violation of it.
+- **`/health` and `/ready` are in `serve/app.py`, adapted from `impl/app/main.py`.** What survived
+  is that module's discipline of keeping distinct failures distinct; what did not is the `200`-empty
+  abstention, the combined `/api/health`, the HTML UI and the unauthenticated surface.
+  `create_app(env)` is a factory, so importing the module has no side effect and a test can point
+  an instance at a different Qdrant without touching `os.environ`.
+- **The app does not wait for Qdrant at start-up.** `impl` blocked for up to 60 s. Readiness is
+  what gates traffic, so the process starts immediately and reports itself unready until Qdrant
+  answers — which is also what makes start-up have no warm-up requirement (§15.2).
+- **`doctor.py` gained `BootRefused` + `assert_boot_ok`** so `vsir doctor` (exit code) and server
+  start (exception, before the port is bound) run the identical `BOOT_CHECKS`. A configuration the
+  CLI refuses cannot be one the server accepts.
+- **U003 must add a third check status.** When the live-collection checks join `BOOT_CHECKS`,
+  "Qdrant unreachable" must not read as "the schema is wrong": a refusal on unreachability turns an
+  outage into a restart loop, which is the exact failure §15.1 forbids. So `CheckResult.status`
+  needs `unavailable` alongside `ok`/`fail`, with **boot refusing on `fail` only** and **`/ready`
+  red on either**. `serve/app.py::ready` already has the comment marking where it lands.
+- **`vsir serve` is U014's**, so the test stack's `backend-test` overrides the entrypoint to
+  `uvicorn --factory vsir.serve.app:create_app`. Same image, same release, same code path — only
+  the command differs, and U014 replaces it with the subcommand.
+- **`frontend-test` is behind the compose `profiles: ["e2e"]`** until M7 creates `frontend/`:
+  `docker compose up -d` must not fail on a build context that does not exist.
+  `scripts/test-e2e.sh` passes `--profile e2e`.
+- **`pyproject.toml` now discovers packages with `include = ["vsir*"]`.** The explicit
+  `packages = ["vsir"]` shipped an image without `vsir.serve` — the editable install hid it, the
+  container found it. Every later subpackage is covered.
+- **`scripts/test-unit.sh` forwards `"$@"`** (the gap noted in U001), prefers `backend/.venv`, and
+  exports `VSIR_VLM=stub VSIR_ALLOW_PAID=0` so no test can reach a paid API. `test-api.sh` passes
+  `VSIR_TEST_QDRANT_URL`/`VSIR_TEST_BASE_URL` to the host-side tests.
+- **`/metrics` is not here.** §7.4 lists it and §11.4 defines it, but the plan scopes this unit to
+  health/ready; it belongs with U014's audit and observability work.
 
 ---
 

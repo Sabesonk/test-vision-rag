@@ -182,6 +182,41 @@ def run_boot_checks(env: Mapping[str, str] | None = None) -> list[CheckResult]:
     return [check(env) for check in BOOT_CHECKS]
 
 
+class BootRefused(RuntimeError):
+    """Raised instead of serving. Spec §4.3: never degrade to a partial service.
+
+    ``vsir doctor`` turns the same failures into an exit code; a server start turns them into this,
+    which unwinds before the port is bound. The two run the identical :data:`BOOT_CHECKS`, so a
+    configuration the CLI refuses can never be one the server accepts.
+    """
+
+    def __init__(self, results: list[CheckResult]) -> None:
+        reasons = "; ".join(f"{result.name}: {result.detail}" for result in results)
+        super().__init__(f"boot refused — {reasons}")
+        self.results = results
+
+    @property
+    def failed_checks(self) -> list[str]:
+        return [result.name for result in self.results]
+
+
+def assert_boot_ok(env: Mapping[str, str] | None = None) -> list[CheckResult]:
+    """Run the boot self-check, report it on the event stream, and raise on any failure."""
+    results = run_boot_checks(env)
+    for result in results:
+        emit = _log.error if result.failed else _log.info
+        emit(
+            "boot_check_failed" if result.failed else "boot_check_ok",
+            check=result.name,
+            detail=result.detail,
+            **result.facts,
+        )
+    failures = [result for result in results if result.failed]
+    if failures:
+        raise BootRefused(failures)
+    return results
+
+
 def report(env: Mapping[str, str] | None = None) -> dict[str, object]:
     """The facts §13 M0 requires ``vsir doctor`` to print: release, models, index fingerprint."""
     env = os.environ if env is None else env
@@ -218,19 +253,11 @@ def report(env: Mapping[str, str] | None = None) -> dict[str, object]:
 def doctor(env: Mapping[str, str] | None = None) -> int:
     """Run the boot self-check, log one JSON event per check, and return the exit code."""
     env = os.environ if env is None else env
-    results = run_boot_checks(env)
-    for result in results:
-        emit = _log.error if result.failed else _log.info
-        emit(
-            "boot_check_failed" if result.failed else "boot_check_ok",
-            check=result.name,
-            detail=result.detail,
-            **result.facts,
-        )
-    failures = [result.name for result in results if result.failed]
     facts = report(env)
-    if failures:
-        _log.error("doctor_refused", failed_checks=failures, **facts)
+    try:
+        assert_boot_ok(env)
+    except BootRefused as refusal:
+        _log.error("doctor_refused", failed_checks=refusal.failed_checks, **facts)
         return 1
     _log.info("doctor_ok", failed_checks=[], **facts)
     return 0
