@@ -7,9 +7,9 @@
 
 | | |
 |---|---|
-| **Complete** | 2 / 26 units (8%) |
-| **Current milestone** | M0 complete — M1 next (`core/` and the exact surface: the whole proof) |
-| **Next unit** | U003 — Page record, identifiers, and the `INDEXED` schema |
+| **Complete** | 3 / 26 units (12%) |
+| **Current milestone** | M1 — `core/` and the exact surface (1 / 4 units); M0 closed and tagged |
+| **Next unit** | U004 — Tokenisation, variants, the exact filter, and both envelopes |
 | **Blocked** | none |
 
 ---
@@ -28,7 +28,7 @@
 - [x] U002 Qdrant test harness, probes, and conformance greps
 
 ### M1 — `core/` and the exact surface on synthetic text (spend: none) — the whole proof
-- [ ] U003 Page record, identifiers, and the `INDEXED` schema
+- [x] U003 Page record, identifiers, and the `INDEXED` schema
 - [ ] U004 Tokenisation, variants, the exact filter, and both envelopes
 - [ ] U005 Synthetic exact surface, `lookup`, and `vsir demo exact`
 - [ ] U006 `verify_claims`, `present_instead`, and the L3 abstention eval
@@ -241,6 +241,118 @@ closed). Spec §20.1 register item **E6** — *no tests at all* — closed: 92 L
   `VSIR_TEST_QDRANT_URL`/`VSIR_TEST_BASE_URL` to the host-side tests.
 - **`/metrics` is not here.** §7.4 lists it and §11.4 defines it, but the plan scopes this unit to
   health/ready; it belongs with U014's audit and observability work.
+
+---
+
+### U003 — Page record, identifiers, and the `INDEXED` schema
+
+**Milestone:** M1 · **Spend:** none · **Status:** `[x]` Complete · **Completed:** 2026-09-09
+
+**Demo output** — `docker compose -f docker-compose.test.yml up -d test-qdrant && vsir doctor
+--create-collection && vsir doctor` (with `VSIR_QDRANT_URL=http://localhost:6335`):
+
+```json
+{"event": "collection_created", "collection": "vsir_pages_1536", "dim": 1536,
+ "fingerprint_id": "45a09c588c25422c",
+ "vectors": {"dense": {"size": 1536, "distance": "Cosine"}},
+ "sparse_vectors": {"lexical": {"modifier": "idf"}, "captions": {"modifier": "idf"}},
+ "payload_indexes": {"text":      {"type": "text", "phrase_matching": true,
+                                   "tokenizer": "word", "lowercase": true, "min_token_len": 1},
+                     "vlm_codes": {"type": "text", "phrase_matching": true,
+                                   "tokenizer": "word", "lowercase": true, "min_token_len": 1},
+                     ... 16 payload indexes in all}}
+create-exit=0
+
+{"event": "boot_check_ok", "check": "collection_schema", "collection": "vsir_pages_1536",
+ "detail": "vsir_pages_1536 matches INDEXED (16 keys)", "dim": 1536}
+doctor-exit=0
+```
+
+Then the refusal the plan's demo asks for — drop the `text` payload index and re-run:
+
+```json
+{"event": "boot_check_failed", "check": "collection_schema",
+ "detail": "live schema disagrees with INDEXED: payload index missing: 'text' (text)"}
+doctor-exit=1
+```
+
+`bash scripts/test-unit.sh` → **153 passed**. `bash scripts/test-api.sh` → **28 passed**, script
+exit 0, stack torn down and volume wiped.
+
+**Invariants / failure rows closed:** **I6** asserted — one `INDEXED` dict creates the payload
+indexes, gates every filter (`reject_unknown_keys`) and is asserted against the live collection at
+boot (`check_collection_schema`), by both `vsir doctor` and server start. Spec §20.1 register items
+**A5** (there is no `image_path` field) and **B1/B4** (provenance is a first-class field group)
+closed. F10 stays open until U004's filter gate consumes the dict, as the plan says.
+
+**Notes**
+
+- **This unit closes M0's acceptance gap.** Spec §13 M0 requires "doctor refuses … a missing
+  payload index, naming the reason", but the refusal needs `INDEXED`, which the plan assigns to
+  U003 in M1 — and Spec §13 M0 simultaneously forbids creating a module before the milestone that
+  implements it. The M0 verification subagent confirmed the miss against commit `922bc3f`. Rather
+  than tag a milestone whose acceptance list was not met, `cr1-m0` is tagged **after** this unit,
+  and the M0 demo was re-run against the finished check. Recorded as a milestone-boundary
+  correction, not a spec change: no requirement was weakened.
+- **The check has three statuses, and that is the design, not a hedge.** `ok` / `fail` /
+  `unavailable`, with **boot refusing on `fail` only** and **`/ready` red on either**. §15.1 lists
+  readiness as "boot self-check passed **and** Qdrant reachable **and** the pinned index schema
+  present" — three clauses, so schema *presence* is readiness while schema *drift* is a refusal.
+  Refusing to boot because somebody else's service is down would turn their outage into a restart
+  loop that outlasts it. An absent collection reports `index_not_ready`, an unreachable Qdrant
+  `qdrant_unavailable`.
+- **`/ready` now runs the whole check list per probe, in a worker thread.** The list is sync
+  (shared with the CLI), so `starlette.concurrency.run_in_threadpool` keeps the event loop clean —
+  no blocking I/O in an async handler. The async Qdrant client and the separate `probe_qdrant`
+  helper from U002 are gone: one sync client on `app.state`, one round trip, and reachability is
+  reported by the same check that reads the schema.
+- **The model-identity half of the §6.6 fingerprint is not checked yet, and cannot be here.**
+  `dim` and `distance` are read back from the live collection; `embed_model` and
+  `composition_version` are not observable from Qdrant, so they need a record written beside the
+  collection. **U010 owns it** (it is the unit that writes the fingerprint and refuses to upsert on
+  a mismatch). `vsir doctor` prints the configured fingerprint and its digest today, and the README
+  now says exactly that rather than implying the model half is verified.
+- **`point_id` corrects `impl`.** `impl/app/pagemodel.py` hashed under a private namespace
+  constant; §5.1 specifies `uuid.NAMESPACE_URL`, which is what ships, asserted by an explicit
+  equality test and by a subprocess test proving stability across processes (I1).
+- **`run_id` is a hand-written ULID** — 48-bit ms timestamp + 80 bits of randomness in Crockford
+  base32. No new dependency (§4.2), it sorts in time order, and unlike `impl`'s `uuid4().hex[:8]`
+  (register E1) two runs in the same millisecond still differ.
+- **`series_id` carries no revision, deliberately** (F8): a scope expressed as a series survives a
+  revision boundary where a `section_id` cannot. This unit fixes the id's *grammar* only — the
+  canonical section key it is built from comes from stitching (U009) and is asserted across
+  revisions by U025.
+- **The 16 flat payload keys are exactly the 16 `INDEXED` keys**, asserted both ways
+  (`test_the_flat_payload_is_exactly_the_indexed_keys`). A filterable field hiding in `content`
+  would be filterable-but-unindexed, which is F10 with no error message.
+- **The conformance gate caught my own prose.** A docstring in `core/indexed.py` named a struck
+  legacy identifier while explaining that it had been removed; the grep fired, and the docstring
+  was rephrased to describe the field rather than spell it. Working as designed — the rule has no
+  docstring exemption, and that is the right trade.
+- **`INDEXED` is a `MappingProxyType`**, so nothing can add a seventeenth key at runtime — a key
+  the creation loop never indexed and the boot assertion never checked.
+
+**Fixes from the M0 verification pass** (all in this commit):
+
+- **`scripts/test-api.sh` teardown never ran, and then swallowed the exit code.** The `EXIT` trap
+  invoked `docker compose -f docker-compose.test.yml` *after* `cd backend`, so teardown silently
+  did nothing and the script exited 1 on a fully green run, leaving the stack and volume up. Fixed
+  with an absolute `$COMPOSE`. Fixing that exposed a second, worse bug: a successful `docker
+  compose down` in the trap replaced pytest's status, so a **failing suite reported success**. The
+  trap now captures `$?` first and exits with it. Verified both ways: green → 0 with nothing left
+  running, non-green → the real code. `scripts/test-e2e.sh` had the same two bugs.
+- **The serving process's stdout was a mixed stream.** uvicorn keeps its own plain-text handlers,
+  so ~10 of 18 lines were not JSON — §15 Factor XI was not true of the stream the platform
+  actually collects. `logging.capture_stdlib_loggers()` drops their handlers and lets the records
+  propagate to the one formatter. `httpx`/`httpcore`/`urllib3` are floored at WARNING in the same
+  pass: one event per HTTP request is the transport's business, and our own audit line (§7.4) is
+  the record that matters.
+- **`README.md` overstated the implementation** — it claimed `vsir doctor` verified the collection
+  fingerprint. Corrected to name what is checked, and to state that unreachable ≠ wrong.
+- **`data/source/` and `data/fixtures/` did not exist**, and `.gitignore` referenced a
+  `data/source/.gitkeep` that was missing, so neither directory would survive a clone. Both now
+  carry a `.gitkeep`. `backend/tests/paid/` is left to **U013**, its owner — `test-paid.sh` already
+  handles its absence, and an empty test directory is exactly the placeholder M0 forbids.
 
 ---
 

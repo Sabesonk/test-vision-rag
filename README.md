@@ -64,10 +64,18 @@ vsir doctor
 ```
 
 `vsir doctor` is the boot self-check of §4.3. It prints `release_id`, the resolved model ids and the
-index fingerprint, and it **refuses to start** — non-zero, with a named reason — on a model id
-ending `-latest`, a missing required variable, a live payload schema that has drifted from
-`INDEXED`, a collection fingerprint that does not match the configured embedding model, or a `text`
-index without `phrase_matching`. It never degrades to a partial service.
+configured index fingerprint, and it **refuses to start** — non-zero, with a named reason — on a
+model id ending `-latest`, a missing or malformed required variable, a live payload schema that has
+drifted from `INDEXED`, or a `text`/`vlm_codes` index without `phrase_matching`. It never degrades
+to a partial service.
+
+An **unreachable** Qdrant, or a collection that does not exist yet, is a different thing from a
+wrong one: those leave the check inconclusive, so boot proceeds and `GET /ready` goes red instead.
+Refusing to boot on somebody else's outage would turn it into a restart loop that outlasts it.
+
+Create the collection from `INDEXED` with `vsir doctor --create-collection`. The model-identity
+half of the §6.6 fingerprint — `embed_model` and `composition_version`, which Qdrant cannot report
+— is checked against the record written beside the collection once ingestion exists.
 
 The image carries no configuration and no secret. Tag it with the release id, never `latest`, and
 run it read-only:

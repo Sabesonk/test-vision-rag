@@ -34,6 +34,11 @@ _correlation: contextvars.ContextVar[dict[str, str] | None] = contextvars.Contex
     "vsir_correlation", default=None
 )
 
+#: Libraries that log one line per HTTP request at INFO. Their floor is raised so the event stream
+#: stays events: what a call did to the index is our own audit line (§7.4), not the transport's.
+#: A warning or an error from them still comes through — that is the part worth seeing.
+_NOISY_LOGGERS = ("httpx", "httpcore", "urllib3")
+
 _LINE_BREAKS = str.maketrans({"\u2028": " ", "\u2029": " "})
 
 
@@ -118,6 +123,8 @@ def configure(*, release_id: str, level: str = "INFO", stream: Any | None = None
         root.removeHandler(existing)
     root.addHandler(handler)
     root.setLevel(logging.getLevelNamesMapping().get((level or "").upper(), logging.INFO))
+    for noisy in _NOISY_LOGGERS:
+        logging.getLogger(noisy).setLevel(max(root.level, logging.WARNING))
 
 
 class EventLogger:
@@ -148,6 +155,22 @@ class EventLogger:
 
     def exception(self, event: str, /, **fields: Any) -> None:
         self._emit(logging.ERROR, event, fields, exc_info=True)
+
+
+def capture_stdlib_loggers(*names: str) -> None:
+    """Route another library's logger through this formatter instead of its own handler.
+
+    uvicorn installs its own handlers and its own plain-text format, so without this the process's
+    stdout is a *mixed* stream — half JSON events, half ``INFO:  127.0.0.1 - "GET /health" 200`` —
+    and §15 Factor XI's "one event per line" stops being true of the stream the platform actually
+    collects. Removing their handlers and letting the records propagate to the root logger makes
+    every line, from every library, one JSON object.
+    """
+    for name in names:
+        logger = logging.getLogger(name)
+        for handler in list(logger.handlers):
+            logger.removeHandler(handler)
+        logger.propagate = True
 
 
 def get_logger(name: str) -> EventLogger:

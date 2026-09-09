@@ -28,19 +28,20 @@ from typing import AsyncIterator, Literal, Mapping
 
 from fastapi import FastAPI, Response
 from pydantic import BaseModel, Field
-from qdrant_client import AsyncQdrantClient
+from qdrant_client import QdrantClient
+from starlette.concurrency import run_in_threadpool
 
 from vsir import __version__
 from vsir import logging as vsir_logging
 from vsir.config import Config, load_config
-from vsir.doctor import FAIL, assert_boot_ok, run_boot_checks
+from vsir.doctor import QDRANT_UNAVAILABLE, assert_boot_ok, run_boot_checks
 
-#: §11.3 — the named condition a red readiness probe reports.
-QDRANT_UNAVAILABLE = "qdrant_unavailable"
 #: A local boot check that has started failing after boot (a rotated variable, say).
 BOOT_CHECK_FAILED = "boot_check_failed"
 #: A probe must never be the slow thing in the cluster: two seconds, then it is unreachable.
 PROBE_TIMEOUT_S = 2
+#: uvicorn's own loggers, folded into the one JSON stream (§15 Factor XI).
+_UVICORN_LOGGERS = ("uvicorn", "uvicorn.error", "uvicorn.access")
 
 _log = vsir_logging.get_logger(__name__)
 
@@ -62,19 +63,6 @@ class ReadyResponse(BaseModel):
     checks: dict[str, str] = Field(default_factory=dict)
 
 
-async def probe_qdrant(client: AsyncQdrantClient) -> tuple[bool, str | None]:
-    """Is Qdrant reachable? One metadata call — no collection scan, no vector search.
-
-    Every exception is reachability: a probe that re-raises turns readiness into a 500 and loses
-    the named reason the orchestrator needs.
-    """
-    try:
-        await client.info()
-    except Exception as exc:  # noqa: BLE001 - any failure here means "not reachable"
-        return False, f"{type(exc).__name__}: {exc}"
-    return True, None
-
-
 def create_app(env: Mapping[str, str] | None = None) -> FastAPI:
     """Build the app, refusing to start rather than serving a half-configured process (§4.3).
 
@@ -90,6 +78,9 @@ def create_app(env: Mapping[str, str] | None = None) -> FastAPI:
         release_id=(env.get("VSIR_RELEASE_ID") or "").strip() or "unknown",
         level=(env.get("VSIR_LOG_LEVEL") or "INFO").strip(),
     )
+    # uvicorn has already installed its own plain-text handlers by the time it calls this factory.
+    # Fold them into the one stream, or half of what the platform collects is not an event.
+    vsir_logging.capture_stdlib_loggers(*_UVICORN_LOGGERS)
     assert_boot_ok(env)
     cfg = load_config(env)
 
@@ -101,15 +92,19 @@ def create_app(env: Mapping[str, str] | None = None) -> FastAPI:
         traffic (§15.1), so this process starts immediately and reports itself unready until the
         backing service answers — which is also what makes start-up have no warm-up requirement.
         """
-        app.state.qdrant = AsyncQdrantClient(url=cfg.qdrant_url, timeout=PROBE_TIMEOUT_S,
-                                             check_compatibility=False)
+        # One connection for the process, handed to the boot checks on every readiness probe so
+        # they do not build and tear down an HTTP client every few seconds. It is the **sync**
+        # client because the checks are sync and shared with the CLI: `/ready` runs the whole list
+        # in a worker thread rather than doing blocking I/O on the event loop.
+        app.state.qdrant = QdrantClient(url=cfg.qdrant_url, timeout=PROBE_TIMEOUT_S,
+                                        check_compatibility=False)
         _log.info("startup", port=cfg.port, collection=cfg.pages_collection)
         try:
             yield
         finally:
             # SIGTERM: uvicorn stops accepting, drains in flight, then unwinds this (§15 IX).
             _log.info("shutdown", draining="complete")
-            await app.state.qdrant.close()
+            app.state.qdrant.close()
 
     app = FastAPI(
         title="Vision segmentation, index & retrieval",
@@ -133,23 +128,33 @@ def create_app(env: Mapping[str, str] | None = None) -> FastAPI:
 
     @app.get("/ready", response_model=ReadyResponse, tags=["probes"])
     async def ready(response: Response) -> ReadyResponse:
-        """Readiness (§15.1): boot checks green, Qdrant reachable, pinned schema present.
+        """Readiness (§15.1): boot checks green, Qdrant reachable, pinned index schema present.
 
-        The boot checks are re-run rather than cached from start-up, so a configuration that has
-        drifted under a running process turns the instance red instead of leaving it serving. The
-        live-collection checks — payload schema against ``INDEXED``, the embedding fingerprint,
-        ``phrase_matching`` on ``text``/``vlm_codes`` — join ``BOOT_CHECKS`` in U003 and are picked
-        up here with no change: that is the "pinned index schema present" half of the sentence.
+        All three clauses are the one ``BOOT_CHECKS`` list, under readiness's policy rather than
+        boot's: **red on a failure *or* on a check that could not conclude.** That difference is
+        the whole design. A drifted schema is a boot refusal, so the process exits instead of
+        serving; an unreachable Qdrant or a collection that does not exist yet leaves the instance
+        alive but out of the load balancer, because a restart loop would outlast the outage.
+
+        The checks are re-run per probe rather than cached from start-up, so a schema that drifts
+        under a running process turns the instance red instead of leaving it answering. They run in
+        a worker thread: the check list is sync and shared with the CLI, and blocking the event
+        loop on a probe would be its own outage.
         """
-        checks = {result.name: result.status for result in run_boot_checks(app.state.env)}
-        reachable, detail = await probe_qdrant(app.state.qdrant)
-        checks["qdrant_reachable"] = "ok" if reachable else FAIL
+        results = await run_in_threadpool(run_boot_checks, app.state.env, app.state.qdrant)
+        checks = {result.name: result.status for result in results}
 
+        failed = [result for result in results if result.failed]
+        inconclusive = [result for result in results if result.inconclusive]
         reason: str | None = None
-        if any(status == FAIL for name, status in checks.items() if name != "qdrant_reachable"):
-            reason = BOOT_CHECK_FAILED
-        elif not reachable:
-            reason = QDRANT_UNAVAILABLE
+        detail: str | None = None
+        if failed:
+            reason, detail = BOOT_CHECK_FAILED, "; ".join(r.detail for r in failed)
+        elif inconclusive:
+            # A named reason, not a bare boolean: `qdrant_unavailable` is somebody else's outage,
+            # `index_not_ready` is this deployment waiting for its first ingest (§11.3).
+            reason = inconclusive[0].reason or QDRANT_UNAVAILABLE
+            detail = "; ".join(r.detail for r in inconclusive)
 
         if reason is not None:
             response.status_code = 503

@@ -15,17 +15,26 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "  API integration tests (Layer 2/3 — Docker)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
+COMPOSE="$ROOT/docker-compose.test.yml"
+
 # Always wipe volumes on exit: a test run starts from an empty collection or it is not a test.
+# The path is absolute because the trap fires from wherever the script happens to be — including
+# after the `cd backend` below, where a relative path silently resolves to nothing and the
+# teardown becomes a no-op that also fails the run.
 teardown() {
+  # Capture the run's status FIRST: an EXIT trap whose last command succeeds would otherwise
+  # replace it, and a failing suite would report success.
+  local status=$?
   echo ""
   echo "Tearing down test stack (wiping volumes)..."
-  docker compose -f docker-compose.test.yml down -v
+  docker compose -f "$COMPOSE" down -v
+  exit $status
 }
 trap teardown EXIT
 
 echo ""
 echo "Starting test-qdrant and backend-test..."
-docker compose -f docker-compose.test.yml up -d --build --wait test-qdrant backend-test
+docker compose -f "$COMPOSE" up -d --build --wait test-qdrant backend-test
 
 PY="python"
 if [[ -x backend/.venv/bin/python ]]; then

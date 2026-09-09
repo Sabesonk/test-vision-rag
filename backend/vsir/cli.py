@@ -28,8 +28,8 @@ EXIT_INTERRUPTED = 130
 _log = vsir_logging.get_logger(__name__)
 
 
-def _cmd_doctor(_args: argparse.Namespace) -> int:
-    return doctor()
+def _cmd_doctor(args: argparse.Namespace) -> int:
+    return doctor(create_collection=args.create_collection)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -45,6 +45,12 @@ def build_parser() -> argparse.ArgumentParser:
         "doctor",
         help="run the boot self-check (§4.3): prints release_id, the resolved model ids and the "
              "index fingerprint, and refuses a floating model alias or a missing variable",
+    )
+    doctor_parser.add_argument(
+        "--create-collection",
+        action="store_true",
+        help="create the vsir_pages collection from INDEXED first, then assert the live schema "
+             "back against it (§5.5) — a one-off admin process, not live surgery",
     )
     doctor_parser.set_defaults(handler=_cmd_doctor)
 

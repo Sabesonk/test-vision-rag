@@ -16,11 +16,24 @@ import pytest
 
 from vsir import logging as vsir_logging
 from vsir.config import MODEL_ENV, REQUIRED_ENV, InvalidConfig, MissingConfig, load_config
-from vsir.doctor import FAIL, OK, doctor, report, run_boot_checks
+from vsir.doctor import (
+    FAIL,
+    INDEX_NOT_READY,
+    OK,
+    QDRANT_UNAVAILABLE,
+    UNAVAILABLE,
+    check_collection_schema,
+    doctor,
+    report,
+    run_boot_checks,
+)
 
 COMPLETE_ENV = {
     "VSIR_PORT": "8000",
-    "VSIR_QDRANT_URL": "http://localhost:6333",
+    # A closed loopback port: the fast layer stays offline, and the live-collection check is
+    # deterministically `unavailable` rather than depending on whether a dev Qdrant happens to be
+    # running. Its logic is proved below against a fake client, with no I/O at all.
+    "VSIR_QDRANT_URL": "http://127.0.0.1:6399",
     "VSIR_COLLECTION": "vsir_pages",
     "VSIR_VLM": "stub",
     "VSIR_VLM_MODEL": "gemini-3.8-flash-001",
@@ -38,7 +51,9 @@ COMPLETE_ENV = {
 def captured_log():
     """Capture the JSON event stream the way a collector sees it: one line at a time."""
     stream = io.StringIO()
-    vsir_logging.configure(release_id="test-0", level="DEBUG", stream=stream)
+    # INFO, not DEBUG: at DEBUG the HTTP client's own trace lines join the stream and the
+    # assertions below would be about httpcore rather than about doctor.
+    vsir_logging.configure(release_id="test-0", level="INFO", stream=stream)
     yield stream
     vsir_logging.configure(release_id="unknown", level="INFO", stream=sys.stdout)
 
@@ -53,7 +68,21 @@ def _statuses(env: dict[str, str]) -> dict[str, str]:
 
 def test_doctor_passes_on_a_complete_environment(captured_log):
     assert doctor(COMPLETE_ENV) == 0
-    assert all(result.status == OK for result in run_boot_checks(COMPLETE_ENV))
+    assert not [result for result in run_boot_checks(COMPLETE_ENV) if result.failed]
+
+
+def test_an_unreachable_qdrant_does_not_refuse_the_boot(captured_log):
+    """§15.1 — refusing on unreachability turns a backing-service outage into a restart loop.
+
+    It is not silence either: the check reports `unavailable` with a reason, and readiness (which
+    *is* red on it) is what removes the instance from the load balancer.
+    """
+    assert doctor(COMPLETE_ENV) == 0
+
+    schema = _statuses(COMPLETE_ENV)["collection_schema"]
+    assert schema == UNAVAILABLE
+    summary = next(line for line in _lines(captured_log) if line["event"] == "doctor_ok")
+    assert summary["unavailable_checks"] == ["collection_schema"]
 
 
 def test_doctor_prints_release_model_ids_and_index_fingerprint(captured_log):
@@ -260,6 +289,102 @@ def test_the_config_repr_cannot_leak_a_credential():
 
     assert "s3cr3t" not in repr(cfg)
     assert cfg.api_tokens == ("s3cr3t-token",)
+
+
+# ── the live-collection check (Spec §4.3 refusals 2 and 4) ──────────────────────────────────────
+
+class FakeClient:
+    """A Qdrant stand-in. No I/O, so the check's *logic* is what is under test."""
+
+    def __init__(self, *, exists: bool = True, problems: list[str] | None = None,
+                 raises: Exception | None = None) -> None:
+        self._exists = exists
+        self._problems = problems or []
+        self._raises = raises
+        self.calls: list[str] = []
+
+    def collection_exists(self, _name: str) -> bool:
+        self.calls.append("collection_exists")
+        if self._raises is not None:
+            raise self._raises
+        return self._exists
+
+    def get_collection(self, _name: str):
+        self.calls.append("get_collection")
+        raise AssertionError("schema_problems is stubbed in these tests")
+
+    def close(self) -> None:
+        self.calls.append("close")
+
+
+def _schema_check(monkeypatch, client: FakeClient) -> object:
+    from vsir.core import indexed
+
+    monkeypatch.setattr(indexed, "schema_problems",
+                        lambda _c, _n, _d: client._problems)
+    return check_collection_schema(COMPLETE_ENV, client)
+
+
+def test_a_matching_collection_passes(monkeypatch):
+    result = _schema_check(monkeypatch, FakeClient(problems=[]))
+
+    assert result.status == OK
+    assert result.facts["collection"] == "vsir_pages_1536"
+
+
+def test_a_drifted_schema_refuses_the_boot(monkeypatch):
+    """I6 — a dropped index is a named refusal, not a quietly narrower answer (F10)."""
+    client = FakeClient(problems=["payload index missing: 'text' (text)"])
+
+    result = _schema_check(monkeypatch, client)
+
+    assert result.status == FAIL
+    assert "text" in result.detail
+    assert result.reason is None
+
+
+def test_a_collection_that_does_not_exist_yet_is_not_ready_rather_than_wrong(monkeypatch):
+    """§15.1 — schema *presence* is readiness; schema *drift* is a boot refusal."""
+    result = _schema_check(monkeypatch, FakeClient(exists=False))
+
+    assert result.status == UNAVAILABLE
+    assert result.reason == INDEX_NOT_READY
+    assert "--create-collection" in result.detail
+
+
+def test_an_unreachable_qdrant_is_reported_as_such(monkeypatch):
+    result = _schema_check(monkeypatch, FakeClient(raises=ConnectionError("refused")))
+
+    assert result.status == UNAVAILABLE
+    assert result.reason == QDRANT_UNAVAILABLE
+
+
+def test_the_check_never_closes_a_client_it_was_handed(monkeypatch):
+    """A long-lived process hands in its own connection; closing it would break the next probe."""
+    client = FakeClient(problems=[])
+
+    _schema_check(monkeypatch, client)
+
+    assert "close" not in client.calls
+
+
+def test_the_schema_check_makes_no_search_call(monkeypatch):
+    """§15.1 — the probe is free: metadata only, no vector search, no scroll."""
+    client = FakeClient(problems=[])
+
+    _schema_check(monkeypatch, client)
+
+    assert set(client.calls) <= {"collection_exists", "get_collection"}
+
+
+def test_a_refused_configuration_leaves_the_schema_unchecked(monkeypatch):
+    """There is nothing to check a schema against when the configuration itself is refused."""
+    env = {key: value for key, value in COMPLETE_ENV.items() if key != "VSIR_COLLECTION"}
+
+    result = check_collection_schema(env, FakeClient())
+
+    assert result.status == UNAVAILABLE
+    assert result.reason == INDEX_NOT_READY
 
 
 # ── the process (Spec §15 Factor IX) ─────────────────────────────────────────────────────────────
