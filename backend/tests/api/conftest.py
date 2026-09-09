@@ -8,6 +8,7 @@ creation path rather than a fixture's idea of it.
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 import pytest
 from qdrant_client import QdrantClient
@@ -18,6 +19,17 @@ QDRANT_URL = os.environ.get("VSIR_TEST_QDRANT_URL", "http://localhost:6335")
 BASE_URL = os.environ.get("VSIR_TEST_BASE_URL", "http://localhost:8001")
 COLLECTION = "vsir_pages"
 EMBED_DIM = 1536
+
+
+@pytest.fixture(scope="session")
+def repo_root() -> str:
+    """The directory `docker-compose.test.yml` lives in — these tests drive the real stack."""
+    return str(Path(__file__).resolve().parents[3])
+
+
+@pytest.fixture(scope="session")
+def base_url() -> str:
+    return BASE_URL
 
 
 @pytest.fixture(scope="session")

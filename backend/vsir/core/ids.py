@@ -30,7 +30,10 @@ _ULID_RAND_CHARS = 16   # 80 bits of randomness
 ULID_LENGTH = _ULID_TIME_CHARS + _ULID_RAND_CHARS
 
 _SLUG_SEPARATORS = re.compile(r"[^A-Za-z0-9]+")
-_PAGE_ID = re.compile(r"^(?P<doc_id>.+)@(?P<revision>[^@#]+)#p(?P<page_no>\d{3,})$")
+#: Only the **canonical** spellings `page_id()` can emit: exactly three digits (`001`… `999`), or
+#: four or more with no leading zero (`1000`…). `#p0001` is therefore *not* a page id, even though
+#: it reads like one — see :func:`parse_page_id`.
+_PAGE_ID = re.compile(r"^(?P<doc_id>.+)@(?P<revision>[^@#]+)#p(?P<page_no>\d{3}|[1-9]\d{3,})$")
 
 
 def slug(raw: str) -> str:
@@ -58,12 +61,23 @@ def parse_page_id(value: str) -> tuple[str, str, int]:
     """``"TC1E-SF@1.3#p001"`` → ``("TC1E-SF", "1.3", 1)``. Raises on anything else.
 
     `resolve` accepts a saved citation from outside this service, so the parse refuses a malformed
-    id rather than guessing at one (§7.2.3).
+    id rather than guessing at one (§7.2.3) — and **only the canonical spelling parses**.
+
+    That last part is load-bearing, and it is not fussiness. ``#p0001`` and ``#p001`` are the same
+    page to a human and to ``int()``, but they are different strings, so they hash to different
+    ``point_id``\ s. A lenient parse plus a string-keyed hash is one page with several point ids:
+    a re-ingest would add a second point instead of overwriting it (I1), and a citation spelled
+    with an extra zero would address a point that does not exist — a silent miss rather than an
+    error. So over-padding is refused here, and :func:`point_id` canonicalises through this
+    function so a non-canonical string cannot reach the hash at all.
     """
     match = _PAGE_ID.match(value)
     if not match:
         raise ValueError(f"not a page_id: {value!r}")
-    return match["doc_id"], match["revision"], int(match["page_no"])
+    page_no = int(match["page_no"])
+    if page_no < 1:
+        raise ValueError(f"page_no is 1-based: {value!r}")
+    return match["doc_id"], match["revision"], page_no
 
 
 def section_id(document: str, revision: str, ordinal: int) -> str:
@@ -87,8 +101,15 @@ def series_id(document: str, section_key: str) -> str:
 
 
 def point_id(page: str) -> str:
-    """The Qdrant point id for a page. Deterministic: a re-ingest overwrites (I1, F12)."""
-    return str(uuid.uuid5(NAMESPACE, page))
+    """The Qdrant point id for a page. Deterministic: a re-ingest overwrites (I1, F12).
+
+    The page id is **canonicalised before hashing**, by round-tripping it through
+    :func:`parse_page_id` and :func:`page_id`. For a canonical input that is the identity; for
+    anything else it raises. Hashing the raw string instead would make ``#p0001`` a second point
+    for the same page, which is the failure I1 exists to make impossible.
+    """
+    document, revision, page_no = parse_page_id(page)
+    return str(uuid.uuid5(NAMESPACE, page_id(document, revision, page_no)))
 
 
 def run_id(now_ms: int | None = None, randomness: bytes | None = None) -> str:

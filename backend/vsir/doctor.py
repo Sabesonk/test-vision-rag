@@ -404,8 +404,13 @@ def doctor(env: Mapping[str, str] | None = None, *, create_collection: bool = Fa
     except BootRefused as refusal:
         _log.error("doctor_refused", failed_checks=refusal.failed_checks, **facts)
         return 1
-    # An inconclusive check does not refuse the boot, but it is not silence either: an operator
-    # running `vsir doctor` against an unreachable Qdrant must see that it was not checked.
-    _log.info("doctor_ok", failed_checks=[],
-              unavailable_checks=[r.name for r in results if r.inconclusive], **facts)
+    # An inconclusive check does not refuse the boot, but it is not a pass either. The event name
+    # changes, because an operator greps `event=doctor_ok` to mean "this release was checked" and
+    # a run that never reached the collection did not check it.
+    unavailable = [result.name for result in results if result.inconclusive]
+    if unavailable:
+        _log.warning("doctor_inconclusive", failed_checks=[], unavailable_checks=unavailable,
+                     **facts)
+    else:
+        _log.info("doctor_ok", failed_checks=[], unavailable_checks=[], **facts)
     return 0

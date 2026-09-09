@@ -123,7 +123,14 @@ class Config:
 
     @property
     def fingerprint_id(self) -> str:
-        """A short stable digest of the fingerprint — what `vsir doctor` prints and boot compares."""
+        """A short stable digest of the fingerprint — what `vsir doctor` prints.
+
+        Nothing *compares* it yet. `dim` and `distance` are read back from the live collection by
+        `core.indexed.schema_problems`, but `embed_model` and `composition_version` are not
+        observable from Qdrant, so the model half of §6.6 needs a record written beside the
+        collection — U010's, the unit that writes the fingerprint and refuses to upsert on a
+        mismatch.
+        """
         canonical = json.dumps(self.fingerprint, sort_keys=True, separators=(",", ":"))
         return hashlib.sha256(canonical.encode("utf-8")).hexdigest()[:16]
 

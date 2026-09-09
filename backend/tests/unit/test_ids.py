@@ -59,12 +59,53 @@ def test_a_doc_id_can_never_contain_the_separators(stem):
 
 @pytest.mark.parametrize(
     "value",
-    ["TC1E-SF#p001", "TC1E-SF@1.3", "TC1E-SF@1.3#p1", "TC1E-SF@1.3#s001", "", "p001"],
+    ["TC1E-SF#p001", "TC1E-SF@1.3", "TC1E-SF@1.3#p1", "TC1E-SF@1.3#p12", "TC1E-SF@1.3#s001",
+     "", "p001", "TC1E-SF@1.3#p001 ", "TC1E-SF@1.3#pABC"],
 )
 def test_parse_page_id_refuses_a_malformed_citation(value):
     """`resolve` takes a citation from outside this service: refuse, never guess (§7.2.3)."""
     with pytest.raises(ValueError):
         ids.parse_page_id(value)
+
+
+@pytest.mark.parametrize("value", ["TC1E-SF@1.3#p0001", "TC1E-SF@1.3#p00001",
+                                   "TC1E-SF@1.3#p0000001"])
+def test_an_over_padded_page_id_is_not_a_page_id(value):
+    """One page must have exactly one spelling, or it has more than one `point_id`.
+
+    `#p0001` reads like page 1 and `int()` agrees, but it is a different string, so hashing it
+    would produce a second point for the same page: a re-ingest adds instead of overwriting (I1),
+    and a citation spelled with an extra zero addresses a point that does not exist. A silent miss
+    is the worst possible failure mode here, so the parse refuses.
+    """
+    with pytest.raises(ValueError):
+        ids.parse_page_id(value)
+    with pytest.raises(ValueError):
+        ids.point_id(value)
+
+
+def test_page_zero_is_refused_by_the_parse_as_well_as_the_constructor():
+    """`page_id()` refuses page 0 outright; the parse must not accept what it cannot emit."""
+    with pytest.raises(ValueError):
+        ids.parse_page_id("TC1E-SF@1.3#p000")
+
+
+def test_point_id_canonicalises_rather_than_hashing_the_raw_string():
+    """The property that closes the bug: only a canonical page id can reach the hash."""
+    canonical = ids.page_id("TC1E-SF", "1.3", 1)
+
+    assert ids.point_id(canonical) == str(uuid.uuid5(uuid.NAMESPACE_URL, canonical))
+    for spelling in ("TC1E-SF@1.3#p0001", "TC1E-SF@1.3#p1"):
+        with pytest.raises(ValueError):
+            ids.point_id(spelling)
+
+
+def test_every_page_of_a_long_document_has_exactly_one_point_id():
+    """1,440 pages, 1,440 point ids, no collisions and no aliases."""
+    page_ids = [ids.page_id("M", "1", page_no) for page_no in range(1, 1441)]
+
+    assert len({ids.point_id(page) for page in page_ids}) == 1440
+    assert all(ids.point_id(page) == ids.point_id(page) for page in page_ids[:10])
 
 
 def test_point_id_is_uuid5_of_the_page_id_under_namespace_url():

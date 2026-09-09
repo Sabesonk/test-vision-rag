@@ -7,9 +7,9 @@
 
 | | |
 |---|---|
-| **Complete** | 3 / 26 units (12%) |
-| **Current milestone** | M1 — `core/` and the exact surface (1 / 4 units); M0 closed and tagged |
-| **Next unit** | U004 — Tokenisation, variants, the exact filter, and both envelopes |
+| **Complete** | 4 / 26 units (15%) |
+| **Current milestone** | M1 — `core/` and the exact surface (2 / 4 units); M0 closed and tagged |
+| **Next unit** | U005 — Synthetic exact surface, `lookup`, and `vsir demo exact` |
 | **Blocked** | none |
 
 ---
@@ -29,7 +29,7 @@
 
 ### M1 — `core/` and the exact surface on synthetic text (spend: none) — the whole proof
 - [x] U003 Page record, identifiers, and the `INDEXED` schema
-- [ ] U004 Tokenisation, variants, the exact filter, and both envelopes
+- [x] U004 Tokenisation, variants, the exact filter, and both envelopes
 - [ ] U005 Synthetic exact surface, `lookup`, and `vsir demo exact`
 - [ ] U006 `verify_claims`, `present_instead`, and the L3 abstention eval
 
@@ -360,7 +360,7 @@ closed. F10 stays open until U004's filter gate consumes the dict, as the plan s
 
 | M | Demo command | Status | Evidence |
 |---|---|---|---|
-| M0 | `vsir doctor && bash scripts/test-unit.sh` | ⬜ | U001 half green (see unit detail); pending U002 |
+| M0 | `vsir doctor && bash scripts/test-unit.sh` | ✅ | see below |
 | M1 | `vsir demo exact --synthetic` | ⬜ | |
 | M2a | `vsir ingest data/source/synthetic_3window.pdf --vlm stub` | ⬜ | |
 | M2b | `VSIR_ALLOW_PAID=1 vsir ingest data/source/TC1E-SF.pdf` | ⬜ | |
@@ -370,6 +370,189 @@ closed. F10 stays open until U004's filter gate consumes the dict, as the plan s
 | M6 | `VSIR_ALLOW_PAID=1 vsir ask "carton discharge won't restart after an E-stop reset"` | ⬜ | |
 | M7 | `bash scripts/test-e2e.sh` then browse `http://localhost:5174` | ⬜ | |
 | M8 | `vsir ingest --resume <run_id>` and `vsir eval corpus` | ⬜ | |
+
+### U004 — Tokenisation, variants, the exact filter, and both envelopes
+
+**Milestone:** M1 · **Spend:** none · **Status:** `[x]` Complete · **Completed:** 2026-09-10
+
+**Demo output** — `vsir demo exact --synthetic --only primitives` (abridged; all five sections
+print, every line PASS, exit 0):
+
+```
+1. variants(label) — three spellings of the SAME characters (§5.6, I3)
+   SF 1.1A          SF 1.1A · SF1.1A · SF 1.1 A                  PASS
+   84-5140.0020     84-5140.0020                                 PASS
+   X20SI4100        X20SI4100 · X 20 SI 4100                     PASS
+
+2. exact_filter(label, scope) — the ONLY exact-match code path (§5.6, F1)
+   should[
+     must[ MatchPhrase(text='SF 1.1A'), doc_id='TC1E-SF', is_current=True ]
+     must[ MatchPhrase(text='SF1.1A'),  doc_id='TC1E-SF', is_current=True ]
+     must[ MatchPhrase(text='SF 1.1 A'), doc_id='TC1E-SF', is_current=True ]
+   ]
+   one phrase per variant, scope ANDed into every branch          PASS
+
+3. tok() mirrors Qdrant's WORD tokenizer, not impl's TOKEN_RE (§5.6, §2.4)
+   84-5140.0020     ['84', '5140', '0020']             PASS
+   84-5140.0020 -> three tokens, which is why phrase matching is the mechanism  PASS
+
+4. §7.3 caps — each a typed 400 naming its bound, never a clamp (F18)
+   read, 4 pages          -> 400 read_page_cap_exceeded   {'limit': 3, 'requested': 4}          PASS
+   fetch, 6 pages         -> 400 fetch_budget_exceeded    {'bound': 'pages', 'limit': 5, ...}   PASS
+   dpi=100                -> 400 dpi_not_allowed          {'allowed': [36, 72, 150, ...]}       PASS
+   dpi=300, no region     -> 400 dpi_requires_region      {'region_required_above': 220}        PASS
+   scope={'bogus': 1}     -> 400 filter_unknown_key       {'keys': ['bogus']}                   PASS
+   reads_remaining=0      -> 429 budget_exhausted         {'reads_remaining': 0}                PASS
+
+ALL ASSERTIONS PASSED
+demo-exit=0
+```
+
+`bash scripts/test-unit.sh` → **409 passed**. `bash scripts/test-api.sh` → **84 passed**, exit 0.
+
+**Invariants / failure rows closed:** **I3** — one `exact_filter`, and an **AST scan** (not a grep)
+proves `MatchPhrase` has exactly one call site in the package; the property test asserts every
+variant of every corpus label equals the label with whitespace stripped, so `K73` cannot yield
+`K78`. **I5** — `SearchResponse.empty_is_never_ok` makes an empty `ok` a validation error.
+**F10** — an unknown scope key is a typed `filter_unknown_key` 400 naming the keys, from `core`
+and from `serve`. Spec §20.1 register item **D3** closed: `sparse.dedupe(against=text)` is ported,
+so U010 can populate the `captions` surface that `impl` declared, weighted, and never wrote.
+
+**Notes**
+
+- **The tokenizer differential is at L2, not L0.** The plan lists this unit as `[L0]` while its own
+  fixtures row says "an ephemeral Qdrant for the tokenizer differential test only" — and a test
+  that needs Docker cannot be in the no-Docker layer. Split: L0 pins `tok()` against a frozen
+  golden table of the corpus's shapes; `tests/api/test_tokenizer_differential.py` (51 assertions)
+  proves that table is what a live `qdrant/qdrant:v1.19.0` actually produces. Qdrant has no
+  "tokenize this" endpoint, so the comparison is **behavioural**: each label is indexed, and a
+  phrase built from `tok()`'s output is asked of the real index. That is stronger than a string
+  comparison — it also proves order matters (`"1a 1 sf"` does not match a page printing `SF 1.1A`)
+  and that Qdrant really does split `84-5140.0020`, which is the evidence that the phrase mechanism
+  is required rather than merely chosen. A Qdrant bump that changed the tokenizer now fails L2.
+- **`variants()` de-duplicates, so the count is *at most* three.** The plan's AC says
+  `len(variants(label)) == 3` while its own Edge Cases row says a whitespace-free label "collapses
+  to fewer than three distinct strings — assert de-duplication, not a crash". De-duplication wins;
+  the invariant that carries the weight is the character-preserving one, which holds for every
+  label. `variants("SF 1.1A")` is 3; `variants("K158")` is 2; `variants("84-5140.0020")` is 1.
+- **`rrf()` breaks ties deterministically**, which `impl` did not. It sorted on the fused total
+  alone and left equal rows in dictionary insertion order; §16 requires the same query to return
+  the same rows *in the same order*. The tiebreak is best per-surface rank, then the point id. The
+  fused total is computed by a private function and **never returned** — `impl` carried it to the
+  API as `Hit.fused`, and a fused float is a similarity score under another name (§7.6). The
+  §12.5 grep would now fail the build on the field name, which is how the port was caught.
+- **`region_invalid` is an error code §7.3 does not enumerate.** §7.3 tabulates *bounds*; a
+  malformed normalised region has no row. Rather than clamp `[0, 0, 2, 2]` to the page — which
+  would return a different crop and call it success — it is a typed 400 in the same family. Flagged
+  as an addition to the error vocabulary, not a spec change.
+- **The demo prints a human-readable report, not JSON**, like its ancestor
+  `impl/scripts/interfaces_demo.py`. `vsir doctor` and the server emit the JSON event stream;
+  a one-off demo's output *is* the artefact a reviewer reads (§4.4).
+- **`vsir demo exact --only` accepts only `primitives` at this milestone.** U005 adds the
+  seeded-corpus sections and changes the default; until then any other value is an argparse usage
+  error listing the valid choices, not a stub that prints "not implemented".
+- **Carry-forward for U007:** `ids.slug()` is lossy, so `TC1E-SF`, `TC1E_SF`, `TC1E SF` and
+  `TC1E.SF` all produce the same `doc_id` — and therefore the same `point_id`s. That is correct for
+  a slug, but it means I1's idempotent overwrite would fire on two *different* documents, erasing
+  one instead of doubling totals. The manifest step must assert `doc_id` uniqueness at ingest
+  rather than trusting the uploader. Found by the U003 re-verification pass.
+
+**Fixes from the U003 re-verification pass** (all in this commit):
+
+- **`point_id` hashed the raw page-id string, and `parse_page_id` accepted spellings `page_id()`
+  can never emit.** `TC1E-SF@1.3#p0001` parsed to page 1 but hashed to a different uuid5 than
+  `#p001` — one page, three point ids — and `#p000` parsed to page 0, which the constructor refuses
+  outright. Left in place, any future `resolve` doing `point_id(citation)` would address a point
+  that does not exist: **a silent miss, which is the failure class this module exists to prevent**
+  (I1, F12). Fixed both ends: the regex now admits only canonical spellings (exactly three digits,
+  or four-plus with no leading zero), page 0 is refused, and `point_id` canonicalises through
+  `parse_page_id` + `page_id` so a non-canonical string cannot reach the hash at all. Canonical
+  point ids are unchanged — `TC1E-SF@1.3#p001` still hashes to `82882c2a-…` — so nothing already
+  written is orphaned. Regression tests added for every over-padded spelling and for page 0.
+- **`event: "doctor_ok"` was emitted for runs where the collection was never checked.** An
+  operator greps that event to mean "this release was verified". Now a run with any inconclusive
+  check logs `doctor_inconclusive` at `warning`, and `doctor_ok` is reserved for a run where every
+  check concluded.
+- **A boot refusal escaped uvicorn as a 42-line traceback.** §4.3's refusal is a designed
+  behaviour whose reason is already on the stream as JSON, so the traceback was redundant non-JSON
+  noise on a stream whose contract is one JSON object per line. Added
+  `serve.app:app_factory` — the process entry point — which turns `BootRefused` into `exit 1` after
+  logging it. `create_app` still raises, because a library that calls `sys.exit` is untestable and
+  a test asserting *which* check refused is worth more than a tidy exit code.
+- **The mixed-stream fix had no regression guard.** Nothing in the tests mentioned uvicorn, so a
+  bump would silently reinstate plain-text access logs. `tests/api/test_log_stream.py` now drives
+  the **container** through a 404 and a 405 and asserts every line of its stdout parses as JSON
+  with `release_id` and `level` — and that the access log is still *there*, since folding uvicorn's
+  loggers in must not mean silencing them.
+- **Two stale doc claims corrected.** `config.fingerprint_id` said boot "compares" it (nothing
+  does — the model half is U010's), and `/ready`'s docstring said a drifted schema makes the
+  process exit (true at start-up; at runtime it goes red, which is the case that docstring is
+  about).
+
+**Correction to the U003 record:** that commit message says the `test-api.sh` teardown bug was that
+"a successful `docker compose down` in the trap replaced pytest's status". The re-verification could
+not reproduce that in isolation — a bash `EXIT` trap does not normally override the triggering
+status — and identified the primary cause as the **relative compose path**: after `cd backend` the
+teardown command failed, and `set -e` inside the trap exited the script with docker's status, which
+is exactly "no teardown, and exit 1 on a green run". The observed exit-0-with-a-failing-test on this
+machine is consistent with a shell-version-dependent variant of the same area. The explicit
+`local status=$?; … exit $status` is therefore belt-and-braces rather than the load-bearing fix, and
+both behaviours are now asserted in both directions.
+
+---
+
+### M0 milestone gate — closed 2026-09-09, tagged `cr1-m0`
+
+**Demo** (Spec §0): `vsir doctor && bash scripts/test-unit.sh`
+
+```json
+{"event": "boot_check_unavailable", "check": "collection_schema", "reason": "index_not_ready",
+ "detail": "collection 'vsir_pages_1536' does not exist yet — create it with `vsir doctor --create-collection`"}
+{"event": "doctor_ok", "failed_checks": [], "unavailable_checks": ["collection_schema"],
+ "release_id": "dev-0", "python": "3.11.15",
+ "models": {"VSIR_VLM_MODEL": "gemini-3.8-flash-001", "VSIR_EMBED_MODEL": "gemini-embedding-2"},
+ "fingerprint_id": "45a09c588c25422c", "pages_collection": "vsir_pages_1536"}
+```
+```
+153 passed in 1.08s
+Layer 0/1 PASSED
+M0-demo-exit=0
+```
+
+With no Qdrant running, the live-collection check is honestly reported as inconclusive
+(`doctor_inconclusive`, `reason: index_not_ready`) and boot proceeds — not a check that passed
+vacuously.
+
+**Spec-conformance ledger for §4.3 — 4 of the 5 refusals ship, and one is narrowed by choice:**
+
+| §4.3 refusal | Status |
+|---|---|
+| a model id ending `-latest` | **ships** (U001) |
+| a missing required env var | **ships** (U001) |
+| `text`/`vlm_codes` not text indexes with `phrase_matching=True` | **ships** (U003) |
+| the live payload schema lacks any `INDEXED` key | **ships, narrowed** — see below |
+| the collection fingerprint ≠ the configured embedding model | **not implemented — U010 owns it.** `dim` and `distance` are read back from the live collection; `embed_model` and `composition_version` are not observable from Qdrant, so the model half of §6.6 needs a record written beside the collection |
+
+**The narrowing, stated plainly.** A collection that *exists and disagrees* with `INDEXED` refuses
+the boot, by name — that is the M0 acceptance item and it is closed. A collection that is **absent**
+does not refuse; it reports `index_not_ready` and `GET /ready` goes 503. §4.3's literal text covers
+the absent case (a nonexistent collection's schema lacks every key), and the re-verification pass
+was right that reachable-and-absent is a *conclusion* rather than an inability to conclude — so this
+is a **deliberate deviation, not a reading**. Two things justify it and both are recorded here
+rather than argued away: §15.1 lists "the pinned index schema present" as a **readiness** condition,
+separately from "boot self-check passed"; and because `/ready` is red for the whole time the
+collection is absent, **no instance can ever serve without the pinned schema** — which is the
+guarantee §4.3 exists to provide ("never degrade to a partial service"). An unreachable Qdrant is
+inconclusive for the stronger reason that refusing to boot on a backing-service outage is a restart
+loop that outlasts the outage.
+
+**Acceptance verified by subagent** against Spec §13 M0. First pass (at commit `922bc3f`) returned
+✓ on 8 of 11 acceptance rows and 9 of 11 deliverable rows, and **✗ on the payload-index refusal**
+plus five defects. All six are fixed in `5163ab4` and re-verified. The gate is recorded as closed
+**after U003**, because the payload-index refusal needs `INDEXED`, which the plan assigns to U003 —
+a milestone-boundary correction, documented under U003, with no requirement weakened.
+
+---
 
 ---
 

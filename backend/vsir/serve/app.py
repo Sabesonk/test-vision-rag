@@ -34,7 +34,7 @@ from starlette.concurrency import run_in_threadpool
 from vsir import __version__
 from vsir import logging as vsir_logging
 from vsir.config import Config, load_config
-from vsir.doctor import QDRANT_UNAVAILABLE, assert_boot_ok, run_boot_checks
+from vsir.doctor import QDRANT_UNAVAILABLE, BootRefused, assert_boot_ok, run_boot_checks
 
 #: A local boot check that has started failing after boot (a rotated variable, say).
 BOOT_CHECK_FAILED = "boot_check_failed"
@@ -132,9 +132,11 @@ def create_app(env: Mapping[str, str] | None = None) -> FastAPI:
 
         All three clauses are the one ``BOOT_CHECKS`` list, under readiness's policy rather than
         boot's: **red on a failure *or* on a check that could not conclude.** That difference is
-        the whole design. A drifted schema is a boot refusal, so the process exits instead of
-        serving; an unreachable Qdrant or a collection that does not exist yet leaves the instance
-        alive but out of the load balancer, because a restart loop would outlast the outage.
+        the whole design. A schema that is already drifted at start-up is a boot refusal, so the
+        process never begins serving; a schema that drifts *under a running instance* turns it red
+        here, which is why the checks are re-run per probe. An unreachable Qdrant or a collection
+        that does not exist yet leaves the instance alive but out of the load balancer, because a
+        restart loop would outlast the outage.
 
         The checks are re-run per probe rather than cached from start-up, so a schema that drifts
         under a running process turns the instance red instead of leaving it answering. They run in
@@ -167,6 +169,24 @@ def create_app(env: Mapping[str, str] | None = None) -> FastAPI:
         )
 
     return app
+
+
+def app_factory() -> FastAPI:
+    """The process entry point: ``uvicorn --factory vsir.serve.app:app_factory``.
+
+    Identical to :func:`create_app` but for one thing: a §4.3 boot refusal exits **1** instead of
+    unwinding as a traceback. The refusal is a designed behaviour with its reason already on the
+    event stream as JSON, so a forty-line traceback after it is redundant non-JSON noise on a
+    stream whose contract is one JSON object per line (§15 Factor XI).
+
+    `create_app` keeps raising, because a library that calls `sys.exit` is untestable and a test
+    asserting *which* check refused is worth more than a tidy exit code.
+    """
+    try:
+        return create_app()
+    except BootRefused as refusal:
+        _log.error("boot_refused", failed_checks=refusal.failed_checks, detail=str(refusal))
+        raise SystemExit(1) from None
 
 
 def config_of(app: FastAPI) -> Config:

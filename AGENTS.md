@@ -51,7 +51,7 @@ backend/.venv/bin/vsir --help            # the §4.4 command table, as far as it
 The HTTP probes, until `vsir serve` lands in U014:
 
 ```bash
-backend/.venv/bin/uvicorn --factory vsir.serve.app:create_app --port 8000   # from backend/
+backend/.venv/bin/uvicorn --factory vsir.serve.app:app_factory --port 8000   # from backend/
 curl -s localhost:8000/health            # liveness — green even with Qdrant down
 curl -s localhost:8000/ready             # readiness — 503 `qdrant_unavailable` with Qdrant down
 ```

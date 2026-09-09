@@ -81,15 +81,44 @@ def test_an_unreachable_qdrant_does_not_refuse_the_boot(captured_log):
 
     schema = _statuses(COMPLETE_ENV)["collection_schema"]
     assert schema == UNAVAILABLE
-    summary = next(line for line in _lines(captured_log) if line["event"] == "doctor_ok")
+    summary = next(line for line in _lines(captured_log)
+                   if line["event"] == "doctor_inconclusive")
     assert summary["unavailable_checks"] == ["collection_schema"]
+    assert summary["level"] == "warning"
+
+
+def test_a_run_that_never_reached_the_collection_is_not_greppable_as_a_pass(captured_log):
+    """An operator greps `event=doctor_ok` to mean "this release was checked"."""
+    assert doctor(COMPLETE_ENV) == 0
+
+    events = {line["event"] for line in _lines(captured_log)}
+    assert "doctor_ok" not in events
+    assert "doctor_inconclusive" in events
+
+
+def test_doctor_ok_is_emitted_when_every_check_concluded(captured_log, monkeypatch):
+    from vsir import doctor as doctor_module
+
+    monkeypatch.setattr(
+        doctor_module, "BOOT_CHECKS",
+        tuple(check for check in doctor_module.BOOT_CHECKS
+              if check is not doctor_module.check_collection_schema),
+    )
+
+    assert doctor(COMPLETE_ENV) == 0
+
+    summary = _lines(captured_log)[-1]
+    assert summary["event"] == "doctor_ok"
+    assert summary["unavailable_checks"] == []
 
 
 def test_doctor_prints_release_model_ids_and_index_fingerprint(captured_log):
     assert doctor(COMPLETE_ENV) == 0
 
     summary = _lines(captured_log)[-1]
-    assert summary["event"] == "doctor_ok"
+    # No Qdrant in the fast layer, so the run is honestly inconclusive rather than a pass; the
+    # facts §13 M0 requires are printed either way.
+    assert summary["event"] == "doctor_inconclusive"
     assert summary["release_id"] == "test-0"
     assert summary["models"] == {
         "VSIR_VLM_MODEL": "gemini-3.8-flash-001",

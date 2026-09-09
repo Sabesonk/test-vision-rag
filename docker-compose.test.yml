@@ -47,7 +47,7 @@ services:
     # Until U014 registers `vsir serve`, the probes are served by uvicorn directly out of the same
     # image and the same release. The image's own ENTRYPOINT is `vsir`; this overrides the command,
     # not the code path.
-    entrypoint: ["uvicorn", "--factory", "vsir.serve.app:create_app",
+    entrypoint: ["uvicorn", "--factory", "vsir.serve.app:app_factory",
                  "--host", "0.0.0.0", "--port", "8000"]
     environment:
       # The twelve of §15 Factor III. Boot refuses a missing one, so this list is exhaustive by
