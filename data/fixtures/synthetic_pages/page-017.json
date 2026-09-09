@@ -1,0 +1,15 @@
+{
+  "page_no": 17,
+  "section": "Schematics and wiring",
+  "page_kind": "table",
+  "text": "Module list, sheet 17 — cell 3\n\nThe SI3 safe input module occupies slot 4 of rack 2. Slot 5 is empty.\n",
+  "codes": [
+    "SI3"
+  ],
+  "topics": [
+    "modules",
+    "rack layout"
+  ],
+  "summary": "Sheet 17 lists the rack modules: the safe input module in slot 4, slot 5 empty.",
+  "note": "§5.5 — `min_token_len=1` is what keeps a three-character code findable. `lookup(\"SI 3\")` reaches it through the whitespace-removed variant."
+}

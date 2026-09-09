@@ -7,9 +7,9 @@
 
 | | |
 |---|---|
-| **Complete** | 4 / 26 units (15%) |
-| **Current milestone** | M1 — `core/` and the exact surface (2 / 4 units); M0 closed and tagged |
-| **Next unit** | U005 — Synthetic exact surface, `lookup`, and `vsir demo exact` |
+| **Complete** | 5 / 26 units (19%) |
+| **Current milestone** | M1 — `core/` and the exact surface (3 / 4 units); M0 closed and tagged |
+| **Next unit** | U006 — `verify_claims`, `present_instead`, and the L3 abstention eval |
 | **Blocked** | none |
 
 ---
@@ -30,7 +30,7 @@
 ### M1 — `core/` and the exact surface on synthetic text (spend: none) — the whole proof
 - [x] U003 Page record, identifiers, and the `INDEXED` schema
 - [x] U004 Tokenisation, variants, the exact filter, and both envelopes
-- [ ] U005 Synthetic exact surface, `lookup`, and `vsir demo exact`
+- [x] U005 Synthetic exact surface, `lookup`, and `vsir demo exact`
 - [ ] U006 `verify_claims`, `present_instead`, and the L3 abstention eval
 
 ### M2a — ingest a generated PDF with a stubbed VLM (spend: none)
@@ -498,6 +498,199 @@ is exactly "no teardown, and exit 1 on a green run". The observed exit-0-with-a-
 machine is consistent with a shell-version-dependent variant of the same area. The explicit
 `local status=$?; … exit $status` is therefore belt-and-braces rather than the load-bearing fix, and
 both behaviours are now asserted in both directions.
+
+---
+
+### U005 — Synthetic exact surface, `lookup`, and `vsir demo exact`
+
+**Milestone:** M1 · **Spend:** none · **Status:** `[x]` Complete · **Completed:** 2026-09-10
+
+**Demo output** — `vsir demo exact --synthetic` (sections 6–13; 1–5 are U004's primitives,
+unchanged and still green):
+
+```
+6. the §13 M1 corpus — hand-written page text, no PDF, no VLM, no spend
+   source .../data/fixtures/synthetic_pages
+   SYN-M1@1.0, pages seeded                 31 points, 30 current                    PASS
+   pages with no text layer (§5.7)          1                                        PASS
+   pages unsearchable for lookup (§5.7)     2                                        PASS
+   superseded revision 0.9 kept, not deleted 1 page, is_current=False                PASS
+
+7. lookup(label) — exact, phrase-only, a SET not a ranking (§7.2.2, F1)
+   lookup("SF 1.1A")                        ok total=1 p001                          PASS
+   the token-decoy page is NOT returned     p008 absent from hits                    PASS
+   every hit carries an image REFERENCE     /pages/SYN-M1@1.0#p001/image?dpi=150     PASS
+   no hit carries image bytes (P2, D12)     no bytes_b64 field                       PASS
+
+8. the eight compact labels each resolve to the page that prints them (F3)
+   lookup("SF 1.1A") → printed SF 1.1A      ok total=1 p001 [as given]               PASS
+   lookup("SF 5.5b") → printed SF5.5b       ok total=1 p014 [whitespace removed]     PASS
+   lookup("SF 121.1") → printed SF121.1)    ok total=1 p003 [whitespace removed]     PASS
+   lookup("K 158") → printed K158           ok total=1 p001 [whitespace removed]     PASS
+   lookup("K 78") → printed K78             ok total=1 p006 [whitespace removed]     PASS
+   lookup("SI 3") → printed SI3             ok total=1 p017 [whitespace removed]     PASS
+   lookup("Q25") → printed Q 25             ok total=1 p023 [letter-digit boundary]  PASS
+   lookup("EAO84-5140.0020") → printed EAO 84-5140.0020 ok total=1 p021 [boundary]   PASS
+   lookup("SF 5.5b") ≠ SF 5.5c              ok total=1 p014                          PASS
+   lookup("K 73") ≠ K78                     not_found total=0 —                      PASS
+
+9. a model-invented code is unfindable in the exact surface (I2, F14, D3)
+   lookup("K999")                           not_found total=0 —                      PASS
+   lookup("K999", include_unverified=True)  not_found hits=0 unverified=1            PASS
+   the unverified hit is on the claiming page, verified=False  p004 verified=False    PASS
+   the two lists are never merged           hits ∩ unverified_hits = ∅               PASS
+
+10. an unsearchable page is `not_searchable`, never `not_found` (F4, §5.7)
+   lookup("SF 9.9", scope={'page_no': 5})   not_searchable pages=1 no_text=1         PASS
+   lookup("SF 9.9") unscoped                not_found total=0 —                      PASS
+   lookup("K404", scope={'page_no': 10})    not_searchable pages=1 no_text=0         PASS
+   lookup("K404") unscoped                  not_found total=0 —                      PASS
+
+11. `weak` is the server's signal, and `cap` cannot move it (§7.1)
+   lookup("3", cap=5)                       total=26 hits=5 capped=True weak=True    PASS
+   lookup("3", cap=20)                      total=26 hits=20 capped=True weak=True   PASS
+   lookup("3", cap=200)                     total=26 hits=26 capped=False weak=True  PASS
+
+12. typed absence, and the affordance that keeps it honest (I5, §7.1)
+   lookup("alarm 152")                      not_found suggest=['skim_pages']         PASS
+   lookup("SF1.1A")                         not_found suggest=['skim_pages']         PASS
+   lookup("SF 1.1A", scope={'doc_id': 'NO-SUCH-DOC'})  out_of_scope pages=0          PASS
+   lookup("SF 7.7A") — is_current injected (I7)  not_found total=0 —                 PASS
+   lookup("K 158") — is_current injected (I7)    ok total=1 p001                     PASS
+   effective_scope is echoed back (F8, C11) {'is_current': True}                     PASS
+
+13. the observed-token inventory (§6.8) — display-only, and never a match
+   tokens observed in SYN-M1                57 tokens                                PASS
+   every code-like token of the text, and nothing else  text ∩ has-a-digit            PASS
+   nothing that is not in the text surface  no model claim leaks in                  PASS
+   a prefix lookup, not a distance (F16)    starting_with('k7') = ['k78']            PASS
+   lookup.py cannot reach the inventory     vsir.core.observed_tokens not imported   PASS
+
+ALL ASSERTIONS PASSED
+demo-exit=0
+```
+
+`bash scripts/test-unit.sh` → **474 passed** (409 → 474; +65). `bash scripts/test-api.sh` →
+**130 passed** (84 → 130; +46), exit 0. The demo also runs green **from the production image**
+with the corpus mounted read-only, which is the §15 Factor XII claim made good:
+
+```
+docker run --rm --read-only --tmpfs /tmp --env-file .env --network <test-net> \
+  -e VSIR_QDRANT_URL=http://test-qdrant:6333 -e VSIR_SYNTHETIC_PAGES=/corpus \
+  -v "$PWD/data/fixtures/synthetic_pages:/corpus:ro" vsir:<release> demo exact --synthetic
+→ ALL ASSERTIONS PASSED
+```
+
+**Invariants / failure rows closed:** **I2 (M1 half)** — `lookup("K999")` on the code p004's
+`content.codes` claims and its text does not contain is `not_found`, and reachable *only* through
+`unverified_hits` with `verified: false`; the page itself stays findable by what its text does say
+(`X7`), so the claim is quarantined and the page is not. **F1** — `test_lookup_sf_1_1a_returns_exactly_one`:
+`total == 1`, and the decoy page carrying `sf`, `1` and `1a` non-adjacently is not returned.
+**F3** — `test_all_eight_compact_labels_found`: eight labels, three variant kinds, each resolving
+to the page that prints it. **F14** — `test_hallucinated_code_never_findable`. Also asserted here,
+without claiming the rows their owning milestones hold: `is_current` is injected server-side so the
+superseded revision 0.9 page is in the collection and mute (I7's mechanism; F9's
+`found_only_in_superseded` upgrade is M8's), a re-seed does not double the count (I1's mechanism),
+and every one of the twelve `INDEXED` scope keys filters for real against a live collection (I6).
+
+**Notes**
+
+- **The corpus is 31 pages, not four.** The plan's Deliverables say "four hand-written page
+  records" and its own acceptance criteria say `lookup("3")` must be `weak` at `cap=5` *and*
+  `cap=200`. `weak = total > max(WEAK_ABS, 0.25 × pages)` with `WEAK_ABS = 20` (§7.1), so a
+  four-page corpus can never be weak at any cap — the signal needs more than twenty matching
+  pages to exist at all. The corpus is therefore one 30-page document plus one superseded page:
+  the six load-bearing pages the plan names (the literal `SF 1.1A`, the scattered-token decoy,
+  `SF121.1)`, the `K999` claim, plus a no-text page and a `K78` page for U006), seven more that
+  carry the labels the F3 table needs, and seventeen ordinary sheets. 26 of the 30 carry the token
+  `3` — two sign-off pages deliberately do not, so the assertion is a filter and not a tautology.
+- **The fixture is a *page*, not a record.** Each file carries only what a human can supply — the
+  page's text and the codes an extraction would have claimed — and `vsir.eval.synthetic` derives
+  the §5.3 record from it. A hand-written record could contradict itself (`has_text: true` with
+  empty text, a `codes_in_text` that is not a subset of `codes`); a hand-written page cannot.
+  `expected.json` beside it holds the §12.3 table, so no number lives in a test file where it
+  could be quietly re-baselined (C10).
+- **`variants()` is asymmetric, and that is a recorded recall gap.** A caller typing `SF1.1A`
+  against a corpus printing `SF 1.1A` gets `not_found`: the three spellings of `SF1.1A` are
+  `SF1.1A` ([sf1, 1a]) and `SF 1.1 A` ([sf, 1, 1, a]), and neither is [sf, 1, 1a] — re-spacing a
+  bare label spaces **every** letter↔digit boundary and can never space just one. This is exactly
+  what §5.6 specifies, so it is not a defect against the spec, and it is not fixable without
+  either an identifier grammar (§5.2 prohibits one) or an exponential variant set. It is R1
+  ("recall is not guaranteed"), and what makes it survivable is that it degrades to an honest
+  abstention **carrying a next move** — never to a wrong page. Asserted in both layers
+  (`test_the_compact_spelling_of_a_spaced_label_abstains_with_an_affordance`) and recorded in
+  `expected.json` under `asymmetric_variant` so it is a known property rather than a surprise.
+- **`next.suggest` is gated on observed words, and the words themselves are not in the envelope.**
+  §7.1 says a `not_found` a different move could answer returns `suggest: ["skim_pages"]` "and the
+  tokens that did occur" — but §7.1's own `NextMoves` model has `expand`, `neighbours`,
+  `references` and `suggest`, and none of them is a list of words. Inventing a fifth field is a
+  change to the response contract, so the words gate the suggestion (no word occurred ⇒ no
+  suggestion, which is why `K999` carries none and `alarm 152` does) and ride on the event stream
+  instead. **If a caller needs the list, that is a §7.1 spec change, not a tool change.**
+- **The probe set is the union over the *variants*, minus one-character words.** Probing only the
+  typed spelling would learn nothing about `X20SI4100` (one token); probing single characters would
+  fire a suggestion on almost every abstention, because `min_token_len=1` means the index really
+  does contain `3` and `k`. A word that is itself a one-word variant is not probed either — `total
+  == 0` over the OR of the variants has already answered it. Bounded at eight probes.
+- **`text_trust: untrusted` is excluded from `hits`, not just from the count.** §5.7 says both
+  `untrusted` and `no_text` "count as unsearchable for `lookup`", so p010's garbled text layer
+  really does contain the phrase `K404` and really is not a verified hit; scoped to that page alone
+  the answer is `not_searchable`. The model's claim about the same page is still disclosed through
+  `unverified_hits`, which is the honest shape: *something* says `K404` is there, and it is not the
+  text layer.
+- **`cap < 1` is a typed `cap_out_of_range` 400** — added to `serve/caps.py`, an error code §7.3
+  does not enumerate, on the same reasoning U004 recorded for `region_invalid`: §7.3 tabulates the
+  bounds that cost money and this is the same rule applied to a parameter it left implicit. Zero
+  cannot be allowed through, because every alternative is a lie — `ok` with no hits is impossible
+  (I5), and any of the four absences reported beside `total: 26` says "nothing is there" about a
+  set whose size the same response is reporting. There is no upper bound: §12.3 requires `weak` to
+  hold at `cap=200`.
+- **`lookup` logs at `debug`, not `info`.** §7.4 requires one audit line per `read` and per
+  `fetch` — the two tools that spend — and §11.4 asks for nothing per call from a free one. It
+  also keeps the demo's report readable at the default log level, since both share stdout.
+- **The log redactor hides a field called `tokens_*`.** `logging.redact` matches
+  credential-shaped field *names* and `token` is one of the hints, so the first version of the
+  event arrived as `"tokens_observed": "***"` — the redactor working exactly as designed on a name
+  that has nothing to do with a secret. Renamed to `words_observed`, which is also the more
+  accurate noun (`tok()` mirrors Qdrant's **WORD** tokenizer). Worth knowing before somebody logs
+  `input_tokens` in U014's audit line — **that** field is required by §7.4 and will be redacted
+  unless the redactor learns about it.
+- **`backend/vsir/eval/` is a new package, beyond the unit's Deliverables list.** The synthetic
+  corpus loader and seeder are needed by both the CLI and the L2 suite, so they cannot live in
+  either; plan §8 SA-5 already records `eval/` as a sanctioned extension of §4.1's layout (owned
+  by U016, which adds the `vsir eval` commands to it). Nothing about correctness lives there —
+  the rules stay in `core/`.
+- **Points are seeded with no vectors.** `vector={}` is legal in Qdrant and honest: there is no
+  embedder at M1 and this milestone spends nothing, so the dense and the two sparse surfaces are
+  empty in this corpus and nothing here can exercise them. That is what M1 *is* — the exact
+  surface, proved on its own, before a cent is spent.
+- **`VSIR_SYNTHETIC_PAGES` is a new optional env var** (`.env.example`, AGENTS.md). The image's
+  build context is `backend/`, so the checked-in corpus is not in the image; a container running
+  the demo mounts it and points the variable at the mount, exactly as `VSIR_FIXTURE` does for
+  replay mode (D10). A missing corpus is a named `FixtureMissing` refusal and a non-zero exit, not
+  a traceback and not an empty corpus — an empty corpus would answer `out_of_scope` to everything,
+  which reads as a green run of a suite that tested nothing.
+- **Seven Qdrant round trips for a hit**: three counts and two facets for `scope_stats`, then one
+  count and one scroll for the set — six where the scope holds no `has_text: false` page, since
+  that facet is skipped — plus up to eight probes on a `not_found`, and one more scroll when
+  `include_unverified` is on.
+  Every one is an indexed filter, and the whole 46-test L2 suite runs in 1.4 s, so this is
+  recorded rather than optimised. `scope_stats` is a required envelope field (§7.1) and `weak`
+  needs `scope_stats.pages`, so the denominator is not optional.
+- **Carry-forward for U009 (`core/health.py`) and U011 (the §11.1 gates):** §5.7's
+  `have = token_set(page.text)` cannot ground a **multi-token** code. `SF 1.1A` is [sf, 1, 1a] in
+  the text and `sf 1.1a` as a claimed code, so they never intersect, and p001 — where all four
+  codes are plainly printed — derives `grounded_rate: 0.5` and a `codes_in_text` holding only the
+  two single-token codes. §2.4 forbids porting `impl`'s adjacent-token joins, and says why: they
+  are "superseded by `phrase_matching` + `variants()`". So the phrase-aware replacement is the one
+  §2.4 points at — a code is grounded when `exact_filter(code)` matches the page — and it belongs
+  in U009's derivation, not here. The synthetic records compute the formula §5.7 states, verbatim,
+  so that the gap is visible in the fixture rather than hidden by a local fix. **Left unfixed, a
+  document whose codes are printed with spaces would fail the `grounded_rate ≥ 0.8` publish gate
+  (§11.1) for a reason that is entirely an artefact of set intersection.**
+- **Fixed while here:** a pre-existing `DeprecationWarning: invalid escape sequence '\ '` from
+  `core/ids.py`'s `parse_page_id` docstring (an RST `\ ` continuation in a non-raw string, which
+  becomes a `SyntaxWarning` on a later Python). The docstring is now raw.
 
 ---
 

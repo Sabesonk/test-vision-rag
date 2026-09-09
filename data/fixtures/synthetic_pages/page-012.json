@@ -1,0 +1,13 @@
+{
+  "page_no": 12,
+  "section": "Schematics and wiring",
+  "page_kind": "table",
+  "text": "Terminal strip X12 — cell 3\n\nTerminals 13 to 24 carry the guard lock feedback.\n",
+  "codes": [
+    "X12"
+  ],
+  "topics": [
+    "terminal strips"
+  ],
+  "summary": "Terminal strip X12 and the terminals that carry the guard lock feedback."
+}

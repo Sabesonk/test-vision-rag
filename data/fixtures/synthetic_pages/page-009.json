@@ -1,0 +1,15 @@
+{
+  "page_no": 9,
+  "section": "Schematics and wiring",
+  "page_kind": "table",
+  "is_start": true,
+  "text": "Cable schedule, sheet 9 — cell 3\n\nCables W90 to W98 run from the panel to the light curtain.\n",
+  "codes": [
+    "W90",
+    "W98"
+  ],
+  "topics": [
+    "cable schedule"
+  ],
+  "summary": "The cable schedule for the run between the panel and the light curtain."
+}

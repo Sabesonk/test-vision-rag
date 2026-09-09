@@ -1,0 +1,122 @@
+{
+  "_note": "The M1 acceptance table (Spec §12.3, §13 M1) over the hand-written corpus beside it. It is data, not code, so `vsir demo exact --synthetic` and tests/api/test_acceptance_synthetic.py assert the same numbers. Nothing here may be re-baselined to make a run green (C10): a disagreement is a finding.",
+
+  "corpus": {
+    "doc_id": "SYN-M1",
+    "revision": "1.0",
+    "pages": 30,
+    "pages_no_text": 1,
+    "pages_unsearchable": 2,
+    "searchable_ratio": 0.9666666666666667,
+    "superseded_revision": "0.9",
+    "superseded_pages": 1
+  },
+
+  "compact_labels": [
+    {"label": "SF 1.1A", "page_id": "SYN-M1@1.0#p001", "printed": "SF 1.1A",
+     "variant": "as given", "phrase": ["sf", "1", "1a"]},
+    {"label": "SF 5.5b", "page_id": "SYN-M1@1.0#p014", "printed": "SF5.5b",
+     "variant": "whitespace removed", "phrase": ["sf5", "5b"]},
+    {"label": "SF 121.1", "page_id": "SYN-M1@1.0#p003", "printed": "SF121.1)",
+     "variant": "whitespace removed", "phrase": ["sf121", "1"]},
+    {"label": "K 158", "page_id": "SYN-M1@1.0#p001", "printed": "K158",
+     "variant": "whitespace removed", "phrase": ["k158"]},
+    {"label": "K 78", "page_id": "SYN-M1@1.0#p006", "printed": "K78",
+     "variant": "whitespace removed", "phrase": ["k78"]},
+    {"label": "SI 3", "page_id": "SYN-M1@1.0#p017", "printed": "SI3",
+     "variant": "whitespace removed", "phrase": ["si3"]},
+    {"label": "Q25", "page_id": "SYN-M1@1.0#p023", "printed": "Q 25",
+     "variant": "letter-digit boundary", "phrase": ["q", "25"]},
+    {"label": "EAO84-5140.0020", "page_id": "SYN-M1@1.0#p021", "printed": "EAO 84-5140.0020",
+     "variant": "letter-digit boundary", "phrase": ["eao", "84", "5140", "0020"]}
+  ],
+
+  "decoy": {
+    "label": "SF 1.1A",
+    "page_id": "SYN-M1@1.0#p008",
+    "why": "the tokens sf, 1 and 1a are all on p008 and none is adjacent to the next, so any-order matching returns it and a phrase does not (F1)"
+  },
+
+  "one_character_apart": [
+    {"label": "SF 5.5b", "not_page_id": "SYN-M1@1.0#p001", "printed_there": "SF 5.5c"},
+    {"label": "K 73", "not_page_id": "SYN-M1@1.0#p006", "printed_there": "K78"}
+  ],
+
+  "hallucinated": {
+    "label": "K999",
+    "page_id": "SYN-M1@1.0#p004",
+    "status": "not_found",
+    "unverified_hits": 1,
+    "next": null,
+    "why": "claimed in content.codes, absent from text. Reachable only through unverified_hits, always verified:false (I2, F14, D3). No token of the label occurs anywhere in the text surface, so there is no move to suggest either."
+  },
+
+  "no_text": {
+    "label": "SF 9.9",
+    "page_id": "SYN-M1@1.0#p005",
+    "scope": {"page_no": 5},
+    "scoped_status": "not_searchable",
+    "unscoped_status": "not_found",
+    "unverified_hits": 1,
+    "why": "the only candidate page has no text layer: escalate to vision, never conclude the code does not exist (F4)"
+  },
+
+  "untrusted": {
+    "label": "K404",
+    "page_id": "SYN-M1@1.0#p010",
+    "scope": {"page_no": 10},
+    "scoped_status": "not_searchable",
+    "unscoped_status": "not_found",
+    "unverified_hits": 1,
+    "why": "text_trust: untrusted counts as unsearchable for lookup (§5.7), so the phrase in a garbled text layer is never a verified hit"
+  },
+
+  "weak": {
+    "label": "3",
+    "total": 26,
+    "scope_pages": 30,
+    "weak_abs": 20,
+    "weak": true,
+    "needs_scope": true,
+    "caps": [5, 20, 200],
+    "why": "weak = total > max(WEAK_ABS, 0.25 * scope pages) — a server constant, so cap cannot move it (§7.1)"
+  },
+
+  "suggest": {
+    "label": "alarm 152",
+    "status": "not_found",
+    "suggest": ["skim_pages"],
+    "tokens_observed": ["alarm", "152"],
+    "why": "§12.3 — alarm is on p024, 152 is on p026, the phrase is nowhere. The status stays honest and the affordance stops the agent abstaining on a phrasing accident"
+  },
+
+  "asymmetric_variant": {
+    "label": "SF1.1A",
+    "status": "not_found",
+    "suggest": ["skim_pages"],
+    "why": "p001 prints the spaced form and variants() cannot produce it from the compact one: re-spacing a bare label spaces EVERY letter-digit boundary (SF 1.1 A), never just one. A recall gap by construction (§5.6, R1), and it degrades to an honest abstention carrying a next move — never to a wrong page"
+  },
+
+  "superseded": [
+    {"label": "SF 7.7A", "status": "not_found", "hits": 0,
+     "why": "printed only on the is_current:false revision 0.9 page; every tool injects is_current:true (I7). F9's found_only_in_superseded upgrade is closed at M8"},
+    {"label": "K 158", "hits": 1, "page_id": "SYN-M1@1.0#p001",
+     "why": "printed on both revisions; only the current one can answer"}
+  ],
+
+  "out_of_scope": {
+    "label": "SF 1.1A",
+    "scope": {"doc_id": "NO-SUCH-DOC"},
+    "status": "out_of_scope",
+    "why": "no page matched the filters — re-orient and widen; the corpus was never asked (§7.1)"
+  },
+
+  "observed_tokens": {
+    "doc_id": "SYN-M1",
+    "count": 57,
+    "includes": ["1a", "5b", "5c", "84", "0020", "5140", "k158", "k78", "si3", "sf121", "sf5",
+                 "25", "152", "x7", "x26", "w70", "w98"],
+    "excludes": ["k999", "eao84", "sf", "eao", "emergency", "quantity"],
+    "why": "§6.8 — built from the text surface only, and only from tokens carrying at least one digit. `k999` is excluded because it is only ever a model claim (I2); `eao84` because it is a spelling of a query variant and not a token anybody printed; bare words because the inventory exists to back `present_instead` and nothing else"
+  }
+}

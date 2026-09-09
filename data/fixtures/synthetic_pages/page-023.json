@@ -1,0 +1,14 @@
+{
+  "page_no": 23,
+  "section": "Spare parts and maintenance",
+  "page_kind": "table",
+  "text": "Spare parts, sheet 23 — cell 3\n\nQ 25   push button contact block, NC   quantity 4   fits the EAO body on sheet 21\n",
+  "codes": [
+    "Q 25"
+  ],
+  "topics": [
+    "spare parts"
+  ],
+  "summary": "The spare-parts row for the push-button contact block and the body it fits.",
+  "note": "F3 — printed with a space inside the code. `lookup(\"Q25\")` reaches it through the letter↔digit boundary variant, which is the variant that exists for exactly this spelling."
+}

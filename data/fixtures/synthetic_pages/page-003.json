@@ -1,0 +1,14 @@
+{
+  "page_no": 3,
+  "section": "Safety function list",
+  "page_kind": "schematic",
+  "text": "Interlock chain, sheet 3 — cell 3\n\nCallout SF121.1) marks the guard interlock chain carried over from the previous\nrevision. Sheet 13 continues the chain into the second door.\n",
+  "codes": [
+    "SF121.1"
+  ],
+  "topics": [
+    "interlock chain"
+  ],
+  "summary": "Sheet 3 carries the guard interlock chain and its callout, and hands the chain on to sheet 13 for the second door.",
+  "note": "F3 — the compact printed form. `lookup(\"SF 121.1\")` reaches it through the whitespace-removed variant: Qdrant's WORD tokenizer reads `SF121.1)` as [sf121, 1], which the spaced phrase [sf, 121, 1] cannot match."
+}

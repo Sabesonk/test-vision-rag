@@ -1,0 +1,15 @@
+{
+  "page_no": 4,
+  "section": "Safety function list",
+  "page_kind": "prose",
+  "text": "Terminal strip X7 — cell 3\n\nThe relay coil on this sheet is wired through terminal 12 and terminal 14. No safety\nfunction is assigned to this sheet.\n",
+  "codes": [
+    "K999",
+    "X7"
+  ],
+  "topics": [
+    "terminal strips"
+  ],
+  "summary": "Terminal strip X7 and the relay coil wired through terminals 12 and 14; no safety function is assigned to this sheet.",
+  "note": "I2/F14 — the model claimed `K999` on this page and the text layer does not contain it. `K999` is therefore reachable only through `unverified_hits`, never through the exact surface."
+}

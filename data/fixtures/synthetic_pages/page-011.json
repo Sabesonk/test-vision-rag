@@ -1,0 +1,13 @@
+{
+  "page_no": 11,
+  "section": "Schematics and wiring",
+  "page_kind": "table",
+  "text": "Terminal strip X11 — cell 3\n\nTerminals 1 to 12 carry the 24 V supply for the door switches.\n",
+  "codes": [
+    "X11"
+  ],
+  "topics": [
+    "terminal strips"
+  ],
+  "summary": "Terminal strip X11 and the terminals that carry the 24 V door-switch supply."
+}

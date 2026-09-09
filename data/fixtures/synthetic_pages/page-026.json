@@ -1,0 +1,14 @@
+{
+  "page_no": 26,
+  "section": "Spare parts and maintenance",
+  "page_kind": "prose",
+  "text": "Terminal strip X26 — cell 3\n\nTerminals 150 to 152 carry the door switch chain, sheet 3 of 6.\n",
+  "codes": [
+    "X26"
+  ],
+  "topics": [
+    "terminal strips"
+  ],
+  "summary": "Terminal strip X26 and the terminal range that carries the door switch chain.",
+  "note": "§12.3 — the other half of the `alarm 152` row: the token `152` occurs here."
+}

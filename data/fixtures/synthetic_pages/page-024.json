@@ -1,0 +1,12 @@
+{
+  "page_no": 24,
+  "section": "Spare parts and maintenance",
+  "page_kind": "prose",
+  "text": "Alarm list, sheet 24 — cell 3\n\nThe alarm texts for this cell are held in the HMI project and are not reproduced\nhere.\n",
+  "codes": [],
+  "topics": [
+    "alarms"
+  ],
+  "summary": "Sheet 24 says where the alarm texts live: the HMI project, not this manual.",
+  "note": "§12.3 — half of the `lookup(\"alarm 152\")` row: the token `alarm` occurs here, the token `152` occurs on p026, and the phrase occurs nowhere. That is a `not_found` carrying `next.suggest: [\"skim_pages\"]`."
+}

@@ -8,12 +8,14 @@ in `development/cr1/progress/implementation-progress.md`.
 | Path | What |
 |---|---|
 | `backend/vsir/` | the service and the CLI (Python 3.11, FastAPI, Pydantic v2) |
+| `backend/vsir/eval/` | the corpora the `vsir demo` / `vsir eval` commands run against |
 | `backend/tests/unit/` | L0/L1 — no Docker, no network, no paid API |
 | `backend/tests/api/` | L2/L3 — needs the Docker test stack |
 | `backend/tests/paid/` | L4 — real model calls, gated |
 | `frontend/` | React + TypeScript + Vite (M7; does not exist yet) |
 | `e2e/` | Playwright |
 | `data/fixtures/` | frozen extractions, checked in |
+| `data/fixtures/synthetic_pages/` | the §13 M1 corpus: hand-written page text + `expected.json` |
 | `data/source/` | input PDFs, gitignored |
 
 ## Setup
@@ -47,6 +49,20 @@ cd backend && uv pip compile requirements.txt --universal --python-version 3.11 
 backend/.venv/bin/vsir doctor            # the §4.3 boot self-check; also `python -m vsir doctor`
 backend/.venv/bin/vsir --help            # the §4.4 command table, as far as it is built
 ```
+
+The M1 demo. It seeds `{VSIR_COLLECTION}_synthetic_{dim}` from `data/fixtures/synthetic_pages/`,
+runs the §12.3 acceptance table against it and **drops the collection on the way out** — so it
+needs a reachable Qdrant but never touches the serving collection:
+
+```bash
+backend/.venv/bin/vsir demo exact --synthetic              # both sections
+backend/.venv/bin/vsir demo exact --only primitives        # pure: no Qdrant, no configuration
+VSIR_QDRANT_URL=http://localhost:6335 backend/.venv/bin/vsir demo exact --synthetic
+```
+
+`--only corpus` without `--synthetic` has no data source at M1 and says so. Set
+`VSIR_SYNTHETIC_PAGES` when the fixture is not at the repository path — the image's build context
+is `backend/`, so a container running this command needs the corpus mounted.
 
 The HTTP probes, until `vsir serve` lands in U014:
 

@@ -1,0 +1,16 @@
+{
+  "page_no": 5,
+  "section": "Safety function list",
+  "page_kind": "schematic",
+  "has_text": false,
+  "text_trust": "no_text",
+  "text": "",
+  "codes": [
+    "SF 9.9"
+  ],
+  "topics": [
+    "hydraulic schematic"
+  ],
+  "summary": "A photocopied hydraulic schematic with no text layer; the codes on it were read off the raster.",
+  "note": "F4 — no text layer at all. A lookup scoped to this page alone is `not_searchable`, never `not_found`, and `verify` on it is `unverifiable` with reason `no_text` (U006)."
+}

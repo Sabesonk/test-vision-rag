@@ -1,0 +1,15 @@
+{
+  "page_no": 21,
+  "section": "Spare parts and maintenance",
+  "page_kind": "table",
+  "is_start": true,
+  "text": "Spare parts, sheet 21 — cell 3\n\nEAO 84-5140.0020   illuminated push button, red   quantity 2\n",
+  "codes": [
+    "EAO 84-5140.0020"
+  ],
+  "topics": [
+    "spare parts"
+  ],
+  "summary": "The spare-parts row for the illuminated push button, with its vendor part number.",
+  "note": "§2.4 — Qdrant reads `84-5140.0020` as [84, 5140, 0020], not as one token. `lookup(\"EAO84-5140.0020\")` reaches this page through the letter↔digit boundary variant."
+}

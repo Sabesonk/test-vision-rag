@@ -58,7 +58,7 @@ def page_id(document: str, revision: str, page_no: int) -> str:
 
 
 def parse_page_id(value: str) -> tuple[str, str, int]:
-    """``"TC1E-SF@1.3#p001"`` → ``("TC1E-SF", "1.3", 1)``. Raises on anything else.
+    r"""``"TC1E-SF@1.3#p001"`` → ``("TC1E-SF", "1.3", 1)``. Raises on anything else.
 
     `resolve` accepts a saved citation from outside this service, so the parse refuses a malformed
     id rather than guessing at one (§7.2.3) — and **only the canonical spelling parses**.

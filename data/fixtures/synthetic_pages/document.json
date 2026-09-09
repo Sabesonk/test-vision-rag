@@ -1,0 +1,17 @@
+{
+  "doc_id": "SYN-M1",
+  "revision": "1.0",
+  "doc_type": "safety_function_list",
+  "title": "Cell 3 controller — safety functions, schematics and spares (synthetic)",
+  "subjects": [
+    "safety functions",
+    "cell 3"
+  ],
+  "tags": [
+    "synthetic",
+    "m1"
+  ],
+  "pages": 30,
+  "printed_page_no_format": "Page {page_no} of {pages}",
+  "_note": "The M1 corpus of Spec §13: hand-written page text, no PDF, no VLM, no spend. Each page file is a page as the probe would have extracted it, plus the codes the model would have claimed; `vsir.eval.synthetic` assembles the §5.3 records from them. Read `expected.json` for what each page is here to prove."
+}

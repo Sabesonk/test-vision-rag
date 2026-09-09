@@ -1,0 +1,12 @@
+{
+  "page_no": 8,
+  "section": "Safety function list",
+  "page_kind": "prose",
+  "text": "Notes on the SF group — cell 3\n\nThe sf column in table 1 lists the abbreviation used on the schematic sheets.\nColumn 1 of that table is the printed label; revision 1a of this manual renumbered\nthe guard door functions.\n",
+  "codes": [],
+  "topics": [
+    "conventions"
+  ],
+  "summary": "Explains the sf column of the label table and records that revision 1a renumbered the guard door functions.",
+  "note": "F1 — the decoy, and the whole point of phrase matching. The tokens sf, 1 and 1a are all on this page and none of them is adjacent to the next, so any-order matching would return it for `SF 1.1A` and a phrase does not. It is also §12.3's `verify(\"SF 1.1A\", [p008]) → absent` row."
+}

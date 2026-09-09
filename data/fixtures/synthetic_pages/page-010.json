@@ -1,0 +1,15 @@
+{
+  "page_no": 10,
+  "section": "Schematics and wiring",
+  "page_kind": "schematic",
+  "text_trust": "untrusted",
+  "text": "Scanned insert, sheet 10 — cell 3\n\nCotnactor K404 on rai1 3 — repalcement for the older unit. Ths page was inserted\nas a photocopy and its text layer is unreliable.\n",
+  "codes": [
+    "K404"
+  ],
+  "topics": [
+    "scanned insert"
+  ],
+  "summary": "A photocopied insert whose text layer came out garbled; it names one contactor.",
+  "note": "§5.7 — `text_trust: untrusted` counts as unsearchable for `lookup`, so `K404` is not a verified hit even though the phrase is in the text. It is still disclosed through `unverified_hits`."
+}

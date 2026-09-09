@@ -1,0 +1,19 @@
+{
+  "page_no": 1,
+  "revision": "0.9",
+  "is_current": false,
+  "section": "Safety function list",
+  "page_kind": "table",
+  "is_start": true,
+  "text": "Safety function list — cell 3 controller (revision 0.9)\n\nSF 7.7A   Emergency stop, main panel   Category 3   PL d   contactor K158\n",
+  "codes": [
+    "SF 7.7A",
+    "K158"
+  ],
+  "topics": [
+    "safety functions",
+    "emergency stop"
+  ],
+  "summary": "The revision 0.9 safety function list, superseded by revision 1.0.",
+  "note": "I7 — written `is_current: false`, and every tool injects `is_current: true` server-side, so nothing here can answer: `lookup(\"SF 7.7A\")` is `not_found` and `lookup(\"K 158\")` returns only the revision 1.0 page. F9's `found_only_in_superseded` upgrade of this same evidence is closed at M8, not here, which is why the page is kept rather than deleted (§6.7)."
+}

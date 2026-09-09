@@ -126,6 +126,27 @@ def validate_scope(scope: Mapping[str, Any] | Iterable[str] | None) -> None:
         )
 
 
+def validate_cap(cap: int) -> None:
+    """``cap`` is at least 1 (§7.2.2). A typed 400, in the same family as every other bound.
+
+    §7.3 tabulates the bounds that cost money and leaves this one implicit, so this is that rule
+    applied to the parameter it left out — the same call `region_invalid` is.
+
+    **Why zero cannot be allowed through.** ``cap`` bounds the page of the set that comes back, and
+    the alternatives for ``cap=0`` are all worse than a refusal: `ok` with no hits is impossible by
+    I5, and any of the four absences beside ``total: 26`` is a lie about the corpus — it says
+    *"nothing is there"* about a set the same response is reporting the size of. There is no upper
+    bound: §12.3 asks for `lookup("3")` at ``cap=200`` and requires `weak` to hold there, so a cap
+    a caller may not raise would make that row unwriteable.
+    """
+    if cap < 1:
+        raise ToolError(
+            "cap_out_of_range",
+            f"cap is the size of the page of the set to return and is at least 1, got {cap}",
+            minimum=1, requested=cap,
+        )
+
+
 def validate_budget(reads_remaining: int) -> None:
     """The per-question ceiling (§8.4, F18). A 429, not a silent truncation of the loop."""
     if reads_remaining <= 0:

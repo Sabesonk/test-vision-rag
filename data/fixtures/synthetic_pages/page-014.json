@@ -1,0 +1,16 @@
+{
+  "page_no": 14,
+  "section": "Schematics and wiring",
+  "page_kind": "schematic",
+  "text": "Schematic sheet 14 — guard door interlock, cell 3\n\nCallout SF5.5b marks the interlock chain for cell 4. The chain is carried by\ncontactor K166.\n",
+  "codes": [
+    "SF5.5b",
+    "K166"
+  ],
+  "topics": [
+    "interlock chain",
+    "guard door"
+  ],
+  "summary": "Sheet 14 is the guard door interlock for cell 4, with its callout and contactor.",
+  "note": "F3 — printed compactly. `lookup(\"SF 5.5b\")` reaches it through the whitespace-removed variant, and must not reach p001's `SF 5.5c`."
+}

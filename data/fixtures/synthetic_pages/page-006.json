@@ -1,0 +1,15 @@
+{
+  "page_no": 6,
+  "section": "Safety function list",
+  "page_kind": "prose",
+  "text": "Relay panel, sheet 6 — cell 3\n\nThe guard lock on the second door is driven by contactor K78 on rail 2.\n",
+  "codes": [
+    "K78"
+  ],
+  "topics": [
+    "relays",
+    "guard lock"
+  ],
+  "summary": "Sheet 6 shows the relay panel and the contactor that drives the second door's guard lock.",
+  "note": "F16 — the page a `K73` claim lands on. `verify(\"K73\")` here is `absent` with `present_instead: [\"K78\"]`, which is a prefix lookup over observed tokens and never a distance (U006)."
+}

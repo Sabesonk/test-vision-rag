@@ -1,0 +1,19 @@
+{
+  "page_no": 1,
+  "section": "Safety function list",
+  "page_kind": "table",
+  "is_start": true,
+  "text": "Safety function list — cell 3 controller\n\nSF 1.1A   Emergency stop, main panel     Category 3   PL d   contactor K158\nSF 5.5c   Guard door interlock, cell 4   Category 3   PL d   contactor K162\n",
+  "codes": [
+    "SF 1.1A",
+    "SF 5.5c",
+    "K158",
+    "K162"
+  ],
+  "topics": [
+    "safety functions",
+    "emergency stop"
+  ],
+  "summary": "The safety function list for the cell 3 controller: two functions with their category, performance level and the contactor that carries each one.",
+  "note": "F1/F3 — prints `SF 1.1A` in the canonical spelling, and `SF 5.5c` one character from the `SF 5.5b` printed on p014. `K158` is also printed on the superseded revision 0.9 page, so `lookup(\"K 158\")` returning one hit is what proves is_current is injected server-side."
+}
