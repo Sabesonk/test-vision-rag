@@ -505,16 +505,21 @@ both behaviours are now asserted in both directions.
 
 **Demo** (Spec §0): `vsir doctor && bash scripts/test-unit.sh`
 
+Re-run at `afeca46`, after U004 renamed the summary event for an unchecked run:
+
 ```json
-{"event": "boot_check_unavailable", "check": "collection_schema", "reason": "index_not_ready",
+{"event": "boot_check_unavailable", "check": "collection_schema", "level": "warning",
+ "reason": "index_not_ready",
  "detail": "collection 'vsir_pages_1536' does not exist yet — create it with `vsir doctor --create-collection`"}
-{"event": "doctor_ok", "failed_checks": [], "unavailable_checks": ["collection_schema"],
- "release_id": "dev-0", "python": "3.11.15",
+{"event": "doctor_inconclusive", "level": "warning", "failed_checks": [],
+ "unavailable_checks": ["collection_schema"], "release_id": "dev-0", "python": "3.11.15",
  "models": {"VSIR_VLM_MODEL": "gemini-3.8-flash-001", "VSIR_EMBED_MODEL": "gemini-embedding-2"},
+ "fingerprint": {"embed_model": "gemini-embedding-2", "dim": 1536, "distance": "cosine",
+                 "composition_version": "d4-fused-v1"},
  "fingerprint_id": "45a09c588c25422c", "pages_collection": "vsir_pages_1536"}
 ```
 ```
-153 passed in 1.08s
+409 passed in 1.43s
 Layer 0/1 PASSED
 M0-demo-exit=0
 ```
