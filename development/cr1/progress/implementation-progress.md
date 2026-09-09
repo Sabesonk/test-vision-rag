@@ -7,9 +7,9 @@
 
 | | |
 |---|---|
-| **Complete** | 5 / 26 units (19%) |
-| **Current milestone** | M1 — `core/` and the exact surface (3 / 4 units); M0 closed and tagged |
-| **Next unit** | U006 — `verify_claims`, `present_instead`, and the L3 abstention eval |
+| **Complete** | 6 / 26 units (23%) |
+| **Current milestone** | M1 — `core/` and the exact surface (4 / 4 units; gate pending); M0 closed and tagged |
+| **Next unit** | U007 — Manifest, probe, render, S1 facts, and the windowing ladder (after the M1 gate) |
 | **Blocked** | none |
 
 ---
@@ -31,7 +31,7 @@
 - [x] U003 Page record, identifiers, and the `INDEXED` schema
 - [x] U004 Tokenisation, variants, the exact filter, and both envelopes
 - [x] U005 Synthetic exact surface, `lookup`, and `vsir demo exact`
-- [ ] U006 `verify_claims`, `present_instead`, and the L3 abstention eval
+- [x] U006 `verify_claims`, `present_instead`, and the L3 abstention eval
 
 ### M2a — ingest a generated PDF with a stubbed VLM (spend: none)
 - [ ] U007 Manifest, probe, render, S1 facts, and the windowing ladder
@@ -691,6 +691,148 @@ and every one of the twelve `INDEXED` scope keys filters for real against a live
 - **Fixed while here:** a pre-existing `DeprecationWarning: invalid escape sequence '\ '` from
   `core/ids.py`'s `parse_page_id` docstring (an RST `\ ` continuation in a non-raw string, which
   becomes a `SyntaxWarning` on a later Python). The docstring is now raw.
+
+---
+
+### U006 — `verify_claims`, `present_instead`, and the L3 abstention eval
+
+**Milestone:** M1 · **Spend:** none · **Status:** `[x]` Complete · **Completed:** 2026-09-10
+
+**Demo output** — `vsir demo exact --synthetic --verify "SF 1.1A,K73,SF 9.9" && bash scripts/test-api.sh -k near_miss`
+(sections 14–15; 1–13 are U004's and U005's, unchanged and green):
+
+```
+14. verify_claims(claims, page_ids) — three states, per (claim, page) (§7.2.4, F2)
+   verify("SF 1.1A", [p001])                present on p001                          PASS
+   verify("SF 1.1A", [p008])                absent                                   PASS
+   verify("K158", [p001 p002])              present on p001                          PASS
+   verify("K73", [p006])                    absent · different part: ['k78']         PASS
+   verify("K999", [p004])                   absent                                   PASS
+   verify("SF 9.9", [p005])                 unverifiable (no_text)                   PASS
+   verify("K404", [p010])                   unverifiable (untrusted)                 PASS
+   verify("SF 7.7A", [p001])                unverifiable (not_current)               PASS
+   every claim absent is still a Family B `ok`  status=ok ['absent', 'absent']        PASS
+   the matrix is per (claim, page), never collapsed  p001=present p002=absent        PASS
+
+15. near_misses(n=100) — one character off a real code (§12.4, F16)
+   100 fabricated codes, deterministic      100 from 21 real codes                   PASS
+   each differs by exactly one character    0020→0000 150→100 152→102 380→300 …      PASS
+   no fabricated code is a real one         no fake is printed, in any spelling      PASS
+   every source is an observed token        21 sources, all from the inventory       PASS
+   a near miss is never its own disclosure (F16)  different part ≠ the claim, cap 5  PASS
+   the eval that asserts none of them can ANSWER runs at L3, on every commit:
+     bash scripts/test-api.sh -k near_miss
+
+ALL ASSERTIONS PASSED
+demo-exit=0
+```
+
+```
+bash scripts/test-api.sh -k near_miss  →  6 passed, 130 deselected, exit 0
+```
+
+`bash scripts/test-unit.sh` → **538 passed** (474 → 538; +64). `bash scripts/test-api.sh` →
+**136 passed** (130 → 136; +6), exit 0.
+
+**Invariants / failure rows closed:** **F2 (core half)** — the one `exact_filter`, per
+`(claim, page)`: `test_verify_claims_sf_1_1a_absent_on_p008` is §12.3's row, and because `verify`
+and `lookup` share the filter the two cannot disagree about the same page. **F16** —
+`test_k73_absent_with_present_instead_k78`, plus a property test asserting every disclosure is a
+**prefix extension** of the claim, and the L3 eval asserting on all 100 near misses that the fake
+never appears in its own `present_instead`. The mechanism I8 gates on at M6 is built here
+(`page_checks` returns the whole matrix); I8 itself is asserted by U022, per Spec §9.
+
+**The eval failed on its first run, twice, and both were real.** That is the unit working.
+
+1. **`sf5` → `sf1` returned `ok` on p001.** Not a defect in `lookup`: `variants("sf1")` includes
+   the boundary-spaced `sf 1`, and `sf 1` **is** printed on p001, inside `SF 1.1A`. A phrase match
+   is a match on a contiguous run of tokens, so a shorter label whose spelling re-spaces into a
+   prefix of a longer printed one is found — and the characters really are on the page. Telling
+   `SF 1` apart from the start of `SF 1.1A` needs to know where a code ends, which is an identifier
+   grammar, and §5.2 prohibits one. So the defect was in the **generator's premise**: "absent from
+   the token inventory" is weaker than "not printed". `near_misses(..., texts=…)` now rejects any
+   candidate the corpus prints in **any** spelling, and the behaviour itself is recorded as
+   `expected.json`'s `phrase_prefix` row with an explicit L2 test
+   (`test_a_shorter_label_can_phrase_match_inside_a_longer_printed_one`) so it is a known property
+   rather than a hidden exclusion. **This is a real precision limit of phrase matching and it is
+   now written down.**
+2. **`k404` and `rai1` were "no longer findable".** They are printed only on p010, whose
+   `text_trust` is `untrusted` — a page `lookup` deliberately excludes from `hits` (§5.7). The
+   near-miss sources were being drawn from a page nothing may be found on. The fix is the rule
+   §5.7 already implies and nothing had yet applied to the inventory: **an unsearchable page does
+   not volunteer codes**. `observed_tokens.is_searchable` is the predicate, applied at every call
+   site (the demo, both evals, `verify`'s local inventory), and the inventory of the synthetic
+   corpus is 55 tokens from 28 searchable pages rather than 57 from 30. Left unfixed, a garbled
+   extraction's debris — `rai1`, for *"rail"* — would have come back beside an `absent` verdict as
+   a *"different part"*: noise presented as knowledge, about a page nobody may be told is evidence.
+
+**Notes**
+
+- **`UNSEARCHABLE_TRUST` now lives in `core/record.py`,** beside `TextTrust`, because three modules
+  need the same §5.7 rule: `lookup` filters `hits` on it, `verify` returns `unverifiable` for it,
+  and the inventory refuses to take codes from it. It was declared in `serve/tools/lookup.py`
+  (U005) and is imported from `core/` now — one definition, or the three drift.
+- **A page that is not current is `unverifiable`, with `reason: not_current`.** I7 is absolute — a
+  run that has not passed its gates cannot answer — and `absent` would be a **false** statement
+  about the revision 0.9 page, which really does print `SF 7.7A`. `unverifiable` is also the only
+  reading that lets the answer gate tell a superseded citation from a scanned page, since both then
+  arrive as "not verified" with different reasons. Note the consequence: `verify` addresses pages
+  by their exact `page_id`, which already carries the revision, so nothing is injected into a
+  filter — publication state is read off the retrieved payload, which is a fact about the page
+  rather than a filter that would make a page the caller explicitly named unaddressable.
+- **The fold is `present` > `absent` > `unverifiable`, and `page_ids` says what the verdict is
+  about.** `present` names the pages that carry the code — which is I8's mechanism, since a draft
+  citing p002 cannot borrow p001's evidence. `absent` names the pages actually **checked**, so a
+  caller can see that an absence asserted over a set containing a scanned page is not asserted
+  about that page. `unverifiable` names none, because nothing was checked. `page_checks` returns
+  the whole matrix uncollapsed, and that is what the answer gate will consume (U022).
+- **`present_instead` is lowercase.** The plan's AC and §7.2.4 both write `["K78"]`; the inventory
+  is lowercase because the text index is (`lowercase=True`, §5.5) and because §6.8's own
+  `codes_in_text` export is lowercase (`["k158", "q25", "sf 1.2a"]`). Read as prose casing, not as
+  a second normalisation — and re-casing a token would be a guess, since the printed form of
+  `sf121` is `SF121.1)`.
+- **`present_instead` reads the inventory of the pages named in the call**, not the whole document,
+  unless a document-level `Inventory` is passed in. That is the tighter and more honest reading of
+  *"instead"*: `k78` is disclosed for a `K73` claim checked against p006 and **not** for the same
+  claim checked against p002, because it is not "instead" on a page that does not carry it. §6.8's
+  document-level inventory on the run's control point is the `inventory=` parameter, and U011 will
+  pass it.
+- **Truncation is bounded at two characters and floored at a two-character prefix.** Without the
+  floor, `K73` falls back to the prefix `k` and discloses every contactor in the document; without
+  the bound, a long claim eventually shares two characters with anything. Neither is an edit
+  distance in disguise: a prefix can only reach tokens that agree with the claim from the first
+  character onwards, which is exactly why `K73` can surface `K78` and can never surface `Q78`.
+- **§12.4's snippet reads `r.present_instead` off a `lookup` response, and Family A has no such
+  field** (§7.1 — the disclosure belongs to a per-claim check). The assertion is made where the
+  field actually lives: every fake also goes through `verify_claims`, and no verdict may name it.
+  That is strictly stronger than the sketch, because it exercises the code path that could leak.
+- **`near_misses` returns `NearMiss(source, fake, position)`, not bare strings.** §12.4's
+  pseudo-code iterates strings; a near miss without the real code it came from is unauditable, and
+  the first question when this eval fails is *"one character off what?"*. No RNG and no seed
+  either: the same corpus produces the same 100 fakes in the same order, because a safety test that
+  samples differently each run turns a reproducible defect into an intermittent build.
+- **The mutation order is character-major, positions last-to-first.** The last character first is
+  the realistic misread (`K73` for `K78`) **and** the case where the fake shares the longest prefix
+  with the real code — which is precisely where `present_instead` has something to say and
+  therefore where F16 could be violated. Character-major then spreads the sample across every
+  position the corpus's codes have: 100 fakes from 21 sources at positions 0–4.
+- **The eval has a control test.** `test_the_real_codes_the_fakes_came_from_are_all_findable`
+  asserts every source is still findable, because a suite made only of absence assertions is green
+  on an index that answers nothing at all — the one failure mode a safety test cannot afford. That
+  control is what caught finding 2.
+- **One inverted import, deliberately.** `core/verify.py` imports `ClaimVerdict` and `VerifyResult`
+  from `serve/envelope.py`, which is the only place `core/` reaches into `serve/`. §7.1 owns those
+  models and §4.1 keeps the response models under `serve/`; declaring the three-state vocabulary a
+  second time in `core/` would give *two* sources of truth to the one vocabulary whose entire
+  purpose is that `unverifiable` and `absent` never blur. Recorded rather than hidden.
+- **`tests/unit/fake_store.py` is now shared** by the `lookup` and `verify` L0 suites (it was
+  private to the former). It answers `count`, `scroll`, `retrieve` and `facet` over payloads in
+  memory, implements a phrase as *"`tok(phrase)` contiguous in `tok(text)`"* — the behaviour the L2
+  tokenizer differential measured against a live Qdrant — and **raises** on any match type it does
+  not implement, so it cannot silently pass a `MatchText` that I3 forbids.
+- **A `verify` costs one `retrieve` plus one count per checkable pair**, asserted
+  (`test_verify_costs_one_retrieve_and_one_count_per_checkable_pair`). Uncheckable pages cost
+  nothing beyond the retrieve, which is why the 100-claim L3 eval runs in ~4 s.
 
 ---
 

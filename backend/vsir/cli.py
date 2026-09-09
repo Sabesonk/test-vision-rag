@@ -26,7 +26,10 @@ from vsir import logging as vsir_logging
 from vsir.config import ConfigError, load_config, scrub_url
 from vsir.core import observed_tokens as observed_tokens_module
 from vsir.core.exact import UnknownScopeKey, exact_filter, phrases_of
-from vsir.core.observed_tokens import from_records, is_code_like
+from vsir.core.nearmiss import is_printed, near_misses
+from vsir.core.observed_tokens import from_records, is_code_like, is_searchable
+from vsir.core.present_instead import PRESENT_INSTEAD_CAP, PRESENT_INSTEAD_LABEL
+from vsir.core.verify import page_checks, verify_claims
 from vsir.core.tok import tok, token_set
 from vsir.core.variants import preserves_characters, variants
 from vsir.doctor import doctor
@@ -39,7 +42,7 @@ from vsir.serve.caps import (
     validate_read_pages,
     validate_scope,
 )
-from vsir.serve.envelope import Provenance
+from vsir.serve.envelope import Provenance, ToolEnvelope, VerifyResult
 from vsir.serve.tools import lookup as lookup_module
 from vsir.serve.tools.lookup import lookup
 
@@ -318,14 +321,20 @@ def _demo_absences(ask: Any, corpus: synthetic.Corpus) -> bool:
     return passed
 
 
+def _searchable(records: tuple[Any, ...]) -> list[Any]:
+    """The pages a code may be observed on: current, and with a text layer worth trusting (§5.7)."""
+    return [record for record in records if record.is_current and is_searchable(record)]
+
+
 def _demo_observed_tokens(corpus: synthetic.Corpus, records: tuple[Any, ...]) -> bool:
     expected = corpus.expected["observed_tokens"]
-    current = [record for record in records if record.is_current]
+    current = _searchable(records)
     inventory = from_records(current)[expected["doc_id"]]
     every_text_token = {token for record in current for token in token_set(record.text)}
 
     print("\n13. the observed-token inventory (§6.8) — display-only, and never a match")
-    passed = _line(f"tokens observed in {expected['doc_id']}", f"{len(inventory)} tokens",
+    passed = _line(f"tokens observed in {expected['doc_id']}",
+                   f"{len(inventory)} tokens from {len(current)} searchable pages",
                    len(inventory) == expected["count"])
     passed &= _line("every code-like token of the text, and nothing else",
                     "text ∩ has-a-digit",
@@ -346,7 +355,97 @@ def _demo_observed_tokens(corpus: synthetic.Corpus, records: tuple[Any, ...]) ->
     return passed
 
 
-def _demo_synthetic_corpus() -> bool:
+def _demo_verify(client: Any, collection: str, corpus: synthetic.Corpus,
+                 claims: list[str]) -> bool:
+    """The `verify` half of the exact surface: three states, per (claim, page) (§7.2.4)."""
+    rows = [row for row in corpus.expected["verify"]
+            if not claims or row["claim"] in claims]
+    if not rows:
+        every_page = sorted({page for row in corpus.expected["verify"] for page in row["page_ids"]})
+        rows = [{"claim": claim, "page_ids": every_page} for claim in claims]
+
+    print("\n14. verify_claims(claims, page_ids) — three states, per (claim, page) (§7.2.4, F2)")
+    passed = True
+    for row in rows:
+        result = verify_claims(client, collection, [row["claim"]], row["page_ids"])
+        verdict = result.claims[row["claim"]]
+        pages = " ".join(page.split("#")[-1] for page in row["page_ids"])
+        detail = verdict.status
+        if verdict.status == "present":
+            detail += " on " + " ".join(page.split("#")[-1] for page in verdict.page_ids)
+        elif verdict.reason:
+            detail += f" ({verdict.reason})"
+        elif verdict.present_instead:
+            detail += f" · {PRESENT_INSTEAD_LABEL}: {verdict.present_instead}"
+        expected = row.get("status")
+        correct = (
+            expected is None
+            or (verdict.status == expected
+                and verdict.page_ids == row.get("on", verdict.page_ids)
+                and verdict.reason == row.get("reason", verdict.reason)
+                and verdict.present_instead == row.get("present_instead",
+                                                       verdict.present_instead))
+        )
+        passed &= _line(f'verify("{row["claim"]}", [{pages}])', detail, correct)
+
+    absent_only = VerifyResult(claims={
+        claim: verdict for claim, verdict in
+        verify_claims(client, collection, ["K999", "K 73"],
+                      [corpus.page_id(4), corpus.page_id(6)]).claims.items()})
+    envelope = ToolEnvelope[VerifyResult](
+        status="ok", result=absent_only,
+        provenance=Provenance(run_id=synthetic.SEED_RUN_ID,
+                              release_id=os.environ.get("VSIR_RELEASE_ID", "unknown")))
+    passed &= _line("every claim absent is still a Family B `ok`",
+                    f'status={envelope.status} '
+                    f'{[v.status for v in envelope.result.claims.values()]}',
+                    envelope.status == "ok"
+                    and all(v.status == "absent" for v in envelope.result.claims.values()))
+
+    matrix = page_checks(client, collection, ["K158"],
+                         [corpus.page_id(1), corpus.page_id(2)])
+    passed &= _line("the matrix is per (claim, page), never collapsed",
+                    " ".join(f"{page.split('#')[-1]}={state}"
+                             for page, (state, _) in matrix["K158"].items()),
+                    [state for state, _ in matrix["K158"].values()] == ["present", "absent"])
+    return passed
+
+
+def _demo_abstention(corpus: synthetic.Corpus, records: tuple[Any, ...]) -> bool:
+    """The §12.4 sample, printed. The eval itself runs at L3, on every commit from M1."""
+    pages = _searchable(records)
+    inventory = from_records(pages)[corpus.doc_id]
+    misses = near_misses(inventory, n=100, texts=[record.text for record in pages])
+
+    print("\n15. near_misses(n=100) — one character off a real code (§12.4, F16)")
+    passed = _line("100 fabricated codes, deterministic",
+                   f"{len(misses)} from {len({miss.source for miss in misses})} real codes",
+                   len(misses) == 100
+                   and misses == near_misses(inventory, n=100,
+                                             texts=[record.text for record in pages]))
+    passed &= _line("each differs by exactly one character",
+                    " ".join(f"{miss.source}→{miss.fake}" for miss in misses[:4]) + " …",
+                    all(len(miss.fake) == len(miss.source)
+                        and sum(a != b for a, b in zip(miss.fake, miss.source)) == 1
+                        for miss in misses))
+    passed &= _line("no fabricated code is a real one",
+                    "no fake is printed, in any spelling",
+                    not any(miss.fake in inventory for miss in misses)
+                    and not any(is_printed(miss.fake, [tok(record.text) for record in pages])
+                                for miss in misses))
+    passed &= _line("every source is an observed token",
+                    f"{len({miss.source for miss in misses})} sources, all from the inventory",
+                    all(miss.source in inventory for miss in misses))
+    passed &= _line("a near miss is never its own disclosure (F16)",
+                    f"{PRESENT_INSTEAD_LABEL} ≠ the claim, cap {PRESENT_INSTEAD_CAP}",
+                    all(miss.fake not in inventory.starting_with(miss.fake)
+                        for miss in misses))
+    print("   the eval that asserts none of them can ANSWER runs at L3, on every commit:")
+    print("     bash scripts/test-api.sh -k near_miss")
+    return passed
+
+
+def _demo_synthetic_corpus(args_claims: list[str]) -> bool:
     """Seed an ephemeral collection from the checked-in corpus and run the acceptance table.
 
     Create, seed, assert, drop — inside one process, with no state left behind (§15 Factor VI).
@@ -388,6 +487,8 @@ def _demo_synthetic_corpus() -> bool:
         passed &= _demo_unfindable(ask, corpus)
         passed &= _demo_absences(ask, corpus)
         passed &= _demo_observed_tokens(corpus, records)
+        passed &= _demo_verify(client, collection, corpus, args_claims)
+        passed &= _demo_abstention(corpus, records)
         return passed
     finally:
         try:
@@ -400,12 +501,13 @@ def _demo_synthetic_corpus() -> bool:
 def _cmd_demo_exact(args: argparse.Namespace) -> int:
     print(f"vsir demo exact — release {os.environ.get('VSIR_RELEASE_ID', 'unknown')}, "
           f"section {args.only}")
+    claims = [claim.strip() for claim in (args.verify or "").split(",") if claim.strip()]
     passed = True
     if args.only in ("primitives", "all"):
         passed &= _demo_primitives()
     if args.only in ("corpus", "all"):
         if args.synthetic:
-            passed &= _demo_synthetic_corpus()
+            passed &= _demo_synthetic_corpus(claims)
         else:
             # Not a silent skip and not a stub: at M1 the synthetic corpus is the only data source
             # there is, so a corpus section without `--synthetic` has nothing to run against and
@@ -448,6 +550,14 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="seed an ephemeral collection from data/fixtures/synthetic_pages/ and run the §12.3 "
              "acceptance table against it; the `primitives` section is pure and reads no corpus",
+    )
+    exact_demo.add_argument(
+        "--verify",
+        metavar="CLAIMS",
+        default="",
+        help="comma-separated claims to run through verify_claims against the pages the corpus's "
+             "expected.json associates with each one, e.g. --verify \"SF 1.1A,K73,SF 9.9\"; "
+             "empty runs every row of that table",
     )
     exact_demo.add_argument(
         "--only",

@@ -45,6 +45,7 @@ from qdrant_client.http import models as qm
 from vsir import logging as vsir_logging
 from vsir.config import DPI_INDEX, LOOKUP_CAP
 from vsir.core.exact import exact_filter, phrases_of, scope_conditions
+from vsir.core.record import UNSEARCHABLE_TRUST
 from vsir.core.tok import tok
 from vsir.core.variants import variants
 from vsir.serve.caps import validate_cap
@@ -60,11 +61,11 @@ from vsir.serve.envelope import (
     weakness,
 )
 
-#: §5.7 — both count as **unsearchable** for `lookup`: `no_text` has nothing to match, and
-#: `untrusted` has a text layer nobody should be told is evidence. A phrase that matches inside a
-#: garbled extraction is not a verified hit, so these pages are excluded from ``hits`` and are
-#: what turns an all-unsearchable scope into `not_searchable` rather than `not_found` (F4).
-UNSEARCHABLE_TRUST = ("untrusted", "no_text")
+# §5.7's two unsearchable trust levels come from `core/record.py`, where `TextTrust` is declared:
+# `no_text` has nothing to match and `untrusted` has a text layer nobody should be told is
+# evidence. A phrase that matches inside a garbled extraction is not a verified hit, so those
+# pages are excluded from ``hits``, and they are what turns an all-unsearchable scope into
+# `not_searchable` rather than `not_found` (F4).
 
 #: The thumbnail tier behind ``thumb_url`` (§7.3). 36 and 72 are the two triage tiers; 72 is the
 #: one a list of page thumbnails renders at.

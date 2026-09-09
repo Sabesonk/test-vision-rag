@@ -13,7 +13,13 @@ from __future__ import annotations
 
 import pytest
 
-from vsir.core.observed_tokens import Inventory, from_records, from_texts, is_code_like
+from vsir.core.observed_tokens import (
+    Inventory,
+    from_records,
+    from_texts,
+    is_code_like,
+    is_searchable,
+)
 from vsir.core.tok import token_set
 from vsir.eval import synthetic
 
@@ -24,8 +30,14 @@ def corpus() -> synthetic.Corpus:
 
 
 @pytest.fixture(scope="module")
-def inventory(corpus: synthetic.Corpus) -> Inventory:
-    return from_records(corpus.current_records())[corpus.doc_id]
+def searchable(corpus: synthetic.Corpus) -> list:
+    """The pages a code may be observed on (§5.7) — current, with a text layer worth trusting."""
+    return [record for record in corpus.current_records() if is_searchable(record)]
+
+
+@pytest.fixture(scope="module")
+def inventory(searchable: list, corpus: synthetic.Corpus) -> Inventory:
+    return from_records(searchable)[corpus.doc_id]
 
 
 # ── the heuristic (§6.8) ────────────────────────────────────────────────────────────────────────
@@ -68,11 +80,10 @@ def test_from_records_groups_by_doc_id():
     assert built["B"].tokens == ("q25",)
 
 
-def test_from_records_accepts_a_record_or_a_payload(corpus):
-    records = corpus.current_records()
-
-    from_models = from_records(records)[corpus.doc_id]
-    from_payloads = from_records([record.to_payload() for record in records])[corpus.doc_id]
+def test_from_records_accepts_a_record_or_a_payload(corpus, searchable):
+    from_models = from_records(searchable)[corpus.doc_id]
+    from_payloads = from_records([record.to_payload()
+                                  for record in searchable])[corpus.doc_id]
 
     assert from_models == from_payloads
 
@@ -118,9 +129,10 @@ def test_every_result_actually_starts_with_the_prefix(inventory):
 
 # ── the corpus's inventory is exactly its text (§6.8, I2) ───────────────────────────────────────
 
-def test_the_inventory_is_every_code_like_token_of_the_text_and_nothing_else(corpus, inventory):
+def test_the_inventory_is_every_code_like_token_of_the_text_and_nothing_else(corpus, inventory,
+                                                                             searchable):
     expected = corpus.expected["observed_tokens"]
-    every_word = {word for record in corpus.current_records() for word in token_set(record.text)}
+    every_word = {word for record in searchable for word in token_set(record.text)}
 
     assert len(inventory) == expected["count"]
     assert set(inventory.tokens) == {word for word in every_word if is_code_like(word)}
@@ -136,13 +148,41 @@ def test_the_declared_members_are_there_and_the_declared_absences_are_not(corpus
         assert token not in inventory, f"{token} is not a token of the text surface"
 
 
+@pytest.mark.parametrize("trust", ["untrusted", "no_text"])
+def test_an_unsearchable_page_is_never_a_source_of_codes(corpus, trust):
+    """§5.7 — the same two levels `lookup` excludes from `hits` and `verify` calls unverifiable."""
+    excluded = [record for record in corpus.current_records() if record.text_trust == trust]
+
+    assert excluded, f"the corpus must hold a {trust} page for this to assert anything"
+    assert not [record for record in excluded if is_searchable(record)]
+
+
+def test_the_untrusted_pages_own_codes_are_absent_from_the_inventory(corpus, inventory):
+    """The outcome of the rule above, on this corpus.
+
+    p010's garbled text layer really does carry `K404`, and its extraction also produced `rai1`
+    for *"rail"*. Disclosing either beside an `absent` verdict as a *"different part"* would
+    present noise as knowledge, about a page nobody may be told is evidence.
+    """
+    garbled = [record for record in corpus.current_records()
+               if record.text_trust == "untrusted"][0]
+    only_there = {word for word in token_set(garbled.text) if is_code_like(word)} - {
+        word for record in corpus.current_records() if is_searchable(record)
+        for word in token_set(record.text)}
+
+    assert {"k404", "rai1"} <= only_there
+    assert not [word for word in only_there if word in inventory]
+    assert inventory.starting_with("k4") == ()
+
+
 def test_a_model_claimed_code_never_enters_the_inventory(corpus, inventory):
     """I2 — the inventory is built from `text`, so `K999` cannot be disclosed as present.
 
     The page that claims it is in the corpus and its `vlm_codes` carries the code; only the text
     surface is read, so the claim is invisible here.
     """
-    claimed = {code.lower() for record in corpus.current_records() for code in record.content.codes}
+    claimed = {code.lower() for record in corpus.current_records()
+               for code in record.content.codes}
 
     assert "k999" in claimed
     assert "k999" not in inventory

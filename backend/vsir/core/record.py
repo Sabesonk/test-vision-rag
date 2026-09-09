@@ -40,6 +40,12 @@ PAGE_KINDS = ("prose", "table", "schematic", "exploded", "cover", "toc", "index"
 #: §5.7 — both `untrusted` and `no_text` count as unsearchable for `lookup`.
 TextTrust = Literal["ok", "degraded", "untrusted", "no_text"]
 
+#: The two levels that make a page unsearchable (§5.7), in one place because three modules need the
+#: same rule: `lookup` excludes these pages from `hits`, `verify` returns `unverifiable` for them,
+#: and the observed-token inventory does not take codes from them. `degraded` is **not** here — it
+#: is a text layer with problems, not one that cannot be read.
+UNSEARCHABLE_TRUST: tuple[str, ...] = ("untrusted", "no_text")
+
 
 class Summary(BaseModel):
     """One page summary, in one language (D5). Never a blended multi-language string."""

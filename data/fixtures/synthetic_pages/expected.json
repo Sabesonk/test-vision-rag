@@ -97,6 +97,13 @@
     "why": "p001 prints the spaced form and variants() cannot produce it from the compact one: re-spacing a bare label spaces EVERY letter-digit boundary (SF 1.1 A), never just one. A recall gap by construction (§5.6, R1), and it degrades to an honest abstention carrying a next move — never to a wrong page"
   },
 
+  "phrase_prefix": {
+    "label": "SF 1",
+    "page_id": "SYN-M1@1.0#p001",
+    "status": "ok",
+    "why": "a phrase match is a match on a contiguous run of tokens, so a SHORTER label whose spelling re-spaces into a prefix of a longer printed one is found: `SF 1` re-spaces to `sf 1`, which is printed inside `SF 1.1A`. Not fuzzy and not fabricated — the characters really are there — but it is the accepted cost of phrase semantics, because telling `SF 1` apart from the start of `SF 1.1A` needs an identifier grammar and §5.2 prohibits one. Recorded here so it is a known property; it is also why the §12.4 generator excludes candidates the corpus prints in ANY spelling"
+  },
+
   "superseded": [
     {"label": "SF 7.7A", "status": "not_found", "hits": 0,
      "why": "printed only on the is_current:false revision 0.9 page; every tool injects is_current:true (I7). F9's found_only_in_superseded upgrade is closed at M8"},
@@ -111,12 +118,38 @@
     "why": "no page matched the filters — re-orient and widen; the corpus was never asked (§7.1)"
   },
 
+  "verify": [
+    {"claim": "SF 1.1A", "page_ids": ["SYN-M1@1.0#p001"], "status": "present",
+     "on": ["SYN-M1@1.0#p001"]},
+    {"claim": "SF 1.1A", "page_ids": ["SYN-M1@1.0#p008"], "status": "absent",
+     "present_instead": [],
+     "why": "§12.3's row — the tokens sf, 1 and 1a are all on p008 and the phrase is not. The one exact_filter answers `verify` and `lookup` identically, which is why F2 cannot disagree with F1"},
+    {"claim": "K158", "page_ids": ["SYN-M1@1.0#p001", "SYN-M1@1.0#p002"], "status": "present",
+     "on": ["SYN-M1@1.0#p001"],
+     "why": "per (claim, page), not per claim: the verdict names the page that carries it, so a draft citing p002 cannot borrow p001's evidence (I8)"},
+    {"claim": "K73", "page_ids": ["SYN-M1@1.0#p006"], "status": "absent",
+     "present_instead": ["k78"],
+     "why": "F16 — a prefix lookup over the observed tokens of that page, labelled `different part`, never a distance and never the match"},
+    {"claim": "K999", "page_ids": ["SYN-M1@1.0#p004"], "status": "absent",
+     "present_instead": [],
+     "why": "I2 — the page claims it in content.codes and its text does not carry it, so the verdict is absent and there is nothing to disclose instead"},
+    {"claim": "SF 9.9", "page_ids": ["SYN-M1@1.0#p005"], "status": "unverifiable",
+     "reason": "no_text",
+     "why": "§7.2.4 — collapsing this into `absent` would tell the agent the code is not on a page nobody could read"},
+    {"claim": "K404", "page_ids": ["SYN-M1@1.0#p010"], "status": "unverifiable",
+     "reason": "untrusted",
+     "why": "§5.7 — the phrase IS in that text layer, and the text layer is not evidence"},
+    {"claim": "SF 7.7A", "page_ids": ["SYN-M1@0.9#p001"], "status": "unverifiable",
+     "reason": "not_current",
+     "why": "I7 — a page that is not current cannot answer. `unverifiable` rather than `absent`, because the code may well be printed on it: the answer gate rejects the draft either way, and only this reading lets it tell a superseded citation from a scanned page"}
+  ],
+
   "observed_tokens": {
     "doc_id": "SYN-M1",
-    "count": 57,
+    "count": 55,
     "includes": ["1a", "5b", "5c", "84", "0020", "5140", "k158", "k78", "si3", "sf121", "sf5",
                  "25", "152", "x7", "x26", "w70", "w98"],
-    "excludes": ["k999", "eao84", "sf", "eao", "emergency", "quantity"],
-    "why": "§6.8 — built from the text surface only, and only from tokens carrying at least one digit. `k999` is excluded because it is only ever a model claim (I2); `eao84` because it is a spelling of a query variant and not a token anybody printed; bare words because the inventory exists to back `present_instead` and nothing else"
+    "excludes": ["k999", "eao84", "sf", "eao", "emergency", "quantity", "k404", "rai1"],
+    "why": "§6.8 — built from the text surface of the 28 SEARCHABLE pages, and only from tokens carrying at least one digit. `k999` is excluded because it is only ever a model claim (I2); `k404` and `rai1` because they are printed only on the untrusted page, and a text layer nobody may be told is evidence must not volunteer codes either (§5.7); `eao84` because it is a spelling of a query variant and not a token anybody printed; bare words because the inventory exists to back `present_instead` and nothing else"
   }
 }

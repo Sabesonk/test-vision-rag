@@ -19,7 +19,7 @@ from qdrant_client import QdrantClient
 
 from vsir.core import ids
 from vsir.core.exact import UnknownScopeKey
-from vsir.core.observed_tokens import from_records, is_code_like
+from vsir.core.observed_tokens import from_records, is_code_like, is_searchable
 from vsir.core.tok import token_set
 from vsir.eval import synthetic
 from vsir.serve.caps import ToolError
@@ -207,6 +207,25 @@ def test_the_unverified_surface_reaches_a_page_with_no_text_layer(ask, corpus):
 
     assert [hit.page_id for hit in disclosed.unverified_hits] == [row["page_id"]]
     assert disclosed.unverified_hits[0].text_trust == "no_text"
+
+
+def test_a_shorter_label_can_phrase_match_inside_a_longer_printed_one(ask, corpus):
+    """The accepted cost of phrase semantics, asserted so it is a property and not a surprise.
+
+    `SF 1` re-spaces to `sf 1`, which is printed inside `SF 1.1A` on p001, so `lookup` returns
+    that page. It is not fuzzy and it is not a fabrication — the characters really are on the page
+    — but neither is it the label the caller typed. Telling `SF 1` apart from the beginning of
+    `SF 1.1A` requires knowing where a code ends, which is an identifier grammar, and §5.2
+    prohibits one. This is also why the §12.4 near-miss generator excludes any candidate the
+    corpus prints in **any** spelling: a fabricated code that happens to be a printed phrase is
+    not a near miss, and asserting on it would test the corpus instead of the system.
+    """
+    row = corpus.expected["phrase_prefix"]
+
+    response = ask(row["label"])
+
+    assert response.status.value == row["status"]
+    assert page_ids(response) == [row["page_id"]]
 
 
 # ── §7.1 · weak, capped, and the four absences ──────────────────────────────────────────────────
@@ -438,6 +457,10 @@ def test_reseeding_the_corpus_does_not_double_anything(qdrant, seeded, corpus, a
 def test_the_observed_token_inventory_matches_the_indexed_text(qdrant, seeded, corpus):
     """§6.8 — built from the same `text` the index answered from, and from nothing else.
 
+    The **searchable** pages only (§5.7): a page `lookup` cannot search and `verify` cannot check
+    must not volunteer codes either, or a garbled extraction's debris comes back beside an
+    `absent` verdict as a "different part".
+
     Read back out of Qdrant rather than off the records, because the inventory that backs
     `present_instead` in production is built from what was **indexed**: if the payload and the
     record ever disagreed, the disclosure would describe a page the caller cannot search.
@@ -446,7 +469,8 @@ def test_the_observed_token_inventory_matches_the_indexed_text(qdrant, seeded, c
     payloads = [point.payload for point in
                 qdrant.scroll(collection_name=seeded, limit=1000, with_payload=True,
                               with_vectors=False)[0]
-                if point.payload and point.payload.get("is_current")]
+                if point.payload and point.payload.get("is_current")
+                and is_searchable(point.payload)]
 
     inventory = from_records(payloads)[expected["doc_id"]]
     every_word = {word for payload in payloads for word in token_set(payload["text"])}
@@ -468,7 +492,8 @@ def test_a_present_instead_candidate_is_never_a_lookup_hit(ask, qdrant, seeded, 
     payloads = [point.payload for point in
                 qdrant.scroll(collection_name=seeded, limit=1000, with_payload=True,
                               with_vectors=False)[0]
-                if point.payload and point.payload.get("is_current")]
+                if point.payload and point.payload.get("is_current")
+                and is_searchable(point.payload)]
     inventory = from_records(payloads)[corpus.doc_id]
 
     near_miss = ask("K 73")

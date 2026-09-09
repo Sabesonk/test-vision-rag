@@ -3,30 +3,23 @@
 `lookup` takes a client and a collection and holds nothing else, so everything about its
 *behaviour* can be asserted without Docker: which absence it chooses, what `cap` may and may not
 move, that the two surfaces are never merged, and that `is_current` is injected whatever the caller
-says. The store is replaced by :class:`FakeStore`, which understands exactly the filter shapes this
-module builds and nothing else.
-
-**Why a fake is honest here.** The one thing a fake could get wrong is what a `MatchPhrase` means,
-and that is already pinned: `tok()` mirrors Qdrant's WORD tokenizer (§5.6) and
-`tests/api/test_tokenizer_differential.py` proves it against a live `qdrant/qdrant:v1.19.0`. So
-this evaluator implements a phrase as *"`tok(phrase)` appears contiguously in `tok(text)`"* — the
-behaviour that test measured — and `tests/api/test_acceptance_synthetic.py` re-runs the same
-acceptance table against the real index. If the two ever disagree, one of the two suites goes red,
-which is the point of having both.
+says. The store is `fake_store.FakeStore`, which understands exactly the filter shapes `serve/`
+builds and raises on anything else; `tests/api/test_acceptance_synthetic.py` re-runs the same
+acceptance table against a real Qdrant, so if the two ever disagree one of them goes red.
 """
 from __future__ import annotations
 
 import ast
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 import pytest
 from qdrant_client.http import models as qm
 
+from fake_store import FakeStore, condition_matches
+
 from vsir.core.exact import UnknownScopeKey
 from vsir.core.record import PageRecord
-from vsir.core.tok import tok
 from vsir.eval import synthetic
 from vsir.serve.caps import ToolError
 from vsir.serve.envelope import ImageRef, LookupHit, Provenance, Status
@@ -44,103 +37,6 @@ from vsir.serve.tools.lookup import (
 PACKAGE = Path(__file__).resolve().parents[2] / "vsir"
 PROVENANCE = Provenance(run_id="R", release_id="test-release")
 COLLECTION = "fake_pages"
-
-
-# ── the fake store ──────────────────────────────────────────────────────────────────────────────
-
-def _phrase_matches(phrase: str, text: str) -> bool:
-    """A phrase is its tokens, contiguous and in order — what §5.5's `phrase_matching` buys."""
-    needle, haystack = tok(phrase), tok(text)
-    if not needle:
-        return False
-    return any(haystack[at:at + len(needle)] == needle
-               for at in range(len(haystack) - len(needle) + 1))
-
-
-def _condition_matches(payload: dict, condition: Any) -> bool:
-    if isinstance(condition, qm.Filter):
-        return _filter_matches(payload, condition)
-    value = payload.get(condition.key)
-    match = condition.match
-    if isinstance(match, qm.MatchValue):
-        return value == match.value
-    if isinstance(match, qm.MatchAny):
-        members = value if isinstance(value, list) else [value]
-        return any(member in match.any for member in members)
-    if isinstance(match, qm.MatchPhrase):
-        return _phrase_matches(match.phrase, str(value or ""))
-    raise AssertionError(f"the fake store does not implement {type(match).__name__} — and "
-                         f"`lookup` must not be using it (I3)")
-
-
-def _filter_matches(payload: dict, query: qm.Filter | None) -> bool:
-    """Qdrant's rule: the three clauses are ANDed, and `should` means at least one."""
-    if query is None:
-        return True
-    if query.must and not all(_condition_matches(payload, c) for c in query.must):
-        return False
-    if query.must_not and any(_condition_matches(payload, c) for c in query.must_not):
-        return False
-    if query.should and not any(_condition_matches(payload, c) for c in query.should):
-        return False
-    return True
-
-
-@dataclass
-class _Count:
-    count: int
-
-
-@dataclass
-class _Point:
-    id: str
-    payload: dict
-
-
-@dataclass
-class _FacetHit:
-    value: Any
-    count: int
-
-
-@dataclass
-class _Facet:
-    hits: list[_FacetHit]
-
-
-class FakeStore:
-    """The three read operations `lookup` uses, over a list of payloads in memory."""
-
-    def __init__(self, payloads: Iterable[dict]) -> None:
-        self.payloads = list(payloads)
-        self.calls = 0
-
-    def _matching(self, query: qm.Filter | None) -> list[dict]:
-        self.calls += 1
-        return [payload for payload in self.payloads if _filter_matches(payload, query)]
-
-    def count(self, _collection: str, count_filter: qm.Filter | None = None,
-              exact: bool = False) -> _Count:
-        assert exact is True, "`total` and `weak` are contracts, not estimates (§7.1)"
-        return _Count(count=len(self._matching(count_filter)))
-
-    def scroll(self, collection_name: str, scroll_filter: qm.Filter | None = None,
-               limit: int = 10, with_payload: bool = True, with_vectors: bool = False,
-               order_by: str | None = None) -> tuple[list[_Point], None]:
-        assert with_vectors is False, "a search never loads a vector it does not use"
-        found = self._matching(scroll_filter)
-        if order_by:
-            found.sort(key=lambda payload: payload.get(order_by) or 0)
-        return [_Point(id=str(index), payload=payload)
-                for index, payload in enumerate(found[:limit])], None
-
-    def facet(self, _collection: str, key: str, facet_filter: qm.Filter | None = None,
-              limit: int = 10, exact: bool = False) -> _Facet:
-        counts: dict[Any, int] = {}
-        for payload in self._matching(facet_filter):
-            counts[payload.get(key)] = counts.get(payload.get(key), 0) + 1
-        ordered = sorted(counts.items(), key=lambda item: -item[1])[:limit]
-        return _Facet(hits=[_FacetHit(value=value, count=count) for value, count in ordered])
 
 
 @pytest.fixture(scope="module")
@@ -480,8 +376,8 @@ def test_lookup_matches_only_with_phrases():
 def test_the_fake_store_refuses_a_match_type_lookup_must_not_use(store):
     """The fake is only evidence if it would notice: an unsupported match raises, never passes."""
     with pytest.raises(AssertionError):
-        _condition_matches({"text": "K158"},
-                           qm.FieldCondition(key="text", match=qm.MatchText(text="K158")))
+        condition_matches({"text": "K158"},
+                          qm.FieldCondition(key="text", match=qm.MatchText(text="K158")))
 
 
 def test_the_module_exports_no_field_named_like_a_score():

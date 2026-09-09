@@ -16,6 +16,12 @@ Three properties make it safe, and all three are structural rather than a matter
   tuple. There is no edit distance, no similarity, no ranking, so a near-miss code cannot be
   returned *as* a match (F16, §7.6). The capping at 5 and the *"different part"* labelling belong
   to `core/present_instead.py` (U006), which is the only consumer.
+* **Only a searchable page contributes.** §5.7 makes `untrusted` and `no_text` unsearchable for
+  `lookup` and unverifiable for `verify`, and the same rule applies here: a page whose text layer
+  nobody may be told is evidence must not be volunteering codes either. Left in, a garbled
+  extraction's debris — ``rai1`` for *"rail"* — would come back beside an `absent` verdict as a
+  *"different part"*, which is noise presented as knowledge. :func:`is_searchable` is the
+  predicate, applied at the call site so it is visible rather than implied.
 * **The code-like heuristic is display-only** — §6.8, verbatim: *a token containing at least one
   digit*, and *unreachable from `lookup` and `verify`, enforced by module boundary*. Nothing in
   `serve/tools/lookup.py` imports this module, and an import-graph test asserts it. The heuristic
@@ -34,6 +40,7 @@ from bisect import bisect_left
 from dataclasses import dataclass
 from typing import Iterable, Mapping
 
+from vsir.core.record import UNSEARCHABLE_TRUST
 from vsir.core.tok import tok
 
 
@@ -46,6 +53,21 @@ def is_code_like(token: str) -> bool:
     shapes of code the system is able to talk about.
     """
     return any(character.isdigit() for character in token)
+
+
+def is_searchable(record: object) -> bool:
+    """Whether this page's text may contribute observed tokens (§5.7).
+
+    ``has_text`` and a ``text_trust`` outside :data:`~vsir.core.record.UNSEARCHABLE_TRUST` — the
+    same two conditions `lookup` filters on and `verify` refuses on, so the inventory can never
+    disclose a code from a page the caller is not allowed to be shown a hit from.
+    """
+    if isinstance(record, Mapping):
+        has_text, trust = record.get("has_text", False), record.get("text_trust", "no_text")
+    else:
+        has_text = getattr(record, "has_text", False)
+        trust = getattr(record, "text_trust", "no_text")
+    return bool(has_text) and str(trust) not in UNSEARCHABLE_TRUST
 
 
 @dataclass(frozen=True)
