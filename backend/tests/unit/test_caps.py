@@ -45,6 +45,7 @@ def test_fetch_takes_five_pages_and_refuses_six():
     assert raised.value.code == "fetch_budget_exceeded"
     assert raised.value.details["limit"] == 5
     assert raised.value.details["requested"] == 6
+    assert raised.value.http_status == 400
 
 
 def test_the_megapixel_budget_is_a_separate_bound_under_the_same_code():
@@ -57,6 +58,7 @@ def test_the_megapixel_budget_is_a_separate_bound_under_the_same_code():
     assert raised.value.code == "fetch_budget_exceeded"
     assert raised.value.details["bound"] == "megapixels"
     assert raised.value.details["limit"] == 12.0
+    assert raised.value.http_status == 400
 
 
 @pytest.mark.parametrize("dpi", ALLOWED_DPI)
@@ -71,6 +73,7 @@ def test_a_dpi_off_the_list_is_refused_rather_than_rounded(dpi):
 
     assert raised.value.code == "dpi_not_allowed"
     assert raised.value.details["allowed"] == list(ALLOWED_DPI)
+    assert raised.value.http_status == 400
 
 
 def test_the_allowed_dpi_tiers_are_the_documented_six():
@@ -86,6 +89,7 @@ def test_above_the_answer_dpi_a_region_is_required(dpi):
         validate_dpi(dpi, region=None)
 
     assert raised.value.code == "dpi_requires_region"
+    assert raised.value.http_status == 400
 
     validate_dpi(dpi, region=[0.1, 0.1, 0.5, 0.5])
 
@@ -114,10 +118,16 @@ def test_a_malformed_region_is_refused_not_clamped(region):
         validate_region(region)
 
     assert raised.value.code == "region_invalid"
+    assert raised.value.http_status == 400
 
 
-def test_an_unknown_scope_key_is_a_typed_400_naming_the_keys():
-    """F10 — the one failure that has no symptom until somebody trusts the smaller answer."""
+def test_unknown_scope_key_returns_typed_400():
+    """F10 — the one failure that has no symptom until somebody trusts the smaller answer.
+
+    Named as the plan's Test Plan names it, so §10's F10 row and this assertion are greppable from
+    each other. The tool-boundary half is `tests/api/test_acceptance_synthetic.py`'s test of the
+    same name, which proves `lookup` raises this and not the core's domain error.
+    """
     validate_scope({"doc_id": "D", "page_no": 1})
     validate_scope(None)
 
@@ -126,6 +136,7 @@ def test_an_unknown_scope_key_is_a_typed_400_naming_the_keys():
 
     assert raised.value.code == "filter_unknown_key"
     assert raised.value.details["keys"] == ["also_bogus", "bogus"]
+    assert raised.value.http_status == 400
 
 
 @pytest.mark.parametrize("key", ["text", "vlm_codes", "content.units", "entity_keys",

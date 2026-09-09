@@ -36,10 +36,14 @@ from vsir.doctor import doctor
 from vsir.eval import synthetic
 from vsir.serve.caps import (
     ToolError,
+    as_tool_error,
     validate_budget,
+    validate_cap,
     validate_dpi,
+    validate_fetch_megapixels,
     validate_fetch_pages,
     validate_read_pages,
+    validate_region,
     validate_scope,
 )
 from vsir.serve.envelope import Provenance, ToolEnvelope, VerifyResult
@@ -67,8 +71,11 @@ _DEMO_LABELS = (
 _DEMO_CAPS = (
     ("read, 4 pages", lambda: validate_read_pages(["a", "b", "c", "d"]), "read_page_cap_exceeded"),
     ("fetch, 6 pages", lambda: validate_fetch_pages(["a"] * 6), "fetch_budget_exceeded"),
+    ("fetch, 12.5 MP", lambda: validate_fetch_megapixels(12.5), "fetch_budget_exceeded"),
     ("dpi=100", lambda: validate_dpi(100), "dpi_not_allowed"),
     ("dpi=300, no region", lambda: validate_dpi(300, None), "dpi_requires_region"),
+    ("region=[0, 0, 2, 2]", lambda: validate_region([0, 0, 2, 2]), "region_invalid"),
+    ("cap=0", lambda: validate_cap(0), "cap_out_of_range"),
     ("scope={'bogus': 1}", lambda: validate_scope({"bogus": 1}), "filter_unknown_key"),
     ("reads_remaining=0", lambda: validate_budget(0), "budget_exhausted"),
 )
@@ -127,6 +134,7 @@ def _demo_primitives() -> bool:
     print("     backend/tests/api/test_tokenizer_differential.py")
 
     print("\n4. §7.3 caps — each a typed 400 naming its bound, never a clamp (F18)")
+    print("   every bound §7.3 tabulates, plus the two parameters it leaves implicit:")
     for description, call, expected in _DEMO_CAPS:
         try:
             call()
@@ -145,6 +153,13 @@ def _demo_primitives() -> bool:
     except UnknownScopeKey as refusal:
         print(f"   exact_filter(scope={{'content.units': ...}}) -> UnknownScopeKey"
               f"{refusal.keys}  {_verdict(True)}")
+        # The gate is `core/`'s, which knows nothing about HTTP, and the translation is `serve/`'s.
+        # One check, one translation — and `lookup` raises the typed 400, not the domain error.
+        typed = as_tool_error(refusal)
+        correct = typed.code == "filter_unknown_key" and typed.http_status == 400
+        passed &= correct
+        print(f"   as_tool_error(...) -> {typed.http_status} {typed.code} {typed.details}"
+              f"  {_verdict(correct)}")
     else:
         passed = False
         print("   exact_filter accepted an unindexed key                            FAIL")

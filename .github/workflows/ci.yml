@@ -1,0 +1,101 @@
+# CI — the layers of Spec §12.2, on every commit.
+#
+# This exists for one sentence in the spec: §12.4's adversarial abstention eval "runs in CI on
+# every commit", and §4 of the build prompt calls a failure there "the injury the whole design
+# exists to prevent — treat it as P0". An eval that only runs when somebody remembers to run it is
+# not a guard, so it runs here.
+#
+# Two properties are deliberate:
+#
+#   * **No credential is needed, and none is offered.** L0-L3 run in replay mode (D10): the stub
+#     VLM is selected by `VSIR_VLM=stub` and `VSIR_ALLOW_PAID=0`, so a stray paid call fails loudly
+#     rather than quietly billing. There is no `secrets` reference anywhere in this file. L4 is the
+#     only layer that may spend and it is not run here (§12.2).
+#   * **It runs the same scripts a builder runs.** `scripts/test-unit.sh` and
+#     `scripts/test-api.sh`, not a re-implementation of them — otherwise CI and the desk diverge
+#     and the green one is whichever you did not just change.
+name: ci
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+# A superseded run tells you nothing about the commit that replaced it.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Replay mode is the default for every test (D10). Set here as well as in the scripts, so a
+  # future job that forgets the script still cannot reach a paid API.
+  VSIR_VLM: stub
+  VSIR_ALLOW_PAID: "0"
+
+jobs:
+  unit:
+    name: L0/L1 + conformance
+    # Pinned, not `ubuntu-latest`: §15.2 bans a floating tag for the app's images, and a
+    # runner that moves under a green build is the same defect one layer out.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          # The pin is 3.11 (§4.2). The image pins the exact minor by digest; this is the floor.
+          python-version: "3.11"
+
+      # `requirements-dev.txt` pulls in `requirements.txt`, which is the §4.2 pinned set. The
+      # hash-locked `requirements.lock` is what the *image* installs (Factor II) and
+      # `scripts/test-api.sh` builds that image, so both resolutions are exercised per run.
+      - name: Install the test dependency set
+        run: |
+          python -m venv backend/.venv
+          backend/.venv/bin/pip install --disable-pip-version-check --no-cache-dir \
+            -r backend/requirements-dev.txt
+          backend/.venv/bin/pip install --disable-pip-version-check --no-cache-dir -e backend
+
+      # The §12.5 conformance greps live in this layer, so this job is also the gate that keeps
+      # `MatchText`, a fuzzy-matching library, a `score` field, a `-latest` model id and the struck
+      # legacy names out of the tree.
+      - name: scripts/test-unit.sh
+        run: bash scripts/test-unit.sh
+
+  api:
+    name: L2/L3 (Qdrant) — includes the §12.4 abstention eval
+    # Pinned, not `ubuntu-latest`: §15.2 bans a floating tag for the app's images, and a
+    # runner that moves under a green build is the same defect one layer out.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # `requirements-dev.txt` pulls in `requirements.txt`, which is the §4.2 pinned set. The
+      # hash-locked `requirements.lock` is what the *image* installs (Factor II) and
+      # `scripts/test-api.sh` builds that image, so both resolutions are exercised per run.
+      - name: Install the test dependency set
+        run: |
+          python -m venv backend/.venv
+          backend/.venv/bin/pip install --disable-pip-version-check --no-cache-dir \
+            -r backend/requirements-dev.txt
+          backend/.venv/bin/pip install --disable-pip-version-check --no-cache-dir -e backend
+
+      # Brings up `test-qdrant` and `backend-test` from docker-compose.test.yml — the same image as
+      # production, differing only in environment and ports — runs tests/api/, and always tears the
+      # stack down with `down -v`.
+      - name: scripts/test-api.sh
+        run: bash scripts/test-api.sh
+
+      # Named separately so the run's summary says whether the safety eval passed, rather than
+      # burying it in 136 dots. It has already run above; this is 4 seconds to make it legible.
+      - name: The abstention eval, named (§12.4 — a failure here is P0)
+        run: bash scripts/test-api.sh -k near_miss

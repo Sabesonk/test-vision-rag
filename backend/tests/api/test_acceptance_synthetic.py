@@ -18,7 +18,7 @@ import pytest
 from qdrant_client import QdrantClient
 
 from vsir.core import ids
-from vsir.core.exact import UnknownScopeKey
+from vsir.core.exact import UnknownScopeKey, exact_filter
 from vsir.core.observed_tokens import from_records, is_code_like, is_searchable
 from vsir.core.tok import token_set
 from vsir.eval import synthetic
@@ -357,11 +357,25 @@ def test_a_caller_cannot_ask_for_a_non_current_page(ask, corpus):
 
 # ── I6 / F10 · nothing is filtered off-index ────────────────────────────────────────────────────
 
-def test_an_unknown_scope_key_never_reaches_the_index(ask):
-    with pytest.raises(UnknownScopeKey) as refusal:
+def test_unknown_scope_key_returns_typed_400(ask):
+    """F10's test row, at the tool boundary: a typed 400 naming the keys, never a scan.
+
+    `content.codes` is a real field on every page and Qdrant would happily filter on it — just
+    unindexed, skipping the filterable-HNSW path and returning a smaller answer that looks like a
+    complete one. That is the whole of F10, which is why this is a refusal and not a slow path.
+    """
+    with pytest.raises(ToolError) as refusal:
         ask("K 158", scope={"content.codes": "K158"})
 
-    assert refusal.value.keys == ["content.codes"]
+    assert refusal.value.code == "filter_unknown_key"
+    assert refusal.value.http_status == 400
+    assert refusal.value.details["keys"] == ["content.codes"]
+
+
+def test_the_core_gate_still_raises_the_domain_error(ask):
+    """The gate is `core/`'s and the translation is `serve/`'s — one check, not two."""
+    with pytest.raises(UnknownScopeKey):
+        exact_filter("K 158", {"content.codes": "K158"})
 
 
 @pytest.mark.parametrize("scope", [

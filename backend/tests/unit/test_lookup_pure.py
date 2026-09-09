@@ -18,7 +18,7 @@ from qdrant_client.http import models as qm
 
 from fake_store import FakeStore, condition_matches
 
-from vsir.core.exact import UnknownScopeKey
+from vsir.core.exact import UnknownScopeKey, exact_filter
 from vsir.core.record import PageRecord
 from vsir.eval import synthetic
 from vsir.serve.caps import ToolError
@@ -80,11 +80,28 @@ def test_the_searchable_filter_excludes_both_unsearchable_trust_levels():
 
 
 def test_an_unknown_scope_key_is_refused_before_it_reaches_the_store(store):
-    """I6, F10 — a typed refusal, never an unindexed scan, and never a narrower answer."""
-    with pytest.raises(UnknownScopeKey) as refusal:
+    """I6, F10 — a typed **400** at the tool boundary, never an unindexed scan.
+
+    The `INDEXED` gate lives in `core/`, which knows nothing about HTTP, so it raises
+    `UnknownScopeKey`; the tool translates that once into the typed `filter_unknown_key` its
+    callers switch on. Both halves are asserted: the refusal happens, and it happens **before** a
+    single round trip is spent.
+    """
+    before = store.calls
+
+    with pytest.raises(ToolError) as refusal:
         ask(store, "K158", scope={"content.codes": "K158"})
 
-    assert refusal.value.keys == ["content.codes"]
+    assert refusal.value.code == "filter_unknown_key"
+    assert refusal.value.http_status == 400
+    assert refusal.value.details["keys"] == ["content.codes"]
+    assert store.calls == before, "a refused filter must not reach the index at all"
+
+
+def test_the_core_gate_is_the_one_that_decides(store):
+    """One check, one translation: `serve/` does not re-implement `INDEXED`'s gate."""
+    with pytest.raises(UnknownScopeKey):
+        exact_filter("K158", {"content.codes": "K158"})
 
 
 def test_label_variants_is_the_one_variant_function():

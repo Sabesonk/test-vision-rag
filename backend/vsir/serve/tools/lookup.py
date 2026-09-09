@@ -44,11 +44,11 @@ from qdrant_client.http import models as qm
 
 from vsir import logging as vsir_logging
 from vsir.config import DPI_INDEX, LOOKUP_CAP
-from vsir.core.exact import exact_filter, phrases_of, scope_conditions
+from vsir.core.exact import UnknownScopeKey, exact_filter, phrases_of, scope_conditions
 from vsir.core.record import UNSEARCHABLE_TRUST
 from vsir.core.tok import tok
 from vsir.core.variants import variants
-from vsir.serve.caps import validate_cap
+from vsir.serve.caps import as_tool_error, validate_cap
 from vsir.serve.envelope import (
     DocScopeStat,
     ImageRef,
@@ -132,15 +132,17 @@ def _no_text() -> qm.Condition:
     return qm.FieldCondition(key="has_text", match=qm.MatchValue(value=False))
 
 
-def _scope_stats(client: Any, collection: str, scope: Mapping[str, Any]) -> tuple[ScopeStats, int]:
+def _scope_stats(client: Any, collection: str, scoped: qm.Filter) -> tuple[ScopeStats, int]:
     """``(scope_stats, searchable_pages)`` — what was actually searched (§7.1, §5.7).
+
+    Takes the **built** scope filter rather than the scope dict, so the `INDEXED` gate runs exactly
+    once per call and every refusal leaves this function before a round trip is spent.
 
     ``pages_no_text`` is why F4 cannot happen quietly: a scope of 40 pages of which 40 have no text
     layer is not *"nothing matched"*, it is *"nothing was searchable"*. It counts ``has_text``
     exactly, because that is what ``searchable_ratio`` is defined on (§5.7); ``searchable_pages``
     is the wider notion that also excludes ``untrusted``, and it is what chooses the status.
     """
-    scoped = _scope_filter(scope)
     pages = _count(client, collection, scoped)
     pages_no_text = _count(client, collection, _with(scoped, _no_text()))
     searchable_pages = _count(client, collection, searchable(scoped))
@@ -253,6 +255,7 @@ def _words_observed(client: Any, collection: str, label: str,
     ]
 
 
+
 def _absence(scope_pages: int, searchable_pages: int) -> Status:
     """Which of the four absences this is (§7.1) — never an empty ``ok``, never a bare ``200``.
 
@@ -282,15 +285,23 @@ def lookup(client: Any, collection: str, label: str, *,
     HTTP and MCP wrappers of U015 add transport, auth and the budget, and **not one line of
     behaviour**. That is the point: M1's proof has to still apply at the tool boundary.
 
-    Raises :class:`~vsir.core.exact.UnknownScopeKey` for a filter key absent from ``INDEXED``,
-    which `serve/` turns into a typed ``filter_unknown_key`` 400 (I6, F10) — never a scan, never a
-    silently narrower answer, and a :class:`~vsir.serve.caps.ToolError` for a ``cap`` below 1.
+    Every refusal is a **typed** :class:`~vsir.serve.caps.ToolError` naming its bound: a ``cap``
+    below 1, and a filter key absent from ``INDEXED`` — ``filter_unknown_key``, a 400 rather than
+    an unindexed scan and never a silently narrower answer (I6, F10). The `INDEXED` gate itself
+    stays in `core/`, which knows nothing about HTTP; this is the one translation
+    (:func:`~vsir.serve.caps.as_tool_error`), so there is one check and not two.
     """
     validate_cap(cap)
     scope_in_force = effective_scope(scope)
-    stats, searchable_pages = _scope_stats(client, collection, scope_in_force)
+    try:
+        phrase_query = exact_filter(label, scope_in_force, field="text")
+        codes_query = exact_filter(label, scope_in_force, field="vlm_codes")
+        scoped = _scope_filter(scope_in_force)
+    except UnknownScopeKey as refusal:
+        raise as_tool_error(refusal) from None
 
-    phrase_query = exact_filter(label, scope_in_force, field="text")
+    stats, searchable_pages = _scope_stats(client, collection, scoped)
+
     text_query = searchable(phrase_query)
     total = _count(client, collection, text_query)
     hits = _page_of_the_set(client, collection, text_query, cap, verified=True)
@@ -300,10 +311,7 @@ def lookup(client: Any, collection: str, label: str, *,
         # No trust condition on this branch, deliberately: `vlm_codes` is the only recall there is
         # on a page with no text layer, which is the reason D3 ships it at all. Its hits are
         # labelled `verified: false` and are never merged into `hits`.
-        unverified_hits = _page_of_the_set(
-            client, collection, exact_filter(label, scope_in_force, field="vlm_codes"), cap,
-            verified=False,
-        )
+        unverified_hits = _page_of_the_set(client, collection, codes_query, cap, verified=False)
 
     # §7.1 spells these as one assignment — `weak = needs_scope = total > max(...)` — so they are
     # computed once here rather than twice in the constructor, where they could drift apart.

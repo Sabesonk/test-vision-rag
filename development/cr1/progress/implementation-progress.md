@@ -8,8 +8,8 @@
 | | |
 |---|---|
 | **Complete** | 6 / 26 units (23%) |
-| **Current milestone** | M1 — `core/` and the exact surface (4 / 4 units; gate pending); M0 closed and tagged |
-| **Next unit** | U007 — Manifest, probe, render, S1 facts, and the windowing ladder (after the M1 gate) |
+| **Current milestone** | M2a — ingest a generated PDF with a stubbed VLM (0 / 5 units); M0 and M1 closed and tagged |
+| **Next unit** | U007 — Manifest, probe, render, S1 facts, and the windowing ladder |
 | **Blocked** | none |
 
 ---
@@ -833,6 +833,73 @@ never appears in its own `present_instead`. The mechanism I8 gates on at M6 is b
 - **A `verify` costs one `retrieve` plus one count per checkable pair**, asserted
   (`test_verify_costs_one_retrieve_and_one_count_per_checkable_pair`). Uncheckable pages cost
   nothing beyond the retrieve, which is why the 100-claim L3 eval runs in ~4 s.
+
+---
+
+### M1 milestone gate — closed 2026-09-10, tagged `cr1-m1`
+
+**M1 is the whole correctness proof and it spent nothing.**
+
+**Demo** (Spec §0): `vsir demo exact --synthetic` — **89 PASS lines, 0 FAIL, exit 0**, across
+fifteen sections: `variants` · `exact_filter` · `tok` · the nine §7.3 bounds · the `INDEXED` gate ·
+the corpus · `lookup` · the eight compact labels · the hallucinated code · the unsearchable page ·
+`weak` at three caps · typed absence · the observed-token inventory · `verify_claims` ·
+`near_misses(100)`. Recorded per unit under U004, U005 and U006; re-run at this gate against a
+fresh collection.
+
+```
+vsir demo exact --synthetic   →  89 PASS · 0 FAIL · ALL ASSERTIONS PASSED · exit 0
+bash scripts/test-unit.sh     →  539 passed (L0/L1 + the §12.5 conformance greps)
+bash scripts/test-api.sh      →  137 passed (L2 acceptance table + L3 abstention eval)
+bash scripts/test-api.sh -k near_miss  →  6 passed, 131 deselected
+```
+
+**Acceptance verified by subagent** against Spec §13 M1's Acceptance list (13 items) and its
+Deliverable list (17 items), as an adversarial audit at commit `8fec4e3`:
+**every item ✓, none unsupported.** The audit read each cited test body rather than trusting its
+name, and returned nine findings — no outright ✗, but four were worth fixing and one was wrong.
+All are resolved below before the tag.
+
+| Finding | Resolution |
+|---|---|
+| **1. F10's typed 400 had no production call site.** `lookup` raised the *core* `UnknownScopeKey` (a `ValueError`) and nothing in the shipped package converted it, while §10 claims F10 closed at M1. | **Fixed.** `lookup` now translates it once through `caps.as_tool_error` — its first production call site — and raises the typed `filter_unknown_key` 400 with the keys named. The gate stays in `core/`, which knows nothing about HTTP: one check, one translation. Both halves asserted, plus that a refused filter costs **zero** round trips (`test_unknown_scope_key_returns_typed_400`, L0 and L2). |
+| **2. Five of six §7.3 validators were exercised only by tests**, and two were not in the demo at all. | **Improved, and the row's ownership restated.** The demo table now runs **all nine** bounds — read pages, fetch pages, fetch megapixels, dpi list, dpi-requires-region, region shape, cap, unknown scope key, read budget. F18 remains **M4/M5's** row (§10) and nothing here claims it: what M1 claims is that the validators refuse, which the demo now shows in full. The `ToolError → HTTP status` handler is U014's. |
+| **3. There was no CI at all**, so U006's AC *"the L3 eval is registered in CI and runs on every commit"* was aspirational. | **Fixed.** `.github/workflows/ci.yml` runs `scripts/test-unit.sh` and `scripts/test-api.sh` on every push and pull request, with the §12.4 eval named as its own step so a P0 failure is legible in the run summary. It interpolates **no** secret — L0–L3 are replay-mode only (D10), L4 is not run there — and both runners are pinned (`ubuntu-24.04`, not a floating label). |
+| **4. "`impl/` does not exist anywhere on disk."** | **Incorrect — the audit searched the wrong root.** `impl/` is outside this repository, at `/Users/sabesonk/Documents/VisionRag/dilmah-engineering-solutioning/poc/vision_segmentation_index_and_retrieval/impl`, exactly where AGENTS.md says; the audit searched under `~/Documents/DILMAH`, which is *this* repo. `impl/app/retrieve.py` and `impl/app/segstore.py` were read during U005 and are quoted in `serve/tools/lookup.py`'s docstring. **U012/M2b is not blocked.** |
+| **5. I2's `get_text(` grep is vacuous at M1** (nothing calls it yet, because `ingest/` holds only `sparse.py`). | **By design, and already recorded.** §9 makes I2's M1 half *behavioural* — the `K999` tests — and the plan assigns the structural half to U009's L1 check. The grep is in place so it starts guarding the moment a second extractor is written. |
+| **6. "L2 + L3 green" was recorded, not re-verified** (Docker was outside the audit's remit). | **Re-run at this gate:** 137 passed, exit 0, and the demo green against a fresh collection. |
+| **7. F10's test name had drifted** from the plan's `test_unknown_scope_key_returns_typed_400`. | **Fixed.** Renamed in both layers, keeping the stronger assertions, so §10's F10 row and the test that closes it are greppable from each other. |
+| **8. `http_status == 400` was asserted for one of the five 400s.** | **Fixed.** Asserted on all of them — `fetch_budget_exceeded` (both bounds), `dpi_not_allowed`, `dpi_requires_region`, `region_invalid`, `filter_unknown_key`. "A typed 400" is the acceptance item's own wording; relying on a constructor default is not evidence of it. |
+| **9. The multi-token `grounded_rate` gap** (§5.7's set intersection cannot ground `SF 1.1A`). | **Carried forward to U009, deliberately.** Recorded under U005's notes with the phrase-aware replacement §2.4 points at. **Flagged for explicit reviewer sign-off before M2a:** left unfixed, a document printing spaced codes fails §11.1's `grounded_rate ≥ 0.8` publish gate for an artefact of set intersection, not for a defect in extraction. |
+
+**Two additions to §7.3's error vocabulary need ratification** (both recorded when introduced, and
+neither weakens a bound): `region_invalid` (U004) and `cap_out_of_range` (U005). §7.3 tabulates
+*bounds*, and these are that same rule applied to the two parameters it leaves implicit — a
+malformed normalised region, and a `cap` of zero, for which every alternative is a lie (an empty
+`ok` is impossible under I5, and any absence reported beside `total: 26` denies a set whose size
+the same response is reporting).
+
+**One follow-up for U014, which owns auth:** §12.5's credential-literal grep is `=`-shaped
+(`api_key = "…"`), so it cannot see a YAML `KEY: value`. Both `docker-compose.test.yml` and the new
+CI workflow commit environment blocks, so a YAML-shaped pattern belongs in the cloud-native set.
+Not added here because a naive pattern trips on the test stack's own
+`${VSIR_API_TOKENS:-test-only-not-a-secret}` placeholder, and the greps must never be the reason a
+file cannot explain itself.
+
+**What M1 closed.** Invariants **I2** (behavioural half), **I3**, **I5**, **I6** asserted; failure
+rows **F1**, **F2** (core), **F3**, **F10**, **F14**, **F16** closed. Nothing claims a row §10
+assigns to a later milestone: F4 is disclosed but owned by M2a/M3, F9's
+`found_only_in_superseded` upgrade is M8's, F18 is M4/M5's, and I8's mechanism is built but
+asserted at M6.
+
+**The audit's own summary of the evidence**, worth keeping: the strongest is I3 and F16 — I3 proved
+three independent ways (a character-preservation property test over 30 corpus-shaped labels, an
+**AST** scan proving `MatchPhrase` has exactly one call site, and the `MatchText` grep), and F16 by
+a prefix-only implementation with a floor and a bound, a property test that every disclosure is a
+prefix *extension* of the claim, an import-graph assertion that `lookup` structurally cannot reach
+the inventory, and a 100-case L3 eval carrying a **control** test that stops an all-absence suite
+passing on a dead index. That control is what caught both U006 findings. The weakest is I2's
+`get_text(` grep, vacuous by design until U009.
 
 ---
 

@@ -85,6 +85,11 @@ All arguments reach pytest: `bash scripts/test-unit.sh -k conformance`,
 `bash scripts/test-api.sh -k probes`. L0–L3 and E2E can never reach a paid API — the stack and the
 scripts set `VSIR_VLM=stub` and `VSIR_ALLOW_PAID=0`.
 
+CI runs the first two on every push and pull request (`.github/workflows/ci.yml`), and names the
+§12.4 abstention eval as its own step so a failure there is legible in the run summary rather than
+buried in 136 dots. It references no secret: L0–L3 are replay-mode only (D10), and L4 is not run
+there at all.
+
 ## Docker
 
 ```bash
