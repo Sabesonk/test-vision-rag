@@ -16,7 +16,8 @@ in `development/cr1/progress/implementation-progress.md`.
 | `e2e/` | Playwright |
 | `data/fixtures/` | frozen extractions, checked in |
 | `data/fixtures/synthetic_pages/` | the §13 M1 corpus: hand-written page text + `expected.json` |
-| `data/source/` | input PDFs, gitignored |
+| `data/fixtures/synthetic_3window/` | the M2a corpus's replay fixture: frozen S1 facts + `expected.json` |
+| `data/source/` | input PDFs, gitignored — except the generated `synthetic_3window.pdf` |
 
 ## Setup
 
@@ -63,6 +64,29 @@ VSIR_QDRANT_URL=http://localhost:6335 backend/.venv/bin/vsir demo exact --synthe
 `--only corpus` without `--synthetic` has no data source at M1 and says so. Set
 `VSIR_SYNTHETIC_PAGES` when the fixture is not at the repository path — the image's build context
 is `backend/`, so a container running this command needs the corpus mounted.
+
+The M2a demo. Steps 01-05 of §6.1 over the generated 3-window corpus, with S1 replayed from the
+frozen fixture (D10). No Qdrant, no network, no spend:
+
+```bash
+export VSIR_FIXTURE=data/fixtures/synthetic_3window
+backend/.venv/bin/vsir ingest data/source/synthetic_3window.pdf --vlm stub --until window
+backend/.venv/bin/vsir ingest data/source/synthetic_3window.pdf --until probe   # 01-02 only
+```
+
+`--until` takes `manifest | probe | render | facts | window`; later units extend the list. Steps
+01-03 need no fixture. From step 04 on, a `facts_key` that is not in `VSIR_FIXTURE` is a typed
+`fixture_miss` and a non-zero exit — never a live call (D10) — and `--vlm gemini` refuses
+`vlm_backend_unavailable` until U008 lands the client.
+
+Regenerate the corpus (reproducible byte for byte; both the PDF and the fixture are committed):
+
+```bash
+cd backend && ../backend/.venv/bin/python -m vsir.eval.synthetic_pdf
+```
+
+It reads `VSIR_VLM_MODEL` and `VSIR_PROMPT_VERSION`, because `facts_key` is keyed on them: change
+either and the frozen S1 response is written under a new name.
 
 The HTTP probes, until `vsir serve` lands in U014:
 

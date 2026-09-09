@@ -7,9 +7,9 @@
 
 | | |
 |---|---|
-| **Complete** | 6 / 26 units (23%) |
-| **Current milestone** | M2a — ingest a generated PDF with a stubbed VLM (0 / 5 units); M0 and M1 closed and tagged |
-| **Next unit** | U007 — Manifest, probe, render, S1 facts, and the windowing ladder |
+| **Complete** | 7 / 26 units (27%) |
+| **Current milestone** | M2a — ingest a generated PDF with a stubbed VLM (1 / 5 units); M0 and M1 closed and tagged |
+| **Next unit** | U008 — The VLM boundary, cache keys, replay mode, and S2 extraction |
 | **Blocked** | none |
 
 ---
@@ -34,7 +34,7 @@
 - [x] U006 `verify_claims`, `present_instead`, and the L3 abstention eval
 
 ### M2a — ingest a generated PDF with a stubbed VLM (spend: none)
-- [ ] U007 Manifest, probe, render, S1 facts, and the windowing ladder
+- [x] U007 Manifest, probe, render, S1 facts, and the windowing ladder
 - [ ] U008 The VLM boundary, cache keys, replay mode, and S2 extraction
 - [ ] U009 Derivation, health signals, label attribution, and stitching
 - [ ] U010 Embedding, the three surfaces, the fingerprint, and indexing
@@ -833,6 +833,173 @@ never appears in its own `present_instead`. The mechanism I8 gates on at M6 is b
 - **A `verify` costs one `retrieve` plus one count per checkable pair**, asserted
   (`test_verify_costs_one_retrieve_and_one_count_per_checkable_pair`). Uncheckable pages cost
   nothing beyond the retrieve, which is why the 100-claim L3 eval runs in ~4 s.
+
+---
+
+### U007 — Manifest, probe, render, S1 facts, and the windowing ladder
+
+**Milestone:** M2a · **Spend:** none · **Status:** `[x]` Complete · **Completed:** 2026-09-10
+
+**Demo output** — `vsir ingest data/source/synthetic_3window.pdf --vlm stub --until window`
+(after `set -a && . ./.env && set +a` and `export VSIR_FIXTURE=data/fixtures/synthetic_3window`;
+the JSON event lines and 36 of the 42 per-page rows are elided):
+
+```
+vsir ingest — release dev-0 · run 01M23Y0764NYS8YCWJW7SH3TS2 · until window
+
+01 manifest — identity, from the filename, the metadata and the uploader ─────
+   doc_id       synthetic-3window
+   revision     1.0   (undeclared — the default, and recorded as such (register A4))
+   doc_type     unknown   (undeclared — the default, and recorded as such (register A4))
+   subjects     C24
+   tags         synthetic, m2a, fixture, 3window
+   source       data/source/synthetic_3window.pdf  ·  87,741 bytes
+
+02 probe — the text layer, and the only writer of `text` (I2) ────────────────
+   page_count 42 · pymupdf-1.28.2 · content_hash 4c9b4585d8f9922e…
+   pages with text 40/42 (searchable_ratio 0.95) · s2_input_mode render@220
+   front sample (8 pages) 92 chars/page vs a 150 threshold — extraction happened anyway,
+   which is register A1: one `else` there throws away a mixed document's whole text
+
+03 render — page rasters at dpi 220, in memory, never written down ───────────
+   42 rasters at dpi 220, 1819x2573 px, 4.0 MB held in memory
+   raster cache: 42 rendered, 0 served from the LRU (max 96)
+   0 bytes written to the filesystem
+
+   page  label  has_text  text_trust   chars  raster sha256 @220
+      1  i      false     no_text          0  041713c55ab0d2e7b94f5382…
+      2  ii     false     no_text          0  3896ef676d5e5487fb3430be…
+      3  1      true      ok             123  11eba1fa15f6fe3ac0b997bf…
+      …
+     20  18     true      ok             522  51785438fe16681fd7d363c7…
+      …
+     42  40     true      ok             526  7860bc69aaa3c8d56f4302f1…
+
+04 S1 document facts — cached per document, because the ladder rides on them ─
+   facts_key    93061d0ce0b453e1…  (content hash ‖ gemini-3.8-flash-001 ‖ s2-v1)
+   replay HIT   data/fixtures/synthetic_3window/facts/93061d0c….json
+   title "C24 SYNTHETIC SAFETY MANUAL" · lang en · effectivity "from batch 68"
+   toc          3 entries, 3 usable chapter range(s) — this is what picks the ladder
+                p1    Front matter and general information
+                p15   Safety functions of the C24 cell
+                p29   Electrical references and part numbers
+   the model disagrees with a DECLARED facet: nothing
+
+05 window — the ladder, and the receipt that stops the pipeline paying twice ─
+   level 1 · chapter-aligned · parallel=True
+   #   pages       n  extract_key
+   1   1-14       14  77cc653385accd4b3859dc07…
+   2   15-28      14  02acdaa8b97c4ca41c83b1f7…
+   3   29-42      14  3185733c74030a45860448a4…
+   coverage: pages 1-42, each exactly once — True
+   distinct keys: 3/3
+
+assertions — data/fixtures/synthetic_3window/expected.json
+   PASS  42 pages, as the fixture declares
+   PASS  3 windows at level 1 — 1-14 · 15-28 · 29-42
+   PASS  each window's extract_key is distinct — 3 distinct of 3
+   PASS  coverage is the whole document, once
+   PASS  has_text == false implies text_trust == no_text (§5.7) — pages [1, 2]
+   PASS  the mixed-document trap is armed (register A1)
+         the front sample averages 92 chars/page, under 150 — and all 40 text pages
+         were still extracted
+   PASS  the printed labels are the fixture's, offset and all (I4, F7)
+         PDF page 3 prints "1" — label = index -2
+   PASS  the crop trap: text comes from the FULL page, never a crop (F15)
+         page 20's raster region [0.0, 0.0, 1.0, 0.55] keeps 1416/2573 px of the sheet
+         and cuts off at 0.55; "EAO 84-5140.0020" sits at 0.965 — outside it, and in
+         the extracted text
+   PASS  the dpi 220 rasters are byte-identical to the fixture's — 42/42 hashes match
+
+ALL ASSERTIONS PASSED
+```
+
+The two refusals, both non-zero and named — neither is a live call, and neither fabricates:
+
+```
+VSIR_PROMPT_VERSION=s2-v2 vsir ingest … --until facts
+   REFUSED  fixture_miss: no frozen S1 response for facts_key 52426cd7… under
+            data/fixtures/synthetic_3window/facts                              exit=1
+
+vsir ingest … --vlm gemini --until facts
+   REFUSED  vlm_backend_unavailable: step 04 needs S1 document facts and
+            VSIR_VLM=gemini has no client at M2a                               exit=1
+```
+
+`bash scripts/test-unit.sh` → **630 passed**, Layer 0/1 PASSED (was 539).
+`bash scripts/test-api.sh` → **137 passed** (unchanged; U007 adds no L2).
+
+**Invariants / failure rows closed:** **F13** (a window truncates and loses 30 pages) — the
+bisection ladder: each of §6.2's four triggers splits and re-bills, the union of the halves is the
+original with no gap and no duplicate, and one page still over budget is typed
+`window_unsplittable` (`test_oversized_window_bisects`, `test_window_unsplittable`,
+`test_every_documented_trigger_bisects`). **F15** (a code is invisible because it was cropped away)
+— `text` always comes from the full page (`test_crop_trap_full_text_extracted`,
+`test_page_texts_never_clips`), backed by the existing `get_text(` conformance grep, which stops
+being vacuous with this unit. No invariant is asserted here: I4 is U011's per Spec §9, and this
+unit supplies the window boundaries its two checks use (`Window.absolute`).
+
+**Register items closed:** **A1** (extraction is unconditional — the corpus is built so `impl`'s
+eight-page sample would have thrown away 40 extractable pages), **A3** (`s2_input_mode` describes
+the call that actually happens), **A4** (an undeclared facet is recorded as undeclared, so a
+default and a declaration are tellable apart), **E3** (rasters are never persisted, asserted by a
+filesystem-write spy plus a directory snapshot). **B2** is *prepared* here — `facts_key` exists and
+the CLI reads S1 through it — and closed at U008, which owns the cache.
+
+**The corpus.** `data/source/synthetic_3window.pdf`, 42 pages, 87,741 bytes, generated by
+`python -m vsir.eval.synthetic_pdf` and reproducible byte for byte (`no_new_id=True`, fixed
+metadata dates), with four hazards wired into the page geometry rather than described in prose:
+three chapter starts at 1/15/29 so Level 1 answers and two sections straddle a fold (13-17, 27-31);
+a `/PageLabels` table that restarts at "1" on PDF page 3, so *printed label = index − 2*; page 20's
+`EAO 84-5140.0020` below the footer, outside a top-55 % crop; and pages 1-2 rasterised over six
+short pages, so the front sample averages 92 chars/page. A test asserts every page's extracted text
+line-for-line against what the generator says it printed — which is what would catch a layout mode
+that silently reorders a table.
+
+**Notes**
+
+- **Two deliberate deviations from the plan's file list, both recorded rather than argued away.**
+  (1) `backend/vsir/ingest/extract.py` is added, carrying **only** the §5.2 response schema and
+  `S2_SCHEMA_HASH`. `extract_key` cannot be computed without a schema hash (§6.3) and Spec §4.1's
+  normative layout puts the S2 schema in `extract.py`, so the alternative was a placeholder
+  constant. U008 extends the same file with the call, as its Deliverables say. (2)
+  `backend/vsir/eval/synthetic_pdf.py` is the generator the plan asks for; §4.1 has no home for a
+  corpus builder and `eval/` is where the corpora live. `backend/tests/unit/conftest.py` and
+  `test_ingest.py` are new tests, so the unit's `-k` slice widens to
+  `"manifest or probe or render or window or ingest"` — `bash scripts/test-unit.sh` runs all of it
+  either way.
+- **`extract_key` follows §6.3, not `impl`.** It is keyed on the **ordered page image hashes**
+  rather than `content_hash ‖ plan_hash`, which is strictly stronger (the key depends on the pixels
+  the model will actually see), and `s2_input_mode` is out of it while `dpi` is in it — `impl`
+  recorded a mode no code path implemented, inside a cache key (A3). `chain()` and `plan_hash()`
+  are **not** ported: both exist to thread Level 2's carry chain, which §2.5 B excludes.
+- **`Probe.has_text` is per page and is `bool(text.strip())`, with no threshold.** §6.1 step 02 and
+  §5.3 both make `has_text` page-level, so the eight-page sample now decides nothing except what
+  gets reported. There is no OCR anywhere, so every character in the layer came from the file and a
+  sparse but genuinely born-digital page must not be made unsearchable by a minimum. §20.1 leaves
+  register **A2** open at the *document* level; that document-level branch is simply gone here,
+  because there is nothing left for it to gate.
+- **`text_trust` from the probe is provisional and only ever `no_text` or `ok`.** `degraded` and
+  `untrusted` are a judgement about how well the layer matches the page, which needs
+  `grounded_rate` — U009's `core/health.py` demotes. Nothing ever promotes `no_text`.
+- **`Probe.page_labels` reads the PDF's own `/PageLabels` table.** A mechanical readout of a
+  structure the file carries — not a grammar, not a model reading — and the strongest form of
+  §6.5's "text-layer-confirmed label". It is what makes the demo's printed-label column, and the
+  off-by-one trap, real rather than notional.
+- **Register A6 stays open, deliberately.** `plan()` ports `impl`'s all-or-nothing chapter check,
+  so one over-cap chapter drops the whole plan. What changes is the consequence: the fall-through
+  is a named `ladder_level_2_required`, not a blind fold. Sub-dividing an over-long chapter would
+  be a blind cut inside it — F8's failure, wearing Level 1's name.
+- **The raster cache is a `functools.lru_cache`, not a module-level dict**, so it cannot trip
+  §12.5's module-level-mutable-store grep and cannot become the session store C11 struck. It is
+  keyed on the file's content digest; the ingest path passes the probe's `content_hash` straight
+  through, so a run hashes the file once.
+- **`impl`'s `render_image` is not ported.** The standalone-image door resized with Pillow and
+  saved a PNG; the corpus is PDFs (§2.1) and every line of it was about writing files.
+- **Left for U008:** the S1 *call*. Step 04 here is a read of the content-addressable cache, and at
+  M2a the replay fixture is the only backend that can fill it — `--vlm gemini` refuses
+  `vlm_backend_unavailable` by name. The fixture reader (≈15 lines in `cli.py`) moves to
+  `vlm/cache.py` with U008.
 
 ---
 

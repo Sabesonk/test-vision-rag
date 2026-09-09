@@ -1,0 +1,26 @@
+{
+  "doc_type": "safety_function_list",
+  "effectivity_basis": "from batch 68",
+  "lang": [
+    "en"
+  ],
+  "revision": "1.0",
+  "subjects": [
+    "C24"
+  ],
+  "title": "C24 SYNTHETIC SAFETY MANUAL",
+  "toc": [
+    {
+      "page_no": 1,
+      "title": "Front matter and general information"
+    },
+    {
+      "page_no": 15,
+      "title": "Safety functions of the C24 cell"
+    },
+    {
+      "page_no": 29,
+      "title": "Electrical references and part numbers"
+    }
+  ]
+}

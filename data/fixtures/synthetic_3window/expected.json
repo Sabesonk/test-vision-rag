@@ -1,0 +1,184 @@
+{
+  "crop_trap": {
+    "bbox_top_fraction": 0.964757,
+    "label": "EAO 84-5140.0020",
+    "page": 20,
+    "region": [
+      0.0,
+      0.0,
+      1.0,
+      0.55
+    ]
+  },
+  "doc_id": "synthetic-3window",
+  "first_labelled_page": 3,
+  "label_offset": -2,
+  "ladder_level": 1,
+  "mixed_document": {
+    "born_digital_min_chars": 150,
+    "comment": "pages 1-8 average below the threshold; impl would extract nothing (A1)",
+    "sample_pages": 8
+  },
+  "page_count": 42,
+  "pages_without_text": [
+    1,
+    2
+  ],
+  "printed_labels": {
+    "1": "i",
+    "10": "8",
+    "11": "9",
+    "12": "10",
+    "13": "11",
+    "14": "12",
+    "15": "13",
+    "16": "14",
+    "17": "15",
+    "18": "16",
+    "19": "17",
+    "2": "ii",
+    "20": "18",
+    "21": "19",
+    "22": "20",
+    "23": "21",
+    "24": "22",
+    "25": "23",
+    "26": "24",
+    "27": "25",
+    "28": "26",
+    "29": "27",
+    "3": "1",
+    "30": "28",
+    "31": "29",
+    "32": "30",
+    "33": "31",
+    "34": "32",
+    "35": "33",
+    "36": "34",
+    "37": "35",
+    "38": "36",
+    "39": "37",
+    "4": "2",
+    "40": "38",
+    "41": "39",
+    "42": "40",
+    "5": "3",
+    "6": "4",
+    "7": "5",
+    "8": "6",
+    "9": "7"
+  },
+  "render": {
+    "dpi": 220,
+    "page_sha256": [
+      "041713c55ab0d2e7b94f538260edea74078e6600b93232dc6b2eac1cf92e653f",
+      "3896ef676d5e5487fb3430be40d96b9d0116c15b38eefa50934e0df3e928a669",
+      "11eba1fa15f6fe3ac0b997bfb6d46bb0da17720317a258687e0c4cd28c5ed5b4",
+      "f7578b629b5579fbf0d1fa2e87be5db51354651a68bb6b37c424bbe8fb3973a5",
+      "803065c4b561c09c97e87e271bde95f8676b49fd22e9bacabbf8efd04a37a777",
+      "8f72fa70a7f98bc6917eea45971d45d9c409b3cbe8160d8481c2f6db5c167e3f",
+      "710f633afe56c35a10533505c79aa3e96c470bf817a06816ceb5379af2eea97b",
+      "1446c9d109be7db7a1d7d972da023e809c240a4d8253b1aa1ae6ed333d62a685",
+      "89c496163ae804ea1dda961b5db3b334a870f1d6ab0337a890539b3f1e44eb77",
+      "86dc99301050b12d25bdeaadbf58367f9e0ccea980f4ab3a4bfa575e28d35223",
+      "ae61b72f170f1a778c210fa32eba9a8a6f158e98c80843fa47265536abe15f9f",
+      "9de5e5b22c3e88bca0ea39c60e328bdc83a1bafa47e0a78f01da8401f24022b4",
+      "bcfc053dad33aebbc8fa77ffedec50b05a3b67ace0e1a542b05eecda0ce9ecbf",
+      "830544f2a3d2733cb3fb69af51847b75e821f5a3b634112b158a6551122fdc5a",
+      "c939c6601bc357daaed7708e630b0a81a70f843796aefea92da6132e9952f1a8",
+      "486908d02c81a04e9ecdb0f054545049e485785f4039c6606e00ae12b8a30050",
+      "1503f91b1e2f0e856d8ae0d7daf8b030870301773ff89b564c3daea734eb7ad3",
+      "dedcc0b42145559cf273e4a42fd0f8e8ae6819482ecf9ddebb94c60172f58d19",
+      "353432e96b049e4f2d6f5944e7b63582ecce186903dc390e988527d96f5585e7",
+      "51785438fe16681fd7d363c7d0c68977dd1e2df0425603af5e527cb83f371587",
+      "337bba51c90f184330e2503dec9b55e6c25de8589ddd6af3794a78a7bf5364d9",
+      "9be8d212115dc4ee88d5cedcabe58e390783c629e340bfeae29ee270bf2e7202",
+      "b2e92bb625416828e80e32d79a6fa1b0189a4312bef3b5de26f1dd3fad680040",
+      "bf03e884763a2c54177de7e9151ae0ca26826c5610214d47f5e0745b2cd701df",
+      "50ef7511845e456893c0520f99f97afd56a8ca3c3779177a15fa94bda5fce2a4",
+      "6a01673dcfbedfb6d6991a9e2a4aafade61f74a95feba14a2eb477155b351e20",
+      "d539903df131b7f09b8bd5c4e8967a9edb8c32d7146c1e22bd291db73ad895c5",
+      "7a6a36548af63e0a414ed0ddd469fb3e5e365b858e468ca217e553588eefdea2",
+      "cf8803fd1142bee769f230ea931696663b7b2fbcf73c1572f92ab2e33f61ee56",
+      "5723a58ee7436e8e329e295701feba8fee3f5d4deafb13846b3c7f5f78619268",
+      "2788dfd231c9f5ff02462b1e407cc085f7d7ce1e96767ca1c97e9233c07c3d12",
+      "0677c9edccf5a40191d54b564c3402cb613cce4825f31e78d74a40b4eb309b07",
+      "1cb28b2de69676de3ca2fbfcbd241190b6d71f980e4210f4bc9a018dce6533d1",
+      "7d0f8e7270e626858e13a5ba30b724dbe3b052bd2f1868807e6795799c08afd8",
+      "457db1d40229a7aaa9b475fdb8a0c5f511b0e3320e83ac5281f81e94bbe79ed7",
+      "7c2e0cd0a29be88eadf81aed60bd5983bb7c5ed2c1a7a9a75044aed1144b4c71",
+      "f4924f93134fc3eef72f368a3103d44b56b92f9e6bd0043f8c255008ac40f1c1",
+      "df662c3d343ea0bb5a2de5f84b21792e68e320dd8588c8b317b097bb7f5de116",
+      "be7a36b5ab69fec27cf98c8d766fbef15fe9819eca1d1f4c8e8a5f0b5c4b4446",
+      "861386bfa9cb509d9214847834fa6c79e7482c98e63c16ea7002b4b9e976b14e",
+      "03ceaba1b774e05057bc0c8c87d1f869ec9d0c224aaf81ed072a5a3cb941b811",
+      "7860bc69aaa3c8d56f4302f1992f1f1f430d76c019ec2101e4a955eff676face"
+    ]
+  },
+  "revision": "1.0",
+  "sections": [
+    {
+      "first": 1,
+      "last": 2,
+      "title": "Front matter"
+    },
+    {
+      "first": 3,
+      "last": 8,
+      "title": "General information and symbols"
+    },
+    {
+      "first": 9,
+      "last": 12,
+      "title": "Machine layout and access points"
+    },
+    {
+      "first": 13,
+      "last": 17,
+      "title": "Emergency stop chain"
+    },
+    {
+      "first": 18,
+      "last": 22,
+      "title": "Guard door interlocks"
+    },
+    {
+      "first": 23,
+      "last": 26,
+      "title": "Two-hand control and enabling devices"
+    },
+    {
+      "first": 27,
+      "last": 31,
+      "title": "Light curtain muting"
+    },
+    {
+      "first": 32,
+      "last": 36,
+      "title": "Safety relay wiring"
+    },
+    {
+      "first": 37,
+      "last": 42,
+      "title": "Part numbers and suppliers"
+    }
+  ],
+  "straddling_sections": [
+    "Emergency stop chain",
+    "Light curtain muting"
+  ],
+  "windows": [
+    [
+      1,
+      14
+    ],
+    [
+      15,
+      28
+    ],
+    [
+      29,
+      42
+    ]
+  ]
+}

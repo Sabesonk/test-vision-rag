@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import json
 import os
 import signal
 from pathlib import Path
@@ -23,7 +24,8 @@ from qdrant_client import QdrantClient
 
 from vsir import __version__
 from vsir import logging as vsir_logging
-from vsir.config import ConfigError, load_config, scrub_url
+from vsir.config import DPI_ANSWER, VLM_BACKENDS, ConfigError, load_config, scrub_url
+from vsir.core import ids
 from vsir.core import observed_tokens as observed_tokens_module
 from vsir.core.exact import UnknownScopeKey, exact_filter, phrases_of
 from vsir.core.nearmiss import is_printed, near_misses
@@ -34,6 +36,9 @@ from vsir.core.tok import tok, token_set
 from vsir.core.variants import preserves_characters, variants
 from vsir.doctor import doctor
 from vsir.eval import synthetic
+from vsir.ingest import manifest, probe, render
+from vsir.ingest import window as window_module
+from vsir.ingest.extract import S2_SCHEMA_HASH
 from vsir.serve.caps import (
     ToolError,
     as_tool_error,
@@ -532,6 +537,318 @@ def _cmd_demo_exact(args: argparse.Namespace) -> int:
     return EXIT_OK if passed else EXIT_REFUSED
 
 
+# ── `vsir ingest` — steps 01-05 of §6.1 (M2a; the rest of the ladder lands with U008-U011) ───────
+
+#: The steps `--until` can stop at, in pipeline order. Later units extend the list rather than
+#: adding a second command: §6.1 is one pipeline and `vsir ingest` is its one operational surface.
+INGEST_STEPS = ("manifest", "probe", "render", "facts", "window")
+
+_RULE_WIDTH = 78
+
+
+def _step(number: str, title: str) -> None:
+    print(f"\n{number} {title} " + "─" * max(0, _RULE_WIDTH - len(number) - len(title) - 2))
+
+
+def _check(description: str, observed: str, ok: bool) -> bool:
+    """One assertion over two lines: the claim, then what was actually observed.
+
+    `_line`'s single fixed-width row is right for `demo exact`, where every observation is a status
+    and a page list. These observations are sentences, and truncating the evidence to fit a column
+    is how a reviewer stops reading it.
+    """
+    print(f"   {_verdict(ok):<5} {description}")
+    print(f"         {observed}")
+    return ok
+
+
+def _short(digest: str, keep: int = 16) -> str:
+    return f"{digest[:keep]}…" if len(digest) > keep else digest
+
+
+def _declared(flag: bool) -> str:
+    return "declared" if flag else "undeclared — the default, and recorded as such (register A4)"
+
+
+class IngestRefused(Exception):
+    """A named, non-zero refusal from the ingest CLI. Never a warning followed by a partial run."""
+
+    def __init__(self, code: str, message: str, **details: Any) -> None:
+        super().__init__(message)
+        self.code = code
+        self.message = message
+        self.details = details
+
+
+def _load_facts(cfg: Any, key: str) -> tuple[window_module.DocumentFacts, Path]:
+    """Step 04, served from the content-addressable cache keyed by `facts_key` (§6.3, D10).
+
+    At M2a the only backend that can *fill* that cache is the replay fixture: the Gemini client,
+    the prompts and the stub arrive with the VLM boundary in U008, which is also where this reader
+    moves to (`vlm/cache.py`). A key that is not in the fixture is a typed `fixture_miss` — never a
+    live call, and never a fabricated answer (D10).
+    """
+    if not cfg.replay:
+        raise IngestRefused(
+            "vlm_backend_unavailable",
+            f"step 04 needs S1 document facts and VSIR_VLM={cfg.vlm} has no client at M2a: "
+            f"set VSIR_VLM=stub and VSIR_FIXTURE=<dir> to replay a frozen response (D10)",
+            vlm=cfg.vlm, fixture=cfg.fixture_dir,
+        )
+    path = Path(cfg.fixture_dir) / "facts" / f"{key}.json"
+    if not path.is_file():
+        raise IngestRefused(
+            "fixture_miss",
+            f"no frozen S1 response for facts_key {key} under {path.parent}",
+            facts_key=key, fixture=str(path.parent),
+        )
+    return window_module.DocumentFacts.model_validate_json(path.read_text()), path
+
+
+def _ingest(args: argparse.Namespace, cfg: Any) -> bool:
+    """Run steps 01-05 and print what each one decided. Returns whether the assertions passed.
+
+    The run id is not a parameter: it is bound into the correlation context by the caller, so every
+    event any of these steps logs carries it without a step having to remember to pass it on
+    (§11.4). Nothing here holds it, and nothing here holds state between calls.
+    """
+    source = Path(args.pdf)
+    until = args.until
+
+    # ── 01 manifest ──────────────────────────────────────────────────────────────────────────
+    _step("01", "manifest — identity, from the filename, the metadata and the uploader")
+    doc = manifest.build(
+        source,
+        doc_id=args.doc_id, revision=args.revision, doc_type=args.doc_type,
+        subjects=[s.strip() for s in (args.subjects or "").split(",") if s.strip()],
+        tags=[t.strip() for t in (args.tags or "").split(",") if t.strip()],
+        uploader=args.uploader,
+    )
+    _log.info("ingest_step", step="manifest", doc_id=doc.doc_id, revision=doc.revision,
+              doc_type=doc.doc_type, subjects=list(doc.subjects), tags=list(doc.tags))
+    print(f"   doc_id       {doc.doc_id}")
+    print(f"   revision     {doc.revision}   ({_declared(doc.revision_declared)})")
+    print(f"   doc_type     {doc.doc_type}   ({_declared(doc.doc_type_declared)})")
+    print(f"   subjects     {', '.join(doc.subjects) or '—'}")
+    print(f"   tags         {', '.join(doc.tags) or '—'}")
+    print(f"   source       {source}  ·  {doc.size_bytes:,} bytes")
+    print("   no content sniffing: §6.1 step 01 takes facets from the filename, the file's own")
+    print("   metadata and the uploader, and this module contains no grammar of any kind")
+    if until == "manifest":
+        return True
+
+    # ── 02 probe ─────────────────────────────────────────────────────────────────────────────
+    _step("02", "probe — the text layer, and the only writer of `text` (I2)")
+    probed = probe.run(source)
+    _log.info("ingest_step", step="probe", page_count=probed.page_count,
+              pages_with_text=probed.pages_with_text, content_hash=probed.content_hash,
+              probe_version=probed.probe_version)
+    print(f"   page_count {probed.page_count} · {probed.probe_version} · "
+          f"content_hash {_short(probed.content_hash)}")
+    print(f"   pages with text {probed.pages_with_text}/{probed.page_count} "
+          f"(searchable_ratio {probed.searchable_ratio:.2f}) · "
+          f"s2_input_mode {probed.s2_input_mode}")
+    print(f"   front sample ({probe.PROBE_SAMPLE_PAGES} pages) {probed.sample_chars_per_page} "
+          f"chars/page vs a {probe.BORN_DIGITAL_MIN_CHARS} threshold — extraction happened anyway,")
+    print("   which is register A1: one `else` there throws away a mixed document's whole text")
+    if until == "probe":
+        _print_pages(probed, rasters=None)
+        return True
+
+    # ── 03 render ────────────────────────────────────────────────────────────────────────────
+    _step("03", f"render — page rasters at dpi {DPI_ANSWER}, in memory, never written down")
+    rasters = render.render_pages(source, range(1, probed.page_count + 1), dpi=DPI_ANSWER,
+                                  content_hash=probed.content_hash)
+    cache = render.cache_info()
+    _log.info("ingest_step", step="render", dpi=DPI_ANSWER, rasters=len(rasters),
+              cache_hits=cache["hits"], cache_misses=cache["misses"], persisted=0)
+    print(f"   {len(rasters)} rasters at dpi {DPI_ANSWER}, "
+          f"{rasters[0].width}x{rasters[0].height} px, "
+          f"{sum(len(r.png) for r in rasters) / 1_048_576:.1f} MB held in memory")
+    print(f"   raster cache: {cache['misses']} rendered, {cache['hits']} served from the LRU "
+          f"(max {cache['maxsize']}) — a cache, never a source of truth (§4.2, register E3)")
+    print("   0 bytes written to the filesystem")
+    _print_pages(probed, rasters=rasters)
+    if until == "render":
+        return True
+
+    # ── 04 S1 document facts ─────────────────────────────────────────────────────────────────
+    _step("04", "S1 document facts — cached per document, because the ladder rides on them")
+    key = window_module.facts_key(probed.content_hash, vlm_model=cfg.vlm_model,
+                                  prompt_version=cfg.prompt_version)
+    facts, facts_path = _load_facts(cfg, key)
+    _log.info("ingest_step", step="facts", facts_key=key, cached=True,
+              toc_entries=len(facts.toc))
+    print(f"   facts_key    {_short(key)}  "
+          f"(content hash ‖ {cfg.vlm_model} ‖ {cfg.prompt_version})")
+    print(f"   replay HIT   {facts_path}")
+    print(f"   title \"{facts.title}\" · lang {', '.join(facts.lang) or '—'} · "
+          f"effectivity \"{facts.effectivity_basis}\"")
+    usable = window_module.chapter_ranges(facts.toc, probed.page_count)
+    print(f"   toc          {len(facts.toc)} entries, "
+          f"{len(usable)} usable chapter range(s) — this is what picks the ladder")
+    for entry in facts.toc:
+        print(f"                p{entry.page_no:<4} {entry.title}")
+    mismatch = doc.disagreement(facts)
+    print(f"   the model disagrees with a DECLARED facet: {mismatch or 'nothing'} "
+          f"(the operator's inventory wins; the reading is kept as a cross-check)")
+    if until == "facts":
+        return True
+
+    # ── 05 window + extract_key ──────────────────────────────────────────────────────────────
+    _step("05", "window — the ladder, and the receipt that stops the pipeline paying twice")
+    plan = window_module.plan(probed.page_count, toc=facts.toc, size_bytes=probed.size_bytes,
+                              document=doc.doc_id)
+    keys = _window_keys(source, plan, probed, cfg)
+    _log.info("ingest_step", step="window", level=plan.level, windows=len(plan.windows),
+              parallel=plan.parallel,
+              ranges=[[w.start, w.end] for w in plan.windows], extract_keys=list(keys))
+    print(f"   level {plan.level} · {'chapter-aligned' if plan.level else 'whole document'} · "
+          f"parallel={plan.parallel}")
+    print(f"   v1 climbs to level {window_module.MAX_LADDER_LEVEL} and refuses the blind cut by "
+          f"name (§6.2, §2.5 B); bisection re-bills, it never pads")
+    print(f"   {'#':<3} {'pages':<9} {'n':>3}  extract_key")
+    for number, (win, key) in enumerate(zip(plan.windows, keys), start=1):
+        print(f"   {number:<3} {f'{win.start}-{win.end}':<9} {win.pages:>3}  {_short(key, 24)}")
+    print(f"   coverage: pages 1-{probed.page_count}, each exactly once — "
+          f"{plan.covers(probed.page_count)}")
+    print(f"   distinct keys: {len(set(keys))}/{len(keys)}")
+    warm = render.cache_info()
+    print(f"   keying the windows re-read every page from the raster cache: "
+          f"{warm['hits']} hits, {warm['misses']} renders in this process")
+
+    return _assertions(args, source, doc, probed, plan, keys)
+
+
+def _print_pages(probed: Any, rasters: Any) -> None:
+    print()
+    header = f"   {'page':>4}  {'label':<6} {'has_text':<9} {'text_trust':<11} {'chars':>6}"
+    print(header + (f"  raster sha256 @{DPI_ANSWER}" if rasters else ""))
+    for page in probed.pages:
+        row = (f"   {page.page_no:>4}  {page.label or '—':<6} {str(page.has_text).lower():<9} "
+               f"{page.text_trust:<11} {page.chars:>6}")
+        if rasters:
+            row += f"  {_short(rasters[page.page_no - 1].sha256, 24)}"
+        print(row)
+
+
+def _window_keys(source: Path, plan: Any, probed: Any, cfg: Any) -> tuple[str, ...]:
+    """One `extract_key` per window, over the ordered page image hashes S2 will see (§6.3)."""
+    return tuple(
+        window_module.extract_key(
+            render.page_hashes(source, win.page_numbers, dpi=DPI_ANSWER,
+                               content_hash=probed.content_hash),
+            vlm_model=cfg.vlm_model, prompt_version=cfg.prompt_version,
+            dpi=DPI_ANSWER, schema_hash=S2_SCHEMA_HASH,
+        )
+        for win in plan.windows
+    )
+
+
+def _assertions(args: argparse.Namespace, source: Path, doc: Any, probed: Any,
+                plan: Any, keys: tuple[str, ...]) -> bool:
+    """Check the run against the numbers checked in beside the corpus, never against itself."""
+    expected_path = Path(args.fixture or "") / "expected.json"
+    if not expected_path.is_file():
+        print(f"\n   no acceptance table at {expected_path} — nothing to check this run against")
+        return True
+
+    table = json.loads(expected_path.read_text())
+    print(f"\nassertions — {expected_path}")
+    passed = True
+
+    passed &= _check(f"{table['page_count']} pages, as the fixture declares",
+                    f"probe found {probed.page_count}",
+                    probed.page_count == table["page_count"])
+    ranges = [[w.start, w.end] for w in plan.windows]
+    passed &= _check(f"{len(table['windows'])} windows at level {table['ladder_level']}",
+                    " · ".join(f"{a}-{b}" for a, b in ranges),
+                    ranges == table["windows"] and plan.level == table["ladder_level"])
+    passed &= _check("each window's extract_key is distinct",
+                    f"{len(set(keys))} distinct of {len(keys)}",
+                    len(set(keys)) == len(keys))
+    passed &= _check("coverage is the whole document, once",
+                    f"pages 1-{probed.page_count}", plan.covers(probed.page_count))
+
+    without = [p.page_no for p in probed.pages if not p.has_text]
+    passed &= _check("has_text == false implies text_trust == no_text (§5.7)",
+                    f"pages {without} have no text layer",
+                    without == table["pages_without_text"]
+                    and all(probed.page(n).text_trust == "no_text" for n in without))
+    sample = probed.sample_chars_per_page
+    passed &= _check("the mixed-document trap is armed (register A1)",
+                    f"the front sample averages {sample} chars/page, under "
+                    f"{table['mixed_document']['born_digital_min_chars']} — and all "
+                    f"{probed.pages_with_text} text pages were still extracted",
+                    sample < table["mixed_document"]["born_digital_min_chars"]
+                    and probed.pages_with_text == probed.page_count - len(without))
+
+    labels = {str(page.page_no): page.label for page in probed.pages}
+    passed &= _check("the printed labels are the fixture's, offset and all (I4, F7)",
+                    f"PDF page {table['first_labelled_page']} prints "
+                    f"\"{table['printed_labels'][str(table['first_labelled_page'])]}\" — "
+                    f"label = index {table['label_offset']:+d}",
+                    labels == table["printed_labels"])
+
+    trap = table["crop_trap"]
+    cropped = render.render_page(source, trap["page"], dpi=DPI_ANSWER, region=trap["region"],
+                                 content_hash=probed.content_hash)
+    full = render.render_page(source, trap["page"], dpi=DPI_ANSWER,
+                              content_hash=probed.content_hash)
+    text = probed.page(trap["page"]).text
+    passed &= _check("the crop trap: text comes from the FULL page, never a crop (F15)",
+                    f"page {trap['page']}'s raster region {trap['region']} keeps "
+                    f"{cropped.height}/{full.height} px of the sheet and cuts off at "
+                    f"{trap['region'][3]:.2f}; \"{trap['label']}\" sits at "
+                    f"{trap['bbox_top_fraction']:.3f} — outside it, and in the extracted text",
+                    trap["label"] in text
+                    and trap["bbox_top_fraction"] > trap["region"][3]
+                    and cropped.height < full.height)
+
+    hashes = [render.render_page(source, n, dpi=DPI_ANSWER,
+                                 content_hash=probed.content_hash).sha256
+              for n in range(1, probed.page_count + 1)]
+    passed &= _check(f"the dpi {DPI_ANSWER} rasters are byte-identical to the fixture's",
+                    f"{sum(a == b for a, b in zip(hashes, table['render']['page_sha256']))}"
+                    f"/{probed.page_count} page hashes match",
+                    hashes == table["render"]["page_sha256"])
+    return passed
+
+
+def _cmd_ingest(args: argparse.Namespace) -> int:
+    if args.vlm:
+        os.environ["VSIR_VLM"] = args.vlm
+    if args.fixture:
+        os.environ["VSIR_FIXTURE"] = args.fixture
+    try:
+        cfg = load_config()
+    except ConfigError as refusal:
+        _log.error("ingest_refused", reason="configuration", detail=str(refusal))
+        print(f"   configuration refused: {refusal}")
+        return EXIT_REFUSED
+    args.fixture = args.fixture or cfg.fixture_dir
+
+    identifier = ids.run_id()
+    with vsir_logging.correlate(run_id=identifier):
+        print(f"vsir ingest — release {cfg.release_id} · run {identifier} · until {args.until}")
+        _log.info("ingest_started", pdf=str(args.pdf), until=args.until, vlm=cfg.vlm,
+                  vlm_model=cfg.vlm_model, prompt_version=cfg.prompt_version, dpi=DPI_ANSWER)
+        try:
+            passed = _ingest(args, cfg)
+        except (IngestRefused, window_module.WindowError, render.RenderError) as refusal:
+            _log.error("ingest_refused", reason=refusal.code, detail=str(refusal),
+                       **getattr(refusal, "details", {}))
+            print(f"\n   REFUSED  {refusal.code}: {refusal}")
+            return EXIT_REFUSED
+        except FileNotFoundError as refusal:
+            _log.error("ingest_refused", reason="source_missing", detail=str(refusal))
+            print(f"\n   REFUSED  source_missing: {refusal}")
+            return EXIT_REFUSED
+        _log.info("ingest_complete", until=args.until, passed=passed)
+    print(f"\n{'ALL ASSERTIONS PASSED' if passed else 'ASSERTIONS FAILED'}")
+    return EXIT_OK if passed else EXIT_REFUSED
+
+
 def build_parser() -> argparse.ArgumentParser:
     """The command table of Spec §4.4, as far as it has been built."""
     parser = argparse.ArgumentParser(
@@ -553,6 +870,36 @@ def build_parser() -> argparse.ArgumentParser:
              "back against it (§5.5) — a one-off admin process, not live surgery",
     )
     doctor_parser.set_defaults(handler=_cmd_doctor)
+
+    ingest_parser = commands.add_parser(
+        "ingest",
+        help="run the ingestion pipeline of §6.1 over one PDF; steps 01-05 at M2a",
+    )
+    ingest_parser.add_argument("pdf", help="the source PDF")
+    ingest_parser.add_argument(
+        "--until", choices=list(INGEST_STEPS), default=INGEST_STEPS[-1],
+        help=f"stop after this step (default: {INGEST_STEPS[-1]}, the last one built)",
+    )
+    ingest_parser.add_argument(
+        "--vlm", choices=list(VLM_BACKENDS), default=None,
+        help="override VSIR_VLM for this process — the backend is chosen by configuration, "
+             "never by a code branch (§15 Factor X)",
+    )
+    ingest_parser.add_argument(
+        "--fixture", default=None,
+        help="override VSIR_FIXTURE: the replay directory frozen S1/S2 responses are keyed into, "
+             "and where the acceptance table beside the corpus is read from (D10)",
+    )
+    ingest_parser.add_argument("--doc-id", default=None,
+                               help="declare the revision-stable document id (§5.1)")
+    ingest_parser.add_argument("--revision", default=None,
+                               help="declare the revision; the operator's value is authoritative")
+    ingest_parser.add_argument("--doc-type", default=None, help="declare the document type")
+    ingest_parser.add_argument("--subjects", default="",
+                               help="comma-separated machine/model subjects (§5.3)")
+    ingest_parser.add_argument("--tags", default="", help="comma-separated uploader tags (§5.3)")
+    ingest_parser.add_argument("--uploader", default="", help="who supplied the document")
+    ingest_parser.set_defaults(handler=_cmd_ingest)
 
     demo_parser = commands.add_parser("demo", help="the reviewable demos of §4.4")
     demos = demo_parser.add_subparsers(dest="demo", metavar="<demo>", required=True)
