@@ -113,15 +113,44 @@ def test_reading_the_description_does_not_open_the_api(served):
     assert served.get("/runs/01ABC").status_code == 401
 
 
-def test_the_free_surface_is_exactly_the_probes_and_the_documents():
-    """Two sets, free for different reasons — and a closed list, so it cannot grow by accident.
+def test_the_free_surface_is_exactly_the_probes_the_documents_and_the_console():
+    """Three sets, free for different reasons — and a closed list, so none grows by accident.
 
-    Anything that returns corpus data, a run, a raster or prose belongs in neither.
+    A probe is free so an orchestrator can reach it, a document so a human can read the interface,
+    the console so a browser can load the page that then asks for a credential. **Anything that
+    returns corpus data, a run, a raster or prose belongs in none of them** — which is what the
+    last assertion is for, and it is the one that would fail if somebody made a data route free to
+    save typing a token.
     """
     assert auth_module.PROBE_PATHS == {"/health", "/ready", "/metrics"}
-    assert auth_module.PUBLIC_PATHS == auth_module.PROBE_PATHS | auth_module.DOC_PATHS
+    assert auth_module.CONSOLE_PATHS == {"/console"}
+    assert auth_module.PUBLIC_PATHS == (auth_module.PROBE_PATHS | auth_module.DOC_PATHS
+                                        | auth_module.CONSOLE_PATHS)
     assert not any(path.startswith(("/tools", "/documents", "/runs", "/ask", "/pages"))
                    for path in auth_module.PUBLIC_PATHS)
+
+
+def test_the_console_page_is_served_and_asks_for_no_credential(served):
+    """A browser cannot attach a header to a navigation, so the page has to be free — and serving
+    markup authorises nothing: every call the page makes carries the operator's own token."""
+    response = served.get("/console")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/html")
+    assert "vsir console" in response.text
+
+
+def test_the_console_carries_no_credential_of_its_own(served):
+    """§15.1 — it is a free page, so a token baked into it would be a published secret.
+
+    The operator types theirs in and it stays in their browser.
+    """
+    from conftest import CONTAINER_TOKEN, TEST_TOKEN
+
+    page = served.get("/console").text
+
+    assert TEST_TOKEN not in page
+    assert CONTAINER_TOKEN not in page
 
 
 def test_a_path_that_merely_starts_like_a_public_one_is_still_protected(served):

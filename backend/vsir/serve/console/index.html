@@ -1,0 +1,548 @@
+<!doctype html>
+<!--
+  The operator console for what this release actually serves: POST /documents, GET /runs/{run_id},
+  POST /tools/lookup, POST /tools/verify.
+
+  This is NOT §13 M7's console. That one is a React + Vite app with a page viewer, region zoom and
+  the agent's move-by-move trace, and it needs `fetch`, `read` and the runner to exist. This is one
+  static file the serving app hands out, so there is no build step, no second container and no CORS
+  boundary — every call below is same-origin. It will be replaced by M7, not extended into it.
+
+  Two things it deliberately makes visible rather than tidy away, because they are the product:
+
+  * **A typed absence is not an empty list.** The status badge shows which of §7.1's six values came
+    back, and `not_found` is rendered as an answer with coverage numbers beside it, never as
+    "0 results". A page that could not be searched at all says so.
+  * **Verified and unverified never merge.** `hits` and `unverified_hits` are separate blocks with
+    different colours, because a code read off an image is not a code found in the page's text
+    (D3, I2) and a UI that interleaved them would undo the guarantee the index exists to make.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>vsir console</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #ffffff; --ink: #14171a; --dim: #5c6670; --line: #dfe3e8;
+    --accent: #1f6feb; --ok: #1a7f37; --warn: #9a6700; --bad: #cf222e; --code: #f2f4f7;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1117; --panel: #161b22; --ink: #e6edf3; --dim: #8b949e; --line: #30363d;
+      --accent: #58a6ff; --ok: #3fb950; --warn: #d29922; --bad: #f85149; --code: #0d1117;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 14px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  }
+  code, pre, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  header {
+    background: var(--panel); border-bottom: 1px solid var(--line);
+    padding: 14px 20px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap;
+    position: sticky; top: 0; z-index: 5;
+  }
+  header h1 { font-size: 15px; margin: 0; font-weight: 600; letter-spacing: -0.01em; }
+  header .sub { color: var(--dim); font-size: 12px; }
+  main { max-width: 1180px; margin: 0 auto; padding: 20px; display: grid; gap: 20px; }
+  .row { display: grid; gap: 20px; grid-template-columns: 1fr; }
+  @media (min-width: 940px) { .row.two { grid-template-columns: 1fr 1fr; } }
+  section {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px;
+  }
+  section h2 {
+    font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--dim);
+    margin: 0 0 12px; font-weight: 600;
+  }
+  label { display: block; font-size: 12px; color: var(--dim); margin: 10px 0 4px; }
+  input, select, button, textarea {
+    font: inherit; color: var(--ink); background: var(--bg);
+    border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px; width: 100%;
+  }
+  input[type=file] { padding: 6px; }
+  button {
+    background: var(--accent); color: #fff; border: 0; font-weight: 600; cursor: pointer;
+    margin-top: 12px; padding: 9px 14px;
+  }
+  button:disabled { opacity: 0.5; cursor: default; }
+  button.ghost { background: transparent; color: var(--accent); border: 1px solid var(--line); }
+  .fields { display: grid; gap: 0 12px; grid-template-columns: 1fr 1fr; }
+  .fields .wide { grid-column: 1 / -1; }
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px;
+    font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase;
+  }
+  .b-ok   { background: color-mix(in srgb, var(--ok) 15%, transparent);   color: var(--ok); }
+  .b-warn { background: color-mix(in srgb, var(--warn) 18%, transparent); color: var(--warn); }
+  .b-bad  { background: color-mix(in srgb, var(--bad) 15%, transparent);  color: var(--bad); }
+  .b-dim  { background: color-mix(in srgb, var(--dim) 15%, transparent);  color: var(--dim); }
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+  th { text-align: left; color: var(--dim); font-size: 11px; text-transform: uppercase;
+       letter-spacing: 0.05em; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+  td { padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  .note { color: var(--dim); font-size: 12px; margin-top: 10px; }
+  .steps { display: flex; flex-wrap: wrap; gap: 5px; margin: 12px 0; }
+  .step {
+    font-size: 11px; padding: 3px 8px; border-radius: 5px; border: 1px solid var(--line);
+    color: var(--dim);
+  }
+  .step.done { border-color: var(--ok); color: var(--ok); }
+  .step.now  { border-color: var(--accent); color: var(--accent); font-weight: 700; }
+  pre {
+    background: var(--code); border: 1px solid var(--line); border-radius: 6px;
+    padding: 10px; overflow-x: auto; font-size: 12px; margin: 10px 0 0;
+  }
+  .kv { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; font-size: 12px; }
+  .kv dt { color: var(--dim); }
+  .kv dd { margin: 0; }
+  .unver { border-left: 3px solid var(--warn); padding-left: 10px; margin-top: 14px; }
+  .err { color: var(--bad); font-size: 13px; margin-top: 10px; }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>vsir console</h1>
+    <div class="sub" id="release">connecting…</div>
+  </div>
+  <div style="flex:1"></div>
+  <div style="min-width:280px">
+    <label for="token" style="margin-top:0">Bearer token &mdash; <code>VSIR_API_TOKENS</code></label>
+    <input id="token" class="mono" placeholder="dev-token-not-a-secret" autocomplete="off">
+  </div>
+</header>
+
+<main>
+
+  <section>
+    <h2>Corpus</h2>
+    <div id="corpus" class="note">enter a token to load</div>
+    <button class="ghost" id="refresh" style="width:auto">Refresh</button>
+  </section>
+
+  <div class="row two">
+
+    <section>
+      <h2>Ingest a PDF</h2>
+      <div class="fields">
+        <div class="wide">
+          <label for="file">PDF</label>
+          <input type="file" id="file" accept="application/pdf">
+        </div>
+        <div>
+          <label for="docId">doc_id <span style="opacity:.6">(optional)</span></label>
+          <input id="docId" class="mono" placeholder="derived from the filename">
+        </div>
+        <div>
+          <label for="revision">revision</label>
+          <input id="revision" class="mono" placeholder="1.0">
+        </div>
+        <div>
+          <label for="docType">doc_type</label>
+          <input id="docType" class="mono" placeholder="datasheet">
+        </div>
+        <div>
+          <label for="subjects">subjects <span style="opacity:.6">(comma)</span></label>
+          <input id="subjects" class="mono" placeholder="C24">
+        </div>
+        <div class="wide">
+          <label for="until">stop after step</label>
+          <select id="until">
+            <option value="publish" selected>publish &mdash; the whole pipeline</option>
+            <option value="render">render &mdash; steps 01-03, no model call at all</option>
+            <option value="extract">extract &mdash; through S2</option>
+            <option value="derive">derive &mdash; through the offset proof</option>
+            <option value="index">index &mdash; written, but not yet queryable</option>
+          </select>
+        </div>
+      </div>
+      <button id="upload">Upload and ingest</button>
+      <div class="note">
+        Steps 01&ndash;03 need no model. From step 04 the release&rsquo;s backend decides: replay is
+        free, <code>gemini</code> bills S1, one S2 per window and one embedding per page. Nothing
+        becomes queryable until the blocking gates pass.
+      </div>
+      <div id="uploadErr" class="err" hidden></div>
+    </section>
+
+    <section>
+      <h2>Run progress</h2>
+      <div id="runIdle" class="note">no run yet &mdash; upload a PDF, or paste a run_id</div>
+      <div id="runBody" hidden>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <span id="runState" class="badge b-dim">&mdash;</span>
+          <code id="runId" style="font-size:12px"></code>
+        </div>
+        <div class="steps" id="runSteps"></div>
+        <dl class="kv" id="runFacts"></dl>
+        <table id="gateTable" hidden>
+          <thead><tr><th>gate</th><th>verdict</th><th>metric</th><th>detail</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <div id="runFail" class="err" hidden></div>
+      </div>
+      <label for="runLookup">poll a run_id</label>
+      <input id="runLookup" class="mono" placeholder="01M2…">
+    </section>
+
+  </div>
+
+  <section>
+    <h2>Search &mdash; <code>lookup</code>, the exact phrase-only surface</h2>
+    <div class="fields">
+      <div>
+        <label for="label">label</label>
+        <input id="label" class="mono" placeholder="1088689">
+      </div>
+      <div>
+        <label for="scopeDoc">scope to a document</label>
+        <select id="scopeDoc"><option value="">every document</option></select>
+      </div>
+      <div class="wide">
+        <label style="display:flex;gap:8px;align-items:center;cursor:pointer">
+          <input type="checkbox" id="unverified" style="width:auto;margin:0">
+          <span>also return <code>vlm_codes</code> matches &mdash; what the model read off the
+            image, always <code>verified: false</code></span>
+        </label>
+      </div>
+    </div>
+    <button id="search">Look up</button>
+    <div id="searchOut"></div>
+    <div id="searchErr" class="err" hidden></div>
+  </section>
+
+  <section>
+    <h2>Check &mdash; <code>verify</code>, per (claim, page)</h2>
+    <div class="fields">
+      <div>
+        <label for="claims">claims <span style="opacity:.6">(comma)</span></label>
+        <input id="claims" class="mono" placeholder="1088689, XX-9999">
+      </div>
+      <div>
+        <label for="pageIds">page_ids <span style="opacity:.6">(comma)</span></label>
+        <input id="pageIds" class="mono" placeholder="SICK-UE410-SD400@1.0#p002">
+      </div>
+    </div>
+    <button id="verify">Verify</button>
+    <div id="verifyOut"></div>
+    <div id="verifyErr" class="err" hidden></div>
+  </section>
+
+</main>
+
+<script>
+const STEPS = ["manifest","probe","render","facts","window","extract","derive","stitch","embed","index","publish"];
+const $ = (id) => document.getElementById(id);
+const token = () => $("token").value.trim();
+
+/* The token lives in this browser only. It is typed by the operator and never rendered back into
+   a response, a log line or a URL (§15.1). localStorage so a reload does not lose it. */
+try { $("token").value = localStorage.getItem("vsir.token") || ""; } catch (e) {}
+$("token").addEventListener("change", () => {
+  try { localStorage.setItem("vsir.token", token()); } catch (e) {}
+  loadCorpus();
+});
+
+async function api(path, options = {}) {
+  const headers = Object.assign({ Authorization: "Bearer " + token() }, options.headers || {});
+  const response = await fetch(path, Object.assign({}, options, { headers }));
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    /* A refusal is typed and says why — surface its own words rather than a status number.
+       `detail` is the field every refusal in this service carries (§7.3, §11.3). */
+    const err = new Error(body.detail || body.error || (response.status + " " + response.statusText));
+    err.code = body.error; err.status = response.status;
+    throw err;
+  }
+  return body;
+}
+
+function badge(text, kind) {
+  return `<span class="badge b-${kind}">${text}</span>`;
+}
+
+/* §7.1's six statuses, each with the agent action it implies. `not_found` is not a failure and is
+   not an empty list: it is an answer, and it is shown as one. */
+const STATUS = {
+  ok:                        ["ok", "found in the extracted text"],
+  not_found:                 ["not_found", "not printed in any searchable page of this scope"],
+  not_searchable:            ["not_searchable", "candidate pages have no text layer — escalate to vision"],
+  out_of_scope:              ["out_of_scope", "nothing in this scope could carry it — re-orient and widen"],
+  found_only_in_superseded:  ["found_only_in_superseded", "present, but only on a retired revision"],
+  error:                     ["error", "retry or report — never treat as an absence"],
+};
+const STATUS_KIND = { ok: "ok", not_found: "dim", not_searchable: "warn",
+                      out_of_scope: "warn", found_only_in_superseded: "warn", error: "bad" };
+
+// ── corpus ────────────────────────────────────────────────────────────────────────────────────
+async function loadCorpus() {
+  if (!token()) { $("corpus").textContent = "enter a token to load"; return; }
+  try {
+    const ready = await (await fetch("/ready")).json();
+    $("release").textContent = `release ${ready.release_id} · ${ready.status}`;
+  } catch (e) { $("release").textContent = "unreachable"; }
+  try {
+    /* There is no `skim_documents` in this release, so the corpus is read from the one place that
+       reports it today: every `lookup` envelope carries `scope_stats` for its effective scope, and
+       an unscoped one covers the whole index. A deliberately absent label keeps it free. */
+    const out = await api("/tools/lookup", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ label: " no-such-label" }),
+    });
+    const s = out.scope_stats || {};
+    const docs = s.docs || [];
+    $("corpus").innerHTML =
+      `<div class="kv" style="margin-bottom:10px">
+         <dt>queryable pages</dt><dd>${s.pages ?? "?"}</dd>
+         <dt>pages with no text layer</dt><dd>${s.pages_no_text ?? "?"}</dd>
+         <dt>documents</dt><dd>${docs.length}</dd>
+       </div>` +
+      (docs.length ? `<table><thead><tr><th>doc_id</th><th>searchable ratio</th></tr></thead><tbody>` +
+        docs.map(d => `<tr><td class="mono">${d.doc_id}</td><td>${
+          (d.searchable_ratio ?? 0).toFixed(3)}${
+          d.searchable_ratio < 1 ? " " + badge("has image-only pages", "warn") : ""}</td></tr>`).join("") +
+        `</tbody></table>` : `<div class="note">nothing ingested yet</div>`);
+
+    const select = $("scopeDoc");
+    const chosen = select.value;
+    select.innerHTML = `<option value="">every document</option>` +
+      docs.map(d => `<option value="${d.doc_id}">${d.doc_id}</option>`).join("");
+    select.value = chosen;
+  } catch (e) {
+    $("corpus").innerHTML = `<span class="err">${e.message}</span>`;
+  }
+}
+$("refresh").addEventListener("click", loadCorpus);
+
+// ── ingest ────────────────────────────────────────────────────────────────────────────────────
+$("upload").addEventListener("click", async () => {
+  const file = $("file").files[0];
+  $("uploadErr").hidden = true;
+  if (!file) { $("uploadErr").textContent = "choose a PDF first"; $("uploadErr").hidden = false; return; }
+
+  const form = new FormData();
+  form.append("file", file);
+  form.append("until", $("until").value);
+  for (const [field, id] of [["doc_id","docId"],["revision","revision"],
+                             ["doc_type","docType"],["subjects","subjects"]]) {
+    const value = $(id).value.trim();
+    if (value) form.append(field, value);
+  }
+  form.append("uploader", "console");
+
+  $("upload").disabled = true;
+  $("upload").textContent = "uploading…";
+  try {
+    const accepted = await api("/documents", { method: "POST", body: form });
+    watch(accepted.run_id);
+  } catch (e) {
+    $("uploadErr").textContent = (e.code ? e.code + " — " : "") + e.message;
+    $("uploadErr").hidden = false;
+  } finally {
+    $("upload").disabled = false;
+    $("upload").textContent = "Upload and ingest";
+  }
+});
+
+let polling = null;
+function watch(runId) {
+  $("runIdle").hidden = true;
+  $("runBody").hidden = false;
+  $("runId").textContent = runId;
+  $("runLookup").value = runId;
+  if (polling) clearInterval(polling);
+  const tick = async () => {
+    let run;
+    try {
+      run = await api("/runs/" + encodeURIComponent(runId));
+    } catch (e) {
+      /* Until step 09 the run has not reached the control plane, so a 404 here means "not yet",
+         not "gone". Anything else is worth showing. */
+      if (e.status === 404) { $("runState").className = "badge b-dim";
+                              $("runState").textContent = "starting"; return; }
+      $("runFail").textContent = e.message; $("runFail").hidden = false; return;
+    }
+    render(run);
+    if (["published", "failed", "blocked"].includes(run.state)) {
+      clearInterval(polling); polling = null;
+      if (run.state === "published") loadCorpus();
+    }
+  };
+  tick();
+  polling = setInterval(tick, 2000);
+}
+$("runLookup").addEventListener("change", () => {
+  const id = $("runLookup").value.trim();
+  if (id) watch(id);
+});
+
+function render(run) {
+  const kind = run.state === "published" ? "ok"
+             : run.state === "failed" ? "bad"
+             : run.state === "blocked" ? "warn" : "dim";
+  $("runState").className = "badge b-" + kind;
+  $("runState").textContent = run.state || "—";
+
+  const at = STEPS.indexOf(run.step);
+  $("runSteps").innerHTML = STEPS.map((step, i) => {
+    const cls = run.state === "published" || (at > -1 && i < at) ? "done"
+              : i === at ? "now" : "";
+    return `<span class="step ${cls}">${String(i + 1).padStart(2, "0")} ${step}</span>`;
+  }).join("");
+
+  const cost = run.cost || {};
+  $("runFacts").innerHTML = `
+    <dt>document</dt><dd class="mono">${run.doc_id || "—"}@${run.revision || "—"}</dd>
+    <dt>windows</dt><dd>${run.windows_done ?? 0} / ${run.windows_total ?? 0}</dd>
+    <dt>pages indexed</dt><dd>${run.pages_indexed ?? 0}${
+      run.page_count ? " of " + run.page_count : ""}</dd>
+    <dt>vlm calls</dt><dd>${cost.vlm_calls ?? 0}</dd>
+    <dt>embeddings</dt><dd>${cost.embeddings_billed ?? 0} billed, ${
+      cost.embeddings_reused ?? 0} reused</dd>
+    <dt>published at</dt><dd>${run.published_at || "—"}</dd>`;
+
+  const gates = run.gate_results || {};
+  const table = $("gateTable");
+  const names = Object.keys(gates);
+  table.hidden = names.length === 0;
+  table.querySelector("tbody").innerHTML = names.map(name => {
+    const g = gates[name];
+    const passed = g.pass;
+    return `<tr><td class="mono">${name}</td>
+      <td>${badge(passed ? "pass" : "fail", passed ? "ok" : "bad")}</td>
+      <td>${g.metric ?? "—"}</td>
+      <td class="note" style="margin:0">${(g.detail || "").slice(0, 150)}</td></tr>`;
+  }).join("");
+
+  if (run.failed) {
+    $("runFail").innerHTML = `<strong>${run.failed.reason}</strong> at step
+      <code>${run.failed.step}</code><br>${run.failed.detail || ""}`;
+    $("runFail").hidden = false;
+  } else {
+    $("runFail").hidden = true;
+  }
+}
+
+// ── lookup ────────────────────────────────────────────────────────────────────────────────────
+$("search").addEventListener("click", async () => {
+  $("searchErr").hidden = true;
+  $("searchOut").innerHTML = "";
+  const label = $("label").value.trim();
+  if (!label) { $("searchErr").textContent = "enter a label"; $("searchErr").hidden = false; return; }
+  const body = { label };
+  if ($("scopeDoc").value) body.scope = { doc_id: $("scopeDoc").value };
+  if ($("unverified").checked) body.include_unverified = true;
+
+  try {
+    const out = await api("/tools/lookup", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    $("searchOut").innerHTML = renderLookup(out);
+  } catch (e) {
+    $("searchErr").textContent = (e.code ? e.code + " — " : "") + e.message;
+    $("searchErr").hidden = false;
+  }
+});
+
+function hitRows(hits, verified) {
+  return hits.map(h => `<tr>
+    <td class="mono">${h.page_id}</td>
+    <td>${h.printed_page_no || "—"}</td>
+    <td>${h.page_kind || "—"}</td>
+    <td>${badge(verified ? "verified" : "read from image", verified ? "ok" : "warn")}</td>
+    <td>${h.text_trust === "ok" ? "ok" : badge(h.text_trust, "warn")}</td>
+    <td class="note" style="margin:0">${h.image ? `<code>${h.image.url}</code>` : "—"}</td>
+  </tr>`).join("");
+}
+
+function renderLookup(out) {
+  const [name, meaning] = STATUS[out.status] || [out.status, ""];
+  const s = out.scope_stats || {};
+  let html = `<div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      ${badge(name, STATUS_KIND[out.status] || "dim")}
+      <span class="note" style="margin:0">${meaning}</span>
+    </div>
+    <div class="kv" style="margin-top:10px">
+      <dt>total</dt><dd>${out.total}${out.capped ? " (capped)" : ""}</dd>
+      <dt>scope</dt><dd class="mono">${JSON.stringify(out.effective_scope)}</dd>
+      <dt>coverage</dt><dd>${s.pages ?? "?"} page(s) in scope, ${
+        s.pages_no_text ?? "?"} with no text layer</dd>
+    </div>`;
+
+  if (out.total > 0) {
+    html += `<table><thead><tr><th>page_id</th><th>printed</th><th>kind</th><th>trust</th>
+      <th>text_trust</th><th>image (endpoint arrives with U018)</th></tr></thead>
+      <tbody>${hitRows(out.hits, true)}</tbody></table>`;
+  }
+
+  if ((out.unverified_hits || []).length) {
+    /* Separate block, never interleaved: `vlm_codes` is what a model read off a raster and is the
+       only recall on an image-only page, but it is not the page's own text (D3, I2). */
+    html += `<div class="unver">
+      ${badge("unverified", "warn")}
+      <span class="note" style="margin:0">matched <code>vlm_codes</code> — the model's reading of
+        the image, not the page's text. Confirm with <code>read</code> when it exists.</span>
+      <table><thead><tr><th>page_id</th><th>printed</th><th>kind</th><th>trust</th>
+        <th>text_trust</th><th>image</th></tr></thead>
+        <tbody>${hitRows(out.unverified_hits, false)}</tbody></table></div>`;
+  }
+
+  if (out.next && out.next.suggest && out.next.suggest.length) {
+    html += `<div class="note">a different move could answer this:
+      <code>${out.next.suggest.join(", ")}</code>${
+      out.next.observed ? ` — tokens that did occur: <code>${
+        out.next.observed.slice(0, 12).join(", ")}</code>` : ""}</div>`;
+  }
+  if (out.status === "not_found" && s.pages_no_text > 0) {
+    html += `<div class="note">${s.pages_no_text} page(s) in this scope have no text layer and
+      could not be searched. Saying &ldquo;not in these documents&rdquo; is not yet honest
+      (&sect;8.5) — that needs <code>fetch</code>/<code>read</code>.</div>`;
+  }
+  return html;
+}
+
+// ── verify ────────────────────────────────────────────────────────────────────────────────────
+$("verify").addEventListener("click", async () => {
+  $("verifyErr").hidden = true;
+  $("verifyOut").innerHTML = "";
+  const claims = $("claims").value.split(",").map(s => s.trim()).filter(Boolean);
+  const pages = $("pageIds").value.split(",").map(s => s.trim()).filter(Boolean);
+  if (!claims.length || !pages.length) {
+    $("verifyErr").textContent = "give at least one claim and one page_id";
+    $("verifyErr").hidden = false; return;
+  }
+  try {
+    const out = await api("/tools/verify", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ claims, page_ids: pages }),
+    });
+    const rows = Object.entries((out.result || {}).claims || {});
+    const kind = { present: "ok", absent: "bad", unverifiable: "warn" };
+    $("verifyOut").innerHTML =
+      `<div class="note" style="margin-top:12px">Every claim <code>absent</code> is still a
+        successful call — the answer is that the page does not print it.</div>
+       <table><thead><tr><th>claim</th><th>verdict</th><th>pages checked</th>
+         <th>present instead</th></tr></thead><tbody>` +
+      rows.map(([claim, v]) => `<tr>
+        <td class="mono">${claim}</td>
+        <td>${badge(v.status, kind[v.status] || "dim")}</td>
+        <td class="mono note" style="margin:0">${(v.page_ids || []).join("<br>")}</td>
+        <td class="mono">${(v.present_instead || []).join(", ") || "—"}${
+          v.reason ? `<div class="note" style="margin:0">${v.reason}</div>` : ""}</td>
+      </tr>`).join("") + `</tbody></table>`;
+  } catch (e) {
+    $("verifyErr").textContent = (e.code ? e.code + " — " : "") + e.message;
+    $("verifyErr").hidden = false;
+  }
+});
+
+loadCorpus();
+</script>
+</body>
+</html>

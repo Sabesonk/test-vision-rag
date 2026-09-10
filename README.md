@@ -68,6 +68,7 @@ production and as the test stack, differing only in environment and ports.
 
 | | |
 |---|---|
+| **Console** | <http://localhost:8055/console> — upload a PDF, watch the run, search |
 | **Swagger UI** | <http://localhost:8055/docs> — paste the token into **Authorize** once |
 | API | <http://localhost:8055> |
 | Qdrant | <http://localhost:6353> |

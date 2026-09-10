@@ -26,6 +26,10 @@ include = ["vsir*"]
 # step 04 with `prompt_unavailable` — invisible to every test, because the stub backend replays a
 # frozen response and never loads a prompt, so only a live call could find it.
 "vsir.vlm" = ["prompts/*.md"]
+# The console is one static page the app serves at `/console` (§7.4). Same reason as the prompts:
+# it is read at runtime from a path resolved off `__file__`, so it has to be in the wheel or the
+# route answers `console_unavailable` in the container and works perfectly in a source tree.
+"vsir.serve" = ["console/*.html"]
 
 [tool.setuptools.dynamic]
 version = { attr = "vsir.__version__" }

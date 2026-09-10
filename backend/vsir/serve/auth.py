@@ -69,11 +69,20 @@ PROBE_PATHS = frozenset({"/health", "/ready", "/metrics"})
 #: is an ordinary authenticated request. Reading the description authorises nothing.
 DOC_PATHS = frozenset({"/openapi.json", "/docs", "/docs/oauth2-redirect", "/redoc"})
 
-#: Every path that does not require a token. Two sets rather than one, because they are free for
-#: different reasons and only one of them may ever grow: a probe is free so an orchestrator can
-#: reach it, a document is free so a human can read it. Anything that returns corpus data, a run,
-#: a raster or prose belongs in neither.
-PUBLIC_PATHS = PROBE_PATHS | DOC_PATHS
+#: The operator console — **one static page and nothing else**. Free for the same reason the
+#: documents are: it is markup, it contains no corpus data, no run, no page and no token, and a
+#: browser cannot attach an `Authorization` header to a plain navigation. The operator types their
+#: own token into it and every call it makes is an ordinary authenticated request, so serving the
+#: page authorises nothing. It is `/console`, not `/`, because a root route is how a service
+#: acquires an untyped catch-all.
+CONSOLE_PATHS = frozenset({"/console"})
+
+#: Every path that does not require a token. Three sets rather than one, because they are free for
+#: different reasons and each may only grow for its own: a probe is free so an orchestrator can
+#: reach it, a document so a human can read the interface, the console so a browser can load the
+#: page that then asks for a credential. **Anything that returns corpus data, a run, a raster or
+#: prose belongs in none of them.**
+PUBLIC_PATHS = PROBE_PATHS | DOC_PATHS | CONSOLE_PATHS
 
 #: Where the authenticated :class:`Identity` is parked on the ASGI scope. A private key rather than
 #: ``scope["state"]`` so it cannot collide with another middleware's, and so nothing reads it by

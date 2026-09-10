@@ -58,13 +58,15 @@ from __future__ import annotations
 import os
 import uuid
 from contextlib import asynccontextmanager
+from pathlib import Path
 from dataclasses import dataclass
 from typing import (Any, AsyncIterator, Awaitable, Callable, Iterator, Literal, Mapping,
                     MutableMapping, Sequence)
 
 from fastapi import FastAPI, File, Form, Request, Response, UploadFile
 from fastapi.openapi.utils import get_openapi
-from fastapi.responses import JSONResponse, PlainTextResponse, StreamingResponse
+from fastapi.responses import (HTMLResponse, JSONResponse, PlainTextResponse,
+                               StreamingResponse)
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from qdrant_client import QdrantClient
 from qdrant_client.http.exceptions import ResponseHandlingException, UnexpectedResponse
@@ -123,6 +125,12 @@ STORE_FAILURES: tuple[type[BaseException], ...] = (
 VLM_UNAVAILABLE: tuple[type[BaseException], ...] = (VlmUnavailable, VlmCallFailed)
 
 _log = vsir_logging.get_logger(__name__)
+
+#: The console page, resolved from `__file__` so it is found in a wheel as well as in a tree. It
+#: ships because `[tool.setuptools.package-data]` names it; `test_release_artefacts.py` fails if a
+#: runtime data file under `vsir/` is not declared, which is the check that would have caught the
+#: prompts going missing from the image.
+CONSOLE_PAGE = Path(__file__).resolve().parent / "console" / "index.html"
 
 
 class HealthResponse(BaseModel):
@@ -704,6 +712,30 @@ def create_app(env: Mapping[str, str] | None = None) -> FastAPI:
     from vsir.mcp import server as mcp_server
 
     app.state.mcp_paths = mcp_server.mount(app)
+
+    @app.get("/console", response_class=HTMLResponse, tags=["console"], responses={
+        404: {"description": "this release ships no console page"},
+    })
+    async def console() -> Any:
+        """The operator console for what this release serves — one static page, no build step.
+
+        **Not §13 M7's console.** That is a React + Vite app with a page viewer, region zoom and the
+        agent's move-by-move trace, and it needs `fetch`, `read` and the runner to exist. This is
+        one file served same-origin, so there is no CORS boundary and no second container to keep in
+        step with the API. M7 replaces it rather than growing out of it.
+
+        Served by the app rather than by a sidecar for the same reason `/docs` is: the surface an
+        operator actually uses has to be the surface that shipped. A page served from somewhere else
+        can disagree with the release it is pointed at, and the first thing that disagreement costs
+        is trust in what the page says.
+        """
+        if not CONSOLE_PAGE.is_file():                    # pragma: no cover — packaging, not logic
+            return JSONResponse(status_code=404, content={
+                "error": "console_unavailable",
+                "detail": f"{CONSOLE_PAGE.name} is missing from the release — the package data "
+                          f"declaration in pyproject.toml is what ships it",
+            })
+        return HTMLResponse(CONSOLE_PAGE.read_text(encoding="utf-8"))
 
     @app.get("/health", response_model=HealthResponse, tags=["probes"])
     async def health() -> HealthResponse:
