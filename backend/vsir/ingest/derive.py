@@ -18,9 +18,22 @@ runs both:
    printed on **this** page. If it is printed on a neighbour's page instead, that is the
    off-by-one signature: raise :class:`OffsetError` and bisect (§6.2's fourth trigger).
 
-One page is enough to raise. A genuine shift moves every page of the window, so the first
-observation is as good as the twentieth — and the asymmetry is the argument: a false positive costs
-one re-billed window, a missed shift costs a document of confidently wrong citations.
+**One observation is no longer enough to raise (fixes/002).** The asymmetry §6.4 assumed — *"a
+false positive costs one re-billed window"* — does not hold: :func:`_neighbours_printing` reads the
+**whole document**, not the window, so the predicate is invariant under bisection and the repair
+reaches the same verdict all the way down to ``window_unsplittable``. Since ``offset_check`` is
+blocking and deliberately not overridable, one bare numeral cost the document plus roughly eight
+paid windows on the way down. Measured over the real corpus, a single witness fires on 22 pages
+across 11 of the 98 documents that declare ``/PageLabels``, and every one is a false positive of
+the form ``label '1' printed on [2], not on p1``.
+
+What replaces it is §6.4's own argument, stated exactly. *"A genuine shift moves every page of the
+window"* — so under a real shift **no page can confirm its own label**, and a page that does
+confirm its own label is direct evidence of alignment that one stray numeral must not outvote.
+:func:`check_offset` therefore refuses on :data:`OFFSET_WITNESSES` witnesses, **or** on a single
+witness when nothing in the window confirms itself. That keeps every false positive out and keeps
+sensitivity even where one page of the window carries the only legible label — the legacy
+`TC1E-SF` window, whose other 29 labels are printed nowhere in the projected text.
 
 **The gate is gone (§2.4, §2.5 B).** `impl` classified every identifier against nine regexes, kept
 the ones a curated allowlist backed, and wrote the rest to `withheld.jsonl`. None of that is here:
@@ -41,7 +54,7 @@ the model never writes `text`.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Callable, Iterable, Mapping, Sequence
+from typing import Any, Callable, Iterable, Mapping, Sequence
 
 from vsir import logging as vsir_logging
 from vsir.config import DPI_ANSWER
@@ -59,6 +72,18 @@ _log = vsir_logging.get_logger(__name__)
 #: The §6.2 trigger an offset failure bisects under. Named here so the reason a window was split
 #: is the same string in the log, the run record and `extract.py`'s own bisection path.
 OFFSET = "offset"
+
+#: How many pages of one window must show the off-by-one signature for §6.4 check (2) to raise on
+#: witnesses alone (fixes/002). Two, because a false positive is isolated by nature: a lone
+#: witness is a bare numeral that happens to occur on a neighbour's sheet.
+#:
+#: This is the *sufficient* count, not the only route to a refusal — a single witness still
+#: refuses when no page of the window confirms its own label, which is what a real shift looks
+#: like at any window size. See :func:`check_offset`.
+#:
+#: Not configurable: a threshold an operator can lower to 1 is the bug this closed, and one they
+#: can raise is a shift the pipeline agrees to miss.
+OFFSET_WITNESSES = 2
 
 #: The disclosure flags derivation can put on a page. A closed list, because a flag nothing sets
 #: and a flag nothing reads are the same bug and only one of them is visible.
@@ -217,6 +242,34 @@ def check_offset(extraction: WindowExtraction, probed: Probe) -> None:
 
     Structural first, because it is free and because an index set that is not ``1..N`` makes the
     absolute page of every form meaningless — there would be nothing sound to run check (2) on.
+
+    Check (2) then weighs **every** page of the window before deciding, rather than raising on the
+    first observation (fixes/002). Each page with a model-read label and a text layer falls into
+    one of three states, and only two of them are evidence:
+
+    * **confirms itself** — the label is printed on this page. Direct evidence the window is
+      *aligned*.
+    * **witness** — the label is printed on a neighbour and not here. Evidence of a shift.
+    * **printed nowhere** — a misread, and evidence of nothing either way. It is
+      ``test_a_label_printed_nowhere_is_a_misread_not_a_shift``'s case, and it must not dilute
+      either side: on the legacy `TC1E-SF` window, 29 of 30 labels are printed nowhere in the
+      projected text, so counting them as agreement would silence the one page that can see.
+
+    A window is refused when the witnesses reach :data:`OFFSET_WITNESSES`, **or** when there is at
+    least one witness and *no page confirms itself*. The second clause is §6.4's own argument
+    stated exactly — *"a genuine shift moves every page of the window"*, so under a real shift
+    nothing can confirm its own label — and it is what keeps sensitivity where only one page of
+    the window carries a legible label. Without it, bisecting a genuinely shifted window would
+    terminate by **accepting** its single pages instead of reaching ``window_unsplittable``, the
+    opposite of §6.2's terminus.
+
+    Conversely a page that does confirm its own label is direct evidence of alignment, and one
+    stray numeral cannot outvote it: that is the shape of all 22 false positives fixes/002
+    measured, and of `DS-5549-EATON`'s ``3 / 3`` tokenising to ``[3, 3]`` on its neighbour.
+
+    A tolerated witness is logged rather than swallowed — it is the only trace that the check saw
+    something — and the line carries the fields the refusal would have, so a corpus sweep can
+    count them without re-running the check.
     """
     window = extraction.window
     if problem := page_index_problem(extraction.out, window):
@@ -225,20 +278,47 @@ def check_offset(extraction: WindowExtraction, probed: Probe) -> None:
                           window=[window.start, window.end], check="structural",
                           cache_key=extraction.key, reason=OFFSET)
 
+    witnesses: list[dict[str, Any]] = []
+    confirms_self = 0
     for form in extraction.out.pages:
         page_no = window.absolute(form.page_index)
-        elsewhere = offset_observation(form, page_no, probed)
-        if elsewhere:
-            raise OffsetError(
-                f"window {window.start}-{window.end}: the model read page label "
-                f"\"{form.printed_page_no}\" on its page_index {form.page_index} — PDF page "
-                f"{page_no} — but that label is printed on page(s) {list(elsewhere)}, not on "
-                f"{page_no}. That is the off-by-one signature (§6.4 check 2): bisect and re-bill, "
-                f"never pad and never guess the offset",
-                window=[window.start, window.end], check="independent_observation",
-                page_no=page_no, page_index=form.page_index, label=form.printed_page_no,
-                printed_on=list(elsewhere), cache_key=extraction.key, reason=OFFSET,
-            )
+        label = form.printed_page_no.strip()
+        page = probed.page(page_no)
+        if not label or not page.has_text:
+            continue
+        if printed_in(tok(page.text), label):
+            confirms_self += 1
+            continue
+        if elsewhere := _neighbours_printing(label, page_no, probed):
+            witnesses.append({"page_no": page_no, "page_index": form.page_index,
+                              "label": form.printed_page_no, "printed_on": list(elsewhere)})
+
+    if not witnesses:
+        return
+
+    shifted = len(witnesses) >= OFFSET_WITNESSES or confirms_self == 0
+    if not shifted:
+        lone = witnesses[0]
+        _log.info("offset_singleton", window=[window.start, window.end],
+                  check="independent_observation", witnesses=len(witnesses),
+                  confirms_self=confirms_self, required=OFFSET_WITNESSES,
+                  cache_key=extraction.key, **lone)
+        return
+
+    first = witnesses[0]
+    raise OffsetError(
+        f"window {window.start}-{window.end}: {len(witnesses)} of its pages read a label that is "
+        f"printed on a neighbour instead — the model read page label "
+        f"\"{first['label']}\" on its page_index {first['page_index']} — PDF page "
+        f"{first['page_no']} — but that label is printed on page(s) {first['printed_on']}, not on "
+        f"{first['page_no']}. That is the off-by-one signature (§6.4 check 2): bisect and re-bill, "
+        f"never pad and never guess the offset",
+        window=[window.start, window.end], check="independent_observation",
+        page_no=first["page_no"], page_index=first["page_index"], label=first["label"],
+        printed_on=first["printed_on"], witnesses=len(witnesses),
+        confirms_self=confirms_self, witness_pages=[w["page_no"] for w in witnesses],
+        cache_key=extraction.key, reason=OFFSET,
+    )
 
 
 # ── §6.5 — printed labels ───────────────────────────────────────────────────────────────────────
@@ -281,7 +361,15 @@ def attribute_label(model_label: str, file_label: str, text: str, *, has_text: b
     # The file's own label table is evidence about this page in the same way its text is — a
     # mechanical readout, not a reading. The model's label alone, on a page whose text neither
     # confirms nor contradicts it, is a reading and says so.
-    verified = printed_in(tokens, only) or only == _collapse(file_label)
+    #
+    # But `/PageLabels` is a readout of the **container**, and writers emit a plain 1..N table
+    # regardless of what is printed on the sheet — so where the page has a text layer that does
+    # not print the label, the page is the better witness and this is not verification
+    # (fixes/003). Without the `has_text` guard the two halves of §6.4/§6.5 contradict each other
+    # on the same evidence: `check_offset` calls a label absent from this page's text a fatal
+    # off-by-one, while this stamped ``verified: true`` on it. On the 22 pages fixes/002 measured,
+    # both fired at once.
+    verified = printed_in(tokens, only) or (only == _collapse(file_label) and not has_text)
     return Label(printed=only, verified=verified)
 
 
