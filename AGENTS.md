@@ -138,6 +138,21 @@ backend/.venv/bin/vsir publish <run_id> --override grounded_rate --reason "<why>
 (R4). `window_coverage` and `offset_check` refuse an override by name. `--reason` is required and
 is recorded in the run record and stamped on every page as the `published_with_override` flag.
 
+The M4 demo. One query narrowed to page rows carrying only `ImageRef`s, the reference dereferenced
+to bytes, `fetch` with and without the pixels, a `region` crop at 400 dpi, every §7.3 bound as a
+typed 400, and the raster cache proved evictable and byte-identical when cold:
+
+```bash
+bash scripts/stack.sh up                  # it runs over what this release has PUBLISHED
+bash scripts/stack.sh vsir demo narrow    # a one-off container of the same image
+backend/.venv/bin/vsir demo narrow --query "guard door interlocks" --limit 5
+```
+
+Unlike `demo exact --synthetic` it **seeds nothing**: `fetch` needs the source document reachable
+through the store, so a demo that built its own corpus would be proving that a directory it had
+just written to could be read back. With nothing published it names the command that ingests one
+rather than failing as an empty result.
+
 ### The document store (U029)
 
 Step 02 deposits the source PDF as `<doc_id>@<revision>.pdf` under **`VSIR_DOC_STORE`** — a mounted
@@ -336,14 +351,16 @@ curl -s -H "Authorization: Bearer $TOKEN" localhost:8000/runs/<run_id>/export/ob
 its stdout *is* the event stream and the contract there is one JSON object per line (§15 XI).
 
 **Those three probes are the entire unauthenticated surface.** Auth is middleware and default
-deny, so a path that does not exist yet — `GET /pages/{page_id}/image`, `POST /ask` — is already
-refused without a token; a route added later is protected before it is written. The identity in
+deny, so a path that does not exist yet — `POST /ask` — is already refused without a token; a
+route added later is protected before it is written. `GET /pages/{page_id}/image` was that example
+until U018 and is now a real route, protected by the middleware that already refused it. The identity in
 the audit line and the budget ledger is `caller-<sha256(token)[:12]>`, never the token itself, so
 a rotated credential is a new caller id and no log line ever held the secret (§15.1).
 
-`POST /tools/{tool_name}` dispatches through the release's tool table — `skim_pages`, `lookup`,
-`resolve` and `verify` today. A name that is not in it — `read` and `fetch` until U020/U018 — is a
-typed `404` listing what *is* served, never an empty result. One append-only audit line goes to stdout per `read` and per `fetch` and none for a free
+`POST /tools/{tool_name}` dispatches through the release's tool table — `fetch`, `lookup`,
+`resolve`, `skim_pages` and `verify` today. A name that is not in it — `read`, `skim_documents`
+and `skim_sections` until U019/U020 — is a typed `404` listing what *is* served, never an empty
+result. One append-only audit line goes to stdout per `read` and per `fetch` and none for a free
 tool; **cost is in that line and never in a response body**, where the caller gets the single
 integer `reads_remaining` (§7.4). The per-caller quota is `VSIR_READ_QUOTA` reads per UTC day,
 held as a `kind: budget` point in `vsir_runs` so N replicas enforce one ceiling, and exhausting it
@@ -368,6 +385,10 @@ backend/.venv/bin/vsir lookup "SF 1.1A"                      # JUMP, §7.2.2
 backend/.venv/bin/vsir lookup "alarm 152" --json | jq        # the envelope, verbatim
 backend/.venv/bin/vsir lookup "SF 9.9" --scope page_no=5 --include-unverified
 backend/.venv/bin/vsir verify --claims K73 --pages "SYN-M1@1.0#p006"     # CHECK, §7.2.4
+# LOOK (§7.2.5) — needs a document store, so an INGESTED corpus, not the M1 one
+backend/.venv/bin/vsir fetch --pages "synthetic-3window@1.0#p019,synthetic-3window@1.0#p021"
+backend/.venv/bin/vsir fetch --pages "SYN-M1@1.0#p001" --include text,summary   # no store needed
+backend/.venv/bin/vsir fetch --pages "synthetic-3window@1.0#p019" --dpi 400 --region 0,0,1,0.55
 
 backend/.venv/bin/vsir mcp --stdio     # one client on a pipe; stdout is JSON-RPC, events on stderr
 backend/.venv/bin/vsir mcp --sse       # == `vsir serve`: the SSE transport binds $VSIR_PORT
@@ -388,6 +409,20 @@ rows of a ten-row skim are the three rows of a three-row skim.
 `resolve` takes the label **as printed** — `"8"`, or the citation `"Page 8 of 55"`, whose
 digit-bearing words are probed as labels in their own right when the citation as typed matches
 nothing. An ambiguous label returns **every** candidate (F5); narrow with `--doc-id`.
+
+**`fetch` and `GET /pages/{page_id}/image` need `VSIR_DOC_STORE` to hold the source PDF.** Rasters
+are never persisted (§4.2) — they are re-rendered on demand into an in-process LRU — so the bytes
+have to come from the document store U029 writes at ingest step 02. A page that is indexed but
+whose document is not on that volume is a **503 `document_not_stored`**, not a 404: the citation
+is fine and a volume is missing. Dropping `"image"` from `--include` needs no store at all and
+renders nothing, which is the cheap text/summary read.
+
+The dpi tiers are `{36, 72, 150, 220, 300, 400}` and anything **above 220 requires `--region`** —
+a full page at 400 dpi is 15 megapixels. `--region` is `x0,y0,x1,y1` normalised to the page.
+Every §7.3 bound is a typed 400 naming what it broke (`fetch_budget_exceeded` carries `bound`,
+`limit` and `requested`), never a clamp and never a truncated page list. The URL a row hands back
+percent-encodes the `#` of a `page_id` — `/pages/SYN-M1@1.0%23p001/image?dpi=150` — because a bare
+`#` is a fragment delimiter and the server would only ever see `/pages/SYN-M1@1.0`.
 
 **A typed absence exits 0.** `vsir lookup "alarm 152"` searched, found nothing and said so
 correctly — that is a successful call (§7.1), which is what lets the §4.4 demo chain with `&&`.
