@@ -31,6 +31,9 @@ MAX_FETCH_MEGAPIXELS = 12.0
 #: draft's codes against the ≤ 3 pages a `read` saw (I8, §8.4), which is tens of pairs, not
 #: hundreds. The bound exists so a caller cannot turn one free call into ten thousand counts.
 MAX_VERIFY_PAIRS = 200
+#: §7.2.1 — `skim_pages` returns ten rows by default and twenty-five at most. A triage list an
+#: agent chooses from, not a page of a set: see :func:`validate_skim_limit`.
+MAX_SKIM_LIMIT = 25
 
 
 class ToolError(Exception):
@@ -149,6 +152,23 @@ def validate_cap(cap: int) -> None:
             "cap_out_of_range",
             f"cap is the size of the page of the set to return and is at least 1, got {cap}",
             minimum=1, requested=cap,
+        )
+
+
+def validate_skim_limit(limit: int) -> None:
+    """`skim_pages` returns ten rows by default and twenty-five at most (§7.2.1).
+
+    A **triage** bound rather than a money one, and that is exactly why it is refused instead of
+    clamped. The rung's job is to hand an agent a short list it can choose from; a caller asking
+    for a hundred rows has misunderstood the move it is making, and silently returning twenty-five
+    of them would let it believe it had seen the hundred. `lookup`'s `cap` has no upper bound for
+    the opposite reason — there it bounds a page of a **set**, and §12.3 asks for `cap=200`.
+    """
+    if limit < 1 or limit > MAX_SKIM_LIMIT:
+        raise ToolError(
+            "limit_out_of_range",
+            f"skim_pages returns between 1 and {MAX_SKIM_LIMIT} rows, got {limit}",
+            minimum=1, limit=MAX_SKIM_LIMIT, requested=limit,
         )
 
 

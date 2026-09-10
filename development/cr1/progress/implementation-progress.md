@@ -7,10 +7,10 @@
 
 | | |
 |---|---|
-| **Complete** | 18 / 30 units (60%) — 15 of the planned 26, plus U027, U028 and U030 added after the plan was written (plan §4b) |
-| **Current milestone** | **M3 closed and tagged `cr1-m3`** (3 / 3 units); M0, M1 and M2a closed and tagged before it, M2b's non-paid half shipped. Next milestone: **M4** — `skim_pages`, `fetch`, `resolve` |
-| **Next unit** | U017 — `skim_pages`, deterministic fusion, image queries, and `resolve` (**Spend: none**, M4, P0-Critical). The page rung of the narrowing ladder with §7.2.1's score-free ordering, `exclude`, the `next` affordances and D12's image queries, plus `resolve` with `interpolated`. It is the first unit that reads a *vector*, so the three fused surfaces U010 wrote become load-bearing — today they are written and never queried. **Unblocked, and needs no new storage** |
-| **Then** | **U029 — the document store**, which is new and **must land before U018** (plan §4b). Rasters are re-rendered on demand by design, and nothing keeps the source PDF to render them from: U018's own dependency list asserted *"the source PDF must be reachable by the serving process"* with no mechanism behind it. `page_id → bytes` is its one job. Until it exists, `fetch`, `read`, `GET /pages/{id}/image` and correction **Loop 5** all have nowhere to go |
+| **Complete** | 19 / 31 units (61%) — 16 of the planned 26, plus U027, U028 and U030 added after the plan was written (plan §4b) |
+| **Current milestone** | **M4 — in progress**: `skim_pages` and `resolve` shipped (U017); `fetch` and the page-image route remain, behind U029. M0, M1, M2a and M3 closed and tagged, M2b's non-paid half shipped |
+| **Next unit** | **U029 — the document store (`page_id` → bytes)**, new and not in the original 26 (plan §4b). Rasters are re-rendered on demand by design and nothing keeps the source PDF to render them from, so `fetch`, `read`, `GET /pages/{id}/image` and correction **Loop 5** all have nowhere to go until it exists. **U018 cannot be built without it** |
+| **Then** | **U018** — `GET /pages/{page_id}/image`, the raster cache and `fetch`, which closes M4. It also owns the percent-encoding of the `#` in a `page_id`: `image.url` is emitted today and is not dereferenceable until that route and that encoding land together |
 | **Read first** | **Plan §4c — six open defects found by running the system.** None breaks a build; all of them mislead somebody who trusts the output. P1 (a live run records no cost) and P2 (no VLM cache store, so a re-ingest re-bills) both land on U013 |
 | **Blocked** | **U013** — the paid re-bill only, and now on **OQ-1 alone**: `data/source/TC1E-SF.pdf` is still not present. **OQ-2 is closed** — a key is configured and was exercised live on 2026-09-10, ingesting a real 4-page datasheet to `published` through `POST /documents`. The ladder is no longer a blocker either: the shipped `plan()` refused the 55-page pilot at **step 05**, one step before the spend everyone thought it was waiting on a credential for, and `fixes/001` now folds it to `[[1, 30], [31, 55]]` — byte-for-byte what its own acceptance table declared. Nothing downstream is blocked (§17) |
 
@@ -98,7 +98,7 @@ Two things a later unit should not have to rediscover:
       contradicted the page's own text. See `fixes/README.md` for the two measured deviations
 
 ### M4 — `skim_pages`, `fetch`, `resolve` (spend: none)
-- [ ] U017 `skim_pages`, deterministic fusion, image queries, and `resolve`
+- [x] U017 `skim_pages`, deterministic fusion, image queries, and `resolve`
 - [ ] **U029 The document store — `page_id` → bytes** — new (plan §4b); **U018 cannot be built without it**
 - [ ] U018 The page-image endpoint, the raster cache, and `fetch` — **depends on U029**
 
@@ -2928,3 +2928,200 @@ earlier milestone. What is new is that the proof is a command rather than three 
   both are recorded in the gate entry below: `tests/api/test_one_shot_parity.py` closes §7.5's
   third surface, and `--json` moved its event stream to stderr so AGENTS.md's `| jq` promise is
   true. `test_conformance.py` gained a positive control for `scan_under`.
+
+---
+
+### U017 — `skim_pages`, deterministic fusion, image queries, and `resolve`
+
+**Milestone:** M4 · **Spend:** none · **Status:** `[x]` Complete · **Completed:** 2026-09-10
+
+The page rung of the narrowing ladder, and the first thing in this system that reads a **vector**.
+U010 has been writing three surfaces per page since M2a and nothing had ever queried them; this
+unit makes them load-bearing. `resolve` lands beside it because it is the other free move that
+turns something a *person* reads — a printed page label — into a `page_id`.
+
+**Demo output** — the plan's demo command, adapted to the corpus that exists. `TC1E-SF` is still
+absent (OQ-1), so the demo runs against the 42-page generated corpus that `bash scripts/stack.sh up`
+ingests through the real pipeline. Replayed, free, and it is the same code path `POST /tools/skim_pages`
+runs (§7.5, asserted byte-for-byte in `test_ordering_determinism.py`).
+
+```
+$ vsir skim pages "emergency stop reset" --scope doc_id=synthetic-3window --limit 3
+
+status       ok · total 42 · capped true · weak true · needs_scope true
+scope        {'doc_id': 'synthetic-3window', 'is_current': True} · searched 42 page(s), 2 with no text layer
+
+rank  page_id                       printed   why                   grounded  trust       image
+1     synthetic-3window@1.0#p031    29        dense,lexical         1.00      ok          /pages/synthetic-3window@1.0#p031/image?dpi=150
+      Page 29 covers light curtain muting stage 29 within the light curtain muting section. It names K [en]
+      next: expand {'section_id': ['synthetic-3window@1.0#s007']} · neighbours ['synthetic-3window@1.0#p030', 'synthetic-3window@1.0#p032'] · references []
+2     synthetic-3window@1.0#p013    11        dense,lexical         1.00      ok          /pages/synthetic-3window@1.0#p013/image?dpi=150
+3     synthetic-3window@1.0#p036    34        dense,lexical         1.00      ok          /pages/synthetic-3window@1.0#p036/image?dpi=150
+
+P2           no row carries page text or image bytes: confirmed
+reads_left   50 · release dev-0 · schema 1
+
+$ vsir skim pages "emergency stop reset" --scope doc_id=synthetic-3window --limit 3 --json   # again
+rows   ['synthetic-3window@1.0#p031', 'synthetic-3window@1.0#p013', 'synthetic-3window@1.0#p036']
+why    [['dense', 'lexical'], ['dense', 'lexical'], ['dense', 'lexical']]
+
+$ vsir skim pages --image /tmp/panel.png --scope doc_id=synthetic-3window --limit 3   # D12
+rank  page_id                       printed   why                   grounded  trust       image
+1     synthetic-3window@1.0#p019    17        dense                 1.00      ok          /pages/…/image?dpi=150
+2     synthetic-3window@1.0#p040    38        dense                 1.00      ok          /pages/…/image?dpi=150
+3     synthetic-3window@1.0#p031    29        dense                 1.00      ok          /pages/…/image?dpi=150
+
+$ vsir skim pages "wiring K131" --scope doc_id=synthetic-3window --limit 3   # the code is a filter
+status       ok · total 1 · capped false · weak false · needs_scope false
+1     synthetic-3window@1.0#p031    29        dense,lexical         1.00      ok          /pages/…/image?dpi=150
+
+$ vsir resolve "Page 8 of 55" --doc-id synthetic-3window
+status       ok · candidates 1 · total 1 · capped false
+  CANDIDATE  synthetic-3window@1.0#p010 · printed 8 · label_verified true · interpolated false · image /pages/…
+
+$ vsir resolve "40"                                        # unscoped: two binders number a page 40
+status       ok · candidates 2 · total 80 · capped false
+  CANDIDATE  synthetic-3window@1.0#p042 · printed 40 · label_verified true · interpolated false
+  CANDIDATE  via-docker@3.0#p042 · printed 40 · label_verified true · interpolated false
+             ambiguous — every candidate is returned, never a pick (F5)
+
+$ vsir resolve "999"
+status       not_found · candidates 0 · total 0 · capped false
+next         suggest ['skim_pages', 'lookup']
+```
+
+And over HTTP, through the same dispatcher (`POST /tools/skim_pages`, bearer-authenticated):
+
+```json
+{"status": "ok",
+ "hits": [{"page_id": "synthetic-3window@1.0#p031", "printed_page_no": "29",
+           "summary": "Page 29 covers light curtain muting stage 29 …", "summary_lang": "en",
+           "why": ["dense", "lexical"], "rank": 1, "grounded_rate": 1.0, "text_trust": "ok",
+           "image": {"url": "/pages/synthetic-3window@1.0#p031/image?dpi=150",
+                     "thumb_url": "/pages/synthetic-3window@1.0#p031/image?dpi=72",
+                     "dpi": 150, "width": 0, "height": 0},
+           "next": {"expand": {"section_id": ["synthetic-3window@1.0#s007"]},
+                    "neighbours": ["…#p030", "…#p032"], "references": []}}]}
+```
+
+**Tests** — L0/L1 `1155 passed`; L2/L3 `1158 passed, 13 skipped`. New: `test_skim_pages.py` (25),
+`test_ordering_determinism.py` (8), `test_image_query.py` (13), `test_resolve.py` (28),
+`test_stateless_scope.py` (11).
+
+**Invariants / failure rows closed**
+
+- **F5 (M4 half)** — an ambiguous printed label returns **every** candidate, never a silent pick:
+  `test_an_ambiguous_label_returns_every_candidate`, and the citation case beside it.
+- **F8 (stateless half)** — no server session; `effective_scope` echoed on every response, and a
+  narrow call does not narrow the next one: `test_stateless_scope.py`.
+- **D2** — three surfaces fused by RRF at `k=60`, weights `1.0 / 1.0 / 0.4`, ranks only. The
+  arithmetic is checked against a hand-computed `Σ w/(k+rank)` in
+  `test_the_fused_order_matches_the_hand_computed_sum`.
+- **D12** — image queries: one `types.Content`, **no instruction prefix** when multimodal (asserted
+  on the SDK request payload), an image-only query runs the dense branch alone (asserted with a
+  call spy on the store, not just on the rows), and no image parameter exists on `lookup` or
+  `verify`.
+- **P2** — no page text and no `bytes_b64` in a triage row, asserted over the serialised response.
+  Made structural as well: `ROW_PAYLOAD` omits `text`, so the page's text is never loaded into the
+  serving process at all.
+- **E9** — `resolve` never scrolls; a call spy asserts `facet` and `query_points` and the absence of
+  `scroll`.
+
+**Decisions worth keeping**
+
+- **`decompose` splits on §6.8's code-like rule** — a word containing a digit — imported from
+  `core/observed_tokens.py` rather than restated, so there is one definition of *code-like*. It is
+  safe in this direction for a different reason than it is for `present_instead`: a word wrongly
+  called an identifier goes to the **exact** surface, which is stricter, not looser, so the failure
+  is a narrower answer that says so (`total`, `weak`) and never a wrong page. Adjacent words are
+  **not** joined (§5.6, §2.4).
+- **The identifiers are a hard filter, not a fourth branch.** §7.2.1 says the code goes to the
+  phrase filter; a fourth surface would need a fourth weight, which is a pin. When the narrowing
+  empties the rung the response is `not_found` with `next.suggest: ["lookup"]` — the move that
+  answers *"is this code printed anywhere at all"*.
+- **A branch runs when it has an input.** One rule, applied twice: an image-only query skips the two
+  sparse branches (D12 rule 2), and a query that decomposes to identifiers only (`"K158"`) skips the
+  dense branch, because embedding the code after splitting it out would be the blurring rule 1
+  exists to prevent. `why` states which branches ran, so neither is silent.
+- **`BRANCH_DEPTH` is a constant (50), not a multiple of `limit`.** Found by running the demo: with
+  a depth of `5 × limit`, `limit=3` read a different candidate pool from `limit=10` and fused it
+  into a different order, so the first three rows of a ten-row skim were **not** the three rows of a
+  three-row skim. An agent narrowing its list would have seen the ranking move under it for no
+  observable reason. `test_a_shorter_limit_is_the_prefix_of_a_longer_one` guards it.
+- **`total` on a skim is the size of the set the branches were allowed to rank** — the scope,
+  narrowed by the identifiers and by `exclude` — and not `len(hits)`. That is what keeps
+  `weak`/`needs_scope` meaningful on a rung where the dense branch always has something to return:
+  an unscoped skim of 42 pages says `needs_scope`, and `"wiring K131"` inside one document does not.
+- **`resolve` pages through the matched set rather than looking at a window of it.** Also found by
+  running the demo: `resolve("40")` returned `not_found` with `total: 80, capped: true`, because
+  the page whose *footer* prints 40 was outside the first 64 candidates sorted by `page_no` — E9's
+  injury in a new costume. It now scans up to 8 × 64 candidates, stops as soon as the counted set is
+  exhausted, and reports `capped` when the budget binds instead of reporting an absence it did not
+  establish. `test_a_confirmation_past_the_first_window_is_still_found` builds a 130-page document
+  for it.
+- **A citation is not a label.** `resolve("Page 8 of 55")` first asks the index for the citation as
+  typed (which no footer prints), then for the digit-bearing words of it — `8`, then `55` — always
+  confirming a candidate against the **whole** citation. That the second probe can find the page
+  numbered 55 is not a defect to tune away: the citation really is ambiguous evidence for it, and
+  F5's answer to ambiguity is every candidate.
+- **U009's recorded follow-up is closed: `resolve` reads `content.label_candidates` as well as
+  `printed_page_no`.** §6.5 leaves `printed_page_no` **empty** where two readings cannot be
+  arbitrated, so a resolver that read only that field would make exactly the pages a citation is
+  most likely to be wrong about the pages no citation could open. A page answers to every reading of
+  itself (`labels_of`), and `printed_page_no` is still echoed as stored — writing the candidate that
+  matched would claim the page prints a reading it could not arbitrate. **The other half of that
+  ambiguity is a documented limit**: `attribute_label` also produces candidates for a page that
+  prints *neither* reading, and no phrase query can reach that page by either — a typed absence with
+  `next.suggest`, asserted rather than left to be discovered.
+- **The bracket, at query time.** A phrase query can only find a label a page *prints*, so it is
+  structurally blind to an `interpolated` label — which is exactly what §7.2.3 asks `resolve` to
+  disclose. When nothing is confirmed and the label is a plain integer, §6.5's own rule runs: if
+  *n−1* and *n+1* are printed on two pages of one document two apart, the page between them comes
+  back `interpolated: true, label_verified: false`. Never from one neighbour and a delta — §6.5 is
+  explicit that no `printed + offset = pdf` formula exists in this corpus.
+- **`next.references` ships empty, deliberately.** §7.2.1 declares it as *"[printed labels]"* and
+  there is no field on the §5.3 record to read them from: `refs[]` was measured at zero reads in
+  `impl` and §2.5 B struck it. The only alternative is a cross-reference grammar scraped out of page
+  text at query time, which is what §5.2 refuses and what F5 is about. The field stays in the
+  contract; a caller that read a label itself can still `resolve` it. **Open for U019/U023 if a
+  source for it is ever agreed.**
+- **Four helpers in `serve/tools/lookup.py` were made public** (`scope_filter`, `count_exact`,
+  `scope_stats`, `absence`) so `skim` and `resolve` reuse them rather than re-deriving `scope_stats`
+  and the four absences. No behaviour changed; the rename is the whole diff.
+- **The embedder is a factory on the runtime**, not an instance and not per request. A `lookup` must
+  not pay for a model client it never uses, and a release configured for Gemini with no credential
+  must still serve every free tool that does not embed — so a missing credential is a
+  `503 vlm_unavailable` on the one rung that needs it, at call time, not a boot refusal.
+
+**Pre-existing defect found and fixed: every frozen fixture key was stale.**
+
+`bash scripts/stack.sh up` — the documented way to run this system — refused at step 04 with
+`fixture_miss`, and had done since U028. U028 corrected `VSIR_VLM_MODEL` from `gemini-3.8-flash-001`
+(a 404 from the API) to `gemini-3.8-flash`; `facts_key` and `extract_key` are keyed on the resolved
+model id (§6.3), so every committed fixture for `synthetic_3window` was filed under a name the
+release no longer computes. **1155 green tests could not see it**, because the test environments
+carried the old id — the suites and the shipped configuration disagreed about which model this
+release runs, which is the same class of defect U028 itself was about.
+
+Fixed by re-keying rather than re-recording: `python -m vsir.eval.synthetic_pdf` regenerates the
+fixture under the current id, the four files under the old keys are deleted, and the responses are
+byte-identical (verified by hash before the delete). The PDF and `expected.json` did not move, so no
+acceptance number was re-baselined (C10). Every test environment now uses the same model id as
+`.env` (§15 Factor X), and AGENTS.md records the rule: **a model-id change is a fixture re-key.**
+
+**Notes**
+
+- The plan's demo command names `TC1E-SF` and a JSON `--scope`; the shipped CLI takes repeatable
+  `KEY=VALUE` (U015's convention) and the pilot is still absent (OQ-1), so the demo above is the
+  same five moves against the generated corpus.
+- **`skim_pages` needs a collection with vectors**, which the §13 M1 corpus deliberately has not:
+  `vsir.eval.synthetic.seed` writes an empty vector map because M1 spends nothing. The L2 suites
+  seed their own collection through the shipped `ingest/index.build_point`, so `lexical` and
+  `captions` are the real surfaces and only the dense vector is stood in for (`seed_with_vectors`
+  in `tests/api/conftest.py`).
+- Nothing about `fetch`, `read` or the two aggregate rungs moved. `skim_documents`,
+  `skim_sections`, `fetch` and `read` are still a typed `404` listing `["lookup", "resolve",
+  "skim_pages", "verify"]`.
+- **U029 (the document store) is next and blocks U018**, unchanged by this unit: `image.url` is a
+  reference to a route that does not exist yet, and the L2 assertion on it is deliberately about the
+  URL's shape. U018 owns the route **and** the percent-encoding of the `#` in a `page_id`.

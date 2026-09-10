@@ -270,6 +270,14 @@ typed `fixture_miss` rather than a stale hit. Editing `backend/vsir/vlm/prompts/
 adding a new version to `PROMPT_DIGESTS` is refused by name (`prompt_unavailable`): a prompt is
 part of the release, not configuration.
 
+**So a model-id change is a fixture re-key, and forgetting it breaks replay for everyone.** U028
+corrected `VSIR_VLM_MODEL` to the id the API actually serves and the committed fixtures stayed on
+the old one, so `bash scripts/stack.sh up` refused at step 04 with `fixture_miss` while the whole
+test suite stayed green — the suites carried the old id in their own environment. Re-run the
+generator after any change to `VSIR_VLM_MODEL` or `VSIR_PROMPT_VERSION`, delete the files under
+the old keys, and keep the test environments on the same id as `.env` (dev/prod parity, §15 X):
+the responses are identical, only their names move.
+
 The HTTP surface — `vsir serve` binds `$VSIR_PORT` and exports §7.4. The boot self-check runs
 **before** anything is bound, so a floating model id, a live schema that disagrees with `INDEXED`
 or a missing variable is a named non-zero exit and never a partially serving process (§4.3):
@@ -300,9 +308,9 @@ refused without a token; a route added later is protected before it is written. 
 the audit line and the budget ledger is `caller-<sha256(token)[:12]>`, never the token itself, so
 a rotated credential is a new caller id and no log line ever held the secret (§15.1).
 
-`POST /tools/{tool_name}` dispatches through the release's tool table — `lookup` and `verify`
-today. A name that is not in it — `read` and `fetch` until U020/U018 — is a typed `404` listing
-what *is* served, never an empty result. One append-only audit line goes to stdout per `read` and per `fetch` and none for a free
+`POST /tools/{tool_name}` dispatches through the release's tool table — `skim_pages`, `lookup`,
+`resolve` and `verify` today. A name that is not in it — `read` and `fetch` until U020/U018 — is a
+typed `404` listing what *is* served, never an empty result. One append-only audit line goes to stdout per `read` and per `fetch` and none for a free
 tool; **cost is in that line and never in a response body**, where the caller gets the single
 integer `reads_remaining` (§7.4). The per-caller quota is `VSIR_READ_QUOTA` reads per UTC day,
 held as a `kind: budget` point in `vsir_runs` so N replicas enforce one ceiling, and exhausting it
@@ -319,6 +327,10 @@ same table, the same validation, the same budget and the same typed refusals `PO
 uses — so there is no second code path and nothing to keep in step:
 
 ```bash
+backend/.venv/bin/vsir skim pages "emergency stop reset" --scope doc_id=SYN-M1   # NARROW, §7.2.1
+backend/.venv/bin/vsir skim pages --image ./panel.png --scope doc_id=SYN-M1      # D12, dense only
+backend/.venv/bin/vsir skim pages "reset K158" --limit 3 --exclude "SYN-M1@1.0#p001"
+backend/.venv/bin/vsir resolve "Page 8 of 55" --doc-id SYN-M1                    # FOLLOW, §7.2.3
 backend/.venv/bin/vsir lookup "SF 1.1A"                      # JUMP, §7.2.2
 backend/.venv/bin/vsir lookup "alarm 152" --json | jq        # the envelope, verbatim
 backend/.venv/bin/vsir lookup "SF 9.9" --scope page_no=5 --include-unverified
@@ -331,6 +343,18 @@ backend/.venv/bin/vsir mcp --sse       # == `vsir serve`: the SSE transport bind
 `--scope` is repeatable `KEY=VALUE` and its values are read as Python literals, so `page_no=5`
 filters on the integer the payload holds. A key outside `INDEXED` is a typed `400`
 (`filter_unknown_key`) here exactly as it is over HTTP.
+
+**`skim pages` needs a collection with vectors.** It is the first tool that reads one, so a corpus
+seeded by `vsir demo exact --synthetic` (payloads only, §13 M1) answers it with `not_found` — use
+`bash scripts/stack.sh up`, which ingests the 42-page generated corpus through the real pipeline.
+`--image` takes a path and is sent base64 over the same JSON body an MCP client uses; with no query
+text beside it the two sparse branches are skipped and every row's `why` is `["dense"]` (D12).
+`--limit` is 1…25 and **truncates** the fused list rather than re-ranking it, so the first three
+rows of a ten-row skim are the three rows of a three-row skim.
+
+`resolve` takes the label **as printed** — `"8"`, or the citation `"Page 8 of 55"`, whose
+digit-bearing words are probed as labels in their own right when the citation as typed matches
+nothing. An ambiguous label returns **every** candidate (F5); narrow with `--doc-id`.
 
 **A typed absence exits 0.** `vsir lookup "alarm 152"` searched, found nothing and said so
 correctly — that is a successful call (§7.1), which is what lets the §4.4 demo chain with `&&`.

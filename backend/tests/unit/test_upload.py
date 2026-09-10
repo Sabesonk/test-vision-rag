@@ -41,7 +41,7 @@ def _config() -> Config:
     """A replay-mode release: free by construction, so the spend switch is not in the way."""
     return Config(
         port=8000, qdrant_url="http://localhost:6333", collection="vsir_pages", vlm="stub",
-        vlm_model="gemini-3.8-flash-001", embed_model="gemini-embedding-2",
+        vlm_model="gemini-3.8-flash", embed_model="gemini-embedding-2",
         prompt_version="s2-v1", read_quota=50, allow_paid=False, log_level="INFO",
         release_id="dev-0", embed_dim=1536, runs_collection="vsir_runs", reads_per_question=3,
         fixture_dir="data/fixtures/synthetic_3window", vlm_tier="standard", vlm_rpm=60,

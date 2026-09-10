@@ -36,7 +36,7 @@ COMPLETE_ENV = {
     "VSIR_QDRANT_URL": "http://127.0.0.1:6399",
     "VSIR_COLLECTION": "vsir_pages",
     "VSIR_VLM": "stub",
-    "VSIR_VLM_MODEL": "gemini-3.8-flash-001",
+    "VSIR_VLM_MODEL": "gemini-3.8-flash",
     "VSIR_EMBED_MODEL": "gemini-embedding-2",
     "VSIR_PROMPT_VERSION": "s2-v1",
     "VSIR_API_TOKENS": "t0,t1",
@@ -121,7 +121,7 @@ def test_doctor_prints_release_model_ids_and_index_fingerprint(captured_log):
     assert summary["event"] == "doctor_inconclusive"
     assert summary["release_id"] == "test-0"
     assert summary["models"] == {
-        "VSIR_VLM_MODEL": "gemini-3.8-flash-001",
+        "VSIR_VLM_MODEL": "gemini-3.8-flash",
         "VSIR_EMBED_MODEL": "gemini-embedding-2",
     }
     # The fingerprint is what a collection is checked against, so all four of its inputs are

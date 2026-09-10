@@ -111,7 +111,7 @@ def test_a_fully_populated_payload_round_trips():
         provenance=Provenance(
             page_id=PAGE_ID, run_id="01J000000000000000000000", release_id="dev-0",
             extract_key="abc", embed_key="def", read_keys=["ghi"], probe_version="1.28.2",
-            vlm_model="gemini-3.8-flash-001", prompt_version="s2-v1", dpi=220,
+            vlm_model="gemini-3.8-flash", prompt_version="s2-v1", dpi=220,
         ),
     )
 

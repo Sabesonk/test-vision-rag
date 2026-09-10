@@ -62,7 +62,7 @@ def env_for(qdrant_url: str) -> dict[str, str]:
         **os.environ,
         "VSIR_PORT": "8000", "VSIR_QDRANT_URL": qdrant_url, "VSIR_COLLECTION": COLLECTION,
         "VSIR_RUNS_COLLECTION": RUNS, "VSIR_VLM": "stub", "VSIR_FIXTURE": str(FIXTURE),
-        "VSIR_VLM_MODEL": "gemini-3.8-flash-001", "VSIR_EMBED_MODEL": "gemini-embedding-2",
+        "VSIR_VLM_MODEL": "gemini-3.8-flash", "VSIR_EMBED_MODEL": "gemini-embedding-2",
         "VSIR_PROMPT_VERSION": "s2-v1", "VSIR_API_TOKENS": "test-only-not-a-credential",
         "VSIR_READ_QUOTA": "10", "VSIR_ALLOW_PAID": "0", "VSIR_LOG_LEVEL": "INFO",
         "VSIR_RELEASE_ID": "test-0", "PYTHONUNBUFFERED": "1",

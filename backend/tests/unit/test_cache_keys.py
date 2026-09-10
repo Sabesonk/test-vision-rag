@@ -26,7 +26,7 @@ from vsir.ingest.extract import S2_SCHEMA_HASH, WindowOut, schema_hash
 from vsir.vlm import EXTRACT, FACTS, NAMESPACES, READ, FixtureMiss, FixtureStore
 from vsir.vlm import cache, embed_key, extract_key, facts_key, read_key, write
 
-MODEL = "gemini-3.8-flash-001"
+MODEL = "gemini-3.8-flash"
 OTHER_MODEL = "gemini-3.8-pro-001"
 PROMPT = "s2-v1"
 EMBED_MODEL = "gemini-embedding-2"

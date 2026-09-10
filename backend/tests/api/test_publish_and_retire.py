@@ -72,7 +72,7 @@ def build_records(doc_id: str, revision: str, run_id: str, *, pages: int = PAGES
                                         series_id=f"{doc_id}#s:operation", page_range=(1, pages))],
             ),
             provenance=Provenance(page_id=make_page_id(doc_id, revision, number), run_id=run_id,
-                                  release_id="test-0", vlm_model="gemini-3.8-flash-001",
+                                  release_id="test-0", vlm_model="gemini-3.8-flash",
                                   prompt_version="s2-v1", dpi=220),
         )
         for number in range(1, pages + 1)

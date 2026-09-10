@@ -33,7 +33,7 @@ from vsir.ingest import window as w
 from vsir.ingest.extract import S2_SCHEMA_HASH
 from vsir.vlm import extract_key
 
-MODEL = "gemini-3.8-flash-001"
+MODEL = "gemini-3.8-flash"
 PROMPT = "s2-v1"
 
 #: The pilot's acceptance table, written from the spec before any ingest and normative (§12.1).

@@ -1863,7 +1863,7 @@ N/A — read-only evaluation commands; no index state and no tool contract is ch
 
 ## Unit: `skim_pages`, deterministic fusion, image queries, and `resolve` (ID: U017)
 
-**Status:** 🔵 Not Started
+**Status:** 🟢 Complete (2026-09-10)
 **Milestone:** M4
 **Priority:** P0-Critical
 **Type:** tool

@@ -31,7 +31,7 @@ from vsir.vlm import (EXTRACT, MAX_ATTEMPTS, PROMPT_DIGESTS, PROMPT_DIR, PROMPT_
                       VlmTierUnsupported, VlmTruncated, VlmUnavailable, hint, prompt)
 from vsir.vlm import client
 
-MODEL = "gemini-3.8-flash-001"
+MODEL = "gemini-3.8-flash"
 PROMPT = "s2-v1"
 BODY = '{"pages": []}'
 

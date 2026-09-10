@@ -66,7 +66,7 @@ SYNTHETIC_ENV = {
     "VSIR_QDRANT_URL": "http://127.0.0.1:6399",
     "VSIR_COLLECTION": "vsir_pages",
     "VSIR_VLM": "stub",
-    "VSIR_VLM_MODEL": "gemini-3.8-flash-001",
+    "VSIR_VLM_MODEL": "gemini-3.8-flash",
     "VSIR_EMBED_MODEL": "gemini-embedding-2",
     "VSIR_PROMPT_VERSION": "s2-v1",
     "VSIR_API_TOKENS": "test-only-not-a-credential",

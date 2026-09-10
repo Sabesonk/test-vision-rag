@@ -27,7 +27,7 @@ BASE_ENV = {
     "VSIR_PORT": "8000",
     "VSIR_COLLECTION": "vsir_pages",
     "VSIR_VLM": "stub",
-    "VSIR_VLM_MODEL": "gemini-3.8-flash-001",
+    "VSIR_VLM_MODEL": "gemini-3.8-flash",
     "VSIR_EMBED_MODEL": "gemini-embedding-2",
     "VSIR_PROMPT_VERSION": "s2-v1",
     "VSIR_API_TOKENS": "probe-only-not-a-secret",

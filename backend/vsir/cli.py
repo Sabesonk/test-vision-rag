@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import base64
 import dataclasses
 import json
 import math
@@ -82,6 +83,7 @@ from vsir.vlm import cache as vlm_cache
 from vsir.vlm import record as vlm_record
 from vsir.serve.tools import lookup as lookup_module
 from vsir.serve.tools.lookup import lookup
+from vsir.serve.tools.skim import SKIM_LIMIT
 
 EXIT_OK = 0
 EXIT_REFUSED = 1
@@ -2098,6 +2100,96 @@ def _print_verify(payload: Mapping[str, Any]) -> None:
           f"{payload['provenance']['schema_version']}")
 
 
+def _print_skim(payload: Mapping[str, Any]) -> None:
+    """A `skim_pages` envelope, printed as a triage list — rank, why, trust, and the image URL.
+
+    Deliberately shows what the row does **not** carry as prominently as what it does: no page
+    text and no bytes, because that is the property P2 asks a reviewer to check, and a rendering
+    that only printed the fields that are there could not show an absence.
+    """
+    stats = payload.get("scope_stats") or {}
+    print(f"status       {payload['status']} · total {payload['total']} · "
+          f"capped {str(payload['capped']).lower()} · weak {str(payload['weak']).lower()} · "
+          f"needs_scope {str(payload['needs_scope']).lower()}")
+    print(f"scope        {payload['effective_scope']} · searched {stats.get('pages', 0)} page(s), "
+          f"{stats.get('pages_no_text', 0)} with no text layer")
+    hits = payload.get("hits") or ()
+    if hits:
+        print(f"\n{'rank':<6}{'page_id':<30}{'printed':<10}{'why':<22}"
+              f"{'grounded':<10}{'trust':<12}image")
+    for hit in hits:
+        grounded = hit["grounded_rate"]
+        moves = hit.get("next") or {}
+        print(f"{hit['rank']:<6}{hit['page_id']:<30}{(hit['printed_page_no'] or '—'):<10}"
+              f"{','.join(hit['why']):<22}"
+              f"{('—' if grounded is None else f'{grounded:.2f}'):<10}"
+              f"{hit['text_trust']:<12}{hit['image']['url'] if hit['image'] else '—'}")
+        print(f"{'':<6}{hit['summary'][:96] or '(no summary)'}"
+              f"{' [' + hit['summary_lang'] + ']' if hit['summary_lang'] else ''}")
+        print(f"{'':<6}next: expand {moves.get('expand') or {}} · "
+              f"neighbours {moves.get('neighbours') or []} · "
+              f"references {moves.get('references') or []}")
+    # Printed as an absence, because an absence is what P2 asks a reviewer to check: a rendering
+    # that only showed the fields that are there could not show the two that must not be.
+    carried = sorted({field for hit in hits for field in ("text", "bytes_b64") if field in hit})
+    print(f"\nP2           no row carries page text or image bytes: "
+          f"{'confirmed' if not carried else 'VIOLATED by ' + str(carried)}")
+    moves = payload.get("next") or {}
+    if moves.get("suggest"):
+        print(f"next         suggest {moves['suggest']}")
+    print(f"reads_left   {payload['reads_remaining']} · release "
+          f"{payload['provenance']['release_id']} · schema "
+          f"{payload['provenance']['schema_version']}")
+
+
+def _print_resolve(payload: Mapping[str, Any]) -> None:
+    """A `resolve` envelope, printed. Every candidate, because a pick is what F5 forbids."""
+    print(f"status       {payload['status']} · candidates {len(payload.get('hits') or ())} · "
+          f"total {payload['total']} · capped {str(payload['capped']).lower()}")
+    print(f"scope        {payload['effective_scope']}")
+    for hit in payload.get("hits") or ():
+        print(f"  CANDIDATE  {hit['page_id']} · printed {hit['printed_page_no'] or '—'} · "
+              f"label_verified {str(hit['label_verified']).lower()} · "
+              f"interpolated {str(hit['interpolated']).lower()} · "
+              f"image {hit['image']['url'] if hit['image'] else '—'}")
+    if len(payload.get("hits") or ()) > 1:
+        print("             ambiguous — every candidate is returned, never a pick (F5)")
+    moves = payload.get("next") or {}
+    if moves.get("suggest"):
+        print(f"next         suggest {moves['suggest']}")
+    print(f"reads_left   {payload['reads_remaining']} · release "
+          f"{payload['provenance']['release_id']} · schema "
+          f"{payload['provenance']['schema_version']}")
+
+
+def _cmd_skim(args: argparse.Namespace) -> int:
+    """`vsir skim pages` — the page rung, with an optional photograph as the query (D12)."""
+    try:
+        scope = _scope_from(args.scope)
+    except ToolError as refusal:
+        print(f"   REFUSED  {refusal.code}: {refusal.message}")
+        return EXIT_REFUSED
+    image = ""
+    if args.image:
+        path = Path(args.image)
+        if not path.is_file():
+            print(f"   REFUSED  image_unreadable: {path} is not a file")
+            return EXIT_REFUSED
+        # Base64 here rather than a multipart body: the argument the tool receives is the same
+        # argument an MCP client sends, so the one-shot exercises the shipped contract (§7.5).
+        image = base64.b64encode(path.read_bytes()).decode("ascii")
+    return _one_shot("skim_pages", {"query": args.query or "", "image": image, "scope": scope,
+                                    "exclude": _csv_arg(args.exclude) if args.exclude else [],
+                                    "limit": args.limit},
+                     as_json=args.json, render=_print_skim)
+
+
+def _cmd_resolve(args: argparse.Namespace) -> int:
+    return _one_shot("resolve", {"printed_label": args.printed_label,
+                                 "doc_id": args.doc_id or ""},
+                     as_json=args.json, render=_print_resolve)
+
+
 def _cmd_lookup(args: argparse.Namespace) -> int:
     try:
         scope = _scope_from(args.scope)
@@ -2472,6 +2564,58 @@ def build_parser() -> argparse.ArgumentParser:
     verify_parser.add_argument("--json", action="store_true",
                                help="print the envelope verbatim (see `lookup --json`)")
     verify_parser.set_defaults(handler=_cmd_verify)
+
+    skim_parser = commands.add_parser(
+        "skim",
+        help="NARROW (§7.2.1): triage rows for a question or a photograph — rank and why, never "
+             "a score, and never page text or image bytes",
+    )
+    skim_commands = skim_parser.add_subparsers(dest="rung", metavar="<rung>", required=True)
+    skim_pages_parser = skim_commands.add_parser(
+        "pages",
+        help="the page rung. `skim documents` and `skim sections` aggregate the same fused "
+             "candidates and arrive with U019",
+    )
+    skim_pages_parser.add_argument(
+        "query", nargs="?", default="",
+        help="the question, in words. Optional when --image is given. A printed code in it is "
+             "split out and matched as an exact phrase rather than embedded (§7.2.1)",
+    )
+    skim_pages_parser.add_argument(
+        "--image", metavar="PATH",
+        help="a photograph as the query side of the search (D12). With no query text this runs "
+             "the dense branch alone and every row says why: [\"dense\"]",
+    )
+    skim_pages_parser.add_argument(
+        "--scope", action="append", default=[], metavar="KEY=VALUE",
+        help="narrow the search, repeatable, e.g. --scope doc_id=TC1E-SF. A key outside INDEXED "
+             "is a typed 400 (filter_unknown_key)",
+    )
+    skim_pages_parser.add_argument(
+        "--exclude", metavar="ID,ID",
+        help="page ids already looked at and rejected. The service remembers nothing between "
+             "calls, so this is how an agent narrows across turns (C11)",
+    )
+    skim_pages_parser.add_argument("--limit", type=int, default=SKIM_LIMIT,
+                                   help=f"rows to return (default: {SKIM_LIMIT}, max 25)")
+    skim_pages_parser.add_argument("--json", action="store_true",
+                                   help="print the envelope verbatim (see `lookup --json`)")
+    skim_pages_parser.set_defaults(handler=_cmd_skim)
+
+    resolve_parser = commands.add_parser(
+        "resolve",
+        help="FOLLOW (§7.2.3): a printed page label to the page_id it opens, with "
+             "label_verified and interpolated. An ambiguous label returns every candidate (F5)",
+    )
+    resolve_parser.add_argument("printed_label",
+                                help="the label as printed, e.g. \"8\" or \"Page 8 of 55\"")
+    resolve_parser.add_argument("--doc-id", dest="doc_id", default="",
+                                help="narrow to one document; without it the whole current "
+                                     "corpus is in scope, which is what lets a cross-reference "
+                                     "point at another binder")
+    resolve_parser.add_argument("--json", action="store_true",
+                                help="print the envelope verbatim (see `lookup --json`)")
+    resolve_parser.set_defaults(handler=_cmd_resolve)
 
     demo_parser = commands.add_parser("demo", help="the reviewable demos of §4.4")
     demos = demo_parser.add_subparsers(dest="demo", metavar="<demo>", required=True)

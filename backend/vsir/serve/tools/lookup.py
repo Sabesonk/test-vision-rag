@@ -114,12 +114,12 @@ def searchable(query: qm.Filter) -> qm.Filter:
     )
 
 
-def _scope_filter(scope: Mapping[str, Any]) -> qm.Filter:
+def scope_filter(scope: Mapping[str, Any]) -> qm.Filter:
     """The scope alone, as a filter — the denominator behind `weak` and `scope_stats`."""
     return qm.Filter(must=scope_conditions(scope))
 
 
-def _count(client: Any, collection: str, query: qm.Filter) -> int:
+def count_exact(client: Any, collection: str, query: qm.Filter) -> int:
     """An **exact** count. `weak` and `total` are contracts, not estimates (§7.1)."""
     return client.count(collection, count_filter=query, exact=True).count
 
@@ -132,7 +132,7 @@ def _no_text() -> qm.Condition:
     return qm.FieldCondition(key="has_text", match=qm.MatchValue(value=False))
 
 
-def _scope_stats(client: Any, collection: str, scoped: qm.Filter) -> tuple[ScopeStats, int]:
+def scope_stats(client: Any, collection: str, scoped: qm.Filter) -> tuple[ScopeStats, int]:
     """``(scope_stats, searchable_pages)`` — what was actually searched (§7.1, §5.7).
 
     Takes the **built** scope filter rather than the scope dict, so the `INDEXED` gate runs exactly
@@ -143,9 +143,9 @@ def _scope_stats(client: Any, collection: str, scoped: qm.Filter) -> tuple[Scope
     exactly, because that is what ``searchable_ratio`` is defined on (§5.7); ``searchable_pages``
     is the wider notion that also excludes ``untrusted``, and it is what chooses the status.
     """
-    pages = _count(client, collection, scoped)
-    pages_no_text = _count(client, collection, _with(scoped, _no_text()))
-    searchable_pages = _count(client, collection, searchable(scoped))
+    pages = count_exact(client, collection, scoped)
+    pages_no_text = count_exact(client, collection, _with(scoped, _no_text()))
+    searchable_pages = count_exact(client, collection, searchable(scoped))
 
     per_doc = {hit.value: hit.count for hit in
                client.facet(collection, key="doc_id", facet_filter=scoped,
@@ -251,12 +251,12 @@ def _words_observed(client: Any, collection: str, label: str,
                 ordered.append(word)
     return [
         word for word in ordered[:SUGGEST_WORD_PROBES]
-        if _count(client, collection, searchable(exact_filter(word, scope))) > 0
+        if count_exact(client, collection, searchable(exact_filter(word, scope))) > 0
     ]
 
 
 
-def _absence(scope_pages: int, searchable_pages: int) -> Status:
+def absence(scope_pages: int, searchable_pages: int) -> Status:
     """Which of the four absences this is (§7.1) — never an empty ``ok``, never a bare ``200``.
 
     Order matters: an empty scope is `out_of_scope` (the corpus was never asked) before it is
@@ -296,14 +296,14 @@ def lookup(client: Any, collection: str, label: str, *,
     try:
         phrase_query = exact_filter(label, scope_in_force, field="text")
         codes_query = exact_filter(label, scope_in_force, field="vlm_codes")
-        scoped = _scope_filter(scope_in_force)
+        scoped = scope_filter(scope_in_force)
     except UnknownScopeKey as refusal:
         raise as_tool_error(refusal) from None
 
-    stats, searchable_pages = _scope_stats(client, collection, scoped)
+    stats, searchable_pages = scope_stats(client, collection, scoped)
 
     text_query = searchable(phrase_query)
-    total = _count(client, collection, text_query)
+    total = count_exact(client, collection, text_query)
     hits = _page_of_the_set(client, collection, text_query, cap, verified=True)
 
     unverified_hits: list[LookupHit] = []
@@ -316,7 +316,7 @@ def lookup(client: Any, collection: str, label: str, *,
     # §7.1 spells these as one assignment — `weak = needs_scope = total > max(...)` — so they are
     # computed once here rather than twice in the constructor, where they could drift apart.
     is_weak = weakness(total, stats.pages)
-    status = Status.OK if hits else _absence(stats.pages, searchable_pages)
+    status = Status.OK if hits else absence(stats.pages, searchable_pages)
     observed: list[str] = []
     next_moves: NextMoves | None = None
     if status == Status.NOT_FOUND:

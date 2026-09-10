@@ -707,3 +707,32 @@ def embed_document(backend: Embedder, records: Sequence[PageRecord], *, source: 
               pages=len(compositions), reused=len(reused), billed=len(outstanding),
               text_dropped=embedding.text_dropped, composition_version=COMPOSITION_VERSION)
     return embedding
+
+
+# ── the query side of a search (D12, §7.2.1) ─────────────────────────────────────────────────────
+
+def query_vector(backend: Embedder, *, text: str = "", image: bytes | None = None) -> list[float]:
+    """One query → one dense vector, with D12's three rules applied in **one** place.
+
+    `skim_pages` is the only caller today and `read`'s routing may be the next, so the choice
+    between the two embedding calls lives here rather than at each call site: a rung that forgot
+    the multimodal case would silently embed the words and drop the photograph, and the row it
+    returned would look exactly like a correct one.
+
+    * **an image, with or without words** → :meth:`Embedder.embed_query_image`, which puts both in
+      a single ``types.Content`` so the model fuses them (*"this photo, but the wiring detail"*)
+      and applies **no instruction prefix** — Google's own guidance for a multimodal query, and
+      the reason :data:`vsir.config.EMBED_QUERY_INSTRUCTION` is empty;
+    * **words alone** → :meth:`Embedder.embed_query`, the only place the prefix may apply at all;
+    * **neither** is not a query. It is refused here rather than embedded as the empty string,
+      because a vector of nothing still returns ten confident-looking rows.
+
+    What this function deliberately does **not** do is decide whether the lexical and captions
+    branches run. That is the caller's, and §7.2.1 requires it to be visible where the branches
+    are: an image-only query runs the dense branch alone and every row says so in ``why``.
+    """
+    if image is not None:
+        return backend.embed_query_image(image, text=text or None)
+    if not text.strip():
+        raise EmbedError("a query is a photograph, words, or both — this is neither")
+    return backend.embed_query(text)

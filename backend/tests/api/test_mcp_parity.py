@@ -159,7 +159,8 @@ def test_the_mcp_server_declares_the_releases_tools_and_no_others(served_collect
         "vision-segmentation-retriever"
     assert initialised.instructions == mcp_server.INSTRUCTIONS
     assert sorted(tool.name for tool in listing.tools) == sorted(app_module.tool_table())
-    assert sorted(tool.name for tool in listing.tools) == ["lookup", "verify"]
+    assert sorted(tool.name for tool in listing.tools) == ["lookup", "resolve", "skim_pages",
+                                                            "verify"]
 
 
 def test_the_published_input_schema_is_the_http_request_model(served_collection):
@@ -268,7 +269,7 @@ def test_an_unknown_tool_over_mcp_is_the_typed_404(served_collection):
     assert result.is_error is True
     body = json.loads(text_of(result))
     assert body["error"] == "tool_not_found"
-    assert body["available"] == ["lookup", "verify"]
+    assert body["available"] == ["lookup", "resolve", "skim_pages", "verify"]
 
 
 def test_is_current_is_injected_on_the_mcp_surface_too(served_collection):

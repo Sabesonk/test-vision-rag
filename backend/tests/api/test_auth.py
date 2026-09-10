@@ -205,7 +205,8 @@ def test_a_tool_this_release_does_not_serve_is_a_404_naming_what_it_does(served,
     The literal list is deliberate and it is expected to change: it is an assertion about **this
     release's** surface, so a milestone that adds a tool updates this line on purpose rather than
     discovering later that the 404 body had quietly gained a name. `verify` joined at U015;
-    `skim_*` and `resolve` arrive at U017, `fetch` at U018 and `read` at U020.
+    `skim_pages` and `resolve` at U017; `skim_documents`/`skim_sections` arrive at U019, `fetch`
+    at U018 and `read` at U020.
     """
     response = served.post("/tools/read", json={"page_ids": ["x"], "question": "?"},
                            headers=token_header)
@@ -213,7 +214,7 @@ def test_a_tool_this_release_does_not_serve_is_a_404_naming_what_it_does(served,
     assert response.status_code == 404
     body = response.json()
     assert body["error"] == "tool_not_found"
-    assert body["available"] == ["lookup", "verify"]
+    assert body["available"] == ["lookup", "resolve", "skim_pages", "verify"]
     assert body["available"] == sorted(served.app.state.tools)
 
 

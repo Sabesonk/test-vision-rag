@@ -24,8 +24,11 @@ from fastapi.testclient import TestClient
 from qdrant_client import QdrantClient
 
 from vsir import logging as vsir_logging
+from vsir.config import load_config
 from vsir.core.indexed import create_collection
 from vsir.eval import synthetic
+from vsir.ingest import embed as embed_module
+from vsir.ingest import index as index_module
 from vsir.serve.app import create_app
 
 QDRANT_URL = os.environ.get("VSIR_TEST_QDRANT_URL", "http://localhost:6335")
@@ -39,6 +42,10 @@ EMBED_DIM = 1536
 TEST_TOKEN = "u014-local-test-credential"
 #: A syntactically fine token that is not in `VSIR_API_TOKENS`.
 WRONG_TOKEN = "u014-not-in-the-configured-list"
+#: The collection the fused-surface suites use — its own again, because seeding vectors changes
+#: what every other suite's `lookup` would rank and none of them asked for that (U017).
+SKIM_COLLECTION = "vsir_pages_u017"
+SKIM_RUNS = "vsir_runs_u017"
 #: The base name of the collection the served app is pointed at. Its own, so a suite that seeds
 #: pages cannot change what `test_probes.py` or the acceptance table sees.
 SERVED_COLLECTION = "vsir_pages_u014"
@@ -101,7 +108,7 @@ def serve_env(**overrides: str) -> dict[str, str]:
         "VSIR_COLLECTION": SERVED_COLLECTION,
         "VSIR_RUNS_COLLECTION": SERVED_RUNS,
         "VSIR_VLM": "stub",
-        "VSIR_VLM_MODEL": "gemini-3.8-flash-001",
+        "VSIR_VLM_MODEL": "gemini-3.8-flash",
         "VSIR_EMBED_MODEL": "gemini-embedding-2",
         "VSIR_PROMPT_VERSION": "s2-v1",
         "VSIR_API_TOKENS": TEST_TOKEN,
@@ -179,3 +186,79 @@ def log_stream() -> Iterator[io.StringIO]:
 def log_events(buffer: io.StringIO) -> list[dict[str, Any]]:
     """The captured stream, parsed. One JSON object per line is the contract, so this is total."""
     return [json.loads(line) for line in buffer.getvalue().splitlines() if line.strip()]
+
+
+# ── the three fused surfaces, seeded (U017) ─────────────────────────────────────────────────────
+
+def seed_with_vectors(client: Any, collection: str, records: Any, *, dim: int,
+                      embedder: Any) -> int:
+    """Seed a collection with all three surfaces of §5.3, not payloads alone.
+
+    `vsir.eval.synthetic.seed` writes an empty vector map, because M1 had no embedder and spends
+    nothing — which is honest there and useless here: `skim_pages` reads a *vector*, so a corpus
+    with none of them can only ever return nothing. The vectors are built by the shipped
+    :func:`vsir.ingest.index.build_point`, so the `lexical` and `captions` surfaces are the real
+    ones — `sparse.build` over the page's ``text`` and over `dedupe`d generated text — and only
+    the dense vector is stood in for.
+
+    **The stand-in is deliberate and it is a function of the page's own text**:
+    ``StubEmbedder.embed_query(record.text)``. There is no raster behind this corpus, so the D4
+    composition cannot be built at all; what this buys instead is the property the suites need —
+    a query whose words are exactly a page's text lands on that page, so an assertion about the
+    dense branch is an assertion about a query reaching a vector rather than about a hash.
+
+    ``is_current`` is restored after :func:`~vsir.ingest.index.build_point`, which refuses a
+    record that arrives already published (I7): the real path writes every point unpublished and
+    lets the gates flip it, and this fixture stands in for the gates rather than for the writer.
+    """
+    create_collection(client, collection, dim, recreate=True)
+    points = []
+    for record in records:
+        dense = embedder.embed_query(record.text or record.page_id)
+        point = index_module.build_point(record.model_copy(update={"is_current": False}), dense)
+        point.payload["is_current"] = record.is_current
+        points.append(point)
+    if points:
+        client.upsert(collection, points=points, wait=True)
+    return len(points)
+
+
+def skim_config() -> Any:
+    """The configuration the fused-surface app and its fixtures share, as a value."""
+    return load_config(serve_env(VSIR_COLLECTION=SKIM_COLLECTION,
+                                 VSIR_RUNS_COLLECTION=SKIM_RUNS))
+
+
+@pytest.fixture(scope="session")
+def stub_embedder() -> Any:
+    """The embedding backend every fused-surface suite uses — selected by config, never a branch.
+
+    ``VSIR_VLM=stub`` is what chooses it in the app under test too (§15 Factor X, D10), so the
+    vectors the fixture writes and the vectors a request embeds come out of the same object.
+    """
+    return embed_module.embedder(skim_config())
+
+
+@pytest.fixture(scope="session")
+def skim_collection(qdrant: QdrantClient, stub_embedder: Any) -> Iterator[str]:
+    """The §13 M1 corpus with vectors, in the collection the `skim`/`resolve` app is pointed at."""
+    name = f"{SKIM_COLLECTION}_{EMBED_DIM}"
+    corpus = synthetic.load()
+    seed_with_vectors(qdrant, name, corpus.records(release_id="test"), dim=EMBED_DIM,
+                      embedder=stub_embedder)
+    try:
+        yield name
+    finally:
+        synthetic.drop(qdrant, name)
+
+
+@pytest.fixture
+def skimming(qdrant: QdrantClient, skim_collection: str) -> Iterator[Any]:
+    """A :class:`TestClient` over an app pointed at the vector-seeded collection."""
+    with TestClient(create_app(serve_env(VSIR_COLLECTION=SKIM_COLLECTION,
+                                         VSIR_RUNS_COLLECTION=SKIM_RUNS))) as client:
+        try:
+            yield client
+        finally:
+            if qdrant.collection_exists(SKIM_RUNS):
+                qdrant.delete_collection(SKIM_RUNS)

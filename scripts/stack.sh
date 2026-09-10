@@ -164,8 +164,8 @@ cmd_status() {
   tools=$(curl -s -H "Authorization: Bearer $TOKEN" -X POST "$API/tools/__list__" \
           | pyjson 'import sys,json;print(", ".join(json.load(sys.stdin).get("available",[])))')
   echo "  ${tools:-(the API did not answer)}"
-  dim  "  skim_documents, skim_sections, skim_pages, resolve, fetch and read arrive with M4-M5;"
-  dim  "  asking for one now is a typed 404 that lists what is here, never an empty result."
+  dim  "  skim_documents, skim_sections, fetch and read arrive with M4-M5; asking for one now"
+  dim  "  is a typed 404 that lists what is here, never an empty result."
 
   echo
   bold "Documents in the index"

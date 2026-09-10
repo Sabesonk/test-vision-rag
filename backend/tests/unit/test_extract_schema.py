@@ -36,7 +36,7 @@ from vsir.ingest import window as w
 from vsir.vlm import (EXTRACT, FixtureMiss, FixtureStore, StubBackend, VlmSchemaInvalid,
                       extract_key, write)
 
-MODEL = "gemini-3.8-flash-001"
+MODEL = "gemini-3.8-flash"
 PROMPT = "s2-v1"
 PACKAGE = Path(x.__file__).resolve().parent.parent
 

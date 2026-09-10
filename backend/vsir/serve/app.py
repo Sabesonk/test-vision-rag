@@ -17,8 +17,9 @@ written (`serve/auth.py`).
 if the tool spends, runs it, stamps ``reads_remaining`` on the envelope and — for `read` and
 `fetch` only — writes the ten-field audit line of §7.4. Adding a tool is adding a row, so no tool
 can arrive with its own idea of auth, of the budget, or of which failures are which. The table in
-this release holds `lookup` and `verify`; the rest of §7.2 joins it as its milestone lands, and a
-name that is not in the table is a typed `404` naming what is, never a 501-shaped silence.
+this release holds the four free moves of the ladder — `skim_pages`, `lookup`, `resolve` and
+`verify`; the rest of §7.2 joins it as its milestone lands, and a name that is not in the table is
+a typed `404` naming what is, never a 501-shaped silence.
 
 **And the table is not the HTTP surface's — it is the release's.** §7.5 requires the MCP server to
 expose the same tools *"calling the identical implementations (no second code path)"*, so the
@@ -55,6 +56,8 @@ every deploy, which is a metric about the deployment rather than about the corpu
 """
 from __future__ import annotations
 
+import base64
+import binascii
 import os
 import uuid
 from contextlib import asynccontextmanager
@@ -76,6 +79,7 @@ from vsir import __version__
 from vsir import logging as vsir_logging
 from vsir.config import LOOKUP_CAP, Config, load_config
 from vsir.doctor import QDRANT_UNAVAILABLE, BootRefused, assert_boot_ok, run_boot_checks
+from vsir.ingest import embed as embed_module
 from vsir.ingest import export as export_module
 from vsir.ingest import run as run_module
 from vsir.serve import audit as audit_module
@@ -87,6 +91,9 @@ from vsir.serve.auth import BearerAuth, Identity
 from vsir.serve.caps import ToolError
 from vsir.serve.envelope import Provenance, wire
 from vsir.serve.tools.lookup import lookup as lookup_tool
+from vsir.serve.tools.resolve import resolve as resolve_tool
+from vsir.serve.tools.skim import SKIM_LIMIT
+from vsir.serve.tools.skim import skim_pages as skim_pages_tool
 from vsir.serve.tools.verify import verify as verify_tool
 from vsir.vlm.cache import VlmCallFailed, VlmError, VlmUnavailable
 
@@ -122,7 +129,11 @@ STORE_FAILURES: tuple[type[BaseException], ...] = (
 )
 #: Exceptions that mean *the model backend cannot run*. `503 vlm_unavailable` on the tool that
 #: needed it, while every free tool keeps working (§11.3 row 2).
-VLM_UNAVAILABLE: tuple[type[BaseException], ...] = (VlmUnavailable, VlmCallFailed)
+#: `EmbedUnavailable` is here for the same reason and not as an afterthought: `skim_pages` is the
+#: first tool that needs a **model** to answer, so a release with no embedding credential must
+#: refuse that one rung as an outage while `lookup`, `verify` and `resolve` go on working (§11.3).
+VLM_UNAVAILABLE: tuple[type[BaseException], ...] = (VlmUnavailable, VlmCallFailed,
+                                                    embed_module.EmbedUnavailable)
 
 _log = vsir_logging.get_logger(__name__)
 
@@ -311,6 +322,36 @@ class VerifyRequest(ToolRequest):
     page_ids: list[str]
 
 
+class SkimPagesRequest(ToolRequest):
+    """``skim_pages(query, image=None, scope, exclude?, limit=10)`` — §7.2.1.
+
+    ``query`` is optional **when ``image`` is given**, and vice versa; neither is a typed
+    ``query_required`` from the tool rather than a validation error here, because *"a search with
+    nothing to search for"* is a bound on the move and belongs with the other bounds (§7.3).
+
+    ``image`` is base64 because a JSON body is where both transports meet: an MCP client hands
+    `tools/call` a JSON object and cannot post multipart. It is the **query** side of a search and
+    it can never reach the exact surface — `lookup` and `verify` have no such field, and
+    ``extra="forbid"`` makes adding one to their bodies a `400` rather than a photograph deciding
+    whether a code is printed (I2, I3, D12).
+    """
+
+    query: str = ""
+    #: base64, decoded by the adapter. A malformed value is a typed 400 naming the field.
+    image: str = ""
+    scope: dict[str, Any] = Field(default_factory=dict)
+    #: Page ids the agent has already looked at and rejected. State lives in the caller (C11).
+    exclude: list[str] = Field(default_factory=list)
+    limit: int = SKIM_LIMIT
+
+
+class ResolveRequest(ToolRequest):
+    """``resolve(printed_label, doc_id?)`` — §7.2.3. A citation, not a query: no scope, no image."""
+
+    printed_label: str
+    doc_id: str = ""
+
+
 @dataclass(frozen=True)
 class ToolContext:
     """Everything a tool call needs that is not in its body. Built per request, held nowhere.
@@ -324,6 +365,11 @@ class ToolContext:
     identity: Identity
     reads_remaining: int
     provenance: Provenance
+    #: The embedding backend, as a factory rather than an instance. A `lookup` must not pay for a
+    #: model client it will never use, and a release configured for Gemini with no credential must
+    #: still serve every free tool that does not embed — so the refusal happens when a query is
+    #: actually embedded, as a `503 vlm_unavailable`, and not at boot (§11.3).
+    embedder: Callable[[], Any] = lambda: None
 
 
 @dataclass(frozen=True)
@@ -358,6 +404,10 @@ class ToolRuntime:
     #: answering becomes a `503` while the caller is still there to read it.
     search: Any
     tools: Mapping[str, ToolSpec]
+    #: The embedding backend for the query side of a skim, memoised per process by
+    #: :func:`query_embedder`. A backend handle like ``search``, not state: it holds a connection
+    #: and a pinned model id, and nothing about a caller, a session or a previous call (§15 VI).
+    embedder: Callable[[], Any] = lambda: None
 
 
 @dataclass(frozen=True)
@@ -412,9 +462,70 @@ def _call_verify(context: ToolContext, body: VerifyRequest) -> tuple[BaseModel, 
     return envelope, Usage.free()
 
 
+def _call_skim_pages(context: ToolContext, body: SkimPagesRequest) -> tuple[BaseModel, Usage]:
+    """The adapter for §7.2.1's page rung. Decodes the image, and adds no behaviour.
+
+    The base64 is decoded **here** rather than in the tool, because it is a property of the
+    transport: `serve/tools/skim.py` takes bytes, the way `ingest/embed.py` does, and a malformed
+    encoding is the caller's request being wrong rather than the search being empty.
+    """
+    image: bytes | None = None
+    if body.image:
+        try:
+            image = base64.b64decode(body.image, validate=True)
+        except (binascii.Error, ValueError):
+            raise ToolError(
+                "image_invalid",
+                "image is base64 of the photograph's bytes (§7.2.1, D12) and this did not decode",
+                field="image", length=len(body.image),
+            ) from None
+        if not image:
+            raise ToolError("image_invalid", "image decoded to zero bytes", field="image")
+
+    response = skim_pages_tool(
+        context.client, context.cfg.pages_collection,
+        query=body.query, image=image, scope=body.scope, exclude=body.exclude, limit=body.limit,
+        embedder=context.embedder(),
+        provenance=context.provenance, reads_remaining=context.reads_remaining,
+    )
+    return response, Usage.free()
+
+
+def _call_resolve(context: ToolContext, body: ResolveRequest) -> tuple[BaseModel, Usage]:
+    """§7.2.3, and the shortest adapter in the table: a label in, a list of candidates out."""
+    response = resolve_tool(
+        context.client, context.cfg.pages_collection, body.printed_label,
+        doc_id=body.doc_id or None,
+        provenance=context.provenance, reads_remaining=context.reads_remaining,
+    )
+    return response, Usage.free()
+
+
 #: What each tool is *for*, in the words an agent needs to choose between them. Kept beside the
 #: table rather than lifted from the Python docstrings: those explain the implementation to a
 #: maintainer, and a tool description explains a **move** to a caller (§7.2, §8.2).
+SKIM_PAGES_DESCRIPTION = (
+    "NARROW. Triage rows for a question or a photograph — at most 10 pages (25 with `limit`), "
+    "ordered by rank alone. `rank` is an ordinal and there is no score anywhere in the response; "
+    "`why` names the branches that found the row (`dense` = the page's image+text vector, "
+    "`lexical` = its extracted text, `captions` = its generated summary), and a `lexical` hit is "
+    "harder evidence than a `dense` one. A printed code in the query is split out and matched as "
+    "an exact phrase rather than embedded, so `\"reset K158\"` means pages about reset that print "
+    "K158. `image` is base64 and may be sent with or without words; an image-only query runs the "
+    "dense branch alone and every row says `why: [\"dense\"]`. `exclude` drops pages you have "
+    "already rejected — the service holds no memory of them. Every row carries an `image.url` and "
+    "a `next` to expand into the section or step to a neighbour, and **no row carries page text "
+    "or image bytes**: choose a page, then pay for it with `fetch` or `read`. Free."
+)
+RESOLVE_DESCRIPTION = (
+    "FOLLOW. A printed page label — `\"8\"`, `\"Page 8 of 55\"` — to the `page_id` that opens it, "
+    "for following a cross-reference you read on a page. Each candidate says whether the page's "
+    "own text prints that label (`label_verified`) and whether the number was inferred from the "
+    "pages either side rather than read off this one (`interpolated`). **An ambiguous label "
+    "returns every candidate**, never a pick: two binders that both number a page 8 are a "
+    "question for you, and choosing for you is how an answer ends up citing the wrong page. Pass "
+    "`doc_id` to narrow. Free."
+)
 LOOKUP_DESCRIPTION = (
     "JUMP. Exact, phrase-only lookup of a printed code or label — a SET of pages, never a "
     "ranking and never a similarity match. A code this returns is a code printed on the page. "
@@ -443,17 +554,48 @@ def tool_table() -> dict[str, ToolSpec]:
     one app at a different table would be changing every other app's. Each :func:`create_app`
     gets its own, parked on ``app.state`` and handed to the :class:`ToolRuntime`.
 
-    Six of §7.2's eight are absent here and that is a fact about the release, not a gap in the
-    dispatcher: `skim_*` and `resolve` land at U017, `fetch` at U018 and `read` at U020. Until
-    then their names are a typed `404` that lists what *is* available, because a caller that
-    asked for `read` needs to know it is not here — not receive an empty result.
+    Four of §7.2's eight are absent here and that is a fact about the release, not a gap in the
+    dispatcher: `skim_documents` and `skim_sections` land at U019, `fetch` at U018 and `read` at
+    U020. Until then their names are a typed `404` that lists what *is* available, because a
+    caller that asked for `read` needs to know it is not here — not receive an empty result.
+
+    The order of the rows is the order of the ladder, not alphabetical: an agent reading the tool
+    list for the first time is choosing a **move**, and `skim_pages` → `lookup` → `resolve` →
+    `verify` is narrow, jump, follow, check (§7.2, §8.1).
     """
     return {
+        "skim_pages": ToolSpec(name="skim_pages", request=SkimPagesRequest, call=_call_skim_pages,
+                               description=SKIM_PAGES_DESCRIPTION),
         "lookup": ToolSpec(name="lookup", request=LookupRequest, call=_call_lookup,
                            description=LOOKUP_DESCRIPTION),
+        "resolve": ToolSpec(name="resolve", request=ResolveRequest, call=_call_resolve,
+                            description=RESOLVE_DESCRIPTION),
         "verify": ToolSpec(name="verify", request=VerifyRequest, call=_call_verify,
                            description=VERIFY_DESCRIPTION),
     }
+
+
+def query_embedder(cfg: Config) -> Callable[[], Any]:
+    """A memoised embedding backend for one process — built on first use, then held.
+
+    The same shape as the Qdrant client and for the same reason: it is a **backend handle**, so
+    building one per request would open an SDK client per request, and building one at boot would
+    make a release configured for Gemini refuse to start without a credential even though every
+    tool but this one is free and works without it. Nothing about a caller or a previous call is
+    kept, so this is a connection pool and not the session state §15.2 bans.
+
+    A failure to build is raised at the call, where :func:`_failure_response` turns
+    :class:`~vsir.ingest.embed.EmbedUnavailable` into `503 vlm_unavailable` — an outage, never an
+    empty result (§11.3).
+    """
+    held: list[Any] = []
+
+    def backend() -> Any:
+        if not held:
+            held.append(embed_module.embedder(cfg))
+        return held[0]
+
+    return backend
 
 
 def runtime_from_env(env: Mapping[str, str]) -> tuple[ToolRuntime, QdrantClient]:
@@ -476,7 +618,8 @@ def runtime_from_env(env: Mapping[str, str]) -> tuple[ToolRuntime, QdrantClient]
     assert_boot_ok(env)
     cfg = load_config(env)
     client = QdrantClient(url=cfg.qdrant_url, timeout=SEARCH_TIMEOUT_S, check_compatibility=False)
-    return ToolRuntime(config=cfg, search=client, tools=tool_table()), client
+    return ToolRuntime(config=cfg, search=client, tools=tool_table(),
+                       embedder=query_embedder(cfg)), client
 
 
 def _tool_refusal(code: str, detail: str, *, status: int, **details: Any) -> ToolOutcome:
@@ -520,7 +663,7 @@ def _failure_response(failure: BaseException, *, tool: str) -> ToolOutcome:
                    cause=getattr(failure, "code", ""), detail=str(failure))
         return _tool_refusal("vlm_unavailable", str(failure), status=503, retryable=True,
                              tool=tool, cause=getattr(failure, "code", ""))
-    if isinstance(failure, VlmError):
+    if isinstance(failure, (VlmError, embed_module.EmbedError)):
         _log.error("tool_backend_error", tool=tool, code=failure.code, detail=str(failure))
         return _tool_refusal(failure.code, str(failure), status=502, tool=tool)
     if isinstance(failure, run_module.RunRefused):
@@ -558,7 +701,8 @@ def run_tool(runtime: ToolRuntime, spec: ToolSpec, body: ToolRequest, *, identit
             envelope, usage = spec.call(
                 ToolContext(client=runtime.search, cfg=cfg, identity=identity,
                             reads_remaining=reads_remaining,
-                            provenance=Provenance(release_id=cfg.release_id)),
+                            provenance=Provenance(release_id=cfg.release_id),
+                            embedder=runtime.embedder),
                 body)
         except BaseException as failure:  # noqa: BLE001 — every path out is a typed refusal
             if isinstance(failure, (KeyboardInterrupt, SystemExit)):
@@ -664,7 +808,8 @@ def create_app(env: Mapping[str, str] | None = None) -> FastAPI:
         # copy, so a suite (or a later milestone) that registers a tool registers it for the MCP
         # surface at the same instant — there is no second table to keep in step (§7.5).
         app.state.runtime = ToolRuntime(config=cfg, search=app.state.search,
-                                        tools=app.state.tools)
+                                        tools=app.state.tools,
+                                        embedder=query_embedder(cfg))
         _log.info("startup", port=cfg.port, collection=cfg.pages_collection,
                   tools=sorted(app.state.tools), mcp=sorted(app.state.mcp_paths))
         try:
