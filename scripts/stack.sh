@@ -26,8 +26,27 @@ cd "$ROOT"
 COMPOSE=(docker compose -f docker-compose.yml)
 API="http://localhost:8055"
 QDRANT="http://localhost:6353"
-# The same default the compose file substitutes, so `status` prints a token that actually works.
-TOKEN="${VSIR_DEV_API_TOKENS:-dev-token-not-a-secret}"
+
+api_env() {
+  # One variable read out of the **running** container. Printing what this shell believes is how
+  # `status` came to advertise a token the API had never been given: a value set since the
+  # container started, or a different variable name entirely, reads as authoritative and is not.
+  local id
+  id=$("${COMPOSE[@]}" ps -q api 2>/dev/null | head -1)
+  [[ -n "$id" ]] || return 0
+  docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' "$id" 2>/dev/null \
+    | sed -n "s/^$1=//p" | head -1
+}
+
+# Resolved lazily, after the stack is up: before that there is no container to ask.
+TOKEN=""
+resolve_token() {
+  TOKEN="$(api_env VSIR_API_TOKENS)"
+  # Not running yet — fall back to what compose *would* substitute, in its own precedence order.
+  [[ -n "$TOKEN" ]] || TOKEN="${VSIR_API_TOKENS:-dev-token-not-a-secret}"
+  # A multi-token release is a comma-separated list; the first one is a working credential.
+  TOKEN="${TOKEN%%,*}"
+}
 
 bold() { printf "\033[1m%s\033[0m\n" "$*"; }
 dim()  { printf "\033[2m%s\033[0m\n" "$*"; }
@@ -110,6 +129,7 @@ cmd_seed() {
 
 cmd_status() {
   require_docker
+  resolve_token
   bold "Containers"
   "${COMPOSE[@]}" ps --format "  {{.Service}}\t{{.Status}}\t{{.Publishers}}" 2>/dev/null \
     || "${COMPOSE[@]}" ps
@@ -119,12 +139,9 @@ cmd_status() {
   # Read from the running container, not from this shell: what bills money is the API's own
   # environment, and a shell variable set since it started would report a comfortable lie.
   local vlm paid model
-  vlm=$(docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' \
-        "$("${COMPOSE[@]}" ps -q api 2>/dev/null | head -1)" 2>/dev/null | sed -n 's/^VSIR_VLM=//p' | head -1)
-  paid=$(docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' \
-        "$("${COMPOSE[@]}" ps -q api 2>/dev/null | head -1)" 2>/dev/null | sed -n 's/^VSIR_ALLOW_PAID=//p' | head -1)
-  model=$(docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' \
-        "$("${COMPOSE[@]}" ps -q api 2>/dev/null | head -1)" 2>/dev/null | sed -n 's/^VSIR_VLM_MODEL=//p' | head -1)
+  vlm=$(api_env VSIR_VLM)
+  paid=$(api_env VSIR_ALLOW_PAID)
+  model=$(api_env VSIR_VLM_MODEL)
   if [[ "$vlm" == "gemini" ]]; then
     printf "  \033[1;33mLIVE — %s · every ingest bills S1, S2 per window, one embedding per page\033[0m\n" "${model:-?}"
     printf "  VSIR_ALLOW_PAID=%s%s\n" "${paid:-?}" \
@@ -168,9 +185,11 @@ for (doc, rev), pages in sorted(live.items()):
 
   echo
   bold "Try it"
-  echo "  Swagger UI   $API/docs        (Authorize with the token below)"
+  echo "  Console      $API/console      (paste the token below into the header)"
+  echo "  Swagger UI   $API/docs         (Authorize with the token below)"
   echo "  OpenAPI      $API/openapi.json"
   echo "  token        $TOKEN"
+  dim  "               read out of the running container, so it is the one that works"
   echo
   echo "  curl -H \"Authorization: Bearer \$TOKEN\" -X POST $API/tools/lookup \\"
   echo "       -H 'Content-Type: application/json' -d '{\"label\":\"SF 1.13b\"}'"

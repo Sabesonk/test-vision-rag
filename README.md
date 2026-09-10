@@ -72,7 +72,7 @@ production and as the test stack, differing only in environment and ports.
 | **Swagger UI** | <http://localhost:8055/docs> — paste the token into **Authorize** once |
 | API | <http://localhost:8055> |
 | Qdrant | <http://localhost:6353> |
-| token | `dev-token-not-a-secret`, or set `VSIR_DEV_API_TOKENS` |
+| token | `VSIR_API_TOKENS` from your `.env` — `stack.sh status` prints the one the container is actually running with |
 
 ```bash
 bash scripts/stack.sh status          # probes, tools, documents, and the token to use
@@ -90,7 +90,8 @@ listing what *is* there — they arrive with M4–M5.
 Ingesting your own PDF over HTTP:
 
 ```bash
-curl -H "Authorization: Bearer dev-token-not-a-secret" -X POST http://localhost:8055/documents \
+set -a && . ./.env && set +a          # one token for the CLI, the container and the console
+curl -H "Authorization: Bearer $VSIR_API_TOKENS" -X POST http://localhost:8055/documents \
      -F file=@your.pdf -F doc_id=YOUR-DOC -F revision=1.0
 # -> 202 {"run_id": "...", "poll": "/runs/..."}   then poll that until state=published
 ```

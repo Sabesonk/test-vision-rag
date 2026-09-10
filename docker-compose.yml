@@ -61,7 +61,13 @@ services:
       VSIR_VLM_MODEL: "${VSIR_VLM_MODEL:-gemini-3.8-flash}"
       VSIR_EMBED_MODEL: "${VSIR_EMBED_MODEL:-gemini-embedding-2}"
       VSIR_PROMPT_VERSION: "s2-v1"
-      VSIR_API_TOKENS: "${VSIR_DEV_API_TOKENS:-dev-token-not-a-secret}"
+      # The **same** variable the CLI and a direct `vsir serve` read, so there is one token for one
+      # machine. `docker-compose.test.yml` deliberately reads a *different* name
+      # (`VSIR_TEST_API_TOKENS`) because its suites assert about the credential the container was
+      # handed, and picking up a developer's real one made that assertion meaningless. That reason
+      # does not apply here, and copying it split the answer to "which token?" in two: `.env` said
+      # one thing and the container another, so whichever an operator reached for, one of them 401'd.
+      VSIR_API_TOKENS: "${VSIR_API_TOKENS:-dev-token-not-a-secret}"
       VSIR_READ_QUOTA: "50"
       # A live model bills S1, S2 and one embedding per page. `POST /documents` refuses
       # `403 spend_not_permitted` while this is 0 and the release names a live backend, which is
