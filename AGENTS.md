@@ -65,20 +65,26 @@ VSIR_QDRANT_URL=http://localhost:6335 backend/.venv/bin/vsir demo exact --synthe
 `VSIR_SYNTHETIC_PAGES` when the fixture is not at the repository path — the image's build context
 is `backend/`, so a container running this command needs the corpus mounted.
 
-The M2a demo. Steps 01-06 of §6.1 over the generated 3-window corpus, with S1 and S2 both replayed
-from the frozen fixture (D10). No Qdrant, no network, no spend:
+The M2a demo. Steps 01-10 of §6.1 over the generated 3-window corpus, with S1 and S2 both replayed
+from the frozen fixture (D10). No network, no spend; steps 01-08 need no Qdrant either:
 
 ```bash
 export VSIR_FIXTURE=data/fixtures/synthetic_3window
 backend/.venv/bin/vsir ingest data/source/synthetic_3window.pdf --vlm stub --until stitch
 backend/.venv/bin/vsir ingest data/source/synthetic_3window.pdf --until extract --raw  # full bodies
 backend/.venv/bin/vsir ingest data/source/synthetic_3window.pdf --until probe   # 01-02 only
+VSIR_QDRANT_URL=http://localhost:6335 \
+  backend/.venv/bin/vsir ingest data/source/synthetic_3window.pdf --vlm stub --until index
 ```
 
-`--until` takes `manifest | probe | render | facts | window | extract | derive | stitch`; later
+`--until` takes
+`manifest | probe | render | facts | window | extract | derive | stitch | embed | index`; later
 units extend the list. `--raw` prints every window's verbatim response body instead of its first
 page form. Steps 01-03 need no fixture. From step 04 on, a `facts_key` or `extract_key` that is
 not in `VSIR_FIXTURE` is a typed `fixture_miss` and a non-zero exit — never a live call (D10).
+**`embed` and `index` are the two store-backed steps** (`vsir.cli.STORE_BACKED_STEPS`): step 09
+reads the embedding cache off the index and step 10 writes to it, so with no reachable Qdrant both
+refuse `qdrant_unavailable` rather than re-billing every vector the index already holds.
 
 Steps 07-08 cost nothing and print what they decided: a per-page table with the printed label,
 `grounded_rate`, `codes_in_text` and any `moved_from`, then the section table with the window
@@ -86,10 +92,36 @@ folds each section survived. Both of §6.4's offset checks run at step 07, and a
 `offset_check_failed` — the run bisects and re-bills rather than emitting a record for a window
 whose pages it cannot place.
 
+Steps 09-10 print the composed `types.Content` for the page with the most parts — §5.3's order,
+one Part per language, the `dpi_index` raster last — then the `point_id` of every page written and
+the surfaces each one carries. Everything is written `is_current=False`: step 11 (U011) is the only
+thing that flips it. Re-running is free, because a page whose composition has not changed is
+served from the vector already on its point (`embed_key`, register B5) — the second run of the
+command above reports `0 embedded, 42 reused`.
+
+The §6.6 fingerprint (`{embed_model, dim, distance, composition_version}`) is settled **before any
+vector is bought** and recorded on a `kind: fingerprint` point in the `vsir_runs` control plane,
+one per pages collection. Changing `VSIR_EMBED_MODEL`, `VSIR_EMBED_DIM` or the pinned
+`COMPOSITION_VERSION` makes the next run refuse `embed_fingerprint_mismatch` with zero points
+written — the remedy is a new collection plus a full re-embed plus an alias swap, never an
+in-place mix:
+
+```bash
+VSIR_QDRANT_URL=http://localhost:6335 VSIR_EMBED_MODEL=some-other-embed-model \
+  backend/.venv/bin/vsir ingest data/source/synthetic_3window.pdf --vlm stub --until index
+```
+
 `--vlm gemini` is a live call and needs `VSIR_VLM_KEY` (from the platform secret store, never the
-image); without it the run refuses `vlm_backend_unavailable`. `VSIR_VLM_TIER=batch` refuses
-`vlm_tier_unsupported` — the tier is not a cache-key input, so switching it later re-bills nothing.
-`VSIR_VLM_RPM` is the client's token bucket, in calls a minute.
+image); without it the run refuses `vlm_backend_unavailable`. **`VSIR_VLM` selects the embedding
+backend too** — one switch for "does this release make live model calls", so a run that replays S2
+from a fixture cannot quietly spend on embeddings. With `--vlm stub` the vectors are a
+deterministic function of the composition, not a frozen response: there is nothing worth freezing
+in 1,536 floats, and the property the tests need is that the same composition always gives the
+same vector, which is why no embedding is in the fixture directory.
+
+`VSIR_VLM_TIER=batch` refuses `vlm_tier_unsupported` — the tier is not a cache-key input, so
+switching it later re-bills nothing. `VSIR_VLM_RPM` is the client's token bucket, in calls a
+minute.
 
 Regenerate the corpus (reproducible byte for byte; the PDF and every fixture file are committed):
 
@@ -162,7 +194,8 @@ Dev ports, for reference: backend `8000`, Qdrant `6333` REST and `6334` gRPC, fr
 - **Configuration is the environment.** A deployment-varying value is an env var in `.env.example`;
   never a literal, never a committed config file, never a secret in an image or a log line.
 - **Qdrant is the only store**, two collections: `vsir_pages_<dim>` and `vsir_runs`. No relational
-  database, no ORM, no migrations.
+  database, no ORM, no migrations. `vsir_runs` is payload-only (`vectors_config={}`) and every
+  point in it says which `kind` of control record it is.
 - **The stub VLM is selected by `VSIR_VLM=stub`**, never by a code branch and never by a test-only
   import. There is no `if TESTING:` in the production path.
 - **Logs are JSON on stdout**, one event per line. The app never opens a log file.

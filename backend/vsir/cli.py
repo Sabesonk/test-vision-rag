@@ -15,17 +15,26 @@ import argparse
 import ast
 import dataclasses
 import json
+import math
 import os
 import signal
 from pathlib import Path
 from types import FrameType
-from typing import Any
+from typing import Any, Sequence
 
 from qdrant_client import QdrantClient
 
 from vsir import __version__
 from vsir import logging as vsir_logging
-from vsir.config import DPI_ANSWER, VLM_BACKENDS, ConfigError, load_config, scrub_url
+from vsir.config import (
+    COMPOSITION_VERSION,
+    DPI_ANSWER,
+    DPI_INDEX,
+    VLM_BACKENDS,
+    ConfigError,
+    load_config,
+    scrub_url,
+)
 from vsir.core import ids
 from vsir.core import observed_tokens as observed_tokens_module
 from vsir.core.exact import UnknownScopeKey, exact_filter, phrases_of
@@ -38,7 +47,10 @@ from vsir.core.variants import preserves_characters, variants
 from vsir.doctor import doctor
 from vsir.eval import synthetic
 from vsir.ingest import derive as derive_module
+from vsir.ingest import embed as embed_module
 from vsir.ingest import extract as extract_module
+from vsir.ingest import fingerprint as fingerprint_module
+from vsir.ingest import index as index_module
 from vsir.ingest import manifest, probe, render
 from vsir.ingest import stitch as stitch_module
 from vsir.ingest import window as window_module
@@ -547,9 +559,21 @@ def _cmd_demo_exact(args: argparse.Namespace) -> int:
 
 #: The steps `--until` can stop at, in pipeline order. Later units extend the list rather than
 #: adding a second command: §6.1 is one pipeline and `vsir ingest` is its one operational surface.
-INGEST_STEPS = ("manifest", "probe", "render", "facts", "window", "extract", "derive", "stitch")
+INGEST_STEPS = ("manifest", "probe", "render", "facts", "window", "extract", "derive", "stitch",
+                "embed", "index")
+
+#: The steps that need a reachable Qdrant. Steps 01-08 are pure functions of the PDF and the
+#: fixture, which is what lets the whole of derivation and stitching be asserted at L0/L1; step 09
+#: reads the embedding cache off the index and step 10 writes to it, so both refuse
+#: `qdrant_unavailable` with no store rather than running without one (§11.3).
+STORE_BACKED_STEPS: tuple[str, ...] = ("embed", "index")
 
 _RULE_WIDTH = 78
+
+#: How far a vector read back out of Qdrant may differ from the one that was written. Qdrant keeps
+#: a cosine vector as float32 and normalises it on the way in, so the round trip is lossy by about
+#: 1e-9 per component. Anything beyond this is a *different vector*, not a storage artefact.
+VECTOR_STORAGE_TOLERANCE = 1e-6
 
 
 def _step(number: str, title: str) -> None:
@@ -793,8 +817,121 @@ def _ingest(args: argparse.Namespace, cfg: Any) -> bool:
     print(f"   section_id and series_id are keyword ARRAYS: a straddling page carries both, and a "
           f"scope matches on any element (§5.3, F8)")
     _print_sections(stitched, plan)
-    return _assertions(args, source, doc, probed, plan, keys, extraction=extraction,
-                       derivation=derivation, stitched=stitched)
+    if until == "stitch":
+        return _assertions(args, source, doc, probed, plan, keys, extraction=extraction,
+                           derivation=derivation, stitched=stitched)
+
+    # ── 09 embedding + 10 indexing ───────────────────────────────────────────────────────────
+    return _embed_and_index(args, cfg, source=source, doc=doc, probed=probed, plan=plan,
+                            keys=keys, facts=facts, extraction=extraction,
+                            derivation=derivation, stitched=stitched)
+
+
+def _embed_and_index(args: argparse.Namespace, cfg: Any, *, source: Path, doc: Any, probed: Any,
+                     plan: Any, keys: tuple[str, ...], facts: Any, extraction: Any,
+                     derivation: Any, stitched: Any) -> bool:
+    """Steps 09-10 of §6.1, and the one Qdrant connection they share.
+
+    The client is opened here rather than by either step because both need it and neither owns it:
+    step 09 reads the embedding cache off the index (register B5) and step 10 writes to it. It is
+    closed in a ``finally``, so a refusal — a fingerprint mismatch above all — leaves no socket
+    and no partial write behind.
+    """
+    _step("09", "embedding — one page, one fused vector, and the receipt that avoids the re-bill")
+    backend = embed_module.embedder(cfg)
+    collection = cfg.pages_collection
+    fingerprint = fingerprint_module.Fingerprint.of(cfg)
+    print(f"   backend      {backend.name}  (VSIR_VLM={cfg.vlm} selects the embedding backend too: "
+          f"one switch for 'does this release spend')")
+    print(f"   model        {backend.model} · dim {backend.dim} · "
+          f"composition {COMPOSITION_VERSION} · task_type is never sent (D4)")
+    print(f"   fingerprint  {fingerprint.digest}  {fingerprint.as_dict()}")
+
+    try:
+        client = QdrantClient(url=cfg.qdrant_url, timeout=60, check_compatibility=False)
+    except Exception as failure:  # noqa: BLE001 - anything here is "could not reach Qdrant"
+        raise IngestRefused("qdrant_unavailable",
+                            f"{scrub_url(cfg.qdrant_url)}: {type(failure).__name__}: {failure}",
+                            qdrant_url=scrub_url(cfg.qdrant_url)) from failure
+    try:
+        try:
+            state = index_module.ensure_collection(
+                client, name=collection, dim=cfg.embed_dim, fingerprint=fingerprint,
+                runs_collection=cfg.runs_collection)
+            cached = index_module.cached_vectors(
+                client, collection, (page.page_id for page in stitched.pages))
+        except (fingerprint_module.FingerprintMismatch, index_module.IndexRefused):
+            raise
+        except Exception as failure:  # noqa: BLE001 - anything else here is the store being down
+            raise IngestRefused("qdrant_unavailable",
+                                f"{scrub_url(cfg.qdrant_url)}: {type(failure).__name__}: {failure}",
+                                qdrant_url=scrub_url(cfg.qdrant_url)) from failure
+        print(f"   collection   {collection} ({'created' if state.created else 'existing'}) · "
+              f"control plane {cfg.runs_collection} · the §6.6 fingerprint is settled BEFORE a "
+              f"single vector is bought")
+
+        embedding = embed_module.embed_document(
+            backend, stitched.pages, source=source, content_hash=probed.content_hash,
+            doc_title=facts.title, text_chars=cfg.embed_text_chars, cached=cached)
+        _log.info("ingest_step", step="embed", backend=backend.name, model=backend.model,
+                  dim=backend.dim, pages=len(embedding.records), reused=len(embedding.reused),
+                  billed=len(embedding.billed), text_dropped=embedding.text_dropped,
+                  collection=collection, fingerprint=fingerprint.digest)
+        print(f"   {len(embedding.records)} page(s) · {len(embedding.billed)} embedded, "
+              f"{len(embedding.reused)} reused from the index by embed_key (register B5) · "
+              f"{embedding.text_dropped} character(s) of page text dropped by the "
+              f"{cfg.embed_text_chars}-char cap, counted rather than silently cut")
+        _print_composition(embedding, cfg)
+        if args.until == "embed":
+            return _assertions(args, source, doc, probed, plan, keys, extraction=extraction,
+                               derivation=derivation, stitched=stitched, embedding=embedding)
+
+        # ── 10 indexing ──────────────────────────────────────────────────────────────────────
+        _step("10", "indexing — one point per page, three surfaces, every one is_current=False")
+        written = index_module.upsert(client, collection, embedding.records, embedding.vectors,
+                                      fingerprint=fingerprint,
+                                      runs_collection=cfg.runs_collection)
+        _log.info("ingest_step", step="index", collection=written.collection,
+                  points=written.count, with_lexical=written.with_lexical,
+                  with_captions=written.with_captions, is_current=False)
+        print(f"   {written.count} point(s) upserted into {written.collection} · "
+              f"{written.with_lexical} carry the `lexical` surface · {written.with_captions} carry "
+              f"`captions`, which impl declares, weights 0.4 and never writes (register D3)")
+        print(f"   {'page_id':<26} {'is_current':<11} point_id = uuid5(NAMESPACE_URL, page_id)")
+        for page_id, point in written.points:
+            print(f"   {page_id:<26} {'false':<11} {point}")
+        print("   nothing is queryable yet: step 11 is the only thing that flips is_current, and "
+              "every tool injects is_current=True server-side (I7, §6.7)")
+        return _assertions(args, source, doc, probed, plan, keys, extraction=extraction,
+                           derivation=derivation, stitched=stitched, embedding=embedding,
+                           written=written, client=client)
+    finally:
+        client.close()
+
+
+def _print_composition(embedding: Any, cfg: Any) -> None:
+    """The §5.3 part order, on the page that exercises most of it.
+
+    Printed for the page with the most parts rather than page 1, because the order is the clause
+    under review and a cover page has no sections, no codes and often no text.
+    """
+    if not embedding.compositions:
+        return
+    richest = max(embedding.compositions, key=lambda item: (len(item.parts), item.page_id))
+    print(f"\n   the composed Content for {richest.page_id} — {len(richest.parts)} text Part(s), "
+          f"then the raster, all in ONE types.Content (D4, D8)")
+    print(f"   {'#':<3} {'chars':>6}  part")
+    for number, part in enumerate(richest.parts, start=1):
+        flat = " ".join(part.split())
+        print(f"   {number:<3} {len(part):>6}  "
+              f"{flat[:64] + ('…' if len(flat) > 64 else '')!r}")
+    print(f"   {len(richest.parts) + 1:<3} {len(richest.image):>6}  the page raster @ dpi "
+          f"{richest.dpi} (dpi_index), long edge bounded to "
+          f"{embed_module.EMBED_MAX_EDGE_PX} px — the LAST Part")
+    print(f"   {richest.summary_parts} summary Part(s), one per language: a two-language page is "
+          f"never one blended string (D5, D8)")
+    print(f"   embed_key    {_short(richest.key(embedding.model), 24)}  "
+          f"(composition version ‖ {embedding.model} ‖ the composed string)")
 
 
 def _observed(derivation: Any) -> int:
@@ -896,7 +1033,8 @@ def _window_keys(source: Path, plan: Any, probed: Any, cfg: Any) -> tuple[str, .
 
 def _assertions(args: argparse.Namespace, source: Path, doc: Any, probed: Any,
                 plan: Any, keys: tuple[str, ...], *, extraction: Any,
-                derivation: Any = None, stitched: Any = None) -> bool:
+                derivation: Any = None, stitched: Any = None, embedding: Any = None,
+                written: Any = None, client: Any = None) -> bool:
     """Check the run against the numbers checked in beside the corpus, never against itself."""
     expected_path = Path(args.fixture or "") / "expected.json"
     if not expected_path.is_file():
@@ -968,6 +1106,11 @@ def _assertions(args: argparse.Namespace, source: Path, doc: Any, probed: Any,
         passed &= _derivation_assertions(table, probed, extraction, derivation)
     if stitched is not None:
         passed &= _stitch_assertions(table, plan, stitched)
+    if embedding is not None:
+        passed &= _embed_assertions(table, embedding, load_config())
+    if written is not None and client is not None:
+        passed &= _index_assertions(table, embedding, written, client, written.collection,
+                                    load_config())
     return passed
 
 
@@ -1164,6 +1307,124 @@ def _stitch_assertions(table: dict, plan: Any, stitched: Any) -> bool:
     return passed
 
 
+def _embed_assertions(table: dict, embedding: Any, cfg: Any) -> bool:
+    """Step 09's rows: the composition is §5.3's, and one page is one vector.
+
+    These are structural, not baselined: each one recomputes the property from the spec's own
+    statement of it rather than comparing against a number the fixture recorded, which is the only
+    honest way to assert an order and a count (the dim and the page count still come from
+    configuration and from the table).
+    """
+    pages = table["page_count"]
+    passed = _check(f"one page, one fused vector — {pages} pages, {pages} vectors (I1, D4)",
+                    f"{len(embedding.compositions)} composition(s), "
+                    f"{len(embedding.vectors)} vector(s), dim "
+                    f"{sorted({len(v) for v in embedding.vectors.values()})}",
+                    len(embedding.compositions) == pages
+                    and len(embedding.vectors) == pages
+                    and {len(v) for v in embedding.vectors.values()} == {cfg.embed_dim})
+
+    with_text = [item for item in embedding.compositions if item.text_chars]
+    passed &= _check("every text part is its own Part, and the raster is the last one (D4, D8)",
+                    f"{sum(len(i.parts) for i in embedding.compositions)} text Part(s) over "
+                    f"{len(embedding.compositions)} page(s); {len(with_text)} carry page text, "
+                    f"and every composition ends with the dpi {DPI_INDEX} raster",
+                    all(item.dpi == DPI_INDEX and item.image for item in embedding.compositions)
+                    and all(part.strip() for item in embedding.compositions
+                            for part in item.parts))
+
+    keys = {item.page_id: item.key(embedding.model) for item in embedding.compositions}
+    passed &= _check("embed_key is per composition, so an unchanged page is free next run (B5)",
+                    f"{len(set(keys.values()))} distinct key(s) for {len(keys)} page(s); "
+                    f"{len(embedding.reused)} reused this run",
+                    len(set(keys.values())) == len(keys)
+                    and all(record.provenance.embed_key == keys[record.page_id]
+                            for record in embedding.records))
+    return passed
+
+
+def _unit(vector: Sequence[float]) -> list[float]:
+    """``vector`` as Qdrant stores it in a cosine collection: normalised to unit length."""
+    norm = math.sqrt(sum(value * value for value in vector))
+    return [value / norm for value in vector] if norm else list(vector)
+
+
+def _index_assertions(table: dict, embedding: Any, written: Any, client: Any,
+                      collection: str, cfg: Any) -> bool:
+    """Step 10's rows, read back **out of Qdrant** — the payload a tool would see, not our copy."""
+    import uuid as _uuid
+
+    pages = table["page_count"]
+    passed = _check(f"{pages} point(s) written, one per page (I1)",
+                    f"{written.count} upserted into {collection}",
+                    written.count == pages)
+
+    expected = {page_id: str(_uuid.uuid5(_uuid.NAMESPACE_URL, page_id))
+                for page_id, _ in written.points}
+    passed &= _check("point_id == uuid5(NAMESPACE_URL, page_id), recomputed independently (§5.1)",
+                    f"{sum(1 for p, q in written.points if expected[p] == q)}/{written.count} "
+                    f"match; a re-ingest therefore overwrites rather than doubling (F12)",
+                    all(expected[page_id] == point for page_id, point in written.points))
+
+    stored = client.retrieve(collection, ids=list(written.point_ids), with_payload=True,
+                             with_vectors=True)
+    payloads = {(point.payload or {}).get("provenance", {}).get("page_id"): point
+                for point in stored}
+    passed &= _check("every point is is_current=False until the gates pass (I7, §6.7)",
+                    f"{sum(1 for p in stored if (p.payload or {}).get('is_current') is False)}"
+                    f"/{len(stored)} read back false",
+                    len(stored) == pages
+                    and all((point.payload or {}).get("is_current") is False for point in stored))
+
+    named = sorted({key for point in stored
+                    for key in index_module.FORBIDDEN_PAYLOAD_KEYS if key in (point.payload or {})})
+    passed &= _check("no payload names a file — there is no image_path (§5.3, register A5)",
+                    f"forbidden keys present in {len(stored)} payload(s): {named or 'none'}",
+                    not named)
+
+    # Two facts about how Qdrant stores a cosine vector, and the check has to know both or it
+    # fails on a truth rather than on a defect. It **normalises** on write, because cosine
+    # similarity of unit vectors is a dot product — so the round trip preserves the direction and
+    # not the magnitude. And it keeps float32, so a component comes back about 1e-9 from the
+    # float64 that went in — which is why this is a tolerance and not a rounded equality: over
+    # 1,536 components, some value always lands next to a rounding boundary.
+    dense = {page_id: (point.vector or {}).get("dense") for page_id, point in payloads.items()}
+    drift = max((max(abs(a - b) for a, b in zip(vector, _unit(embedding.vectors[page_id])))
+                 for page_id, vector in dense.items() if vector is not None), default=1.0)
+    sized = sum(1 for vector in dense.values()
+                if vector is not None and len(vector) == cfg.embed_dim)
+    passed &= _check("the stored dense vector is the one step 09 composed, unchanged",
+                    f"{sized}/{pages} vectors of dim {cfg.embed_dim} read back; largest component "
+                    f"drift {drift:.2e} — float32 storage, not a different vector",
+                    sized == pages and drift <= VECTOR_STORAGE_TOLERANCE)
+
+    generated = [record for record in embedding.records
+                 if record.content.summaries or record.content.topics]
+    carried = [point for page_id, point in payloads.items()
+               if index_module.CAPTIONS in (point.vector or {})]
+    shared = {token
+              for record in generated
+              for token in tok(index_module.caption_text(record))
+              if token in token_set(record.text)}
+    passed &= _check("the `captions` surface is written, and shares no token with `lexical` (D3)",
+                    f"{len(carried)}/{len(generated)} page(s) with summaries or topics carry a "
+                    f"non-empty captions vector; dedupe(against=text) left {len(shared)} "
+                    f"already-printed token(s) in it",
+                    len(carried) == len(generated) and not shared)
+
+    again = index_module.upsert(client, collection, embedding.records, embedding.vectors,
+                                fingerprint=fingerprint_module.Fingerprint.of(cfg),
+                                runs_collection=cfg.runs_collection)
+    total = index_module.count(client, collection,
+                               {"doc_id": embedding.records[0].doc_id,
+                                "revision": embedding.records[0].revision})
+    passed &= _check("re-running the same write overwrites in place: the count is unchanged (I1)",
+                    f"upserted {again.count} again, and the collection still holds {total} "
+                    f"point(s) for this (doc_id, revision)",
+                    again.count == pages and total == pages)
+    return passed
+
+
 def _cmd_ingest(args: argparse.Namespace) -> int:
     if args.vlm:
         os.environ["VSIR_VLM"] = args.vlm
@@ -1184,7 +1445,9 @@ def _cmd_ingest(args: argparse.Namespace) -> int:
                   vlm_model=cfg.vlm_model, prompt_version=cfg.prompt_version, dpi=DPI_ANSWER)
         try:
             passed = _ingest(args, cfg)
-        except (IngestRefused, window_module.WindowError, render.RenderError) as refusal:
+        except (IngestRefused, window_module.WindowError, render.RenderError,
+                embed_module.EmbedError, fingerprint_module.FingerprintMismatch,
+                index_module.IndexRefused) as refusal:
             _log.error("ingest_refused", reason=refusal.code, detail=str(refusal),
                        **getattr(refusal, "details", {}))
             print(f"\n   REFUSED  {refusal.code}: {refusal}")
@@ -1222,7 +1485,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     ingest_parser = commands.add_parser(
         "ingest",
-        help="run the ingestion pipeline of §6.1 over one PDF; steps 01-05 at M2a",
+        help="run the ingestion pipeline of §6.1 over one PDF; steps 01-10 at M2a",
     )
     ingest_parser.add_argument("pdf", help="the source PDF")
     ingest_parser.add_argument(

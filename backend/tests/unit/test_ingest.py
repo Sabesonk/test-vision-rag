@@ -21,7 +21,11 @@ from vsir.ingest import probe
 
 BASE_ENV = {
     "VSIR_PORT": "8000",
-    "VSIR_QDRANT_URL": "http://localhost:6333",
+    # Nothing serves this port. L0/L1 are steps 01-08 plus pure functions, so a suite that
+    # reached a store would be reaching a *developer's* store — and on this machine there is a
+    # live one on 6333. The two store-backed steps are asserted here by their refusal, and
+    # exercised against a real Qdrant by tests/api/test_index_upsert.py.
+    "VSIR_QDRANT_URL": "http://127.0.0.1:6399",
     "VSIR_COLLECTION": "vsir_pages",
     "VSIR_VLM": "stub",
     "VSIR_VLM_MODEL": "gemini-3.8-flash-001",
@@ -119,7 +123,8 @@ def test_ingest_reports_each_step_on_the_event_stream(env, capsys, synthetic_pdf
     assert all(event["run_id"] for event in events)
 
 
-@pytest.mark.parametrize("until", cli.INGEST_STEPS)
+@pytest.mark.parametrize("until", [step for step in cli.INGEST_STEPS
+                                   if step not in cli.STORE_BACKED_STEPS])
 def test_ingest_stops_where_it_is_told(env, capsys, synthetic_pdf, until):
     code = _run(synthetic_pdf, "--until", until)
     events = [json.loads(line) for line in capsys.readouterr().out.splitlines()
@@ -128,6 +133,24 @@ def test_ingest_stops_where_it_is_told(env, capsys, synthetic_pdf, until):
 
     assert code == cli.EXIT_OK
     assert steps == list(cli.INGEST_STEPS[:cli.INGEST_STEPS.index(until) + 1])
+
+
+@pytest.mark.parametrize("until", cli.STORE_BACKED_STEPS)
+def test_the_store_backed_steps_refuse_by_name_with_no_store(env, capsys, synthetic_pdf, until):
+    """§11.3 — each degradation row is a refusal, not a best-effort fallback.
+
+    Step 09 reads the embedding cache off the index and step 10 writes to it, so neither can run
+    without Qdrant. Running anyway would be worse than refusing in both directions: it would
+    re-bill every vector the index already holds, and then report a published document that was
+    never written.
+    """
+    code = _run(synthetic_pdf, "--vlm", "stub", "--until", until)
+    out = capsys.readouterr().out
+
+    assert code == cli.EXIT_REFUSED
+    assert "REFUSED  qdrant_unavailable" in out
+    assert "09 embedding" in out
+    assert "10 indexing" not in out
 
 
 def test_a_replay_miss_is_typed_and_never_a_live_call(env, capsys, synthetic_pdf):

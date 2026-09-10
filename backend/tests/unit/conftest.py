@@ -59,7 +59,11 @@ def expected(synthetic_pdf: Path) -> dict:
 
 SYNTHETIC_ENV = {
     "VSIR_PORT": "8000",
-    "VSIR_QDRANT_URL": "http://localhost:6333",
+    # Nothing serves this port. L0/L1 are steps 01-08 plus pure functions, so a suite that
+    # reached a store would be reaching a *developer's* store — and on this machine there is a
+    # live one on 6333. The two store-backed steps are asserted here by their refusal, and
+    # exercised against a real Qdrant by tests/api/test_index_upsert.py.
+    "VSIR_QDRANT_URL": "http://127.0.0.1:6399",
     "VSIR_COLLECTION": "vsir_pages",
     "VSIR_VLM": "stub",
     "VSIR_VLM_MODEL": "gemini-3.8-flash-001",

@@ -7,9 +7,9 @@
 
 | | |
 |---|---|
-| **Complete** | 9 / 26 units (35%) |
-| **Current milestone** | M2a — ingest a generated PDF with a stubbed VLM (3 / 5 units); M0 and M1 closed and tagged |
-| **Next unit** | U010 — Embedding, the three surfaces, the fingerprint, and indexing |
+| **Complete** | 10 / 26 units (38%) |
+| **Current milestone** | M2a — ingest a generated PDF with a stubbed VLM (4 / 5 units); M0 and M1 closed and tagged |
+| **Next unit** | U011 — Gates, publish, retirement, the run control plane, and exports |
 | **Blocked** | none |
 
 ---
@@ -37,7 +37,7 @@
 - [x] U007 Manifest, probe, render, S1 facts, and the windowing ladder
 - [x] U008 The VLM boundary, cache keys, replay mode, and S2 extraction
 - [x] U009 Derivation, health signals, label attribution, and stitching
-- [ ] U010 Embedding, the three surfaces, the fingerprint, and indexing
+- [x] U010 Embedding, the three surfaces, the fingerprint, and indexing
 - [ ] U011 Gates, publish, retirement, the run control plane, and exports
 
 ### M2b — ingest the pilot PDF; freeze the fixture (spend: S2 + embed, once)
@@ -1317,6 +1317,179 @@ assertion `record.text == probe_text[page_no]` — now exists and passes on all 
   the record now, but it belongs to the export and is not written here. The §11.1 gates read
   `Derivation.health` — `grounded_median`, `fully_scanned`, `searchable_ratio` — which this unit
   produces and nothing yet enforces.
+
+---
+
+### U010 — Embedding, the three surfaces, the fingerprint, and indexing
+
+**Milestone:** M2a · **Spend:** none · **Status:** `[x]` Complete · **Completed:** 2026-09-10
+
+**Demo output** — the plan's Demo Command, against the test stack's Qdrant on 6335:
+
+```
+$ vsir ingest data/source/synthetic_3window.pdf --vlm stub --until index && \
+  VSIR_EMBED_MODEL=some-other-embed-model \
+    vsir ingest data/source/synthetic_3window.pdf --vlm stub --until index; echo "exit=$?"
+
+09 embedding — one page, one fused vector, and the receipt that avoids the re-bill
+   backend      stub  (VSIR_VLM=stub selects the embedding backend too: one switch for
+                'does this release spend')
+   model        gemini-embedding-2 · dim 1536 · composition d4-fused-v1 · task_type is never
+                sent (D4)
+   fingerprint  45a09c588c25422c  {'embed_model': 'gemini-embedding-2', 'dim': 1536,
+                'distance': 'cosine', 'composition_version': 'd4-fused-v1'}
+   collection   vsir_pages_1536 (created) · control plane vsir_runs · the §6.6 fingerprint is
+                settled BEFORE a single vector is bought
+   42 page(s) · 42 embedded, 0 reused from the index by embed_key (register B5) · 0 character(s)
+   of page text dropped by the 2000-char cap, counted rather than silently cut
+
+   the composed Content for synthetic-3window@1.0#p042 — 6 text Part(s), then the raster, all in
+   ONE types.Content (D4, D8)
+   #    chars  part
+   1       27  'C24 SYNTHETIC SAFETY MANUAL'
+   2       26  'Part numbers and suppliers'
+   3      336  'Page 40 covers part numbers and suppliers stage 40 within the pa…'
+   4       51  'part numbers and suppliers · wiring · stop category'
+   5       78  'SF 3.42B B242 K142 SI3 X20SI4100 Q92 LC1-D38BL S342 EAO 84-5140.…'
+   6      526  'Electrical references and part numbers Part numbers and supplier…'
+   7   125655  the page raster @ dpi 150 (dpi_index), long edge bounded to 1568 px — the LAST Part
+   1 summary Part(s), one per language: a two-language page is never one blended string (D5, D8)
+   embed_key    27da2d92c63e711e09652989…  (composition version ‖ gemini-embedding-2 ‖ the
+                composed string)
+
+10 indexing — one point per page, three surfaces, every one is_current=False
+   42 point(s) upserted into vsir_pages_1536 · 40 carry the `lexical` surface · 42 carry
+   `captions`, which impl declares, weights 0.4 and never writes (register D3)
+   page_id                    is_current  point_id = uuid5(NAMESPACE_URL, page_id)
+   synthetic-3window@1.0#p001 false       91e615c7-f4da-57bd-b422-c757ca693321
+   synthetic-3window@1.0#p002 false       bedb39d2-6c27-5abd-a45e-98fd8d9d7299
+   …
+   synthetic-3window@1.0#p042 false       (42 rows, each id recomputed independently below)
+   nothing is queryable yet: step 11 is the only thing that flips is_current, and every tool
+   injects is_current=True server-side (I7, §6.7)
+
+assertions — data/fixtures/synthetic_3window/expected.json
+   … 26 rows from steps 01-08, all PASS …
+   PASS  one page, one fused vector — 42 pages, 42 vectors (I1, D4)
+         42 composition(s), 42 vector(s), dim [1536]
+   PASS  every text part is its own Part, and the raster is the last one (D4, D8)
+         248 text Part(s) over 42 page(s); 40 carry page text, and every composition ends with
+         the dpi 150 raster
+   PASS  embed_key is per composition, so an unchanged page is free next run (B5)
+         42 distinct key(s) for 42 page(s); 0 reused this run
+   PASS  42 point(s) written, one per page (I1)
+         42 upserted into vsir_pages_1536
+   PASS  point_id == uuid5(NAMESPACE_URL, page_id), recomputed independently (§5.1)
+         42/42 match; a re-ingest therefore overwrites rather than doubling (F12)
+   PASS  every point is is_current=False until the gates pass (I7, §6.7)
+         42/42 read back false
+   PASS  no payload names a file — there is no image_path (§5.3, register A5)
+         forbidden keys present in 42 payload(s): none
+   PASS  the stored dense vector is the one step 09 composed, unchanged
+         42/42 vectors of dim 1536 read back; largest component drift 3.68e-09 — float32
+         storage, not a different vector
+   PASS  the `captions` surface is written, and shares no token with `lexical` (D3)
+         42/42 page(s) with summaries or topics carry a non-empty captions vector;
+         dedupe(against=text) left 0 already-printed token(s) in it
+   PASS  re-running the same write overwrites in place: the count is unchanged (I1)
+         upserted 42 again, and the collection still holds 42 point(s) for this (doc_id, revision)
+
+ALL ASSERTIONS PASSED
+
+  ── then, with the embedding model changed ──────────────────────────────────────────────────
+
+09 embedding — one page, one fused vector, and the receipt that avoids the re-bill
+   model        some-other-embed-model · dim 1536 · composition d4-fused-v1
+   fingerprint  97cd85691bdaf6fa  {'embed_model': 'some-other-embed-model', …}
+
+   REFUSED  embed_fingerprint_mismatch: vsir_pages_1536 was embedded under a different recipe
+   (embed_model: stored 'gemini-embedding-2' != configured 'some-other-embed-model'). Refusing to
+   upsert: a vector made one way cannot be compared with one made another, so the remedy is a NEW
+   collection, a full re-embed of every document into it, and an alias swap — never an in-place
+   mix (§6.6). Nothing was written
+exit=1
+```
+
+The refusal lands **before any vector is bought** and the collection is untouched: 42 points, the
+original `embed_key`, and the stored fingerprint still `gemini-embedding-2`. Re-running the first
+command reports `0 embedded, 42 reused` — register B5, closed with the index as the store.
+
+`bash scripts/test-unit.sh` → **898 passed** (was 835) including the §12.5 conformance greps.
+`bash scripts/test-api.sh` → **165 passed** (was 137), the §12.4 abstention eval among them.
+
+**Invariants/failure rows closed:** none is *asserted* here by Spec §9 — I1's post-publish count
+and I7's publish gate are U011's. What lands here is the half each rests on: `point_id =
+uuid5(page_id)` and `is_current=False` on every write, both asserted by the demo and by
+`tests/api/test_index_upsert.py`. Register items closed: **B5** (embeddings cached by `embed_key`)
+· **D3** (the `captions` surface is finally written) · **E7's idempotent half** (a re-ingest
+overwrites; the retirement rule that removes a *vanished* page is U011's) · **A5** (no payload
+names a file, asserted on the live payload) · **B6/F11** (the embedding pin is re-checked at the
+point of spend, not only at boot).
+
+**Notes**
+
+- **Where the §6.6 fingerprint lives, and why.** Qdrant has no collection-level metadata and §4.2
+  allows exactly two collections, so the record is a point in the **control plane** — `vsir_runs`,
+  payload-only, one point per pages collection, discriminated by `kind: "fingerprint"`. U011 will
+  add `kind: "run"` and `kind: "window"` beside it. The alternative — a sentinel point inside
+  `vsir_pages` — was rejected: that collection's point count is what I1 asserts. `dim` and
+  `distance` are still checked the other way too, read back off the live collection by
+  `core.indexed.schema_problems` at boot; `embed_model` and `composition_version` are not
+  observable from Qdrant at all, which is why the record exists.
+- **`VSIR_VLM` selects the embedding backend as well as the VLM.** No new environment variable:
+  one switch for *"does this release make live model calls"*, so a run that replays S2 from a
+  fixture cannot quietly spend on 42 embeddings. Two switches would let `VSIR_VLM=stub` plus a
+  live embedder past every guard the first one exists to provide.
+- **The stub embedder computes rather than replays, and that is a deliberate difference from the
+  S2 stub.** There is nothing worth freezing in 1,536 floats — a fixture of them is unreviewable
+  and no more truthful than a hash — and the property the tests need is that the *same composition
+  always gives the same vector* and a changed one does not. That is what proves the composition is
+  what gets embedded, which is the one thing about this step the spec constrains. Safe here and
+  not for S2 because nothing downstream asserts what a vector *means*: it orders candidates, and
+  every path that can reach an answer goes through the exact surface (I2, I3). A fabricated
+  `WindowOut`, by contrast, would put invented codes into records the whole system then treats as
+  observations — which is why D10 refuses one.
+- **The embedding cache is the index itself.** `ingest/index.py::cached_vectors` reads the dense
+  vector and the `embed_key` already on a page's point; step 09 reuses it when the key matches and
+  re-bills otherwise. That closes B5 with **no new store, no local disk and no extra collection**
+  (§15 Factor VI) — and it is safe by construction, because a reused vector can only come from a
+  collection whose fingerprint already matched and whose key already encodes the model, the
+  composition version and the composed string.
+- **Two new store-backed steps, and they refuse rather than degrade.** `embed` and `index` are the
+  first `--until` targets that need Qdrant (`cli.STORE_BACKED_STEPS`), and with no store both exit
+  `qdrant_unavailable` (§11.3). Running anyway would be wrong in both directions: it would re-bill
+  every vector the index already holds, then report a document that was never written.
+- **The two L0 environment blocks now point at `127.0.0.1:6399`, a port nothing serves.** They
+  said `localhost:6333`, which on this machine is a *live* Qdrant belonging to another project.
+  Nothing at L0/L1 reached it before, and the two new steps would have. `test_doctor.py` and
+  `test_replay.py` already used 6399; the unit layer is now uniformly unable to touch a store, and
+  the two store-backed steps are asserted at L0 by their refusal instead.
+- **The printed page label is not a composition part.** `impl` prefixes `page ` onto a label that
+  already reads `Page 1 of 55` and embeds the result on every page of the corpus (guide 08 §5.4).
+  §5.3's order does not carry the label at all, and a printed label is `resolve`'s question,
+  answered from an indexed facet rather than by nearest neighbour — so the part goes and the
+  cosmetic defect goes with it.
+- **Truncation is counted.** `impl` cuts `text[:4000]` and `units[:6]` and counts neither, so
+  nothing would tell you when a corpus started losing page tails. `Composition.text_dropped`
+  records it per page and the CLI prints the document total (0 on this corpus, whose longest page
+  is under the 2,000-char cap).
+- **Qdrant normalises a cosine vector on write, and keeps float32.** Both had to be discovered:
+  the first makes a round trip preserve direction and not magnitude, the second puts a component
+  ~1e-9 from what was sent. The read-back assertion therefore compares the *unit* vector within a
+  stated tolerance (`cli.VECTOR_STORAGE_TOLERANCE`, 1e-6) rather than by rounded equality — with
+  1,536 components, some value always lands next to a rounding boundary. A rounded check passed on
+  the stub's already-normalised vectors and would have failed on the first real Gemini ingest.
+- **Deliberate extension of the unit's file list:** `cli.py` (steps 09-10 and their assertion
+  rows — the unit's Demo Command is `--until index`, which cannot exist without it), plus the two
+  L0 environment blocks above and `test_ingest.py`'s step parametrisation. Nothing in `core/` or
+  in another unit's module changed.
+- **Cost line for M8 (plan R9):** per-page image embedding is unbudgeted — ≈ $0.66 for a full
+  5,505-page run at $0.00012/image (Spec §2.3 C12). It is a cost-model line, not a design change;
+  recorded here so U026's scale-out costing includes it.
+- **Left for U011:** the gates and the `is_current` flip, the three-clause retirement rule, and
+  the run/window points that will share `vsir_runs` with the fingerprint record written here.
+  `index.count(client, name, scope)` is in place for I1's post-publish `count(doc, rev) ==
+  pdf.page_count` assertion.
 
 ---
 
