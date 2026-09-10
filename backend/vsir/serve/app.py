@@ -17,9 +17,9 @@ written (`serve/auth.py`).
 if the tool spends, runs it, stamps ``reads_remaining`` on the envelope and — for `read` and
 `fetch` only — writes the ten-field audit line of §7.4. Adding a tool is adding a row, so no tool
 can arrive with its own idea of auth, of the budget, or of which failures are which. The table in
-this release holds the four free moves of the ladder — `skim_pages`, `lookup`, `resolve` and
-`verify`; the rest of §7.2 joins it as its milestone lands, and a name that is not in the table is
-a typed `404` naming what is, never a 501-shaped silence.
+this release holds five of the ladder's free moves — `skim_pages`, `lookup`, `resolve`, `verify`
+and `fetch`; the rest of §7.2 joins it as its milestone lands, and a name that is not in the table
+is a typed `404` naming what is, never a 501-shaped silence.
 
 **And the table is not the HTTP surface's — it is the release's.** §7.5 requires the MCP server to
 expose the same tools *"calling the identical implementations (no second code path)"*, so the
@@ -77,7 +77,7 @@ from starlette.concurrency import run_in_threadpool
 
 from vsir import __version__
 from vsir import logging as vsir_logging
-from vsir.config import LOOKUP_CAP, Config, load_config
+from vsir.config import DPI_INDEX, LOOKUP_CAP, Config, load_config
 from vsir.doctor import QDRANT_UNAVAILABLE, BootRefused, assert_boot_ok, run_boot_checks
 from vsir.ingest import embed as embed_module
 from vsir.ingest import export as export_module
@@ -86,10 +86,13 @@ from vsir.serve import audit as audit_module
 from vsir.serve import auth as auth_module
 from vsir.serve import budget as budget_module
 from vsir.serve import ingest as ingest_module
+from vsir.serve import raster_cache
 from vsir.serve.audit import Usage
 from vsir.serve.auth import BearerAuth, Identity
-from vsir.serve.caps import ToolError
+from vsir.serve.caps import ALLOWED_DPI, ToolError, validate_fetch_megapixels
 from vsir.serve.envelope import Provenance, wire
+from vsir.serve.tools.fetch import INCLUDE_ALL, PART
+from vsir.serve.tools.fetch import fetch as fetch_tool
 from vsir.serve.tools.lookup import lookup as lookup_tool
 from vsir.serve.tools.resolve import resolve as resolve_tool
 from vsir.serve.tools.skim import SKIM_LIMIT
@@ -352,6 +355,34 @@ class ResolveRequest(ToolRequest):
     doc_id: str = ""
 
 
+class FetchRequest(ToolRequest):
+    """``fetch(page_ids, include, dpi=150, region=None, inline=True)`` — §7.2.5.
+
+    No ``scope``: the pages are named outright, so there is nothing to filter — the same reason
+    `verify` has none. No ``image`` either: this tool *returns* rasters, it does not search with
+    one.
+
+    ``include`` is a list of `Literal`s rather than a free list of strings, so a fourth part name
+    is an `invalid_request` naming the field instead of a word this service silently ignores — a
+    caller that asked for ``"summaries"`` and received a page with no summary would conclude the
+    page has none.
+
+    ``dpi`` and ``region`` are plain values here and are bounded in `serve/caps.py`, not by
+    Pydantic: §7.3's bounds have to produce **their own** codes (`dpi_not_allowed`,
+    `dpi_requires_region`, `region_invalid`) because an agent switches on them, and a Pydantic
+    ``Literal[36, 72, …]`` would produce a generic validation error instead.
+    """
+
+    page_ids: list[str]
+    include: list[PART] = Field(default_factory=lambda: list(INCLUDE_ALL))
+    dpi: int = DPI_INDEX
+    #: Normalised ``[x0, y0, x1, y1]`` (D6) — the crop, rendered on demand, stored nowhere.
+    region: list[float] | None = None
+    #: **Default true**, because an agent needs the pixels in its context and an MCP client cannot
+    #: follow a URL. ``false`` returns the reference only, which is what the console uses (§7.2.5).
+    inline: bool = True
+
+
 @dataclass(frozen=True)
 class ToolContext:
     """Everything a tool call needs that is not in its body. Built per request, held nowhere.
@@ -501,6 +532,26 @@ def _call_resolve(context: ToolContext, body: ResolveRequest) -> tuple[BaseModel
     return response, Usage.free()
 
 
+def _call_fetch(context: ToolContext, body: FetchRequest) -> tuple[BaseModel, Usage]:
+    """§7.2.5. The first adapter that hands the tool the whole ``cfg`` and not one collection name.
+
+    `fetch` needs three things this release keeps in separate places — the page index, the run
+    record that says which bytes those pages were indexed from (§6.9), and the document store the
+    bytes are in (U029) — and all three are named by configuration. Passing ``cfg`` keeps the
+    resolution chain inside the tool, where `GET /pages/{page_id}/image` shares it, rather than
+    reassembling it per transport.
+
+    The only adapter that returns a real :class:`Usage`: `fetch` is **free** (§8.1a — it costs the
+    agent's own context) and it is still audited, because the shared §7.4 line tracks image-byte
+    movement rather than spend.
+    """
+    return fetch_tool(
+        context.client, context.cfg, body.page_ids,
+        include=body.include, dpi=body.dpi, region=body.region, inline=body.inline,
+        provenance=context.provenance, reads_remaining=context.reads_remaining,
+    )
+
+
 #: What each tool is *for*, in the words an agent needs to choose between them. Kept beside the
 #: table rather than lifted from the Python docstrings: those explain the implementation to a
 #: maintainer, and a tool description explains a **move** to a caller (§7.2, §8.2).
@@ -536,6 +587,19 @@ LOOKUP_DESCRIPTION = (
     "codes in `unverified_hits`, permanently `verified: false`; they are recall on a scanned "
     "page and they are never evidence. Free."
 )
+FETCH_DESCRIPTION = (
+    "LOOK. The material of pages you have already chosen — the page image, its extracted text "
+    "and its summary — instead of an answer, so you can reason across them, keep the evidence "
+    "and ask a follow-up without paying again. **Free**: it calls no model. At most 5 pages and "
+    "12 megapixels per call, and an over-budget call is a typed refusal naming the bound, never "
+    "a truncated page list. `dpi` is one of 36, 72, 150 (the default), 220, 300, 400; above 220 "
+    "a normalised `region` [x0,y0,x1,y1] is required, because detail that fine is about part of "
+    "a page. `inline` defaults to true and returns the pixels as `bytes_b64` beside the URL; "
+    "`inline=false` returns the URL only. Dropping \"image\" from `include` makes this a cheap "
+    "text/summary read — and every page still reports `text_trust`, so a scanned page's empty "
+    "`text` cannot be mistaken for a blank page. Use `read` only when you need a model to "
+    "interpret the image."
+)
 VERIFY_DESCRIPTION = (
     "CHECK. Is each of these codes actually printed on each of these pages? Per (claim, page), "
     "so a draft citing two pages cannot borrow the neighbouring page's evidence. Three verdicts: "
@@ -554,14 +618,14 @@ def tool_table() -> dict[str, ToolSpec]:
     one app at a different table would be changing every other app's. Each :func:`create_app`
     gets its own, parked on ``app.state`` and handed to the :class:`ToolRuntime`.
 
-    Four of §7.2's eight are absent here and that is a fact about the release, not a gap in the
-    dispatcher: `skim_documents` and `skim_sections` land at U019, `fetch` at U018 and `read` at
-    U020. Until then their names are a typed `404` that lists what *is* available, because a
-    caller that asked for `read` needs to know it is not here — not receive an empty result.
+    Three of §7.2's eight are absent here and that is a fact about the release, not a gap in the
+    dispatcher: `skim_documents` and `skim_sections` land at U019 and `read` at U020. Until then
+    their names are a typed `404` that lists what *is* available, because a caller that asked for
+    `read` needs to know it is not here — not receive an empty result.
 
     The order of the rows is the order of the ladder, not alphabetical: an agent reading the tool
     list for the first time is choosing a **move**, and `skim_pages` → `lookup` → `resolve` →
-    `verify` is narrow, jump, follow, check (§7.2, §8.1).
+    `verify` → `fetch` is narrow, jump, follow, check, look (§7.2, §8.1).
     """
     return {
         "skim_pages": ToolSpec(name="skim_pages", request=SkimPagesRequest, call=_call_skim_pages,
@@ -572,6 +636,10 @@ def tool_table() -> dict[str, ToolSpec]:
                             description=RESOLVE_DESCRIPTION),
         "verify": ToolSpec(name="verify", request=VerifyRequest, call=_call_verify,
                            description=VERIFY_DESCRIPTION),
+        # Free (§8.1a, SA-9) and audited anyway: the §7.4 line beside `read`'s tracks image-byte
+        # movement, which is the resource this tool actually consumes.
+        "fetch": ToolSpec(name="fetch", request=FetchRequest, call=_call_fetch,
+                          description=FETCH_DESCRIPTION),
     }
 
 
@@ -984,6 +1052,110 @@ def create_app(env: Mapping[str, str] | None = None) -> FastAPI:
 
         return Response(content=outcome.body(), status_code=outcome.status,
                         media_type="application/json")
+
+    # ── the page raster: `fetch`'s browser-renderable half (§7.2.5, §7.4) ────────────────────────
+
+    def _rendered(page_id: str, dpi: int, region: Sequence[float] | None) -> Any:
+        """``page_id`` → the raster, with every §7.3 bound in front of it. Sync, by design.
+
+        Both blocking things it does are blocking: Qdrant's client is sync and PyMuPDF is C. The
+        route awaits it in a worker thread, because a 220-dpi render on the event loop is an outage
+        for every other request in flight.
+
+        The megapixel bound applies here too, and it is not `fetch`'s bound borrowed for company:
+        rendering is the memory spike §15.1 names, and a *single* page can exceed 12 MP — an
+        E-size drawing at 220 dpi is over seventy. One bound, one code, both surfaces.
+        """
+        raster_cache.validate_raster_request(dpi, region)
+        resolved = raster_cache.resolve_page(app.state.search, cfg, page_id)
+        validate_fetch_megapixels(
+            raster_cache.megapixels(resolved, dpi=dpi, region=region))
+        return raster_cache.raster(resolved, dpi=dpi, region=region)
+
+    @app.get(raster_cache.PAGE_IMAGE_PATH, tags=["pages"], responses={
+        200: {"content": {raster_cache.PNG_MEDIA_TYPE: {}},
+              "description": "the page raster, rendered on demand and never persisted (§4.2)"},
+        304: {"description": "the caller's `If-None-Match` matches this raster's digest"},
+        400: {"description": "a typed bound of §7.3 — `dpi_not_allowed`, `dpi_requires_region`, "
+                             "`region_invalid`, `page_id_invalid`"},
+        401: {"description": "no bearer token (§7.4) — a raster is never served without one"},
+        404: {"description": "`page_not_found`, or `page_not_current` for a superseded page"},
+        503: {"description": "`document_not_stored` / `document_hash_mismatch` — the page is "
+                             "indexed and its bytes are not here (§11.3)"},
+    })
+    async def page_image(page_id: str, request: Request, dpi: str = str(DPI_INDEX),
+                         region: str = "") -> Any:
+        """The page raster, rendered on demand — ported from `impl`'s `/api/v1/page-image/{id}`.
+
+        What is ported is the idea of a URL a browser `<img>` can point at. What is not is where
+        the bytes came from: `impl` read a PNG that step 03 had written for every page at both
+        dpis, so the path went stale, `read()` returned 503 for every page (register **A5**), and
+        an instance could only answer about files its own replica happened to have. Here nothing is
+        on disk — `page_id` resolves to the source document (U029) and the raster is made now and
+        cached in memory (§4.2, §15 Factor VI).
+
+        **`dpi` is read as a string on purpose.** Declared as `int`, a `?dpi=abc` would be
+        FastAPI's own 422 with a validation array in it; §7.3 says every bound on this parameter is
+        a typed 400 whose ``error`` an agent can switch on, and *"that is not a dpi"* belongs in
+        the same family as *"that dpi is not allowed"*.
+
+        **ETag, and a 304.** The digest is the raster's own SHA-256, which is already computed for
+        `extract_key` (§6.3), so a console scrolling a hundred thumbnails re-validates instead of
+        moving a hundred images again. It is honest under a re-ingest: different bytes render to a
+        different digest, so the browser's copy stops matching by construction.
+
+        No audit line. §7.4 audits `read` and `fetch` — the two *tools* — and widening that set is
+        widening an append-only schema, so this logs its own event with the same facts instead
+        (page, dpi, bytes, whether it rendered) and the audit stream keeps its shape.
+        """
+        identity = auth_module.identity_of(request.scope)
+        if identity is None:                    # unreachable behind `BearerAuth`; fails closed
+            refusal = auth_module.Unauthorized()
+            return JSONResponse(status_code=refusal.http_status, content=refusal.to_payload(),
+                                headers=refusal.headers)
+
+        correlation = dict(request.scope.get(SCOPE_CORRELATION) or {})
+        with vsir_logging.correlate(tool="page_image",
+                                    **{k: v for k, v in correlation.items() if v}):
+            try:
+                resolved_dpi = int(str(dpi).strip())
+            except ValueError:
+                outcome = _failure_response(ToolError(
+                    "dpi_not_allowed",
+                    f"dpi is one of {list(ALLOWED_DPI)}, got {dpi!r}",
+                    allowed=list(ALLOWED_DPI), requested=str(dpi)), tool="page_image")
+                return Response(content=outcome.body(), status_code=outcome.status,
+                                media_type="application/json")
+
+            before = raster_cache.cache_info()
+            try:
+                crop = raster_cache.region_of_query(region)
+                raster = await run_in_threadpool(_rendered, page_id, resolved_dpi, crop)
+            except BaseException as failure:  # noqa: BLE001 — every path out is typed (§11.3)
+                if isinstance(failure, (KeyboardInterrupt, SystemExit)):
+                    raise
+                outcome = _failure_response(failure, tool="page_image")
+                return Response(content=outcome.body(), status_code=outcome.status,
+                                media_type="application/json")
+
+            etag = f'"{raster.sha256}"'
+            rendered = raster_cache.renders(before, raster_cache.cache_info())
+            _log.info("page_image", tool="page_image", user_id=identity.user_id,
+                      page_id=raster_cache.page_id_of_path(page_id), dpi=resolved_dpi,
+                      region=list(crop) if crop else None, width=raster.width,
+                      height=raster.height, bytes=len(raster.png), rendered=bool(rendered),
+                      cache=raster_cache.cache_info())
+            headers = {
+                "etag": etag,
+                # Revalidate every time: a `page_id` does not name the bytes it was rendered from
+                # (a re-ingest of the same revision keeps the id, §6.7), so a max-age would let a
+                # browser show a superseded page. The ETag makes revalidation cheap.
+                "cache-control": "private, max-age=0, must-revalidate",
+            }
+            if request.headers.get("if-none-match") == etag:
+                return Response(status_code=304, headers=headers)
+            return Response(content=raster.png, media_type=raster_cache.PNG_MEDIA_TYPE,
+                            headers=headers)
 
     # ── ingestion over HTTP: the transport for `vsir ingest` (§6.1, §15 Factor XII) ───────────────
 

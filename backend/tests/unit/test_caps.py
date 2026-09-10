@@ -48,6 +48,18 @@ def test_fetch_takes_five_pages_and_refuses_six():
     assert raised.value.http_status == 400
 
 
+def test_a_fetch_that_names_no_page_is_refused_rather_than_answered_emptily():
+    """§7.1 — Family B's `status` says whether the **call** ran, so `ok` with no pages would say
+    *"here is the material"* about a request that named none. The same argument `verify_empty`
+    makes: a caller that dropped its page list would read that as *"those pages hold nothing"*."""
+    with pytest.raises(ToolError) as raised:
+        validate_fetch_pages([])
+
+    assert raised.value.code == "fetch_empty"
+    assert raised.value.http_status == 400
+    assert raised.value.details["requested"] == 0
+
+
 def test_the_megapixel_budget_is_a_separate_bound_under_the_same_code():
     """"A typed 400 naming its bound": both `fetch` bounds say which one was hit."""
     validate_fetch_megapixels(MAX_FETCH_MEGAPIXELS)

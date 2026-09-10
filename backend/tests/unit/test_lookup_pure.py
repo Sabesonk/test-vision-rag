@@ -21,6 +21,7 @@ from fake_store import FakeStore, condition_matches
 from vsir.core.exact import UnknownScopeKey, exact_filter
 from vsir.core.record import PageRecord
 from vsir.eval import synthetic
+from vsir.serve import raster_cache
 from vsir.serve.caps import ToolError
 from vsir.serve.envelope import ImageRef, LookupHit, Provenance, Status
 from vsir.serve.tools import lookup as lookup_module
@@ -111,15 +112,42 @@ def test_label_variants_is_the_one_variant_function():
 # ── the hit ─────────────────────────────────────────────────────────────────────────────────────
 
 def test_a_hit_carries_an_image_reference_and_never_bytes():
-    """§7.1, D12, P2 — ~60 bytes, and it renders nothing until something dereferences it."""
+    """§7.1, D12, P2 — ~60 bytes, and it renders nothing until something dereferences it.
+
+    The URL is the **percent-encoded** form of §7.2.5's example, and that is U018's correction
+    rather than a cosmetic change: a `page_id` contains a `#` (§5.1), so the unencoded URL this
+    assertion used to expect was a request for `/pages/D@1` with a fragment the server never sees
+    — a reference that was present, well-formed and undereferenceable. See
+    :func:`test_the_image_url_round_trips_through_the_route_s_own_parser` for the other half.
+    """
     reference = image_ref("D@1#p007")
 
-    assert reference.url == "/pages/D@1#p007/image?dpi=150"
-    assert reference.thumb_url == "/pages/D@1#p007/image?dpi=72"
+    assert reference.url == "/pages/D@1%23p007/image?dpi=150"
+    assert reference.thumb_url == "/pages/D@1%23p007/image?dpi=72"
     assert reference.dpi == 150
     assert (reference.width, reference.height) == (0, 0)
     assert not [field for field in ImageRef.model_fields if "bytes" in field]
     assert not [field for field in LookupHit.model_fields if "bytes" in field]
+
+
+@pytest.mark.parametrize("page_id", ["D@1#p007", "TC1E-SF@1.3#p001", "SYN-M1@1.0#p026",
+                                     "a-b_c@2.0.1+draft#p1000"])
+def test_the_image_url_round_trips_through_the_routes_own_parser(page_id):
+    """The encoding and the decoding are one contract, so they are asserted as one (U018).
+
+    `image_ref` writes the URL and `GET /pages/{page_id}/image` reads it back: if the two ever
+    disagree, every image reference in every envelope points at a page that is not the one the row
+    is about — and nothing else in the suite would notice, because both halves would still be
+    individually well-formed.
+    """
+    reference = image_ref(page_id)
+    encoded = reference.url[len("/pages/"):].split("/image", 1)[0]
+
+    assert "#" not in encoded, "a bare # is a fragment delimiter to every HTTP client"
+    assert raster_cache.page_id_of_path(encoded) == page_id
+    # §7.2.5's own example keeps the `@` literal — it is legal in a path segment, and encoding it
+    # would make a citation unreadable to a person for no gain.
+    assert "@" in encoded
 
 
 def test_verified_describes_the_surface_and_nothing_else():

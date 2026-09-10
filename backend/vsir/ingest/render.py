@@ -29,7 +29,7 @@ import hashlib
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
-from typing import Iterable, Sequence
+from typing import Any, Iterable, Sequence
 
 import pymupdf
 
@@ -39,6 +39,11 @@ from vsir.config import DPI_ANSWER, DPI_INDEX
 #: re-render and changes no answer. Bounded because a long-lived `web` process would otherwise grow
 #: with every page anyone has ever looked at.
 RASTER_CACHE_PAGES = 96
+
+#: How many page rectangles one process keeps. Four floats each, so this is deliberately far
+#: larger than the raster cache: it is what lets a `fetch` refuse an over-budget render without
+#: opening the document again, let alone rasterising it (§7.3, §15.1).
+PAGE_BOX_CACHE_PAGES = 4096
 
 #: A region is normalised to the page, so it means the same thing at every dpi (§7.3, D6).
 FULL_PAGE = (0.0, 0.0, 1.0, 1.0)
@@ -117,6 +122,46 @@ def _identity(source: Path) -> str:
     return source_hash(str(source), stat.st_size, stat.st_mtime_ns)
 
 
+def _clip(box: Any, region: tuple[float, float, float, float]) -> Any:
+    """A normalised region as an absolute rectangle on this page, or ``None`` for a full page.
+
+    One function, because two consumers must agree exactly: :func:`_render`, which rasterises the
+    clip, and :func:`predicted_pixels`, which says how large that raster will be **before** it
+    exists. `fetch`'s megapixel bound is enforced from the prediction (§7.3, U018), so a
+    prediction computed from a slightly different rectangle would police a raster nobody renders.
+    """
+    if region == FULL_PAGE:
+        return None
+    x0, y0, x1, y1 = region
+    return pymupdf.Rect(box.x0 + x0 * box.width, box.y0 + y0 * box.height,
+                        box.x0 + x1 * box.width, box.y0 + y1 * box.height)
+
+
+def _page(doc: Any, page_no: int) -> Any:
+    """The 1-based page, or a typed refusal naming the range. Never a clamp to the last page."""
+    if not 1 <= page_no <= doc.page_count:
+        raise RenderError("page_out_of_range",
+                          f"page {page_no} is outside 1..{doc.page_count}",
+                          page_no=page_no, page_count=doc.page_count)
+    return doc[page_no - 1]
+
+
+def _render(source: str, page_no: int, dpi: int,
+            region: tuple[float, float, float, float]) -> Raster:
+    """Rasterise one page. **The uncached body**, and the only place pixels are produced.
+
+    Separate from :func:`_cached` so that *"the cache served this one"* is observable: a
+    call-count spy wraps **this** function, and :func:`cache_clear` then makes the next request
+    render again. A cache whose hits cannot be counted is a cache nobody can prove is one — and
+    §15 Factor VI rests on this being a cache and never a source of truth.
+    """
+    with pymupdf.open(source) as doc:
+        page = _page(doc, page_no)
+        pixels = page.get_pixmap(dpi=dpi, clip=_clip(page.rect, region))
+        return Raster(page_no=page_no, dpi=dpi, width=pixels.width, height=pixels.height,
+                      png=pixels.tobytes("png"), region=region)
+
+
 @lru_cache(maxsize=RASTER_CACHE_PAGES)
 def _cached(source: str, content_hash: str, page_no: int, dpi: int,
             region: tuple[float, float, float, float]) -> Raster:
@@ -124,22 +169,27 @@ def _cached(source: str, content_hash: str, page_no: int, dpi: int,
 
     ``content_hash`` is in the key and unused in the body on purpose: it is what makes the key
     correct, and reading it here would defeat the point of having been given it.
+
+    This is **the** raster cache — the one §4.2 and §7.2.5 require, shared by the ingest path and
+    by the serving path. `serve/raster_cache.py` deliberately does not put a second one in front
+    of it: a cache keyed by ``page_id`` cannot see a re-ingest of the same ``(doc_id, revision)``
+    from corrected bytes, so it would serve the superseded pixels for as long as the process
+    lived, and it would hold a second copy of every PNG while doing it.
+    """
+    return _render(source, page_no, dpi, region)
+
+
+@lru_cache(maxsize=PAGE_BOX_CACHE_PAGES)
+def _page_box(source: str, content_hash: str, page_no: int) -> tuple[float, float, float, float]:
+    """The page's rectangle in points — the cheap fact behind :func:`predicted_pixels`.
+
+    Its own memo, and far larger than the raster cache's: a page box is four floats and a raster
+    is megabytes, and the whole point of asking for the box is to decide whether the raster may be
+    made at all.
     """
     with pymupdf.open(source) as doc:
-        if not 1 <= page_no <= doc.page_count:
-            raise RenderError("page_out_of_range",
-                              f"page {page_no} is outside 1..{doc.page_count}",
-                              page_no=page_no, page_count=doc.page_count)
-        page = doc[page_no - 1]
-        box = page.rect
-        x0, y0, x1, y1 = region
-        clip = None if region == FULL_PAGE else pymupdf.Rect(
-            box.x0 + x0 * box.width, box.y0 + y0 * box.height,
-            box.x0 + x1 * box.width, box.y0 + y1 * box.height,
-        )
-        pixels = page.get_pixmap(dpi=dpi, clip=clip)
-        return Raster(page_no=page_no, dpi=dpi, width=pixels.width, height=pixels.height,
-                      png=pixels.tobytes("png"), region=region)
+        box = _page(doc, page_no).rect
+        return box.x0, box.y0, box.x1, box.y1
 
 
 def render_page(source: str | Path, page_no: int, *, dpi: int = DPI_ANSWER,
@@ -170,6 +220,37 @@ def index_raster(source: str | Path, page_no: int, *, content_hash: str | None =
     return render_page(source, page_no, dpi=DPI_INDEX, content_hash=content_hash)
 
 
+def predicted_pixels(source: str | Path, page_no: int, *, dpi: int,
+                     region: Sequence[float] | None = None,
+                     content_hash: str | None = None) -> tuple[int, int]:
+    """How large this raster **will be**, without making it (§7.3's megapixel bound, §15.1).
+
+    Rendering is the memory spike, so the bound that exists to cap it has to be checked before the
+    render rather than after: a 12 MP ceiling enforced by measuring the pixmap has already
+    allocated the pixmap. The arithmetic is PyMuPDF's own — ``dpi/72`` as a scale matrix applied to
+    the same rectangle :func:`_clip` produces — and `test_render.py` asserts the prediction equals
+    the rendered size for every dpi of §7.3 and for a crop, because a prediction that drifted from
+    the renderer would refuse calls that fit and admit calls that do not.
+    """
+    path = Path(source)
+    normalised = normalise_region(region)
+    x0, y0, x1, y1 = _page_box(str(path), content_hash or _identity(path), page_no)
+    box = pymupdf.Rect(x0, y0, x1, y1)
+    target = _clip(box, normalised) or box
+    zoom = dpi / 72
+    rect = (target * pymupdf.Matrix(zoom, zoom)).irect
+    return rect.width, rect.height
+
+
+def predicted_megapixels(source: str | Path, page_no: int, *, dpi: int,
+                         region: Sequence[float] | None = None,
+                         content_hash: str | None = None) -> float:
+    """:func:`predicted_pixels` in the unit §7.3's `fetch` budget is written in."""
+    width, height = predicted_pixels(source, page_no, dpi=dpi, region=region,
+                                     content_hash=content_hash)
+    return width * height / 1_000_000
+
+
 def cache_info() -> dict[str, int]:
     """What the raster cache is holding. Reported by the CLI; nothing branches on it."""
     stats = _cached.cache_info()
@@ -178,6 +259,12 @@ def cache_info() -> dict[str, int]:
 
 
 def cache_clear() -> None:
-    """Drop every cached raster. A cache, so this is always safe and never loses information."""
+    """Drop every cached raster. A cache, so this is always safe and never loses information.
+
+    Also the eviction a test forces to prove the cold path: after this, the same request renders
+    again and must return a **byte-identical** image, which is what makes the cache provably an
+    optimisation and not a source of truth (§4.2, §15 Factor VI).
+    """
     _cached.cache_clear()
+    _page_box.cache_clear()
     source_hash.cache_clear()

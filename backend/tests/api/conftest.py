@@ -16,6 +16,7 @@ from __future__ import annotations
 import io
 import json
 import os
+import time
 from pathlib import Path
 from typing import Any, Iterator
 
@@ -262,3 +263,122 @@ def skimming(qdrant: QdrantClient, skim_collection: str) -> Iterator[Any]:
         finally:
             if qdrant.collection_exists(SKIM_RUNS):
                 qdrant.delete_collection(SKIM_RUNS)
+
+
+# ── one real ingest, for the raster suites (U018) ────────────────────────────────────────────────
+
+#: The document the four U018 suites look at, ingested **once** for the session.
+#:
+#: It has to be a real ingest and it has to be shared. Real, because `fetch` and
+#: `GET /pages/{page_id}/image` resolve `page_id` → the run's `content_hash` → the bytes in the
+#: document store (U029), and a hand-seeded collection would prove that a directory a fixture had
+#: just written to could be read back. Shared, because that ingest is 42 pages through the whole of
+#: §6.1 and four suites all only *read* what it produced.
+RASTER_COLLECTION = "vsir_pages_u018"
+RASTER_RUNS = "vsir_runs_u018"
+RASTER_DOC_ID = "vsir-raster"
+RASTER_REVISION = "1.0"
+RASTER_PAGE_COUNT = 42
+#: Pages 1 and 2 of the generated corpus carry no text layer, which is what makes them the honest
+#: case for F4's disclosure: a `fetch` of them returns `text: ""` and `text_trust: "no_text"`.
+RASTER_NO_TEXT_PAGES = (1, 2)
+RASTER_PUBLISH_TIMEOUT_S = 300
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
+RASTER_PDF = REPO_ROOT / "data/source/synthetic_3window.pdf"
+RASTER_FIXTURE = REPO_ROOT / "data/fixtures/synthetic_3window"
+
+
+class RasterStack:
+    """One ingested document, and everything a raster suite needs to ask about it."""
+
+    def __init__(self, client: Any, store: Any, record: dict, collection: str) -> None:
+        self.client = client
+        self.store = store
+        self.record = record
+        self.collection = collection
+
+    @property
+    def config(self) -> Any:
+        return self.client.app.state.config
+
+    @property
+    def header(self) -> dict[str, str]:
+        return {"Authorization": f"Bearer {TEST_TOKEN}"}
+
+    def page_id(self, page_no: int) -> str:
+        from vsir.core import ids
+
+        return ids.page_id(RASTER_DOC_ID, RASTER_REVISION, page_no)
+
+    def page_ids(self, *page_nos: int) -> list[str]:
+        return [self.page_id(page_no) for page_no in page_nos]
+
+    def image_url(self, page_no: int, *, dpi: int = 150, region: str = "") -> str:
+        """The URL an envelope would carry for this page — built by the shipped function.
+
+        ``region`` is appended **verbatim**, as a caller typed it, rather than parsed and
+        re-formatted: the malformed-region cases (`0,0,2,2`, `top-half`) have to reach the route
+        exactly as sent, and a helper that validated them first would be testing the helper.
+        """
+        from vsir.serve import raster_cache
+
+        url = raster_cache.page_image_url(self.page_id(page_no), dpi=dpi)
+        return f"{url}&region={region}" if region else url
+
+    def get_image(self, page_no: int, **params: Any) -> Any:
+        return self.client.get(self.image_url(page_no, **params), headers=self.header)
+
+    def fetch(self, page_ids: Any, **arguments: Any) -> Any:
+        body = {"page_ids": list(page_ids), **arguments}
+        return self.client.post("/tools/fetch", headers=self.header, json=body)
+
+
+@pytest.fixture(scope="session")
+def rastered(qdrant: QdrantClient, tmp_path_factory: Any) -> Iterator[RasterStack]:
+    """Ingest the generated corpus over HTTP, into this session's own collection and store.
+
+    Isolated for the reason `test_upload_route.py` records: a real ingest writes 42 pages into
+    whichever collection its app is configured for, and running it against the shared one corrupts
+    the corpus every other suite asserts about.
+
+    The document store is a `tmp_path`, which is what a disposable instance has and is honest about
+    being — §4.2's requirement is that the *rasters* are never persisted, and they never are: the
+    only thing on that path is the source PDF (U029).
+    """
+    from vsir.eval import synthetic as synthetic_module
+    from vsir.ingest.store import DocumentStore
+
+    stamp = f"{RASTER_COLLECTION}_{int(time.time() * 1000) % 10_000_000}"
+    pages, runs = f"{stamp}_{EMBED_DIM}", f"{stamp}_runs"
+    root = tmp_path_factory.mktemp("u018-documents")
+    create_collection(qdrant, pages, EMBED_DIM, recreate=True)
+    env = serve_env(VSIR_COLLECTION=stamp, VSIR_RUNS_COLLECTION=runs, VSIR_DOC_STORE=str(root))
+    try:
+        with TestClient(create_app(env)) as client:
+            header = {"Authorization": f"Bearer {TEST_TOKEN}"}
+            accepted = client.post(
+                "/documents", headers=header,
+                files={"file": (RASTER_PDF.name, RASTER_PDF.read_bytes(), "application/pdf")},
+                data={"fixture": str(RASTER_FIXTURE), "doc_id": RASTER_DOC_ID,
+                      "revision": RASTER_REVISION})
+            assert accepted.status_code == 202, accepted.text
+            run_id = accepted.json()["run_id"]
+
+            deadline = time.monotonic() + RASTER_PUBLISH_TIMEOUT_S
+            record: dict = {}
+            while time.monotonic() < deadline:
+                time.sleep(2)
+                polled = client.get(f"/runs/{run_id}", headers=header)
+                if polled.status_code != 200:
+                    continue
+                record = polled.json()
+                if record.get("state") in {"published", "failed", "gated"}:
+                    break
+            assert record.get("state") == "published", record
+            assert record["pages_indexed"] == RASTER_PAGE_COUNT, record
+            yield RasterStack(client, DocumentStore(root), record, pages)
+    finally:
+        synthetic_module.drop(qdrant, pages)
+        if qdrant.collection_exists(runs):
+            qdrant.delete_collection(runs)

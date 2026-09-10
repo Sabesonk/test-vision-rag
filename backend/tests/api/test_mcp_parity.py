@@ -159,8 +159,8 @@ def test_the_mcp_server_declares_the_releases_tools_and_no_others(served_collect
         "vision-segmentation-retriever"
     assert initialised.instructions == mcp_server.INSTRUCTIONS
     assert sorted(tool.name for tool in listing.tools) == sorted(app_module.tool_table())
-    assert sorted(tool.name for tool in listing.tools) == ["lookup", "resolve", "skim_pages",
-                                                            "verify"]
+    assert sorted(tool.name for tool in listing.tools) == ["fetch", "lookup", "resolve",
+                                                            "skim_pages", "verify"]
 
 
 def test_the_published_input_schema_is_the_http_request_model(served_collection):
@@ -191,7 +191,11 @@ def test_every_declared_tool_carries_a_description_an_agent_can_choose_on():
     ("lookup", {"label": LOOKUP_LABEL}),
     ("lookup", {"label": EXPECTED["suggest"]["label"]}),
     ("verify", {"claims": ["K73"], "page_ids": ["SYN-M1@1.0#p006"]}),
-], ids=["lookup-ok", "lookup-not_found", "verify-absent"])
+    # `fetch` without `"image"` in `include`: Family B material over MCP, and the one shape of it
+    # that needs no document store — this collection is the hand-written M1 corpus, which has no
+    # PDF behind it (`test_fetch.py` covers the raster half over a real ingest).
+    ("fetch", {"page_ids": ["SYN-M1@1.0#p001"], "include": ["text", "summary"]}),
+], ids=["lookup-ok", "lookup-not_found", "verify-absent", "fetch-text"])
 def test_stdio_result_is_byte_identical_to_the_http_body(served_collection, name, arguments):
     """The criterion, as bytes. Both sides call one serialiser on one dict (§7.5)."""
     expected = http_body(name, arguments)
@@ -269,7 +273,7 @@ def test_an_unknown_tool_over_mcp_is_the_typed_404(served_collection):
     assert result.is_error is True
     body = json.loads(text_of(result))
     assert body["error"] == "tool_not_found"
-    assert body["available"] == ["lookup", "resolve", "skim_pages", "verify"]
+    assert body["available"] == ["fetch", "lookup", "resolve", "skim_pages", "verify"]
 
 
 def test_is_current_is_injected_on_the_mcp_surface_too(served_collection):

@@ -66,6 +66,22 @@ def validate_read_pages(page_ids: Sequence[str]) -> None:
 
 
 def validate_fetch_pages(page_ids: Sequence[str]) -> None:
+    """`fetch` names between one and :data:`MAX_FETCH_PAGES` pages (§7.3).
+
+    The empty call is refused for the reason `validate_verify_pairs` refuses its own: Family B's
+    ``status`` reports whether the **call** ran (§7.1), so ``ok`` with no pages would say *"here is
+    the material"* about a request that named none — and a caller that dropped its page list on the
+    way here would read that as *"those pages have nothing on them"*. It is a malformed request, so
+    it is a `400` that says so.
+    """
+    if not page_ids:
+        raise ToolError(
+            "fetch_empty",
+            "fetch returns the material for the pages you name and this named none: an empty "
+            "`pages` list would read as 'those pages hold nothing', which is the one thing a "
+            "caller must never conclude by accident (§7.2.5, §7.1)",
+            requested=0, limit=MAX_FETCH_PAGES,
+        )
     if len(page_ids) > MAX_FETCH_PAGES:
         raise ToolError(
             "fetch_budget_exceeded",

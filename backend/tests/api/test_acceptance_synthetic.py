@@ -13,6 +13,7 @@ if the two ever disagree one of them goes red, which is why both exist.
 from __future__ import annotations
 
 from typing import Any
+from urllib.parse import quote
 
 import pytest
 from qdrant_client import QdrantClient
@@ -425,13 +426,20 @@ def test_a_scoped_lookup_reports_the_scope_it_searched(ask):
 
 
 def test_every_hit_carries_an_image_reference_and_no_hit_carries_bytes(ask, corpus):
-    """§7.1, D12, P2 — enough to choose, never enough to answer."""
+    """§7.1, D12, P2 — enough to choose, never enough to answer.
+
+    The URL is the percent-encoded form §7.2.5's example shows (U018): the `#` of a `page_id` is a
+    fragment delimiter to every HTTP client, so the unencoded form this used to assert named the
+    document and not the page. `tests/api/test_page_image.py` dereferences one of these URLs for
+    real; here the shape is what matters, and that it names *this* row's page.
+    """
     response = ask(corpus.expected["weak"]["label"], cap=26)
 
     assert response.hits
     for hit in response.hits:
         assert hit.image is not None
-        assert hit.image.url == f"/pages/{hit.page_id}/image?dpi=150"
+        assert hit.image.url == f"/pages/{quote(hit.page_id, safe='@')}/image?dpi=150"
+        assert "#" not in hit.image.url and "%23" in hit.image.url
         assert hit.image.thumb_url.endswith("dpi=72")
     assert "bytes_b64" not in response.model_dump_json()
 

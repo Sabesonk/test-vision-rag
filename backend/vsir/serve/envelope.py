@@ -28,7 +28,7 @@ from typing import Any, Generic, Literal, Mapping, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from vsir.core.record import SCHEMA_VERSION, TextTrust
+from vsir.core.record import SCHEMA_VERSION, Summary, TextTrust
 from vsir.core.status import CHECK_STATES, Status
 
 #: §7.1 — a **server** constant. `cap` controls how many hits come back and nothing else, so a
@@ -325,6 +325,69 @@ class VerifyResult(BaseModel):
     claims: dict[str, ClaimVerdict] = Field(default_factory=dict)
 
 
+class FetchImage(BaseModel):
+    """The raster as `fetch` returns it: **always** a reference, and the pixels when asked (§7.2.5).
+
+    The one place in the whole surface where image bytes travel. :class:`ImageRef` — what a triage
+    row carries — cannot grow a ``bytes_b64`` even by accident, because it is a different model
+    with ``extra="forbid"``; that is P2 expressed as two types rather than as a convention.
+
+    ``bytes_b64`` is ``None`` rather than absent when ``inline=false``, and that is deliberate: a
+    field that disappears makes a generated client's type optional-by-omission, and the console and
+    the runner both switch on it. ``None`` says *"no pixels travelled"* in a shape a typed caller
+    can read; what matters for P2 is that the bytes are not there, not that the key is not.
+
+    ``width`` and ``height`` are the **rendered** size here, unlike on an `ImageRef` where they
+    stay 0 — by the time this model exists the raster has been made, so reporting its size costs
+    nothing and is what lets a caller lay the image out before it dereferences the URL.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    url: str
+    dpi: int
+    #: The normalised crop this raster is of, or ``None`` for the full page (D6).
+    region: list[float] | None = None
+    width: int = 0
+    height: int = 0
+    #: Present when ``inline=true`` (the default) — an agent needs the pixels in its context, and
+    #: an MCP client cannot follow a URL (§7.2.5).
+    bytes_b64: str | None = None
+
+
+class FetchPage(BaseModel):
+    """One page's material (§7.2.5). Material instead of an answer — that is the whole move.
+
+    Each part is ``None`` when ``include`` did not ask for it, which is not the same as empty: a
+    page whose text layer is genuinely blank returns ``text: ""``, and a caller that asked only for
+    the image gets ``text: null``. Collapsing the two would make *"I did not ask"* look like
+    *"there is nothing there"*.
+
+    ``text_trust`` is **always** disclosed, and it is the one field here that §7.2.5's example does
+    not show. It is F4 applied to this rung: dropping ``"image"`` from ``include`` makes `fetch` a
+    cheap text read, and on a scanned page a cheap text read returns ``""`` — which reads as *"the
+    page is blank"* unless something says the page has no text layer. `PageHit` and `LookupHit`
+    both carry it for the same reason (§5.7, §7.1).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    page_id: str
+    image: FetchImage | None = None
+    #: `ingest/probe.py`'s extraction of the full page, verbatim — never a crop's text (I2, F15).
+    text: str | None = None
+    summary: Summary | None = None
+    text_trust: TextTrust = "no_text"
+
+
+class FetchResult(BaseModel):
+    """`fetch`'s Family B result: the pages, in the order the caller named them (§7.1)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    pages: list[FetchPage] = Field(default_factory=list)
+
+
 ResultT = TypeVar("ResultT", bound=BaseModel)
 
 
@@ -345,7 +408,8 @@ class ToolEnvelope(BaseModel, Generic[ResultT]):
 
 #: Re-exported so a tool module does not have to reach into `core.status` for the vocabulary.
 __all__ = [
-    "CHECK_STATES", "WEAK_ABS", "ClaimVerdict", "DocHit", "DocScopeStat", "ImageRef", "LookupHit",
-    "NextMoves", "PageHit", "Preview", "Provenance", "ResolveHit", "ScopeStats", "SearchResponse",
-    "SectionHit", "Status", "ToolEnvelope", "VerifyResult", "weakness", "wire",
+    "CHECK_STATES", "WEAK_ABS", "ClaimVerdict", "DocHit", "DocScopeStat", "FetchImage",
+    "FetchPage", "FetchResult", "ImageRef", "LookupHit", "NextMoves", "PageHit", "Preview",
+    "Provenance", "ResolveHit", "ScopeStats", "SearchResponse", "SectionHit", "Status", "Summary",
+    "ToolEnvelope", "VerifyResult", "weakness", "wire",
 ]

@@ -241,7 +241,7 @@ def test_an_upload_started_run_resumes_from_the_store_with_no_path_at_all(qdrant
             unpublished = client.get(f"/runs/{run_id}", headers=header).json()
 
         # The instance is gone. Its spool went with it; the document did not.
-        assert not list(Path(tempfile.gettempdir()).glob(f"vsir-spool/{run_id}.pdf"))
+        _wait_for_reap(Path(tempfile.gettempdir()) / "vsir-spool" / f"{run_id}.pdf")
         assert DocumentStore(root).holds("resumed-doc", "1.1")
 
         finished = subprocess.run(
@@ -267,10 +267,34 @@ def test_an_upload_started_run_resumes_from_the_store_with_no_path_at_all(qdrant
 
 
 def _wait_for_points(client, collection: str, expected: int) -> None:
-    """Step 10 has no progress write of its own, so the points are the signal it finished."""
+    """Step 10 has no progress write of its own, so the points are the signal it finished.
+
+    The signal that step 10 finished, and **not** the signal that the child process exited:
+    `serve/ingest.py::_reap` removes the spool when it does, which is strictly later. Anything
+    asserted about the spool has to wait for the reap (:func:`_wait_for_reap`) rather than for
+    this.
+    """
     deadline = time.monotonic() + PUBLISH_TIMEOUT_S
     while time.monotonic() < deadline:
         time.sleep(2)
         if client.count(collection, exact=True).count >= expected:
             return
     raise AssertionError(f"{collection} never reached {expected} points")
+
+
+def _wait_for_reap(spooled: Path) -> None:
+    """The spool is gone, once the reaper thread has had the chance to remove it.
+
+    `_reap` unlinks in a background thread that is waiting on the child, so *"the spool does not
+    survive the run"* is only observable after the child exits — later than the points, which
+    land while step 10 is still running, and later than the app's shutdown, which drains request
+    handlers and not a daemon thread. Asserting it the instant the points appear is a race that
+    passes on a slow machine and fails on a fast one; polling asserts the same fact without
+    depending on which of the two won.
+    """
+    deadline = time.monotonic() + PUBLISH_TIMEOUT_S
+    while time.monotonic() < deadline:
+        if not spooled.exists():
+            return
+        time.sleep(1)
+    raise AssertionError(f"the spool outlived the run it belonged to: {spooled}")

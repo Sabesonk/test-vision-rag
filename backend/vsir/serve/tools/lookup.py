@@ -48,6 +48,7 @@ from vsir.core.exact import UnknownScopeKey, exact_filter, phrases_of, scope_con
 from vsir.core.record import UNSEARCHABLE_TRUST
 from vsir.core.tok import tok
 from vsir.core.variants import variants
+from vsir.serve import raster_cache
 from vsir.serve.caps import as_tool_error, validate_cap
 from vsir.serve.envelope import (
     DocScopeStat,
@@ -170,9 +171,15 @@ def image_ref(page_id: str) -> ImageRef:
     never constructs a URL and a UI renders thumbnails straight out of a `lookup`. ``width`` and
     ``height`` stay 0 until something actually renders: reporting a size here would mean rendering
     the page to answer a search, which is exactly the cost this indirection exists to avoid.
+
+    The URL is built by `serve/raster_cache.py`, which owns the route's grammar **and its
+    percent-encoding**. That is not tidiness: a ``page_id`` contains a ``#`` (§5.1), and an
+    unencoded ``#`` makes every one of these references a request for ``/pages/{doc_id}@{revision}``
+    with a fragment the server never sees — a reference that is present, well-formed and not
+    dereferenceable. §7.2.5's own example shows the encoded form.
     """
-    return ImageRef(url=f"/pages/{page_id}/image?dpi={DPI_INDEX}",
-                    thumb_url=f"/pages/{page_id}/image?dpi={DPI_THUMB}",
+    return ImageRef(url=raster_cache.page_image_url(page_id, dpi=DPI_INDEX),
+                    thumb_url=raster_cache.page_image_url(page_id, dpi=DPI_THUMB),
                     dpi=DPI_INDEX)
 
 

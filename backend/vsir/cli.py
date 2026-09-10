@@ -63,6 +63,7 @@ from vsir.ingest import stitch as stitch_module
 from vsir.ingest import window as window_module
 from vsir.ingest.extract import S2_SCHEMA_HASH
 from vsir.serve.caps import (
+    ALLOWED_DPI,
     ToolError,
     as_tool_error,
     validate_budget,
@@ -77,11 +78,13 @@ from vsir.serve.caps import (
 from vsir.mcp import server as mcp_server
 from vsir.serve import app as app_module
 from vsir.serve import auth as auth_module
+from vsir.serve import raster_cache
 from vsir.serve.app import config_of, create_app
-from vsir.serve.envelope import Provenance, ToolEnvelope, VerifyResult
+from vsir.serve.envelope import Provenance, ToolEnvelope, VerifyResult, wire
 from vsir.vlm import VlmError, backend as vlm_backend
 from vsir.vlm import cache as vlm_cache
 from vsir.vlm import record as vlm_record
+from vsir.serve.tools import fetch as fetch_module
 from vsir.serve.tools import lookup as lookup_module
 from vsir.serve.tools.lookup import lookup
 from vsir.serve.tools.skim import SKIM_LIMIT
@@ -2338,6 +2341,311 @@ def _cmd_verify(args: argparse.Namespace) -> int:
                      as_json=args.json, render=_print_verify)
 
 
+def _print_fetch(payload: Mapping[str, Any]) -> None:
+    """A `fetch` envelope, printed. Family B, so the material is the answer (§7.1).
+
+    The bytes are reported as a **length** and never printed: a page at 150 dpi is around a
+    megabyte of base64, and a reviewer needs to see that it arrived, not read it. `--json` prints
+    the envelope verbatim if the actual bytes are what is wanted.
+    """
+    pages = (payload.get("result") or {}).get("pages") or []
+    print(f"status       {payload['status']} — the CALL ran; the material is below "
+          f"({len(pages)} page(s))")
+    for page in pages:
+        image = page.get("image")
+        print(f"\n  PAGE       {page['page_id']} · trust {page['text_trust']}")
+        if image:
+            pixels = image.get("bytes_b64")
+            print(f"    image    {image['url']}")
+            print(f"             dpi {image['dpi']} · {image['width']}x{image['height']} px · "
+                  f"region {image['region'] or 'full page'} · "
+                  f"bytes_b64 {f'{len(pixels):,} chars' if pixels else '— (inline=false)'}")
+        else:
+            print("    image    — (not in `include`; nothing was rendered)")
+        if page.get("text") is None:
+            print("    text     — (not in `include`)")
+        else:
+            text = page["text"]
+            print(f"    text     {len(text):,} chars · {(text[:88] or '(no text layer)')!r}")
+        summary = page.get("summary")
+        print(f"    summary  {(summary['text'][:88] + ' [' + summary['lang'] + ']') if summary else '—'}")
+    print(f"\nreads_left   {payload['reads_remaining']} · release "
+          f"{payload['provenance']['release_id']} · schema "
+          f"{payload['provenance']['schema_version']}")
+
+
+def _cmd_fetch(args: argparse.Namespace) -> int:
+    """`vsir fetch` — LOOK (§7.2.5), through the release's own dispatcher like every one-shot."""
+    include = _csv_arg(args.include) if args.include else list(fetch_module.INCLUDE_ALL)
+    region: list[float] | None = None
+    if args.region:
+        try:
+            region = raster_cache.region_of_query(args.region)
+        except ToolError as refusal:
+            print(f"   REFUSED  {refusal.code}: {refusal.message}")
+            return EXIT_REFUSED
+    return _one_shot("fetch", {"page_ids": _csv_arg(args.pages), "include": include,
+                               "dpi": args.dpi, "region": region, "inline": not args.no_inline},
+                     as_json=args.json, render=_print_fetch)
+
+
+# ── `vsir demo narrow` — the M4 demo of §0: narrow, look, crop, and the bounds ───────────────────
+
+#: The query the demo narrows with. A phrase from the generated corpus of §12.1 that is also
+#: plausible against the pilot binder, because the demo runs over **whatever this release has
+#: published** rather than seeding its own corpus (see :func:`_cmd_demo_narrow`).
+NARROW_QUERY = "guard door interlocks"
+
+#: The crop the demo takes at 400 dpi: the top 55% of the page, full width. The same shape as the
+#: §12.1 crop trap — a label that sits below it is not in the crop, which is the point of a crop
+#: being a *region* of a page and not a cheaper page.
+NARROW_REGION = (0.0, 0.0, 1.0, 0.55)
+
+#: How to get something to look at, printed when nothing in this release resolves to bytes.
+SEED_HINT = (
+    "   Seed the local stack (free, replayed, one command):\n"
+    "       bash scripts/stack.sh up\n"
+    "   or ingest the generated corpus into this release yourself:\n"
+    "       vsir ingest data/source/synthetic_3window.pdf --vlm stub \\\n"
+    "            --fixture data/fixtures/synthetic_3window"
+)
+
+
+def _demo_dispatch(runtime: Any, tool: str, arguments: Mapping[str, Any]) -> Any:
+    """One tool call through :func:`vsir.serve.app.dispatch` — the shipped path, not a shortcut."""
+    return app_module.dispatch(runtime, tool, dict(arguments),
+                               identity=auth_module.local_identity(CLI_PROCESS), correlation={})
+
+
+def _demo_refusal(outcome: Any) -> str:
+    payload = outcome.payload
+    return f"{outcome.status} {payload.get('error')}: {payload.get('detail')}"
+
+
+def _demo_narrow_rows(runtime: Any, query: str, limit: int) -> tuple[bool, list[dict[str, Any]]]:
+    """Step 01 — one `skim_pages` over what this release has published (§7.2.1)."""
+    _step("01", f"NARROW — skim_pages({query!r})")
+    outcome = _demo_dispatch(runtime, "skim_pages", {"query": query, "limit": limit})
+    if outcome.refused:
+        print(f"   REFUSED  {_demo_refusal(outcome)}")
+        return False, []
+    payload = outcome.payload
+    hits = list(payload.get("hits") or ())
+    print(f"   status {payload['status']} · total {payload['total']} · "
+          f"weak {str(payload['weak']).lower()} · scope {payload['effective_scope']}")
+    if not hits:
+        print(f"   nothing to narrow to: the query matched no current page in "
+              f"{runtime.config.pages_collection}")
+        print(SEED_HINT)
+        return False, []
+    print(f"\n   {'rank':<6}{'page_id':<32}{'why':<22}{'trust':<12}image reference")
+    for hit in hits:
+        print(f"   {hit['rank']:<6}{hit['page_id']:<32}{','.join(hit['why']):<22}"
+              f"{hit['text_trust']:<12}{hit['image']['url'] if hit['image'] else '—'}")
+    passed = _check("every row carries an image REFERENCE and no row carries bytes or text (P2)",
+                    f"{len(hits)} row(s); fields never present: "
+                    f"{sorted({f for hit in hits for f in ('text', 'bytes_b64') if f in hit}) or 'none'}",
+                    all(hit.get("image") for hit in hits)
+                    and not any(field in hit for hit in hits for field in ("text", "bytes_b64")))
+    return passed, hits
+
+
+def _demo_dereference(runtime: Any, hit: Mapping[str, Any]) -> bool:
+    """Step 02 — the `image.url` a row handed back, taken apart and resolved to bytes.
+
+    The URL is dereferenced through the **route's own** functions —
+    :func:`~vsir.serve.raster_cache.page_id_of_path` then the same resolve-and-render the handler
+    calls — rather than over HTTP, because a demo that started a server would be demonstrating
+    uvicorn. `tests/api/test_page_image.py` asserts the `200` over the real transport.
+    """
+    _step("02", "the reference is dereferenceable — /pages/{page_id}/image")
+    url = hit["image"]["url"]
+    encoded = url[len("/pages/"):].split("/image", 1)[0]
+    page_id = raster_cache.page_id_of_path(encoded)
+    passed = _check("the `#` of §5.1's page_id is percent-encoded in the URL, and round-trips",
+                    f"{url}  →  page_id {page_id!r}",
+                    "%23" in encoded and "#" not in encoded and page_id == hit["page_id"])
+    try:
+        resolved = raster_cache.resolve_page(runtime.search, runtime.config, page_id)
+        raster = raster_cache.raster(resolved, dpi=DPI_INDEX)
+    except ToolError as refusal:
+        print(f"   REFUSED  {refusal.code}: {refusal.message}")
+        print(SEED_HINT)
+        return False
+    return passed & _check(
+        "the page resolves to the bytes it was indexed from, and renders in memory",
+        f"{resolved.document} page {resolved.page_no} · {resolved.path.name} · "
+        f"{raster.width}x{raster.height} px at dpi {DPI_INDEX} · {len(raster.png):,} bytes · "
+        f"0 bytes written",
+        raster.png.startswith(b"\x89PNG"))
+
+
+def _demo_look(runtime: Any, page_ids: Sequence[str]) -> bool:
+    """Step 03 — `fetch` those pages: the material, with the pixels in the response (§7.2.5)."""
+    _step("03", f"LOOK — fetch({len(page_ids)} page(s), inline=true)")
+    outcome = _demo_dispatch(runtime, "fetch", {"page_ids": list(page_ids)})
+    if outcome.refused:
+        print(f"   REFUSED  {_demo_refusal(outcome)}")
+        print(SEED_HINT)
+        return False
+    _print_fetch(outcome.payload)
+    pages = outcome.payload["result"]["pages"]
+    return _check("every fetched page carries a URL **and** the pixels (inline defaults to true)",
+                  f"{len(pages)} page(s), "
+                  f"{sum(len(p['image']['bytes_b64']) for p in pages):,} chars of base64",
+                  len(pages) == len(page_ids)
+                  and all(p["image"]["url"] and p["image"]["bytes_b64"] for p in pages))
+
+
+def _demo_reference_only(runtime: Any, page_ids: Sequence[str]) -> bool:
+    """Step 04 — the same call with ``inline=false``: the reference only, which M7's console uses."""
+    _step("04", "the same fetch with inline=false — the reference only")
+    outcome = _demo_dispatch(runtime, "fetch", {"page_ids": list(page_ids), "inline": False})
+    if outcome.refused:
+        print(f"   REFUSED  {_demo_refusal(outcome)}")
+        return False
+    pages = outcome.payload["result"]["pages"]
+    body = len(wire(outcome.payload))
+    return _check("url present, bytes_b64 absent — the console renders from the URL instead",
+                  f"{len(pages)} page(s) in {body:,} bytes of JSON; bytes_b64 "
+                  f"{[p['image']['bytes_b64'] for p in pages]}",
+                  all(p["image"]["url"] and p["image"]["bytes_b64"] is None for p in pages))
+
+
+def _demo_crop(runtime: Any, page_id: str) -> bool:
+    """Step 05 — the region crop at dpi 400, the one dpi that may not be a whole page (§7.3)."""
+    _step("05", f"the crop — fetch(dpi=400, region={list(NARROW_REGION)})")
+    outcome = _demo_dispatch(runtime, "fetch", {"page_ids": [page_id], "dpi": 400,
+                                                "region": list(NARROW_REGION),
+                                                "include": ["image"]})
+    if outcome.refused:
+        print(f"   REFUSED  {_demo_refusal(outcome)}")
+        return False
+    image = outcome.payload["result"]["pages"][0]["image"]
+    print(f"   {image['url']}")
+    return _check("a crop, rendered on demand at 400 dpi and stored nowhere (§7.2.5, D6)",
+                  f"{image['width']}x{image['height']} px · region {image['region']} · "
+                  f"{len(image['bytes_b64']):,} chars of base64",
+                  image["region"] == list(NARROW_REGION) and image["width"] > 0
+                  and bool(image["bytes_b64"]))
+
+
+def _demo_bounds(runtime: Any, page_ids: Sequence[str]) -> bool:
+    """Step 06 — the deliberate failures. Each a typed 400 naming its bound (§7.3, F18).
+
+    The megapixel case needs **two distinct pages and a full-page region**, and both halves of
+    that are the bound's own doing: `fetch` de-duplicates its page list, so one page named twice
+    is one raster, and every dpi above 220 requires a region — so a bare ``dpi=300`` is refused by
+    `dpi_requires_region` and the megapixel total is never reached. A demo that asked the wrong
+    way would print a `PASS` for a bound it had not exercised.
+    """
+    _step("06", "the bounds — every violation a typed 400 naming what it broke (F18)")
+    page_id = page_ids[0]
+    whole_page = [0.0, 0.0, 1.0, 1.0]
+    cases = (
+        ("fetch, 6 pages",
+         {"page_ids": [ids.page_id("demo-over-budget", "1.0", n) for n in range(1, 7)]},
+         "fetch_budget_exceeded", {"limit": 5, "requested": 6}),
+        ("fetch, dpi=400 with no region",
+         {"page_ids": [page_id], "dpi": 400}, "dpi_requires_region", {"requested": 400}),
+        (f"fetch, {len(page_ids)} whole page(s) at dpi=300",
+         {"page_ids": list(page_ids), "dpi": 300, "region": whole_page}, "", {}),
+        ("fetch, dpi=100",
+         {"page_ids": [page_id], "dpi": 100}, "dpi_not_allowed", {"requested": 100}),
+    )
+    passed = True
+    for description, arguments, code, details in cases:
+        outcome = _demo_dispatch(runtime, "fetch", arguments)
+        payload = outcome.payload
+        if not code:
+            # The megapixel bound is the one case whose *outcome* depends on the page: two A4
+            # pages at 300 dpi are 17 MP and refused, and a single smaller page legitimately
+            # fits. Either answer is correct, so what is asserted is that an over-budget call is
+            # refused **by the megapixel bound** — never by another bound, and never quietly
+            # clamped to a lower dpi.
+            over = payload.get("error") == "fetch_budget_exceeded"
+            passed &= _check(
+                f"{description} — the 12 MP bound is checked before anything is rendered",
+                f"{_demo_refusal(outcome) if outcome.refused else 'admitted: within 12 MP'}",
+                (over and payload.get("bound") == "megapixels") or not outcome.refused)
+            continue
+        passed &= _check(f"{description} → {code}", _demo_refusal(outcome),
+                         outcome.status == 400 and payload.get("error") == code
+                         and all(payload.get(key) == value for key, value in details.items()))
+    return passed
+
+
+def _demo_cache(runtime: Any, page_id: str) -> bool:
+    """Step 07 — the in-process cache: a cache, and never a source of truth (§4.2, §15 VI)."""
+    _step("07", "the raster cache — in memory, evictable, and never a source of truth")
+    try:
+        resolved = raster_cache.resolve_page(runtime.search, runtime.config, page_id)
+    except ToolError as refusal:
+        print(f"   REFUSED  {refusal.code}: {refusal.message}")
+        return False
+
+    raster_cache.cache_clear()
+    first = raster_cache.raster(resolved, dpi=DPI_INDEX)
+    cold = raster_cache.cache_info()
+    again = raster_cache.raster(resolved, dpi=DPI_INDEX)
+    warm = raster_cache.cache_info()
+    passed = _check("the second identical request renders nothing — it is served from memory",
+                    f"cold {cold} → warm {warm}",
+                    raster_cache.renders(cold, warm) == 0 and warm["hits"] == cold["hits"] + 1)
+
+    raster_cache.cache_clear()
+    evicted = raster_cache.raster(resolved, dpi=DPI_INDEX)
+    return passed & _check(
+        "after eviction it renders again and the image is byte-identical (a cold instance)",
+        f"{len(first.png):,} bytes, sha256 {_short(first.sha256)} → "
+        f"{len(evicted.png):,} bytes, sha256 {_short(evicted.sha256)}",
+        evicted.png == first.png)
+
+
+def _cmd_demo_narrow(args: argparse.Namespace) -> int:
+    """`vsir demo narrow` — the M4 demo: narrow, dereference, look, crop, bounds, cache.
+
+    **It runs over what this release has published**, and does not seed a corpus of its own. That
+    is the one thing this demo cannot fake: `fetch` and the image route need the *source document*
+    to be reachable through the store (U029), so a demo that built its own would be proving that a
+    temporary directory it had just written to could be read back. `demo exact --synthetic` seeds
+    because its corpus is hand-written page text with no PDF behind it at all.
+
+    So it needs an ingested document, and when there is none it says which command produces one
+    rather than failing as an empty result.
+    """
+    print(f"vsir demo narrow — release {os.environ.get('VSIR_RELEASE_ID', 'unknown')}")
+    try:
+        runtime, client = app_module.runtime_from_env(dict(os.environ))
+    except BootRefused as refusal:
+        _log.error("boot_refused", failed_checks=refusal.failed_checks, detail=str(refusal))
+        print(f"   REFUSED  boot: {refusal}")
+        return EXIT_REFUSED
+    except ConfigError as refusal:
+        _log.error("command_refused", reason="configuration", detail=str(refusal))
+        print(f"   configuration refused: {refusal}")
+        return EXIT_REFUSED
+
+    cfg = runtime.config
+    store = store_module.DocumentStore.from_config(cfg)
+    print(f"   collection {cfg.pages_collection} · document store {store.root} · "
+          f"{len(store.entries())} document(s) held")
+    try:
+        passed, hits = _demo_narrow_rows(runtime, args.query, args.limit)
+        if hits:
+            chosen = [hit["page_id"] for hit in hits[:2]]
+            passed &= _demo_dereference(runtime, hits[0])
+            passed &= _demo_look(runtime, chosen)
+            passed &= _demo_reference_only(runtime, chosen)
+            passed &= _demo_crop(runtime, chosen[0])
+            passed &= _demo_bounds(runtime, chosen)
+            passed &= _demo_cache(runtime, chosen[0])
+    finally:
+        client.close()
+    print(f"\n{'ALL ASSERTIONS PASSED' if passed else 'ASSERTIONS FAILED'}")
+    return EXIT_OK if passed else EXIT_REFUSED
+
+
 def _csv_arg(raw: str) -> list[str]:
     """``"K73, K158"`` → ``["K73", "K158"]``. Order preserved, duplicates left to the tool."""
     return [value.strip() for value in raw.split(",") if value.strip()]
@@ -2765,6 +3073,38 @@ def build_parser() -> argparse.ArgumentParser:
                                 help="print the envelope verbatim (see `lookup --json`)")
     resolve_parser.set_defaults(handler=_cmd_resolve)
 
+    fetch_parser = commands.add_parser(
+        "fetch",
+        help="LOOK (§7.2.5): the material of pages you have already chosen — the raster, the "
+             "extracted text and the summary. Free: it calls no model. At most 5 pages and 12 MP, "
+             "and an over-budget call is a typed 400 naming the bound, never a truncated list",
+    )
+    fetch_parser.add_argument("--pages", required=True, metavar="ID,ID",
+                              help="comma-separated page ids, e.g. \"TC1E-SF@1.3#p001,…#p002\"")
+    fetch_parser.add_argument(
+        "--include", default="", metavar="PART,PART",
+        help=f"which parts to return (default: {','.join(fetch_module.INCLUDE_ALL)}). Dropping "
+             f"`image` makes this a cheap text/summary read and renders nothing",
+    )
+    fetch_parser.add_argument(
+        "--dpi", type=int, default=DPI_INDEX, metavar="DPI",
+        help=f"one of {list(ALLOWED_DPI)} (default: {DPI_INDEX}); 36 and 72 are the thumbnail "
+             f"tiers and anything above {DPI_ANSWER} requires --region",
+    )
+    fetch_parser.add_argument(
+        "--region", default="", metavar="X0,Y0,X1,Y1",
+        help="a crop, normalised to the page (0..1), e.g. 0,0,1,0.55. Rendered on demand and "
+             "stored nowhere (D6)",
+    )
+    fetch_parser.add_argument(
+        "--no-inline", action="store_true",
+        help="return the image reference only, without the pixels — what M7's console uses. The "
+             "default is inline, because an agent needs the bytes in its context (§7.2.5)",
+    )
+    fetch_parser.add_argument("--json", action="store_true",
+                              help="print the envelope verbatim (see `lookup --json`)")
+    fetch_parser.set_defaults(handler=_cmd_fetch)
+
     demo_parser = commands.add_parser("demo", help="the reviewable demos of §4.4")
     demos = demo_parser.add_subparsers(dest="demo", metavar="<demo>", required=True)
     exact_demo = demos.add_parser(
@@ -2793,6 +3133,22 @@ def build_parser() -> argparse.ArgumentParser:
              "configuration and a reachable Qdrant (default: all)",
     )
     exact_demo.set_defaults(handler=_cmd_demo_exact)
+
+    narrow_demo = demos.add_parser(
+        "narrow",
+        help="the M4 demo (§0): one query narrows this release's corpus to a handful of pages, "
+             "the image reference on a row is dereferenced, `fetch` returns the material and a "
+             "400-dpi crop, every §7.3 bound is violated on purpose, and the raster cache is "
+             "shown to be a cache. It reads what has been ingested and seeds nothing",
+    )
+    narrow_demo.add_argument(
+        "--query", default=NARROW_QUERY,
+        help=f"the question to narrow with (default: {NARROW_QUERY!r})",
+    )
+    narrow_demo.add_argument("--limit", type=int, default=5,
+                             help="how many triage rows to print (default: 5); the two "
+                                  "best-ranked are the ones fetched")
+    narrow_demo.set_defaults(handler=_cmd_demo_narrow)
 
     eval_parser = commands.add_parser(
         "eval",

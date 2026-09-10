@@ -7,10 +7,10 @@
 
 | | |
 |---|---|
-| **Complete** | 20 / 31 units (65%) — 16 of the planned 26, plus U027, U028, U029 and U030 added after the plan was written (plan §4b) |
-| **Current milestone** | **M4 — in progress**: `skim_pages` and `resolve` shipped (U017), the document store shipped (U029); `fetch` and the page-image route remain. M0, M1, M2a and M3 closed and tagged, M2b's non-paid half shipped |
-| **Next unit** | **U018** — `GET /pages/{page_id}/image`, the raster cache and `fetch`, which closes M4. **Its blocker is cleared**: U029 shipped the document store, so `page_id → doc_id@revision → bytes` resolves and there is something to render. U018 also owns the percent-encoding of the `#` in a `page_id`: `image.url` is emitted today and is not dereferenceable until that route and that encoding land together |
-| **Then** | **U019/U020** — the two aggregate rungs and `read`, in M5 |
+| **Complete** | 21 / 31 units (68%) — 17 of the planned 26, plus U027, U028, U029 and U030 added after the plan was written (plan §4b) |
+| **Current milestone** | **M4 — closed**: `skim_pages` and `resolve` (U017), the document store (U029) and now the page-image route, the raster cache and `fetch` (U018). M0, M1, M2a, M3 and M4 closed and tagged; M2b's non-paid half shipped |
+| **Next unit** | **U019** — `skim_documents`, `skim_sections` and `searchable_ratio`: the two aggregate rungs, which are *the same page query grouped differently* over the candidates U017 already produces. Free, and it lands before U020 so the free rungs of M5 exist before the paid one |
+| **Then** | **U020** — `read`, the paid step, with stamped codes and a question-keyed cache |
 | **Read first** | **Plan §4c — six open defects found by running the system.** None breaks a build; all of them mislead somebody who trusts the output. P1 (a live run records no cost) and P2 (no VLM cache store, so a re-ingest re-bills) both land on U013 |
 | **Blocked** | **U013** — the paid re-bill only, and now on **OQ-1 alone**: `data/source/TC1E-SF.pdf` is still not present. **OQ-2 is closed** — a key is configured and was exercised live on 2026-09-10, ingesting a real 4-page datasheet to `published` through `POST /documents`. The ladder is no longer a blocker either: the shipped `plan()` refused the 55-page pilot at **step 05**, one step before the spend everyone thought it was waiting on a credential for, and `fixes/001` now folds it to `[[1, 30], [31, 55]]` — byte-for-byte what its own acceptance table declared. Nothing downstream is blocked (§17) |
 
@@ -100,7 +100,7 @@ Two things a later unit should not have to rediscover:
 ### M4 — `skim_pages`, `fetch`, `resolve` (spend: none)
 - [x] U017 `skim_pages`, deterministic fusion, image queries, and `resolve`
 - [x] **U029 The document store — `page_id` → bytes** — new (plan §4b); **U018's blocker, cleared**
-- [ ] U018 The page-image endpoint, the raster cache, and `fetch` — U029 shipped, so it is unblocked
+- [x] U018 The page-image endpoint, the raster cache, and `fetch` — **M4 closes here**
 
 ### M5 — the ladder rungs and `read` (spend: read)
 - [ ] U019 `skim_documents`, `skim_sections`, and `searchable_ratio` — spend: none
@@ -3292,3 +3292,164 @@ no test runs as uid 10001 against a Docker named volume.
   images. A store that grew without bound at corpus scale is an M8 question, not this one.
 - **U018 can now be built.** `store.for_page(page_id)` returns `(document, page_no)` and
   `render.render_page` takes it from there; the L2 test already does exactly that at dpi 72.
+
+---
+
+### U018 — The page-image endpoint, the raster cache, and `fetch`
+
+**Milestone:** M4 · **Spend:** none · **Status:** `[x]` Complete · **Completed:** 2026-09-10
+
+The raster becomes reachable, and M4 closes. Two surfaces onto the same pixels — a
+bearer-authenticated `GET /pages/{page_id}/image` a browser `<img>` can point at, and `fetch`,
+which hands an agent the material instead of an answer — with every §7.3 bound in front of both as
+a typed 400, and nothing written to disk on either path. `impl` had neither: its only way to see a
+page was `read()`, the call that bills, and that returned 503 for every page anyway because the
+raster path on the record was stale (register **A5**). **Splitting looking from comprehending is
+what lets an agent choose a page before deciding it is worth money.**
+
+**Demo output** — `vsir demo narrow`, run as a one-off container of the same image against the
+stack `bash scripts/stack.sh up` seeds (§15 Factor XII). It deliberately does **not** seed a corpus
+of its own: `fetch` needs the *source document* reachable through the store (U029), so a demo that
+built its own would be proving that a directory it had just written to could be read back.
+
+```
+$ bash scripts/stack.sh vsir demo narrow                                    # exit 0
+   collection vsir_pages_1536 · document store /srv/documents · 2 document(s) held
+
+01 NARROW — skim_pages('guard door interlocks') ──────────────────────────────
+   status ok · total 42 · weak true · scope {'is_current': True}
+
+   rank  page_id                         why                   trust       image reference
+   1     synthetic-3window@1.0#p019      dense,lexical         ok          /pages/synthetic-3window@1.0%23p019/image?dpi=150
+   2     synthetic-3window@1.0#p021      dense,lexical         ok          /pages/synthetic-3window@1.0%23p021/image?dpi=150
+   3     synthetic-3window@1.0#p022      dense,lexical         ok          /pages/synthetic-3window@1.0%23p022/image?dpi=150
+   4     synthetic-3window@1.0#p018      dense,lexical         ok          /pages/synthetic-3window@1.0%23p018/image?dpi=150
+   5     synthetic-3window@1.0#p020      dense,lexical         ok          /pages/synthetic-3window@1.0%23p020/image?dpi=150
+   PASS  every row carries an image REFERENCE and no row carries bytes or text (P2)
+
+02 the reference is dereferenceable — /pages/{page_id}/image ─────────────────
+   PASS  the `#` of §5.1's page_id is percent-encoded in the URL, and round-trips
+         /pages/synthetic-3window@1.0%23p019/image?dpi=150  →  page_id 'synthetic-3window@1.0#p019'
+   PASS  the page resolves to the bytes it was indexed from, and renders in memory
+         synthetic-3window@1.0 page 19 · synthetic-3window@1.0.pdf · 1240x1755 px at dpi 150
+         · 74,076 bytes · 0 bytes written
+
+03 LOOK — fetch(2 page(s), inline=true) ──────────────────────────────────────
+status       ok — the CALL ran; the material is below (2 page(s))
+
+  PAGE       synthetic-3window@1.0#p019 · trust ok
+    image    /pages/synthetic-3window@1.0%23p019/image?dpi=150
+             dpi 150 · 1240x1755 px · region full page · bytes_b64 98,768 chars
+    text     506 chars · 'Safety functions of the C24 cell\nGuard door interlocks\nSF 2.19C) …'
+    summary  Page 17 covers guard door interlocks stage 17 within the guard door … [en]
+   PASS  every fetched page carries a URL **and** the pixels (inline defaults to true)
+         2 page(s), 196,524 chars of base64
+
+04 the same fetch with inline=false — the reference only ─────────────────────
+   PASS  url present, bytes_b64 absent — the console renders from the URL instead
+         2 page(s) in 2,292 bytes of JSON; bytes_b64 [None, None]
+
+05 the crop — fetch(dpi=400, region=[0.0, 0.0, 1.0, 0.55]) ───────────────────
+   /pages/synthetic-3window@1.0%23p019/image?dpi=400&region=0,0,1,0.55
+   PASS  a crop, rendered on demand at 400 dpi and stored nowhere (§7.2.5, D6)
+         3306x2573 px · region [0.0, 0.0, 1.0, 0.55] · 222,476 chars of base64
+
+06 the bounds — every violation a typed 400 naming what it broke (F18) ───────
+   PASS  fetch, 6 pages → fetch_budget_exceeded
+         400 fetch_budget_exceeded: fetch takes at most 5 pages, got 6
+   PASS  fetch, dpi=400 with no region → dpi_requires_region
+         400 dpi_requires_region: dpi 400 exceeds 220 and requires a region: detail that fine
+         is about part of a page, and a full page at this dpi is megapixels of raster
+   PASS  fetch, 2 whole page(s) at dpi=300 — the 12 MP bound is checked before anything is rendered
+         400 fetch_budget_exceeded: fetch is bounded at 12.0 MP, requested 17.4 MP
+   PASS  fetch, dpi=100 → dpi_not_allowed
+         400 dpi_not_allowed: dpi must be one of [36, 72, 150, 220, 300, 400], got 100
+
+07 the raster cache — in memory, evictable, and never a source of truth ──────
+   PASS  the second identical request renders nothing — it is served from memory
+         cold {'hits': 0, 'misses': 1, 'size': 1, 'maxsize': 96} → warm {'hits': 1, 'misses': 1, …}
+   PASS  after eviction it renders again and the image is byte-identical (a cold instance)
+         74,076 bytes, sha256 d5acd3fc4a3703e6… → 74,076 bytes, sha256 d5acd3fc4a3703e6…
+
+ALL ASSERTIONS PASSED
+```
+
+**Tests** — L0/L1 `1216 passed`; L2/L3 `1277 passed, 13 skipped` (the 13 are U013's blocked
+re-bill on OQ-1, unchanged). New: `tests/api/test_page_image.py` (39), `test_fetch.py` (24),
+`test_fetch_caps.py` (26), `test_raster_cache.py` (19).
+
+**Acceptance criteria** — all eleven, each with the test that holds it:
+
+| AC | Where |
+|---|---|
+| `GET …?dpi=150` with a token is a 200 PNG; without one, a 401 | `test_a_page_image_is_a_png_with_a_bearer_token` · `test_the_same_page_without_a_token_is_refused` |
+| the same request twice renders **once**; after eviction it renders again, byte-identically | `test_two_identical_requests_render_once_and_a_third_after_eviction_renders_again` |
+| a write spy sees no raster on the filesystem; a cold process is byte-identical | `test_serving_a_page_image_writes_nothing_to_the_filesystem` · `test_a_cold_process_returns_a_byte_identical_image` |
+| 6 page ids → `fetch_budget_exceeded {limit: 5, requested: 6}`, no partial 5-page 200 | `test_six_pages_is_refused_and_there_is_no_partial_five_page_result` |
+| over 12 MP names the **megapixel** bound, never a dpi clamp | `test_two_pages_at_300_dpi_exceed_the_megapixel_bound_and_name_it` |
+| `dpi=100` → `dpi_not_allowed`; `dpi=36` and `72` succeed | `test_a_dpi_off_the_list_is_dpi_not_allowed` · `test_the_two_thumbnail_tiers_succeed` |
+| `dpi=400` with no region → `dpi_requires_region`; with one, a crop | `test_above_the_answer_dpi_a_region_is_required` · `test_the_same_call_with_a_region_succeeds_and_returns_a_crop` |
+| `inline=True` returns url **and** bytes; `inline=False` url only | `test_inline_defaults_to_true_and_the_bytes_are_a_png` · `test_inline_false_returns_the_reference_only` |
+| `include=["text","summary"]` returns no image and performs **zero** renders | `test_dropping_image_makes_it_a_cheap_text_read_and_renders_nothing` |
+| a region out of range is a typed 400, not a clipped guess | `test_an_out_of_range_region_is_a_typed_400_and_not_a_clipped_guess` |
+| `vsir demo narrow` exits 0 with the narrowing, the crop and the typed 400s | the demo above, exit 0 |
+
+**Invariants / failure rows closed** — **F18 (`fetch` half)**: the §7.3 caps, each a typed 400
+naming its bound, held by `test_fetch_budget_exceeded`-family and `test_dpi_requires_region`. F18's
+`read` half stays with U020 (§10 *Closed at*). No invariant is newly asserted here.
+
+**Decisions worth keeping**
+
+- **`serve/raster_cache.py` holds no cache.** The name says otherwise and the module says so in its
+  first paragraph: the LRU is `ingest/render.py::_cached`, keyed by the source's **content hash**.
+  A second cache here keyed by `page_id` is the obvious optimisation and is a correctness bug — a
+  `(doc_id, revision)` re-ingested from corrected bytes keeps its page ids, so it would serve the
+  superseded pixels for the life of the process, and hold a second copy of every PNG while doing
+  it. What the module owns is the four things a *request* needs: the URL grammar and its encoding,
+  resolution, the integrity check, and the megapixel bound **in front of** the render.
+- **The megapixel bound is predicted, never measured.** `predicted_megapixels` reads the page
+  rectangle; measuring the pixmap would mean the bound that exists to cap the memory spike had
+  already paid for what it refuses (§15.1). `test_the_megapixel_bound_is_decided_before_a_single_render`
+  fails the run if `_render` is called at all.
+- **Three refusals, kept distinct, because a caller retries them differently.**
+  `page_not_found` (404) — the corpus does not hold it. `page_not_current` (404) — it does, and the
+  document moved on; told *"no such page"* a caller concludes its citation was wrong, when
+  `resolve` is the move that answers (F9, §6.7). `document_not_stored` (**503**) — the page is
+  indexed and real and its image cannot be made, which is an operational problem and not the
+  caller's mistake (§11.3).
+- **The `#` encoding landed with the route, deliberately.** U014 emitted `ImageRef.url` by
+  interpolation, so a `page_id`'s `#` (§5.1) made every reference undereferenceable —
+  `/pages/SYN-M1@1.0` with a fragment the server never sees. `page_image_url` and
+  `page_id_of_path` are now the only producer and the only reader, `@` is left literal so a
+  citation stays readable, and the round trip is asserted in the demo and in
+  `test_lookup_pure.py`. The three assertions that encoded the old unencoded form moved with it.
+
+**Two defects found and fixed while closing the unit**
+
+- **A text-only `fetch` refused `document_not_stored`.** `fetch` resolved the document store before
+  it looked at `include`, so §7.2.5's *"cheap text/summary read"* was the one shape of `fetch` most
+  likely to be **unavailable** — it failed on any corpus whose source PDFs are not mounted, which
+  is exactly the hand-written M1 corpus. `text` and `summary` are payload fields (§5.3) and have
+  nothing to do with the volume the page was rendered from. Resolution is now two functions —
+  `resolve_payloads` (the index; always) and `attach_sources` (the store; only when pixels were
+  asked for) — and the refusal moved behind the part that needs it rather than being removed.
+  Caught by `test_mcp_parity.py::…[fetch-text]`; guarded now by
+  `test_a_text_read_needs_no_document_store_at_all`, which asserts both halves on one corpus.
+- **The demo's megapixel case never reached the megapixel bound.** It asked for one page named
+  twice at a bare `dpi=300` — and `fetch` de-duplicates its page list, and every dpi above 220
+  requires a region, so the call was refused by `dpi_requires_region` one bound early. Two distinct
+  pages and an explicit full-page region now; the assertion also pins `bound == "megapixels"`, so a
+  demo cannot print `PASS` for a bound it did not exercise.
+
+**Notes / follow-ups**
+
+- **A flaky U029 test, fixed at its root.** `test_an_upload_started_run_resumes_from_the_store_with_no_path_at_all`
+  asserted the spool was gone the instant the 42 points appeared. The points land while step 10 is
+  still running and `serve/ingest.py::_reap` unlinks when the **child exits**, which is strictly
+  later — a race that passes on a slow machine and fails on a fast one. It polls for the reap now,
+  which asserts the same fact without depending on which won. The product was correct.
+- **The dpi tiers are cache-only and feed no key** (SA-12): `fetch` and thumbnails render at
+  36/72/150/220/300/400, while `dpi_index=150` feeds the embedded raster and `dpi_220` feeds
+  `extract_key` and `read_key`. Nothing this unit renders can change a cache key.
+- **M4 is complete** — U017, U029 and U018. `skim_documents`/`skim_sections` are M5 (U019), and
+  `stack.sh status` says so rather than listing them as missing.

@@ -7,9 +7,10 @@ it; this suite is what makes it stay closed.
 
 Two properties are asserted that a per-route dependency could not give:
 
-* **Default deny.** ``GET /pages/{page_id}/image`` is built at U018 and is *already* refused
-  without a token today, because protection is a property of the path and not something a route
-  opts into. A route added next milestone cannot arrive unauthenticated.
+* **Default deny.** ``GET /pages/{page_id}/image`` was refused without a token for four
+  milestones *before* it existed, because protection is a property of the path and not something a
+  route opts into — U018 added the route, not the protection. A route added next milestone cannot
+  arrive unauthenticated either.
 * **Identity is the credential's, never the caller's.** An ``X-User-Id`` header is read only so
   that the attempt appears on the event stream as ignored; the identity that reaches the budget
   and the audit line is a digest of the token, and `test_audit.py` asserts that end to end.
@@ -106,12 +107,12 @@ def test_the_three_probes_need_no_token(served, path):
     assert response.status_code != 401
 
 
-def test_the_page_image_route_requires_a_token_before_it_is_even_built(served):
-    """§7.4 — `GET /pages/{page_id}/image` is bearer. It arrives at U018; it is protected now.
+def test_the_page_image_route_requires_a_token(served):
+    """§7.4, §16 — a raster is never served without a credential.
 
-    This is the whole argument for middleware over a per-route dependency: the route does not
-    exist, so there is nothing to decorate, and it is refused anyway. A future unit cannot ship it
-    unauthenticated by forgetting.
+    This assertion is older than the route: it passed for four milestones while there was nothing
+    to decorate, which is the whole argument for middleware over a per-route dependency. U018
+    added the route; it did not have to add the protection, and could not have forgotten to.
     """
     response = served.get("/pages/SYN-M1@1.0%23p001/image?dpi=150")
 
@@ -136,16 +137,37 @@ def test_every_non_probe_path_is_refused_without_a_token(served, path):
     assert served.post(path, json={}).status_code == 401
 
 
-def test_an_authorised_call_to_an_unbuilt_route_is_a_404_not_a_401(served, token_header):
-    """The refusals stay distinct: *"who are you"* and *"there is nothing here"* are not the same.
+def test_an_authorised_call_gets_the_routes_own_answer_and_never_another_401(served,
+                                                                            token_header):
+    """The refusals stay distinct: *"who are you"* and *"I cannot make that image"* differ.
 
-    With a valid token the same page-image path falls through to routing, which has no such route
-    yet — so the caller learns the truth (it is not built) instead of being told to authenticate
-    again with the credential that just worked.
+    The route exists from U018, and this app is configured with no document store, so the page is
+    indexed and its bytes are not here: a `503 document_not_stored` naming the document (§11.3).
+    What matters for auth is that the credential that just worked is not asked for again — the
+    caller learns the truth about the *corpus* instead of being told to authenticate twice.
+
+    Before U018 this asserted a `404`, because the route did not exist and was refused anyway —
+    which was the whole argument for auth in middleware rather than a per-route dependency.
     """
     response = served.get("/pages/SYN-M1@1.0%23p001/image?dpi=150", headers=token_header)
 
+    assert response.status_code == 503, response.text
+    assert response.json()["error"] == "document_not_stored"
+    assert "SYN-M1@1.0" in response.json()["document"]
+
+
+def test_an_authorised_call_to_an_unbuilt_route_is_a_404_not_a_401(served, token_header):
+    """The same distinction on a path nothing has built: `read` lands at U020.
+
+    With a valid token the call falls through to the tool table, which does not hold `read` in
+    this release — so the caller is told it is absent, and told which tools are here, rather than
+    being asked again for the credential that just worked.
+    """
+    response = served.post("/tools/read", headers=token_header, json={"page_ids": []})
+
     assert response.status_code == 404
+    assert response.json()["error"] == "tool_not_found"
+    assert "fetch" in response.json()["available"]
 
 
 # ── identity comes from the token, and only from the token ───────────────────────────────────────
@@ -205,8 +227,8 @@ def test_a_tool_this_release_does_not_serve_is_a_404_naming_what_it_does(served,
     The literal list is deliberate and it is expected to change: it is an assertion about **this
     release's** surface, so a milestone that adds a tool updates this line on purpose rather than
     discovering later that the 404 body had quietly gained a name. `verify` joined at U015;
-    `skim_pages` and `resolve` at U017; `skim_documents`/`skim_sections` arrive at U019, `fetch`
-    at U018 and `read` at U020.
+    `skim_pages` and `resolve` at U017; `fetch` at U018; `skim_documents`/`skim_sections` arrive
+    at U019 and `read` at U020.
     """
     response = served.post("/tools/read", json={"page_ids": ["x"], "question": "?"},
                            headers=token_header)
@@ -214,7 +236,7 @@ def test_a_tool_this_release_does_not_serve_is_a_404_naming_what_it_does(served,
     assert response.status_code == 404
     body = response.json()
     assert body["error"] == "tool_not_found"
-    assert body["available"] == ["lookup", "resolve", "skim_pages", "verify"]
+    assert body["available"] == ["fetch", "lookup", "resolve", "skim_pages", "verify"]
     assert body["available"] == sorted(served.app.state.tools)
 
 

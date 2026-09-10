@@ -17,6 +17,7 @@ import pytest
 
 from vsir.config import DPI_ANSWER, DPI_INDEX
 from vsir.ingest import render
+from vsir.serve.caps import ALLOWED_DPI, MAX_FETCH_MEGAPIXELS
 
 _WRITE_FLAGS = os.O_WRONLY | os.O_RDWR | os.O_CREAT | os.O_APPEND | os.O_TRUNC
 
@@ -187,6 +188,107 @@ def test_a_page_outside_the_document_is_a_typed_refusal(synthetic_pdf, expected)
 
     assert refusal.value.code == "page_out_of_range"
     assert refusal.value.details["page_count"] == expected["page_count"]
+
+
+# ── the size of a raster, before it exists (§7.3's megapixel bound, U018) ───────────────────────
+
+@pytest.mark.parametrize("dpi", ALLOWED_DPI)
+def test_the_predicted_size_is_the_rendered_size_at_every_allowed_dpi(synthetic_pdf, dpi):
+    """§7.3 — `fetch`'s 12 MP bound is enforced from the prediction, so it must be exact.
+
+    Rendering is the memory spike, so the bound has to be decided *before* the pixmap exists — a
+    12 MP ceiling checked by measuring the pixmap has already allocated what it refuses. That only
+    works if the prediction and the renderer agree exactly: a prediction that drifted would admit
+    calls that do not fit and refuse calls that do.
+    """
+    rendered = render.render_page(synthetic_pdf, 20, dpi=dpi,
+                                 region=None if dpi <= 220 else (0.0, 0.0, 1.0, 0.55))
+
+    assert render.predicted_pixels(synthetic_pdf, 20, dpi=dpi,
+                                   region=None if dpi <= 220 else (0.0, 0.0, 1.0, 0.55)) == \
+        (rendered.width, rendered.height)
+    assert render.predicted_megapixels(synthetic_pdf, 20, dpi=dpi,
+                                       region=None if dpi <= 220 else (0.0, 0.0, 1.0, 0.55)) == \
+        pytest.approx(rendered.megapixels)
+
+
+@pytest.mark.parametrize("region", [(0.0, 0.0, 1.0, 0.55), (0.25, 0.25, 0.75, 0.75),
+                                    (0.9, 0.9, 1.0, 1.0)])
+def test_the_predicted_size_is_the_rendered_size_for_a_crop(synthetic_pdf, region):
+    rendered = render.render_page(synthetic_pdf, 20, dpi=300, region=region)
+
+    assert render.predicted_pixels(synthetic_pdf, 20, dpi=300, region=region) == \
+        (rendered.width, rendered.height)
+
+
+def test_predicting_a_size_renders_nothing(monkeypatch, synthetic_pdf, tmp_path):
+    """The whole point: asking how big a raster would be must not make one (§15.1).
+
+    Asserted two ways — no pixels are produced (the render seam is not called) and nothing is
+    written — because the second is what E3 was and the first is what makes the bound cheap.
+    """
+    render.cache_clear()
+    monkeypatch.chdir(tmp_path)
+    rendered: list[int] = []
+    monkeypatch.setattr(render, "_render",
+                        lambda *args, **kwargs: rendered.append(1) or pytest.fail("rendered"))
+
+    with _write_spy(monkeypatch) as written:
+        pixels = render.predicted_pixels(synthetic_pdf, 20, dpi=400, region=(0, 0, 1, 0.55))
+
+    assert pixels[0] > 0 and pixels[1] > 0
+    assert rendered == []
+    assert written == [], f"predicting a size wrote to the filesystem: {written}"
+    assert render.cache_info()["misses"] == 0
+
+
+def test_predicting_a_page_outside_the_document_is_the_same_typed_refusal(synthetic_pdf,
+                                                                         expected):
+    """The prediction refuses what the renderer would refuse, so the bound cannot be evaded."""
+    with pytest.raises(render.RenderError) as refusal:
+        render.predicted_pixels(synthetic_pdf, expected["page_count"] + 1, dpi=150)
+
+    assert refusal.value.code == "page_out_of_range"
+
+
+def test_a_full_page_at_400_dpi_is_over_the_fetch_megapixel_bound(synthetic_pdf):
+    """Why §7.3 requires a `region` above 220 dpi, as a number rather than as an assertion.
+
+    An A4 page at 400 dpi is 15 MP — over the 12 MP a whole `fetch` is allowed — so the rule that
+    detail that fine must be about *part* of a page is not a policy preference, it is the only
+    shape in which that dpi fits at all.
+    """
+    assert render.predicted_megapixels(synthetic_pdf, 20, dpi=400) > MAX_FETCH_MEGAPIXELS
+    assert render.predicted_megapixels(synthetic_pdf, 20, dpi=400,
+                                       region=(0.0, 0.0, 1.0, 0.55)) < MAX_FETCH_MEGAPIXELS
+
+
+def test_the_render_seam_is_what_the_cache_wraps(monkeypatch, synthetic_pdf):
+    """The cache is provably a cache: one render for two identical requests, then eviction.
+
+    U018's acceptance criterion, at the level where it is cheap to assert. `test_page_image.py`
+    re-asserts it over the HTTP route, where the same eviction must produce a byte-identical image.
+    """
+    render.cache_clear()
+    calls: list[tuple] = []
+    real = render._render
+
+    def counted(source, page_no, dpi, region):
+        calls.append((page_no, dpi, region))
+        return real(source, page_no, dpi, region)
+
+    monkeypatch.setattr(render, "_render", counted)
+
+    first = render.render_page(synthetic_pdf, 5, dpi=DPI_INDEX)
+    render.render_page(synthetic_pdf, 5, dpi=DPI_INDEX)
+
+    assert len(calls) == 1, "the second identical request must not render"
+
+    render.cache_clear()
+    again = render.render_page(synthetic_pdf, 5, dpi=DPI_INDEX)
+
+    assert len(calls) == 2
+    assert again.png == first.png, "an evicted entry re-renders byte-identically"
 
 
 def test_there_is_no_image_path_anywhere_in_the_renderer():

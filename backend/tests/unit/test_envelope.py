@@ -15,6 +15,9 @@ from vsir.serve.envelope import (
     WEAK_ABS,
     ClaimVerdict,
     DocHit,
+    FetchImage,
+    FetchPage,
+    FetchResult,
     ImageRef,
     LookupHit,
     NextMoves,
@@ -35,7 +38,7 @@ HIT = LookupHit(page_id="D@1#p001", page_no=1, verified=True, text_trust="ok")
 
 RESPONSE_MODELS = [
     DocHit, SectionHit, PageHit, LookupHit, ResolveHit, ImageRef, Preview, NextMoves,
-    ScopeStats, Provenance, ClaimVerdict, VerifyResult,
+    ScopeStats, Provenance, ClaimVerdict, VerifyResult, FetchPage, FetchResult,
 ]
 
 
@@ -159,6 +162,55 @@ def test_rank_is_a_required_ordinal(model, field):
     """A position is not a confidence — and it is required, not optional."""
     assert model.model_fields[field].is_required()
     assert model.model_fields[field].annotation is int
+
+
+def test_only_fetchs_image_may_carry_pixels_and_it_is_a_different_model():
+    """P2 as two types rather than as a convention (§7.1, §7.2.5, D12).
+
+    `ImageRef` — what every triage row carries — cannot grow a `bytes_b64` even by accident,
+    because `extra="forbid"` makes adding one a validation error rather than a wider row. The
+    bytes live on `FetchImage`, which only `fetch` returns, and which additionally carries the
+    `region` a crop is of.
+    """
+    assert "bytes_b64" in FetchImage.model_fields
+    assert "bytes_b64" not in ImageRef.model_fields
+    assert "region" in FetchImage.model_fields and "region" not in ImageRef.model_fields
+
+    with pytest.raises(ValidationError):
+        ImageRef(url="/pages/D%401%23p001/image?dpi=150", dpi=150, bytes_b64="iVBORw0KGgo")
+
+
+def test_a_fetched_image_says_no_pixels_travelled_rather_than_dropping_the_field():
+    """`inline=false` returns the reference only — as an explicit `None`, not a missing key.
+
+    A field that disappears makes a generated client's type optional-by-omission, and the console
+    and the runner both switch on it. What P2 requires is that the *bytes* are not there.
+    """
+    reference = FetchImage(url="/pages/D%401%23p001/image?dpi=150", dpi=150, width=1240,
+                           height=1754)
+
+    assert reference.bytes_b64 is None
+    assert "bytes_b64" in reference.model_dump()
+    assert reference.model_dump()["bytes_b64"] is None
+    assert FetchImage(url="u", dpi=150, bytes_b64="iVBORw0KGgo").bytes_b64
+
+
+def test_a_fetched_page_distinguishes_not_asked_for_from_empty():
+    """`include` controls the parts, and `None` is not `""` (§7.2.5).
+
+    A page whose text layer is genuinely blank returns `text: ""`; a caller that asked only for
+    the image gets `text: null`. Collapsing them would make *"I did not ask"* read as *"there is
+    nothing there"* — the F4 injury, one rung along.
+    """
+    image_only = FetchPage(page_id="D@1#p001", text_trust="no_text")
+    blank_text = FetchPage(page_id="D@1#p002", text="", text_trust="ok")
+
+    assert image_only.text is None and blank_text.text == ""
+    assert image_only.summary is None
+    # F4's disclosure is not optional on this rung: a scanned page's empty `text` has to be
+    # readable as "no text layer" without a second call.
+    assert "text_trust" in FetchPage.model_fields
+    assert FetchResult().pages == []
 
 
 def test_an_image_reference_carries_no_pixels():
