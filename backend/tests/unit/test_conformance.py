@@ -92,6 +92,18 @@ def test_the_suite_has_files_to_scan():
     assert container_files(), "no Dockerfile or compose file found"
 
 
+@pytest.mark.parametrize("subdir", ["serve", "core", "ingest", "eval", "vlm", "mcp"])
+def test_every_subdirectory_scan_has_something_to_scan(subdir):
+    """`scan_under` is the one helper that can pass vacuously, so its scope is asserted.
+
+    `test_no_match_text_under_serve` narrows to one package directory. If `serve/` were renamed or
+    moved, that grep would go green by scanning an empty set — the gate on I3's *one exact-match
+    code path* would be gone and nothing would say so. The M3 milestone verification named this
+    as the suite's one remaining vacuous-pass risk.
+    """
+    assert _walk(PACKAGE / subdir, (".py",)), f"nothing to scan under {PACKAGE / subdir}"
+
+
 def test_the_suite_never_scans_markdown():
     """The spec and the README quote every banned string; scanning prose would ban documenting."""
     assert not [path for path in package_files() + container_files() if path.suffix == ".md"]

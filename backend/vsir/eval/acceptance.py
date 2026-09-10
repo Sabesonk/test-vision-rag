@@ -8,11 +8,22 @@ and `test_withheld_negative_set.py` and reconstruct the table from their asserti
 becomes a command, and the command prints one row per assertion with the expectation beside the
 measurement — `vsir eval acceptance`.
 
-**It is a second surface over the same numbers, never a second set of them.** Every expectation
-here is read out of a checked-in `expected.json`; nothing in this module holds a literal the
-corpus is measured against. That is C10: *"if the first real ingest disagrees, record it as a
-blocking finding — do not re-baseline `expected.json` silently"*, and a command that carried its
-own copy of the numbers would be a second place to quietly fix one.
+**It is a second surface over the same numbers, never a second set of them.** That is C10: *"if
+the first real ingest disagrees, record it as a blocking finding — do not re-baseline
+`expected.json` silently"*, and a command carrying its own copy of a number would be a second
+place to quietly fix one. So the rule here is about the **direction** a literal points:
+
+* **no measurement is written down in this module.** Every number the corpus produces — page
+  counts, totals, which page a label lands on, inventory sizes — is read out of a checked-in
+  `expected.json` or out of the ported `labels.jsonl`. There is no line here that could be edited
+  to make a red row green;
+* **§12.3's and §12.1's own text is written down**, and asserted *against* the checked-in table:
+  :data:`PARITY_ROWS`, the seven lookup labels in §12.3's order, "55 pages over 2 windows",
+  `weak_abs == 20`, SA-7's `total: 10`. Those are the spec, and a table that had drifted from it
+  would make every measurement below meaningless. Checking them is the point, not a shortcut.
+
+One literal is neither: :data:`~vsir.eval.abstention.CORRECTNESS_GATE`, in the other module, which
+is D11's gate and is pinned in code deliberately (see there).
 
 ── Three sections, and why they are separate ────────────────────────────────────────────────────
 
@@ -43,7 +54,7 @@ from pathlib import Path
 from typing import Any
 
 from vsir.core.observed_tokens import from_records, is_code_like
-from vsir.core.tok import token_set
+from vsir.core.tok import tok, token_set
 from vsir.core.verify import verify_claims
 from vsir.eval import legacy, searchable_payloads, synthetic
 from vsir.serve.envelope import Provenance, Status
@@ -66,6 +77,10 @@ TC1E_DIR_ENV = "VSIR_TC1E_FIXTURE"
 #: The three artefacts the one paid ingest buys (§12.1). `expected.json` is **not** among them: it
 #: is the spec's, checked in first, and that ordering is the whole of C10.
 BOUGHT = ("raw_window_1.json", "raw_window_2.json", "text.json")
+
+#: §12.3's first two lookup rows, which are also the two the PARITY corpus can carry. This is the
+#: spec's **text**, not a measurement: the pages each one lands on are read out of `labels.jsonl`.
+PARITY_ROWS = ("SF 1.1A", "SF 5.5b")
 
 #: The infix that names the collections this command creates, seeds, queries and drops. The base
 #: is the deployment's own ``VSIR_COLLECTION`` (§15 Factor III), and `synthetic_collection` /
@@ -439,22 +454,45 @@ def parity_rows(client: Any, collection: str, baseline: legacy.Baseline, *,
 
     # §12.3's own first two rows, on real printed shapes rather than hand-written ones. These are
     # the rows any-order matching gets wrong: three pages and two pages respectively (F1).
-    for label, page_id in (("SF 1.1A", "TC1E-SF@1.3#p001"), ("SF 5.5b", "TC1E-SF@1.3#p031")):
+    #
+    # The **pages** come from `labels.jsonl`, never from a literal here. A page id written into
+    # this module would be a measurement of the corpus held in code, editable to make a row green
+    # — the one thing C10 is about. The labels are §12.3's text; where they land is the old run's
+    # own record, and the row's whole content is that the phrase index agrees with it.
+    for label in PARITY_ROWS:
+        expected_pages = sorted(page_id for page_id, accepted in accepted_pairs
+                                if accepted == label)
         response = ask(label)
-        rows.append(_row(PARITY, f'lookup("{label}") on the ported baseline', f"total=1 {page_id}",
+        rows.append(_row(PARITY, f'lookup("{label}") on the ported baseline',
+                         f"total={len(expected_pages)} {' '.join(expected_pages) or '—'}",
                          f"total={response.total} "
                          f"{' '.join(hit.page_id for hit in response.hits) or '—'}",
-                         ok=response.status is Status.OK and response.total == 1
-                         and [hit.page_id for hit in response.hits] == [page_id]))
+                         ok=response.status is Status.OK
+                         and response.total == len(expected_pages)
+                         and [hit.page_id for hit in response.hits] == expected_pages))
 
     # §12.3's last row: a scanned document publishes and answers `not_searchable` (F4).
+    #
+    # Probed with a label the corpus demonstrably **does** print somewhere else, taken off the
+    # baseline rather than written down here. That makes the row stronger than a made-up code
+    # would: a code that is genuinely findable elsewhere is still `not_searchable` on a document
+    # with no text layer, which is the distinction F4 exists for.
     scanned = [doc_id for doc_id in baseline.doc_ids if not baseline.has_text_layer(doc_id)]
+    findable_elsewhere = next((raw for raw in raws if len(tok(raw)) == 1), "")
+    control = ask(findable_elsewhere)
     for doc_id in scanned:
-        response = ask("C24", scope={"doc_id": doc_id})
-        rows.append(_row(PARITY, f"the scanned document {doc_id} → not_searchable",
-                         "not_searchable", response.status.value,
+        response = ask(findable_elsewhere, scope={"doc_id": doc_id})
+        rows.append(_row(PARITY,
+                         f"the scanned document {doc_id} → not_searchable, not not_found",
+                         f'not_searchable for "{findable_elsewhere}", '
+                         f"which IS printed elsewhere",
+                         f"{response.status.value}, found on "
+                         f"{control.total} page(s) elsewhere",
+                         # The second half is the control. Without it the row would pass on a
+                         # label nothing prints at all, which says nothing about F4's distinction.
                          ok=response.status is Status.NOT_SEARCHABLE and not response.hits
-                         and response.scope_stats.pages == response.scope_stats.pages_no_text))
+                         and response.scope_stats.pages == response.scope_stats.pages_no_text
+                         and control.status is Status.OK and control.total >= 1))
 
     # Every gain is checked before it is reported: a code that is not findable is not a gain.
     gains = baseline.gains()
@@ -669,6 +707,19 @@ def run(client: Any, *, base: str, dim: int, release_id: str, only: str = "all",
                   refusals=tuple(refusals))
 
 
+#: What a green section does **not** prove, printed above its rows. The PARITY corpus is a
+#: *projection* — `Baseline.observable_text` is the one page of verbatim text `impl` wrote down
+#: plus the identifier strings its own gate accepted (see `eval/legacy.py`). So the accepted half
+#: genuinely exercises `variants()`, `MatchPhrase` and the WORD tokenizer over 405 real identifier
+#: shapes, and the withheld half is a floor: those strings were never seeded, so "unfindable" is
+#: weaker there than it will be on real text. Saying so beside the result is the only thing that
+#: stops a green 405-row report being read as the M2b row it is standing in for (R7).
+SECTION_CAVEATS = {
+    PARITY: "on the ported projection of §12.1's baseline, not on real page prose — the accepted "
+            "half exercises the phrase mechanism over 405 real identifier shapes; the withheld "
+            "half is a floor until M2b (R7, and NO LEGACY COVERAGE below)",
+}
+
 #: Column widths: the assertion is the sentence, the two middles are the numbers being compared.
 #: Public, because a row that rendered its two sides into one column would still print something
 #: and the L2 suite has to be able to read the columns apart to assert that it did not.
@@ -688,6 +739,8 @@ def print_report(report: Report) -> None:
         if not section:
             continue
         print(f"\n{name} — {len(section)} assertion(s)")
+        if name in SECTION_CAVEATS:
+            print(f"  {SECTION_CAVEATS[name]}")
         for row in section:
             print(f"  {row.assertion[:ASSERTION_WIDTH]:<{ASSERTION_WIDTH}} "
                   f"{row.expected[:VALUE_WIDTH]:<{VALUE_WIDTH}} "

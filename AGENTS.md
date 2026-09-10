@@ -251,6 +251,12 @@ bash scripts/test-api.sh -k "near_miss or eval_commands"
 `vsir eval corpus` (§12.6) arrives at M8; asking for it now is refused by name listing the two
 that are served.
 
+Neither corpus is in the image — the build context is `backend/` — so a container running these
+commands mounts the fixtures and points `VSIR_SYNTHETIC_PAGES`, `VSIR_LEGACY_FIXTURE` and
+`VSIR_TC1E_FIXTURE` at the mounts, exactly as `vsir demo exact --synthetic` does. A section whose
+fixture is not found is a **refusal** naming the path and a non-zero exit, never a silent pass:
+a skipped *row* is evidence deferred, a missing *corpus* is no evidence at all.
+
 Regenerate the corpus (reproducible byte for byte; the PDF and every fixture file are committed):
 
 ```bash
@@ -314,7 +320,7 @@ uses — so there is no second code path and nothing to keep in step:
 
 ```bash
 backend/.venv/bin/vsir lookup "SF 1.1A"                      # JUMP, §7.2.2
-backend/.venv/bin/vsir lookup "alarm 152" --json             # the envelope, verbatim
+backend/.venv/bin/vsir lookup "alarm 152" --json | jq        # the envelope, verbatim
 backend/.venv/bin/vsir lookup "SF 9.9" --scope page_no=5 --include-unverified
 backend/.venv/bin/vsir verify --claims K73 --pages "SYN-M1@1.0#p006"     # CHECK, §7.2.4
 
@@ -329,6 +335,14 @@ filters on the integer the payload holds. A key outside `INDEXED` is a typed `40
 **A typed absence exits 0.** `vsir lookup "alarm 152"` searched, found nothing and said so
 correctly — that is a successful call (§7.1), which is what lets the §4.4 demo chain with `&&`.
 Only a refusal (a `400` naming a bound, a `404`, a `503`) is a non-zero exit.
+
+**`--json` makes stdout the envelope and nothing else** — the event stream moves to stderr, which
+is the same rule `vsir mcp --stdio` follows and for the same reason: a flag that declares stdout
+the machine surface makes a perfectly good `boot_check_ok` a parse error at whatever is reading it
+(§15 XI). The events are *separated, never silenced*, so a boot refusal is still reported in full
+on stderr. Without `--json` the output is a human rendering and stdout stays the event stream.
+Byte-identity with `POST /tools/{name}` is asserted for six calls and both typed refusals in
+`backend/tests/api/test_one_shot_parity.py`.
 
 **MCP over SSE is not a second server.** §15 Factor VII pins it to the serving port, so
 `vsir serve` mounts `GET /sse` and `POST /messages/` beside the HTTP tools and `vsir mcp --sse`

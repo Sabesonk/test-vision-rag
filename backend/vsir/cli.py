@@ -18,6 +18,7 @@ import json
 import math
 import os
 import signal
+import sys
 from pathlib import Path
 from types import FrameType
 from typing import Any, Mapping, Sequence
@@ -2010,7 +2011,20 @@ def _one_shot(tool: str, arguments: dict[str, Any], *, as_json: bool,
     correctly: that is a successful call and §7.1's whole argument is that it is not an error.
     Only a refusal — a `400` naming a bound, a `404`, a `503` — is a non-zero exit, which is also
     what makes the §4.4 demo chain with `&&` read the way a reviewer expects.
+
+    **With ``--json``, nothing is printed on stdout but the envelope.** The rule is
+    `vsir mcp --stdio`'s and the reason is the same one: under `vsir serve` stdout *is* the event
+    stream (§15 Factor XI), and here ``--json`` has declared it the machine surface — so a
+    perfectly good ``boot_check_ok`` in front of the body is a parse error at whatever is reading
+    it. The stream moves to stderr **before the boot check runs**, so a boot refusal is still
+    reported in full; the two outputs are separated, never one of them silenced. Without
+    ``--json`` the output is a human rendering and stdout stays the event stream, unchanged.
     """
+    if as_json:
+        vsir_logging.configure(
+            release_id=(os.environ.get("VSIR_RELEASE_ID") or "").strip() or "unknown",
+            level=(os.environ.get("VSIR_LOG_LEVEL") or "INFO").strip(),
+            stream=sys.stderr)
     try:
         runtime, client = app_module.runtime_from_env(dict(os.environ))
     except BootRefused as refusal:
@@ -2030,8 +2044,9 @@ def _one_shot(tool: str, arguments: dict[str, Any], *, as_json: bool,
         client.close()
 
     if as_json:
-        # The bytes an HTTP caller would have received, byte for byte (§7.5) — so a script can
-        # pipe this into `jq` and be reading the wire contract rather than a printed rendering.
+        # The bytes an HTTP caller would have received, byte for byte (§7.5), and the only thing
+        # on stdout — so `vsir lookup … --json | jq` is reading the wire contract rather than a
+        # printed rendering of it. Asserted in tests/api/test_one_shot_parity.py.
         print(outcome.body().decode("utf-8"))
     elif outcome.refused:
         payload = outcome.payload

@@ -8,7 +8,7 @@
 | | |
 |---|---|
 | **Complete** | 15 / 26 units (58%) |
-| **Current milestone** | M3 — `lookup` + `verify` over HTTP and MCP (**3 / 3 units, complete**); M0, M1 and M2a closed and tagged, M2b's non-paid half shipped. Next milestone: M4 |
+| **Current milestone** | **M3 closed and tagged `cr1-m3`** (3 / 3 units); M0, M1 and M2a closed and tagged before it, M2b's non-paid half shipped. Next milestone: **M4** — `skim_pages`, `fetch`, `resolve` |
 | **Next unit** | U017 — `skim_pages`, deterministic fusion, image queries, and `resolve` (**Spend: none**, M4, P0-Critical). The page rung of the narrowing ladder with §7.2.1's score-free ordering, `exclude`, the `next` affordances and D12's image queries, plus `resolve` with `interpolated`. It is the first unit that reads a *vector*, so the three fused surfaces U010 wrote become load-bearing |
 | **Blocked** | **U013** — the paid re-bill only, on **OQ-1** (no `data/source/TC1E-SF.pdf`) and **OQ-2** (`VSIR_VLM_KEY` empty). Everything in the unit that does not need the PDF or the key shipped on 2026-09-10 and is green; see the unit's entry for what remains and how it unblocks. Nothing downstream is blocked (§17) |
 
@@ -1833,6 +1833,74 @@ ported_files 23 · export_run r-poc-5 · 142 pages · 1,644 accepted pairs · 96
 
 ---
 
+### M3 milestone gate — closed 2026-09-10, tagged `cr1-m3`
+
+**Demo** (Spec §0 and §13): `vsir serve & vsir lookup "SF 1.1A" && vsir eval acceptance` —
+**chain exit 0**, `health=200 ready=200`, and the acceptance table green:
+
+```
+seeded 31 pages into vsir_pages_m3_1536
+health 200
+
+status       ok · total 1 · capped false · weak false · needs_scope false
+scope        {'is_current': True} · searched 30 page(s), 1 with no text layer
+  HIT        SYN-M1@1.0#p001 · printed Page 1 of 30 · table · verified true · trust ok
+             image /pages/SYN-M1@1.0#p001/image?dpi=150
+reads_left   50 · release demo-m3 · schema 1
+
+acceptance: 65 passed, 0 failed, 10 skipped
+CHAIN EXIT=0
+health=200 ready=200
+```
+
+`vsir eval abstention` on the same corpus: `abstention_correctness: 1.00 (D11 gate: 1.00) — PASS`.
+The 10 skips are M2b's, named in the report with OQ-1/OQ-2 in the reason string.
+
+`bash scripts/test-unit.sh` → **1073 passed** · `bash scripts/test-api.sh` → **1052 passed, 13
+skipped**.
+
+**Acceptance verified by subagent** against Spec §13 M3, adversarially and with `path:line`
+evidence per row. Result: **✓ on every row of "Acceptance, always" and every Deliverable row**;
+the three "Acceptance, once M2b exists" rows are **deferred on OQ-1/OQ-2** with the mechanism built
+and skipping by name. Seven findings; all seven are dispositioned:
+
+| finding | disposition |
+|---|---|
+| **The `vsir <tool>` one-shot leg of §7.5's "one dispatcher" was unproven by test** (moderate). `_one_shot` routes through `app_module.dispatch` on reading and nothing asserted it, while §4.4 calls the CLI *"the only supported operational surface"* | **fixed** — new `tests/api/test_one_shot_parity.py` (15 rows): byte-identity against `POST /tools/{name}` for six calls, the typed refusals (`filter_unknown_key`, `cap_out_of_range`) as the *same body* with a non-zero exit, object identity of the tool table (`spec.call is served_table[name].call`), and an AST assertion that `_one_shot` names `dispatch` and no tool implementation |
+| **`--json` shared stdout with the event stream**, so `vsir lookup --json \| jq` — which `_one_shot`'s own docstring and AGENTS.md both promise — saw seven `boot_check_ok` objects in front of the body | **fixed** — with `--json` the event stream moves to **stderr** before the boot check runs. The rule and the reasoning are `vsir mcp --stdio`'s, verbatim: under `vsir serve` stdout *is* the event stream (§15 XI), and a flag that declares stdout the machine surface makes a perfectly good event a parse error. Separated, never silenced — both halves asserted (`test_with_json_the_event_stream_moves_to_stderr_and_is_not_silenced`), and the human rendering is unchanged (`test_without_json_stdout_is_still_the_event_stream`) |
+| ~ **`eval/acceptance.py` held literals its docstring said it did not** (low): `("SF 1.1A", "TC1E-SF@1.3#p001")` and `("SF 5.5b", "TC1E-SF@1.3#p031")` were *measurements of the corpus written into code*, editable to make a row green — exactly what C10 forbids; plus a hardcoded probe label `"C24"` | **fixed** — the pages now come out of `labels.jsonl` (`accepted_pairs`), the labels alone are pinned as `PARITY_ROWS` and marked as §12.3's *text*, and the scanned-document probe is a label the baseline demonstrably prints elsewhere, with the "found on N page(s) elsewhere" control folded into the row so it cannot pass on a label nothing prints. The docstring now states the rule as a **direction**: no measurement in code, spec text asserted *against* the checked-in table |
+| ~ **PARITY is a projection and its negative half is a floor** (low, disclosed): `observable_text` is one page of verbatim text plus the accepted identifier strings, so *"every withheld raw is unfindable"* is near-tautological on a corpus those strings were never seeded into | **improved** — the caveat now prints **above the rows** (`SECTION_CAVEATS`), not only in `NO_LEGACY_COVERAGE` at the bottom. A reader reaching row 1 is told what the section does and does not prove. The substance is unchanged and correct: the accepted half genuinely exercises `variants()`, `MatchPhrase` and the WORD tokenizer over 405 real identifier shapes, and the real-text row is what M2b buys |
+| ~ **one conformance grep could pass vacuously** (very low): `test_no_match_text_under_serve` uses `scan_under("serve", …)` and nothing asserted the scan set was non-empty, so a package rename would silently remove I3's gate | **fixed** — `test_every_subdirectory_scan_has_something_to_scan`, parametrised over all six package directories |
+| ~ **the audit line is exercised only through a test-registered spy tool** (low) | **accepted, unavoidable at M3.** §7.4 audits the two tools that spend; `fetch` lands at M4 and `read` at M5, and `lookup`/`verify` are free. `AUDITED_TOOLS` and the emit site get their first real exercise at **M4** — recorded here so it is a known M4 obligation and not a surprise |
+| ~ **`found_only_in_superseded` is declared and unreachable** (informational) | **correct as claimed.** §10 closes F9 at **M8**; `test_status_enum_end_to_end.py` asserts today's honest `not_found` and names U025 as the unit that turns it red. Claiming it at M3 would claim a row this milestone does not own |
+
+**One deviation from a literal reading of the spec, flagged for explicit sign-off rather than
+inherited.** §7.4 reads *"Bearer token required on every tool (`401` without one)"*. `vsir mcp
+--stdio` and the `vsir <tool>` one-shots use `auth.local_identity` (`local-mcp-stdio`, `local-cli`)
+instead of a credential. U015 argued it at length (`serve/auth.py:132-156`): a one-off process of
+this release is already inside the boundary — it runs from the release's image with the release's
+configuration, spawned by an operator who could equally run `vsir publish`, which flips
+`is_current` on a whole document and asks for nothing. The **network** transports are protected
+(SSE is behind the same default-deny middleware; `test_mcp_parity.py` asserts it). It is a
+defensible reading and it is the one that ships — but it is a reading, and the milestone
+verification is right that a reviewer should sign it off rather than absorb it. **Raised here as
+an open item for review; no code change made.**
+
+**Invariants asserted from M3 (Spec §9):** none newly — §9 assigns I2, I3, I5, I6 to M1, I1, I4, I7
+to M2a and I8 to M6. M3 re-asserts M1's four *at the tool boundary*, which is the point of the
+milestone: `test_lookup_tool.py`, `test_verify_tool.py`, `test_status_enum_end_to_end.py` and
+`test_mcp_parity.py` put the same table through HTTP, MCP and the CLI.
+
+**Failure rows closed at M3 (Spec §10):** **F2 (tool half)** — `verify` over `POST /tools/verify`,
+MCP and `vsir verify`, one `exact_filter` behind all three, so F2 cannot disagree with F1;
+**F4 (M3 half)** — a text-free page answers `not_searchable` and never `not_found`, over every
+surface, scoped and unscoped. No other row is claimed.
+
+**M3's units:** U014 (the serving app — auth, audit, budget, degradation), U015 (`lookup` and
+`verify` over HTTP and MCP through one dispatcher), U016 (the two eval commands).
+
+---
+
 ### M2a milestone gate — closed 2026-09-10, tagged `cr1-m2a`
 
 **Demo** (Spec §0 and §13): `vsir ingest data/source/synthetic_3window.pdf --vlm stub && vsir runs
@@ -2718,7 +2786,7 @@ earlier milestone. What is new is that the proof is a command rather than three 
 - `.github/workflows/ci.yml` — the named §12.4 step now runs
   `-k "near_miss or eval_commands"`, so the **shipped subcommand** is exercised on every commit
   and not only the library behind it.
-- `backend/tests/api/test_eval_commands.py` — 25 tests over the commands' own properties.
+- `backend/tests/api/test_eval_commands.py` — 26 tests over the commands' own properties.
 
 **Decisions, stated**
 
@@ -2807,3 +2875,7 @@ earlier milestone. What is new is that the proof is a command rather than three 
   sign-off for the ~70% of §7/§8 `impl` never exercised, and the list says which parts.
 - Nothing about `read`, `fetch`, `skim_*` or `resolve` moved. They are still absent from the tool
   table and still a typed `404` listing `["lookup", "verify"]`.
+- **Two things changed outside this unit's scope, at the M3 gate rather than in the unit**, and
+  both are recorded in the gate entry below: `tests/api/test_one_shot_parity.py` closes §7.5's
+  third surface, and `--json` moved its event stream to stderr so AGENTS.md's `| jq` promise is
+  true. `test_conformance.py` gained a positive control for `scan_under`.

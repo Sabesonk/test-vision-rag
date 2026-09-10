@@ -310,6 +310,24 @@ def test_a_missing_corpus_is_a_refusal_and_not_a_green_run(tmp_path):
     assert report.refusals and "SYNTHETIC" in report.refusals[0]
 
 
+def test_a_missing_corpus_exits_non_zero_from_the_command_too(run, capsys, monkeypatch, tmp_path):
+    """The same refusal, end to end: an operator sees a named non-zero exit, not `0 failed`.
+
+    `0 passed, 0 failed, 0 skipped` is the summary a report with no evidence prints, and the whole
+    point is that it is **red**. Pointed at a missing fixture through the documented env var, which
+    is how it actually happens: a container that forgot to mount `data/fixtures/`.
+    """
+    monkeypatch.setenv("VSIR_LEGACY_FIXTURE", str(tmp_path / "nowhere"))
+
+    code = run("acceptance", "--only", "parity")
+
+    output = capsys.readouterr().out
+    assert code == cli.EXIT_REFUSED
+    assert "section refused: PARITY" in output
+    assert "VSIR_LEGACY_FIXTURE" in output
+    assert "0 passed, 0 failed, 0 skipped" in output
+
+
 # ── `vsir eval abstention` ──────────────────────────────────────────────────────────────────────
 
 def test_abstention_correctness_is_one_and_the_command_exits_zero(run, capsys):
