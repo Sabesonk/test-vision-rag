@@ -26,6 +26,11 @@ REGION_REQUIRED_ABOVE = 220
 MAX_FETCH_PAGES = 5
 #: The raster budget for one `fetch`. Rendering is the memory spike, and this is what bounds it.
 MAX_FETCH_MEGAPIXELS = 12.0
+#: `verify` is per ``(claim, page)`` (§7.2.4), so its cost is the **product** of the two lists and
+#: not their sum. Generous on purpose: the largest legitimate call is the answer gate checking one
+#: draft's codes against the ≤ 3 pages a `read` saw (I8, §8.4), which is tens of pairs, not
+#: hundreds. The bound exists so a caller cannot turn one free call into ten thousand counts.
+MAX_VERIFY_PAIRS = 200
 
 
 class ToolError(Exception):
@@ -144,6 +149,39 @@ def validate_cap(cap: int) -> None:
             "cap_out_of_range",
             f"cap is the size of the page of the set to return and is at least 1, got {cap}",
             minimum=1, requested=cap,
+        )
+
+
+def validate_verify_pairs(claims: Sequence[str], page_ids: Sequence[str]) -> None:
+    """`verify` names at least one claim, at least one page, and at most :data:`MAX_VERIFY_PAIRS`.
+
+    Two refusals, both typed, both in the family §7.3 tabulates:
+
+    * **empty.** ``verify([], [p001])`` has no honest answer. Family B says ``status`` reports
+      whether the *call* ran (§7.1), so returning ``ok`` with an empty verdict map would say
+      *"checked, and here is nothing"* about a question nobody asked — a caller that dropped its
+      claims list on the way here would read that as *"the draft is clean"*. It is a malformed
+      request, so it is a `400` that names which list was empty.
+    * **too large.** The work is ``len(claims) × len(page_ids)`` index counts, so the bound is on
+      the product rather than on either list.
+    """
+    if not claims or not page_ids:
+        empty = "claims" if not claims else "page_ids"
+        raise ToolError(
+            "verify_empty",
+            f"verify checks every (claim, page) pair and {empty} is empty: a verdict map with no "
+            f"verdicts in it reads as 'nothing to answer for', which is the one thing an answer "
+            f"gate must never conclude by accident (§7.2.4, I8)",
+            empty=empty, claims=len(claims), page_ids=len(page_ids),
+        )
+    pairs = len(claims) * len(page_ids)
+    if pairs > MAX_VERIFY_PAIRS:
+        raise ToolError(
+            "verify_budget_exceeded",
+            f"verify is per (claim, page): {len(claims)} claims × {len(page_ids)} pages is "
+            f"{pairs} pairs and the bound is {MAX_VERIFY_PAIRS}",
+            bound="pairs", limit=MAX_VERIFY_PAIRS, requested=pairs,
+            claims=len(claims), page_ids=len(page_ids),
         )
 
 

@@ -122,6 +122,12 @@ def test_the_page_image_route_requires_a_token_before_it_is_even_built(served):
     "/runs/01JX000000000000000000000A",
     "/runs/01JX000000000000000000000A/export/labels.jsonl",
     "/tools/lookup",
+    "/tools/verify",
+    # The MCP SSE transport binds this same port (§15 Factor VII), so it is on the same side of
+    # the boundary as everything else that is not a probe. It was protected the moment it was
+    # mounted, because protection is middleware and not something a route opts into.
+    "/sse",
+    "/messages/",
     "/ask",
 ])
 def test_every_non_probe_path_is_refused_without_a_token(served, path):
@@ -194,14 +200,21 @@ def test_two_configured_tokens_are_two_identities(qdrant, served_collection, cor
 # ── the tool table, and a body that does not fit it ──────────────────────────────────────────────
 
 def test_a_tool_this_release_does_not_serve_is_a_404_naming_what_it_does(served, token_header):
-    """A name that is not in the table is *absent*, not empty (§7.1's whole argument, applied)."""
+    """A name that is not in the table is *absent*, not empty (§7.1's whole argument, applied).
+
+    The literal list is deliberate and it is expected to change: it is an assertion about **this
+    release's** surface, so a milestone that adds a tool updates this line on purpose rather than
+    discovering later that the 404 body had quietly gained a name. `verify` joined at U015;
+    `skim_*` and `resolve` arrive at U017, `fetch` at U018 and `read` at U020.
+    """
     response = served.post("/tools/read", json={"page_ids": ["x"], "question": "?"},
                            headers=token_header)
 
     assert response.status_code == 404
     body = response.json()
     assert body["error"] == "tool_not_found"
-    assert body["available"] == ["lookup"]
+    assert body["available"] == ["lookup", "verify"]
+    assert body["available"] == sorted(served.app.state.tools)
 
 
 def test_a_misspelt_parameter_is_a_400_and_not_a_quietly_different_query(served, token_header,

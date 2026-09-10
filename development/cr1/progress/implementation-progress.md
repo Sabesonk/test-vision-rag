@@ -7,9 +7,9 @@
 
 | | |
 |---|---|
-| **Complete** | 13 / 26 units (50%) |
-| **Current milestone** | M3 — `lookup` + `verify` over HTTP and MCP (1 / 3 units); M0, M1 and M2a closed and tagged, M2b's non-paid half shipped |
-| **Next unit** | U015 — `lookup` and `verify` over HTTP and MCP (**Spend: none**). U014 built the app, the auth boundary, the audit line, the budget and the degradation mapping; U015 adds `verify`, the MCP transport and the CLI one-shots over the same implementations |
+| **Complete** | 14 / 26 units (54%) |
+| **Current milestone** | M3 — `lookup` + `verify` over HTTP and MCP (2 / 3 units); M0, M1 and M2a closed and tagged, M2b's non-paid half shipped |
+| **Next unit** | U016 — `vsir eval acceptance` and `vsir eval abstention` (**Spend: none**). The §12.3 table and the §12.4 abstention eval become runnable commands and the eval is wired into CI; U015 closed M3's tool surface, so what remains is making the safety net something a reviewer executes rather than reads |
 | **Blocked** | **U013** — the paid re-bill only, on **OQ-1** (no `data/source/TC1E-SF.pdf`) and **OQ-2** (`VSIR_VLM_KEY` empty). Everything in the unit that does not need the PDF or the key shipped on 2026-09-10 and is green; see the unit's entry for what remains and how it unblocks. Nothing downstream is blocked (§17) |
 
 ---
@@ -46,7 +46,7 @@
 
 ### M3 — `lookup` + `verify` over HTTP and MCP (spend: none)
 - [x] U014 The serving app — auth, audit, budget, and degradation
-- [ ] U015 `lookup` and `verify` over HTTP and MCP
+- [x] U015 `lookup` and `verify` over HTTP and MCP
 - [ ] U016 `vsir eval acceptance` and `vsir eval abstention`
 
 ### M4 — `skim_pages`, `fetch`, `resolve` (spend: none)
@@ -2376,3 +2376,192 @@ including the two that spend) is closed. F2 and F4's M3 halves remain U015's.
   plants a store to prove the scanner fires.
 - `docker-compose.test.yml` now runs `command: ["serve"]` instead of invoking `uvicorn` directly, so
   the L2 stack exercises the shipped `web` entry point and its boot self-check.
+
+---
+
+### U015 — `lookup` and `verify` over HTTP and MCP
+
+**Milestone:** M3 · **Spend:** none · **Status:** `[x]` Complete · **Completed:** 2026-09-10
+
+**Demo output** — the §4.4 chain, against the M1 synthetic corpus seeded into the serving
+collection (the **OQ-1 fallback**: `data/source/TC1E-SF.pdf` does not exist, so the demo's page id
+is the corpus's own `K73`-on-a-`K78`-page row). `VSIR_PORT=8010`, for the reason U014 recorded.
+
+```
+$ vsir serve & sleep 2 && vsir lookup "SF 1.1A" && \
+    vsir verify --claims K73 --pages "SYN-M1@1.0#p006" && \
+    vsir lookup "alarm 152" && <the MCP handshake + tools/call>
+
+status       ok · total 1 · capped false · weak false · needs_scope false
+scope        {'is_current': True} · searched 30 page(s), 1 with no text layer
+  HIT        SYN-M1@1.0#p001 · printed Page 1 of 30 · table · verified true · trust ok · image /pages/SYN-M1@1.0#p001/image?dpi=150
+reads_left   10 · release dev-0 · schema 1
+
+status       ok — the CALL ran; the verdicts are below (1 claim(s))
+
+claim           verdict       pages / why
+K73             absent        SYN-M1@1.0#p006
+                              different part: ['k78']
+
+status       not_found · total 0 · capped false · weak false · needs_scope false
+scope        {'is_current': True} · searched 30 page(s), 1 with no text layer
+next         suggest ['skim_pages'] · tokens that did occur ['alarm', '152']
+
+chain exit=0
+
+MCP  tools/call content[0].text : 630 bytes, sha b62b884ecd9157ae
+HTTP POST /tools/lookup body    : 630 bytes, sha b62b884ecd9157ae
+byte-identical                  : True
+```
+
+The SSE half of the same demo, on the **serving port** (§15 Factor VII — `vsir mcp --sse` is
+`vsir serve`, and there is no second socket):
+
+```
+$ vsir mcp --sse &   # then an MCP client against http://127.0.0.1:8010/sse
+server         vision-segmentation-retriever 0.1.0
+tools/list     ['lookup', 'verify']
+tools/call     630 bytes, sha b62b884ecd9157ae isError False
+refusal        True {"error":"filter_unknown_key","detail":"not filterable (see …
+```
+
+Same 16-hex digest on all three surfaces, and the typed refusal reaches MCP under the same code
+it reaches HTTP under.
+
+The one-shots' four other statuses and two refusals, for the record:
+
+```
+$ vsir lookup "SF 1.1A" --scope doc_id=NO-SUCH-DOC   → out_of_scope, searched 0 page(s)   exit 0
+$ vsir lookup "SF 9.9" --scope page_no=5 --include-unverified
+                                                     → not_searchable, 1 UNVERIFIED row   exit 0
+$ vsir lookup "SF 1.1A" --scope nope=1                → 400 filter_unknown_key            exit 1
+$ vsir verify --claims K73 --pages "SYN-M1@1.0#p999"  → 404 page_not_found                exit 1
+```
+
+**Tests**
+
+`bash scripts/test-unit.sh` → **1067 passed**, Layer 0/1 PASSED (conformance 25/25).
+`bash scripts/test-api.sh` → **1011 passed, 13 skipped** (the 13 are M2b's paid-gated rows, as
+before). The unit's own slice, `-k "lookup_tool or verify_tool or status_enum or mcp_parity"`:
+28 + 24 + 15 + 23 = **90** new L2 assertions.
+
+**Invariants / failure rows closed**
+
+- **F2 (tool half)** — `verify` cannot confirm a code that is not on the page, because the wrapper
+  has no matcher: it calls `core/verify.py`, which calls the one `exact_filter` scoped to one page
+  (`test_the_decoy_page_is_absent_not_present`, `test_a_verify_uncited_page_reports_absent`).
+- **F4 (M3 half)** — a page with no text layer answers `not_searchable` end to end, and an
+  untrusted extraction does too (`test_not_searchable_is_never_not_found`,
+  `test_an_untrusted_text_layer_is_also_not_searchable`). The scoped/unscoped pair is the whole
+  distinction: the same label is honestly `not_found` over the 28 pages that *were* searchable.
+- Re-exercised across the new boundary, not newly closed: **I2/F14** (a hallucinated code is
+  unfindable over HTTP and only ever in `unverified_hits`), **I3/F1** (the decoy page), **I5/AC-003**
+  (no empty `ok`, on the wire, re-validated through the declared model), **I6/F10**
+  (`filter_unknown_key` on both transports), **I7** (`is_current` injected server-side, and a
+  caller's explicit `false` overridden *and echoed*), **F16** (`present_instead` inside an `absent`
+  verdict), **D7/R6** (every safeguard below the transport), **D12/P2** (an `ImageRef` on every hit,
+  `bytes_b64` nowhere).
+
+**What was built**
+
+- `serve/tools/verify.py` — net new. The Family B wrapper: `page_not_found` is a `404`, a
+  malformed citation is a `400 page_id_invalid`, and every verdict is `core.verify`'s, unchanged.
+- `serve/app.py` — the tool surface became **transport-neutral**. `ToolRuntime` (config + store +
+  the release's table), `ToolOutcome` (an HTTP status and a payload, no transport in it) and
+  `dispatch(runtime, name, arguments, …)`, which does the name lookup, the validation, the budget,
+  the call and the audit line. `POST /tools/{name}` is now a shell around it, and so are the MCP
+  server and the CLI one-shots. `runtime_from_env` builds the same runtime for a process with no
+  ASGI lifespan.
+- `serve/envelope.py` — `wire()`, the one serialiser (Starlette's `JSONResponse.render` settings,
+  verbatim, because the HTTP half is the surface that already exists), and
+  `NextMoves.tokens_observed`.
+- `mcp/server.py` — net new, and it holds **no tool logic**. `tools/list` publishes each tool's own
+  Pydantic model as its input schema; `tools/call` is `dispatch` plus a `CallToolResult`. SSE is
+  mounted on the serving app; stdio is a one-off process.
+- `serve/auth.py` — `local_identity(process)`, and `serve/caps.py` — `validate_verify_pairs`.
+- `cli.py` — `vsir lookup`, `vsir verify`, `vsir mcp [--stdio|--sse]`.
+- `requirements.txt` / `requirements.lock` — `mcp==2.2.0`, the §4.2 row *"MCP | official Python
+  SDK, stdio + SSE"*. It is a **runtime** dependency (the image serves §7.5), and `vsir doctor`
+  now prints its resolved version with the other eight.
+
+**Decisions, stated**
+
+- **`next.tokens_observed` is new, and §7.1 asked for it.** The sentence is *"it returns
+  `status: not_found` **with** `next.suggest: ["skim_pages"]` and the tokens that did occur"*, and
+  `expected.json` has named the field `tokens_observed` since M1 with nothing asserting it. U014
+  put the words on the log line instead, reasoning that §7.1's inline `{expand, neighbours,
+  references, suggest}` comment enumerated the model. That comment is a shorthand, not a class
+  definition, and the AC (*"and lists the tokens that did occur"*) is binding — so the field is
+  now on `NextMoves`, defaulted, and the corpus's row is asserted end to end.
+- **Two ACs are narrowed by the spec, and the plan now says so inline** (§2.3 — the spec wins).
+  (1) *All six statuses reachable*: five are. `found_only_in_superseded` is **F9's row and §10
+  closes F9 at M8**; claiming it here would claim a row this milestone does not own, and
+  `expected.json` records the honest current answer as `not_found`. `error` is reached as a
+  **5xx**, because §7.1 says a backend failure is a 5xx and never an empty result. Both are
+  asserted, so U025 landing turns the relevant test red rather than leaving it green.
+  (2) *Every response carries `effective_scope` and `scope_stats`*: Family A does. §7.1's
+  `ToolEnvelope` is `{status, result, reads_remaining, provenance}` and a `verify` caller names its
+  pages outright, so there is no scope to echo; adding the fields would contradict the normative
+  model.
+- **MCP SSE is mounted on the serving app, not run as a second server.** §15 Factor VII: *"the MCP
+  SSE transport binds the same port."* `vsir mcp --sse` therefore *is* `vsir serve`, and the help
+  text says so. One socket, one readiness probe, one middleware stack.
+- **stdio needs no bearer token; SSE does.** The socket is the boundary, and register E5 is about
+  an unauthenticated *network* surface. A `vsir mcp --stdio` process runs from the release's own
+  image with the release's own configuration, spawned by an operator who could equally run
+  `vsir publish` — a credential it would read from the same environment the server reads is
+  ceremony, not authentication. What it does get is a stable identity for the audit line and the
+  quota: `local-mcp-stdio`, beside `local-cli` and `caller-<digest>`. `local_identity` names the
+  **process type** and never the host or the user, so a `local-` line carries no personal
+  identifier into a stream whose retention policy was written for digests (§15.1).
+- **Sticky sessions, §15.2.** An SSE session is a *connection*: the POST must reach the replica
+  holding the stream. That is transport affinity. The ban is on **state** affinity — the
+  server-held retrieval session C11 strikes — and there is none: `scope` and `exclude` are
+  parameters, `effective_scope` is echoed back, and a client that reconnects to another replica
+  gets identical answers. Asserted across two processes
+  (`test_two_processes_share_no_state`). Stated as a residual: an SSE deployment behind a load
+  balancer needs connection affinity for the channel; `stdio` and `POST /tools/{name}` do not.
+- **A typed absence is exit 0 from a one-shot.** `vsir lookup "alarm 152"` searched and correctly
+  found nothing — §7.1's whole argument is that this is a successful call, and it is what lets the
+  demo chain with `&&`. Only a refusal is non-zero.
+- **`validate_verify_pairs` is a new bound and it is not in §7.3's table.** `verify` costs
+  `len(claims) × len(page_ids)` index counts, so the bound is on the product, at 200 — far beyond
+  the largest legitimate call (the answer gate checking one draft against the ≤ 3 pages a `read`
+  saw). Same family as `cap_out_of_range` and `region_invalid`, which are also §7.3's rule applied
+  to a parameter it left implicit. An empty `claims` or `page_ids` is a typed `400 verify_empty`
+  rather than an `ok` with no verdicts: *"nothing to answer for"* is the one thing an answer gate
+  must never conclude by accident.
+
+**Deviations from the plan, stated**
+
+- **The demo command needed two corrections, now made in the plan.** MCP requires the
+  `initialize` / `notifications/initialized` handshake — the SDK answers a bare `tools/call` with
+  `-32602` — and it cancels in-flight work on stdin EOF, so a heredoc that closes the pipe while
+  the tool is running in a worker thread gets the frames before the answer. The demo holds stdin
+  open with a trailing `sleep 2`; a real MCP client needs neither. Second, the page id is the
+  synthetic corpus's, per §7's OQ-1 fallback.
+- **`serve/app.py`, `serve/auth.py`, `serve/caps.py` and `doctor.py` were edited beyond the
+  Deliverables list.** Each is the minimal correct home: the tool table and the dispatcher already
+  live in `app.py` and §7.5 forbids a second one; `local_identity` belongs beside `caller_id` or it
+  is duplicated in `mcp/server.py`; the `verify` bound belongs with the other bounds; and Factor II
+  says `vsir doctor` prints the resolved version of every §4.2 pin, which now includes the SDK.
+- **`tests/api/test_auth.py` gained `verify`, `/sse` and `/messages/`.** Its `available == ["lookup"]`
+  assertion is a statement about *this release's* surface, so a milestone that adds a tool updates
+  it deliberately. The docstring now says so, and the test also cross-checks the literal against
+  the live table.
+- **The import cycle is broken by one function-level import**, and it is the only one in the
+  package. `mcp/server.py` imports `dispatch` and `ToolRuntime` from `serve/app.py` because §7.5
+  requires it to call the identical implementations; `create_app` imports `vsir.mcp.server` inside
+  the function to mount the SSE routes. The dependency is one-directional at import time with the
+  MCP surface as the leaf, which is the shape the rule describes, and the comment says so.
+
+**Notes**
+
+- The `ImageRef.url` percent-encoding finding U014 recorded is **still open and still U018's** —
+  the demo output above prints the unencoded `/pages/SYN-M1@1.0#p001/image?dpi=150`. Nothing in
+  this unit dereferences it.
+- `mcp==2.2.0` brings 12 transitive packages into the runtime image (`sse-starlette`, `httpx2`,
+  `jsonschema`, `pyjwt`, `opentelemetry-api`, …). The image still builds and runs read-only as
+  uid 10001 — `scripts/test-api.sh` rebuilds it every run and the container suites are green.
+- **Nothing about `read` or `fetch` moved.** They are still absent from the table and still a typed
+  `404` listing what is served — now `["lookup", "verify"]` — on both transports.

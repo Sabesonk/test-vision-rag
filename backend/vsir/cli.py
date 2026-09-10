@@ -20,7 +20,7 @@ import os
 import signal
 from pathlib import Path
 from types import FrameType
-from typing import Any, Sequence
+from typing import Any, Mapping, Sequence
 
 from qdrant_client import QdrantClient
 
@@ -30,6 +30,7 @@ from vsir.config import (
     COMPOSITION_VERSION,
     DPI_ANSWER,
     DPI_INDEX,
+    LOOKUP_CAP,
     VLM_BACKENDS,
     ConfigError,
     load_config,
@@ -70,6 +71,8 @@ from vsir.serve.caps import (
     validate_region,
     validate_scope,
 )
+from vsir.mcp import server as mcp_server
+from vsir.serve import app as app_module
 from vsir.serve import auth as auth_module
 from vsir.serve.app import config_of, create_app
 from vsir.serve.envelope import Provenance, ToolEnvelope, VerifyResult
@@ -1962,6 +1965,175 @@ def _cmd_gates_rerun(args: argparse.Namespace, cfg: Any, client: Any) -> int:
     return EXIT_OK
 
 
+# ── `vsir lookup` / `vsir verify` — the one-shot tool calls of §4.4 ─────────────────────────────
+
+#: The process type these one-shots are attributed to in the budget ledger and the audit line.
+#: One name for every `vsir <tool>` invocation, because the ceiling is a property of the
+#: deployment's admin surface and not of whichever shell happened to run it (§7.4, §15 XII).
+CLI_PROCESS = "cli"
+
+
+def _scope_from(pairs: Sequence[str]) -> dict[str, Any]:
+    """``--scope doc_id=SYN-M1 --scope page_no=5`` → a scope dict, values typed as they look.
+
+    No schema here on purpose. `INDEXED` is the schema and `core.exact` refuses a key outside it
+    with `filter_unknown_key` (I6, F10), so a second list of legal keys in the CLI would be a
+    second source of truth for the one dict that has three jobs (§5.4) — and the one in the CLI
+    would be the one that goes stale.
+
+    Values are read with :func:`ast.literal_eval` and fall back to the string, so ``page_no=5``
+    filters on the integer the payload actually holds while ``doc_id=SYN-M1`` stays text.
+    """
+    scope: dict[str, Any] = {}
+    for pair in pairs:
+        key, sep, raw = pair.partition("=")
+        if not sep or not key.strip():
+            raise ToolError("scope_malformed", f"--scope takes key=value, got {pair!r}",
+                            requested=pair)
+        try:
+            scope[key.strip()] = ast.literal_eval(raw)
+        except (ValueError, SyntaxError):
+            scope[key.strip()] = raw
+    return scope
+
+
+def _one_shot(tool: str, arguments: dict[str, Any], *, as_json: bool,
+              render: Any) -> int:
+    """Run one tool through the **release's own dispatcher** and print what came back.
+
+    This is the whole point of the one-shots. `_run_tool`, the `INDEXED` gate, the budget, the
+    typed refusals and `is_current=True` are the serving path's, unchanged and un-bypassed
+    (:func:`vsir.serve.app.dispatch`) — so `vsir lookup` is evidence about the shipped tool and
+    not about a second, friendlier implementation of it that happens to live in the CLI.
+
+    **A typed absence exits 0.** `lookup("alarm 152")` searched, found nothing, and said so
+    correctly: that is a successful call and §7.1's whole argument is that it is not an error.
+    Only a refusal — a `400` naming a bound, a `404`, a `503` — is a non-zero exit, which is also
+    what makes the §4.4 demo chain with `&&` read the way a reviewer expects.
+    """
+    try:
+        runtime, client = app_module.runtime_from_env(dict(os.environ))
+    except BootRefused as refusal:
+        _log.error("boot_refused", failed_checks=refusal.failed_checks, detail=str(refusal))
+        print(f"   REFUSED  boot: {refusal}")
+        return EXIT_REFUSED
+    except ConfigError as refusal:
+        _log.error("command_refused", reason="configuration", detail=str(refusal))
+        print(f"   configuration refused: {refusal}")
+        return EXIT_REFUSED
+
+    try:
+        outcome = app_module.dispatch(
+            runtime, tool, arguments,
+            identity=auth_module.local_identity(CLI_PROCESS), correlation={})
+    finally:
+        client.close()
+
+    if as_json:
+        # The bytes an HTTP caller would have received, byte for byte (§7.5) — so a script can
+        # pipe this into `jq` and be reading the wire contract rather than a printed rendering.
+        print(outcome.body().decode("utf-8"))
+    elif outcome.refused:
+        payload = outcome.payload
+        print(f"   REFUSED  {outcome.status} {payload.get('error')}: {payload.get('detail')}")
+    else:
+        render(outcome.payload)
+    return EXIT_OK if not outcome.refused else EXIT_REFUSED
+
+
+def _print_lookup(payload: Mapping[str, Any]) -> None:
+    """A `lookup` envelope, printed. Every field a caller switches on is on the first two lines."""
+    stats = payload.get("scope_stats") or {}
+    print(f"status       {payload['status']} · total {payload['total']} · "
+          f"capped {str(payload['capped']).lower()} · weak {str(payload['weak']).lower()} · "
+          f"needs_scope {str(payload['needs_scope']).lower()}")
+    print(f"scope        {payload['effective_scope']} · searched {stats.get('pages', 0)} page(s), "
+          f"{stats.get('pages_no_text', 0)} with no text layer")
+    for hit in payload.get("hits") or ():
+        print(f"  HIT        {hit['page_id']} · printed {hit['printed_page_no'] or '—'} · "
+              f"{hit['page_kind']} · verified {str(hit['verified']).lower()} · "
+              f"trust {hit['text_trust']} · image {hit['image']['url'] if hit['image'] else '—'}")
+    for hit in payload.get("unverified_hits") or ():
+        # Labelled at the point of display, not just in the field: these are `vlm_codes` hits and
+        # they are the one thing on this surface that was never printed on a page (D3).
+        print(f"  UNVERIFIED {hit['page_id']} · model-claimed, verified "
+              f"{str(hit['verified']).lower()} — never evidence")
+    moves = payload.get("next") or {}
+    if moves.get("suggest"):
+        print(f"next         suggest {moves['suggest']} · tokens that did occur "
+              f"{moves.get('tokens_observed') or []}")
+    print(f"reads_left   {payload['reads_remaining']} · release "
+          f"{payload['provenance']['release_id']} · schema "
+          f"{payload['provenance']['schema_version']}")
+
+
+def _print_verify(payload: Mapping[str, Any]) -> None:
+    """A `verify` envelope, printed — Family B, so the verdicts are the answer (§7.1)."""
+    verdicts = (payload.get("result") or {}).get("claims") or {}
+    print(f"status       {payload['status']} — the CALL ran; the verdicts are below "
+          f"({len(verdicts)} claim(s))")
+    print(f"\n{'claim':<16}{'verdict':<14}pages / why")
+    for claim, verdict in verdicts.items():
+        detail = ", ".join(verdict.get("page_ids") or ()) or (verdict.get("reason") or "—")
+        print(f"{claim:<16}{verdict['status']:<14}{detail}")
+        if verdict.get("present_instead"):
+            print(f"{'':<30}{PRESENT_INSTEAD_LABEL}: {verdict['present_instead']}")
+    print(f"\nreads_left   {payload['reads_remaining']} · release "
+          f"{payload['provenance']['release_id']} · schema "
+          f"{payload['provenance']['schema_version']}")
+
+
+def _cmd_lookup(args: argparse.Namespace) -> int:
+    try:
+        scope = _scope_from(args.scope)
+    except ToolError as refusal:
+        print(f"   REFUSED  {refusal.code}: {refusal.message}")
+        return EXIT_REFUSED
+    return _one_shot("lookup", {"label": args.label, "scope": scope,
+                                "include_unverified": args.include_unverified, "cap": args.cap},
+                     as_json=args.json, render=_print_lookup)
+
+
+def _cmd_verify(args: argparse.Namespace) -> int:
+    return _one_shot("verify", {"claims": _csv_arg(args.claims),
+                                "page_ids": _csv_arg(args.pages)},
+                     as_json=args.json, render=_print_verify)
+
+
+def _csv_arg(raw: str) -> list[str]:
+    """``"K73, K158"`` → ``["K73", "K158"]``. Order preserved, duplicates left to the tool."""
+    return [value.strip() for value in raw.split(",") if value.strip()]
+
+
+# ── `vsir mcp` (§4.4, §7.5) ─────────────────────────────────────────────────────────────────────
+
+def _cmd_mcp(args: argparse.Namespace) -> int:
+    """The MCP surface of §7.5, over whichever transport was asked for.
+
+    ``--sse`` runs **the serving app** — §15 Factor VII pins the SSE transport to the same port
+    the HTTP surface binds, so there is no second server to start and this is `vsir serve` under
+    the name §4.4 gives it. The distinction the flag makes is which surface a client is being
+    pointed at, not which process is running.
+
+    ``--stdio`` is the one-off process (Factor XII): one client on a pipe, no socket, and stdout
+    reserved for the protocol.
+    """
+    if not args.sse:
+        # Neither flag means stdio: a bare `vsir mcp` is what an MCP client config spawns, and
+        # the transport it can spawn is a pipe. `--sse` is the deliberate one, because it binds
+        # a socket.
+        try:
+            mcp_server.run_stdio(dict(os.environ))
+        except BootRefused as refusal:
+            _log.error("boot_refused", failed_checks=refusal.failed_checks, detail=str(refusal))
+            return EXIT_REFUSED
+        except ConfigError as refusal:
+            _log.error("boot_refused", failed_checks=["config_valid"], detail=str(refusal))
+            return EXIT_REFUSED
+        return EXIT_OK
+    return _cmd_serve(args)
+
+
 # ── `vsir serve` (§4.4, §7.4) ────────────────────────────────────────────────────────────────────
 
 #: What the server binds. `0.0.0.0` because the process type this command runs is `web` in a
@@ -2174,6 +2346,69 @@ def build_parser() -> argparse.ArgumentParser:
              f"VSIR_PORT, because it is configuration and not a per-invocation choice (§15 III)",
     )
     serve_parser.set_defaults(handler=_cmd_serve)
+
+    mcp_parser = commands.add_parser(
+        "mcp",
+        help="the MCP surface of §7.5 — the same tools, the same implementations, no second "
+             "code path. --sse is the serving app (the SSE transport binds VSIR_PORT, §15 VII); "
+             "--stdio is a one-off process speaking JSON-RPC on stdin/stdout",
+    )
+    transport = mcp_parser.add_mutually_exclusive_group()
+    transport.add_argument(
+        "--stdio", action="store_true",
+        help="speak MCP on stdin/stdout until the client closes the pipe (the default). stdout "
+             "is the protocol, so events go to stderr and nothing else is printed",
+    )
+    transport.add_argument(
+        "--sse", action="store_true",
+        help=f"bind VSIR_PORT and serve GET {mcp_server.SSE_PATH} + POST "
+             f"{mcp_server.MESSAGES_PATH} beside the HTTP tools — one process, one socket, both "
+             f"protocols. Identical to `vsir serve`, which mounts them too",
+    )
+    mcp_parser.add_argument(
+        "--host", default=SERVE_HOST,
+        help=f"the interface --sse binds (default: {SERVE_HOST}); ignored by --stdio",
+    )
+    mcp_parser.set_defaults(handler=_cmd_mcp)
+
+    lookup_parser = commands.add_parser(
+        "lookup",
+        help="JUMP (§7.2.2): the exact, phrase-only surface. One call through the release's own "
+             "dispatcher, so this is the code path POST /tools/lookup runs. A typed absence "
+             "exits 0 — searching and finding nothing is a successful call (§7.1)",
+    )
+    lookup_parser.add_argument("label", help="the code or label as printed, e.g. \"SF 1.1A\"")
+    lookup_parser.add_argument(
+        "--scope", action="append", default=[], metavar="KEY=VALUE",
+        help="narrow the search, repeatable, e.g. --scope doc_id=SYN-M1 --scope page_no=5. A key "
+             "outside INDEXED is a typed 400 (filter_unknown_key), never a slower answer",
+    )
+    lookup_parser.add_argument(
+        "--include-unverified", action="store_true",
+        help="also query the vlm_codes surface and return those separately, every one "
+             "verified:false and never merged into hits (D3)",
+    )
+    lookup_parser.add_argument("--cap", type=int, default=LOOKUP_CAP,
+                               help=f"how many hits of the set to return (default: {LOOKUP_CAP}). "
+                                    f"It bounds the page of the set and nothing else — it cannot "
+                                    f"move `weak` (§7.1)")
+    lookup_parser.add_argument("--json", action="store_true",
+                               help="print the envelope verbatim: the exact bytes an HTTP or MCP "
+                                    "caller receives for the same request (§7.5)")
+    lookup_parser.set_defaults(handler=_cmd_lookup)
+
+    verify_parser = commands.add_parser(
+        "verify",
+        help="CHECK (§7.2.4): is each code actually printed on each page? Per (claim, page), "
+             "three verdicts, and every claim absent is still a successful call",
+    )
+    verify_parser.add_argument("--claims", required=True, metavar="A,B,C",
+                               help="comma-separated codes to check, e.g. \"K73,K158\"")
+    verify_parser.add_argument("--pages", required=True, metavar="ID,ID",
+                               help="comma-separated page ids, e.g. \"SYN-M1@1.0#p006\"")
+    verify_parser.add_argument("--json", action="store_true",
+                               help="print the envelope verbatim (see `lookup --json`)")
+    verify_parser.set_defaults(handler=_cmd_verify)
 
     demo_parser = commands.add_parser("demo", help="the reviewable demos of §4.4")
     demos = demo_parser.add_subparsers(dest="demo", metavar="<demo>", required=True)

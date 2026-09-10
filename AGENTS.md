@@ -239,6 +239,8 @@ curl -s localhost:8000/metrics           # ingest_grounded_rate_median, ingest_g
 
 curl -s -H "Authorization: Bearer $TOKEN" -X POST localhost:8000/tools/lookup \
      -d '{"label":"SF 1.1A"}'            # the tools of §7.2, one envelope each
+curl -s -H "Authorization: Bearer $TOKEN" -X POST localhost:8000/tools/verify \
+     -d '{"claims":["K73"],"page_ids":["SYN-M1@1.0#p006"]}'
 curl -s -H "Authorization: Bearer $TOKEN" localhost:8000/runs/<run_id>
 curl -s -H "Authorization: Bearer $TOKEN" localhost:8000/runs/<run_id>/export/labels.jsonl
 curl -s -H "Authorization: Bearer $TOKEN" localhost:8000/runs/<run_id>/export/observed_tokens.jsonl
@@ -253,9 +255,9 @@ refused without a token; a route added later is protected before it is written. 
 the audit line and the budget ledger is `caller-<sha256(token)[:12]>`, never the token itself, so
 a rotated credential is a new caller id and no log line ever held the secret (§15.1).
 
-`POST /tools/{tool_name}` dispatches through the release's tool table. A name that is not in it —
-`read` and `fetch` until U018/U020 — is a typed `404` listing what *is* served, never an empty
-result. One append-only audit line goes to stdout per `read` and per `fetch` and none for a free
+`POST /tools/{tool_name}` dispatches through the release's tool table — `lookup` and `verify`
+today. A name that is not in it — `read` and `fetch` until U020/U018 — is a typed `404` listing
+what *is* served, never an empty result. One append-only audit line goes to stdout per `read` and per `fetch` and none for a free
 tool; **cost is in that line and never in a response body**, where the caller gets the single
 integer `reads_remaining` (§7.4). The per-caller quota is `VSIR_READ_QUOTA` reads per UTC day,
 held as a `kind: budget` point in `vsir_runs` so N replicas enforce one ceiling, and exhausting it
@@ -266,6 +268,54 @@ filesystem and there is no file to read from it (§6.8, §15 Factor VI), so any 
 run. `withheld.jsonl`, `impl`'s third file, is gone with the allowlist gate that produced it and is
 a typed 404. The gauges are recomputed from `vsir_runs` on every scrape rather than counted in the
 process, so two replicas agree and a restart is not a hole in the series.
+
+The MCP surface (§7.5) and the one-shots (§4.4). All three call `vsir.serve.app.dispatch` — the
+same table, the same validation, the same budget and the same typed refusals `POST /tools/{name}`
+uses — so there is no second code path and nothing to keep in step:
+
+```bash
+backend/.venv/bin/vsir lookup "SF 1.1A"                      # JUMP, §7.2.2
+backend/.venv/bin/vsir lookup "alarm 152" --json             # the envelope, verbatim
+backend/.venv/bin/vsir lookup "SF 9.9" --scope page_no=5 --include-unverified
+backend/.venv/bin/vsir verify --claims K73 --pages "SYN-M1@1.0#p006"     # CHECK, §7.2.4
+
+backend/.venv/bin/vsir mcp --stdio     # one client on a pipe; stdout is JSON-RPC, events on stderr
+backend/.venv/bin/vsir mcp --sse       # == `vsir serve`: the SSE transport binds $VSIR_PORT
+```
+
+`--scope` is repeatable `KEY=VALUE` and its values are read as Python literals, so `page_no=5`
+filters on the integer the payload holds. A key outside `INDEXED` is a typed `400`
+(`filter_unknown_key`) here exactly as it is over HTTP.
+
+**A typed absence exits 0.** `vsir lookup "alarm 152"` searched, found nothing and said so
+correctly — that is a successful call (§7.1), which is what lets the §4.4 demo chain with `&&`.
+Only a refusal (a `400` naming a bound, a `404`, a `503`) is a non-zero exit.
+
+**MCP over SSE is not a second server.** §15 Factor VII pins it to the serving port, so
+`vsir serve` mounts `GET /sse` and `POST /messages/` beside the HTTP tools and `vsir mcp --sse`
+runs that same app. Both paths are behind the same default-deny middleware: they need a bearer
+token, because the socket is the boundary. **stdio does not** — it is a one-off process of this
+release (Factor XII) spawned by its own client over a pipe, and its identity in the audit line and
+the budget ledger is `local-mcp-stdio`, beside `local-cli` for the one-shots and
+`caller-<digest>` for a network caller. An operator who can run `vsir mcp --stdio` can already run
+`vsir publish`; a credential read from the same environment the server reads would be ceremony.
+
+The `tools/call` result is **byte-identical** to the HTTP response body for the same request, on
+both transports — one serialiser (`vsir.serve.envelope.wire`), one dict. To check it by hand,
+remembering that MCP requires the `initialize` handshake first and that the SDK cancels in-flight
+work on stdin EOF (hence the trailing `sleep`, which a real client does not need):
+
+```bash
+{ printf '%s\n' \
+   '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"demo","version":"0"}}}' \
+   '{"jsonrpc":"2.0","method":"notifications/initialized"}' \
+   '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"lookup","arguments":{"label":"SF 1.1A"}}}'; sleep 2; } \
+  | backend/.venv/bin/vsir mcp --stdio 2>/dev/null | tail -1
+```
+
+The tool descriptions and the input schemas an MCP client sees are generated from the release's
+own tool table: the schema is each tool's Pydantic request model, so `extra="forbid"` is
+advertised and a parameter cannot reach one surface without reaching the other.
 
 ## Test
 
@@ -325,6 +375,10 @@ Dev ports, for reference: backend `8000`, Qdrant `6333` REST and `6334` gRPC, fr
   `VSIR_SAFETY_DOC_TYPES` and `VSIR_SAFETY_TOPICS` are the §6.8 export's two sources for
   `safety_flag`; both default to empty, and a list compiled into the image would be the keyword
   taxonomy §6.8 deletes.
+- **One dispatcher, every surface.** HTTP, MCP (stdio and SSE) and the `vsir <tool>` one-shots all
+  go through `vsir.serve.app.dispatch` with the release's one tool table. Adding a tool is adding
+  a row to `tool_table()`; a wrapper that re-validated, re-capped or re-classified anything would
+  be the second code path §7.5 forbids.
 - **Qdrant is the only store**, two collections: `vsir_pages_<dim>` and `vsir_runs`. No relational
   database, no ORM, no migrations. `vsir_runs` is payload-only (`vectors_config={}`) and every
   point in it says which `kind` of control record it is.

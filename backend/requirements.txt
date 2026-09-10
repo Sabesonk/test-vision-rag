@@ -6,5 +6,8 @@ uvicorn[standard]==0.52.4
 python-multipart==0.0.32
 google-genai==2.22.0
 qdrant-client==1.19.0
+# Spec §4.2 row "MCP | official Python SDK, stdio + SSE". §7.5's surface is a deliverable, not an
+# integration nicety, so the SDK is a runtime dependency of the image and not a dev extra.
+mcp==2.2.0
 PyMuPDF==1.28.2
 pillow==12.3.0

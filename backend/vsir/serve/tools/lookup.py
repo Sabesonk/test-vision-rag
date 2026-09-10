@@ -324,8 +324,10 @@ def lookup(client: Any, collection: str, label: str, *,
         if observed:
             # A `not_found` that a different *move* could still answer says so, rather than
             # inventing a seventh status (§7.1). The status stays honest; the affordance is what
-            # stops the agent abstaining on a phrasing accident.
-            next_moves = NextMoves(suggest=["skim_pages"])
+            # stops the agent abstaining on a phrasing accident — and `tokens_observed` is the
+            # evidence behind it, which §7.1 asks for in the same sentence: the caller can see
+            # that both words of "alarm 152" really are in the corpus and the phrase is not.
+            next_moves = NextMoves(suggest=["skim_pages"], tokens_observed=observed)
 
     response = SearchResponse[LookupHit](
         status=status,
@@ -361,11 +363,9 @@ def lookup(client: Any, collection: str, label: str, *,
         scope_keys=sorted(scope_in_force),
         pages=stats.pages,
         pages_no_text=stats.pages_no_text,
-        # The tokens that did occur are the evidence behind `next.suggest`. They ride on the event
-        # stream rather than in the envelope: §7.1's `NextMoves` has `expand`, `neighbours`,
-        # `references` and `suggest`, and none of them is a list of observed tokens. Inventing a
-        # fifth field is a change to the response contract, so it is a spec change, not a tool's
-        # decision to make (§7.1, §7.6).
+        # The tokens that did occur, on the event stream as well as in `next.tokens_observed`:
+        # an operator reading why a label abstained should not have to correlate a response body
+        # back to the line that produced it.
         #
         # Named `words_observed` rather than `tokens_observed` on purpose: the log redactor matches
         # credential-shaped field *names*, and "token" is one of them (`logging.redact`). A field

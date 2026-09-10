@@ -69,6 +69,10 @@ _CALLER_DOMAIN = b"vsir:caller:"
 #: concern, short enough to read in a log line.
 CALLER_DIGEST_CHARS = 12
 CALLER_PREFIX = "caller-"
+#: The other kind of identity: a one-off process of **this** release, run by whoever already has
+#: the deployment's configuration and can execute the image (§15 Factor XII). ``vsir lookup``,
+#: ``vsir verify`` and ``vsir mcp --stdio`` are these; every network caller is a ``caller-``.
+LOCAL_PREFIX = "local-"
 
 _SCHEME = "bearer"
 #: What a 401 body says. It names no token, no header value and no configured credential.
@@ -123,6 +127,33 @@ def caller_id(token: str) -> str:
     """
     digest = hashlib.sha256(_CALLER_DOMAIN + token.encode("utf-8")).hexdigest()
     return f"{CALLER_PREFIX}{digest[:CALLER_DIGEST_CHARS]}"
+
+
+def local_identity(process: str) -> Identity:
+    """Who a one-off process of this release is, for the budget ledger and the audit line.
+
+    **Not a credential, and not a hole in §7.4 either.** The bearer requirement exists because
+    the HTTP surface is reachable by anyone who can reach the port — that is the boundary, and
+    register **E5** is what happens when nothing guards it. A ``vsir`` subcommand is on the other
+    side of that boundary already: it runs from the release's own image with the release's own
+    configuration, and the operator running it could equally run ``vsir publish``, which flips
+    `is_current` on a whole document and asks for no token at all. A credential the process reads
+    from the same environment the server reads is not authentication, it is ceremony.
+
+    What the identity *is* for is attribution. §7.4's audit line has to say who spent the money,
+    and the §7.3 quota has to have somebody to charge, so a one-off process gets a stable name —
+    ``local-mcp-stdio``, ``local-cli`` — rather than an empty string or a fresh id per invocation.
+    Stable is the operative word: a per-pid identity would hand every invocation a brand-new
+    quota, which is the same as having none.
+
+    It names the **process type**, deliberately, and never the host or the user: those are the
+    two things that would make this a personal identifier in a log stream with a retention policy
+    written for `caller-` digests (§15.1).
+    """
+    slug = "".join(char if char.isalnum() or char == "-" else "-" for char in process.lower())
+    if not slug.strip("-"):
+        raise ValueError(f"a local identity names its process type, got {process!r}")
+    return Identity(user_id=f"{LOCAL_PREFIX}{slug.strip('-')}")
 
 
 def identity_table(tokens: Sequence[str]) -> Mapping[str, Identity]:

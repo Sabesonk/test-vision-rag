@@ -76,6 +76,7 @@ PINNED_DISTRIBUTIONS = (
     "qdrant-client",
     "pymupdf",
     "pillow",
+    "mcp",  # §4.2's "official Python SDK, stdio + SSE" — §7.5's surface, so it is a runtime pin
 )
 
 PYTHON_FLOOR = (3, 11)  # the image pins the exact minor by digest; this is the floor (§4.2)

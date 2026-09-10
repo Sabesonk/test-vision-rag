@@ -1624,7 +1624,7 @@ empty 200 — plus the ten-field JSON audit line printed to stdout.
 
 ## Unit: `lookup` and `verify` over HTTP and MCP (ID: U015)
 
-**Status:** 🔵 Not Started
+**Status:** 🟢 Complete
 **Milestone:** M3
 **Priority:** P0-Critical
 **Type:** mcp
@@ -1643,13 +1643,24 @@ exposing the same two tools, plus the `vsir lookup` / `vsir verify` one-shots.
 ### Demo Command
 ```bash
 vsir serve & sleep 2 && vsir lookup "SF 1.1A" && \
-  vsir verify --claims K73 --pages "TC1E-SF@1.3#p008" && \
+  vsir verify --claims K73 --pages "SYN-M1@1.0#p006" && \
   vsir lookup "alarm 152" && \
-  vsir mcp --stdio <<< '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"lookup","arguments":{"label":"SF 1.1A"}}}'
+  { printf '%s\n' \
+     '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"demo","version":"0"}}}' \
+     '{"jsonrpc":"2.0","method":"notifications/initialized"}' \
+     '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"lookup","arguments":{"label":"SF 1.1A"}}}'; sleep 2; } \
+    | vsir mcp --stdio | tail -1
 ```
 The reviewer sees `total: 1` for the phrase; `K73: absent` with `present_instead`; `alarm 152` coming
 back `not_found` **with** `next.suggest: ["skim_pages"]`; and the MCP call returning a
 byte-identical envelope to the HTTP one.
+
+**Two corrections to the command as first written, both made when U015 was built.** (1) MCP
+requires the `initialize` / `notifications/initialized` handshake before `tools/call`; the SDK
+refuses a bare call with `-32602`, and it cancels in-flight work when stdin reaches EOF, hence the
+trailing `sleep` (a real MCP client holds the pipe open and needs neither). (2) The page id is the
+synthetic corpus's — `TC1E-SF@1.3#p008` does not exist while **OQ-1** is open, and §7's documented
+fallback is the generated corpus. `SYN-M1@1.0#p006` is the corpus's own `K73`-on-a-`K78`-page row.
 
 ### Deliverables (files)
 - `backend/vsir/serve/tools/lookup.py` — **extended** from U005: the HTTP wrapper over the same pure
@@ -1706,11 +1717,27 @@ byte-identical envelope to the HTTP one.
 - [ ] A `lookup` whose only candidates have no text layer returns `status == "not_searchable"`, never `not_found` and never an empty `ok`.
 - [ ] A `lookup` whose scope matches no document returns `status == "out_of_scope"`.
 - [ ] All six status values are reachable by a crafted request (a parametrised test covers each).
+      **As built, five are, and the spec is why** (§2.3 — the spec wins on a behavioural conflict).
+      `ok` and the three absences a published corpus can produce are reached by a crafted body.
+      `found_only_in_superseded` is **F9's row and §10 closes F9 at M8** (U025): `is_current` is
+      injected today, so a superseded page cannot answer and the corpus's `expected.json` records
+      the honest current answer as `not_found` — emitting the sixth value now would claim a row
+      this milestone does not own. `error` is reached as a **5xx**, because §7.1 says *"a backend
+      failure is a 5xx, never an empty result"*; a `200` whose body said `"error"` would be the
+      empty-success shape the whole enum exists to remove.
+      (`test_status_enum_end_to_end.py` asserts all of the above, including the two statements
+      about the corpus, so the day U025 lands the relevant test goes red rather than staying
+      quietly green.)
 - [ ] No Family A response ever has `status == "ok"` with both `hits` and `unverified_hits` empty.
 - [ ] `include_unverified=True` returns the `vlm_codes` match in `unverified_hits` with `verified is False`, and `hits` is unchanged.
 - [ ] `POST /tools/verify` with three claims of which all are absent returns envelope `status == "ok"` and three `absent` verdicts.
 - [ ] `POST /tools/verify` naming a nonexistent `page_id` returns `404 page_not_found`, not an empty result.
 - [ ] Every response carries `effective_scope`, `scope_stats`, `reads_remaining` and `provenance` (with `run_id`, `release_id`, `schema_version`).
+      **Read per family, per §7.1.** Family A carries all four. Family B's declared model is
+      `{status, result, reads_remaining, provenance}` — there is no scope to echo, because a
+      `verify` caller names the pages outright — so adding the other two to `ToolEnvelope` would
+      contradict §7.1's normative shape. Asserted as: all four on `lookup`, both of Family B's on
+      `verify`, and `extra="forbid"` on each so neither can grow a field by accident.
 - [ ] Every query injects `is_current=True` — a point with `is_current=False` is never returned (asserted by seeding one).
 - [ ] The MCP `tools/call` result for `lookup("SF 1.1A")` is **byte-identical** to the HTTP response body, over both stdio and SSE.
 - [ ] An import-graph assertion proves `mcp/server.py` calls `serve/tools/*` directly — there is no second implementation.

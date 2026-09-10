@@ -17,8 +17,16 @@ written (`serve/auth.py`).
 if the tool spends, runs it, stamps ``reads_remaining`` on the envelope and — for `read` and
 `fetch` only — writes the ten-field audit line of §7.4. Adding a tool is adding a row, so no tool
 can arrive with its own idea of auth, of the budget, or of which failures are which. The table in
-this release holds `lookup`; the rest of §7.2 joins it as its milestone lands, and a name that is
-not in the table is a typed `404` naming what is, never a 501-shaped silence.
+this release holds `lookup` and `verify`; the rest of §7.2 joins it as its milestone lands, and a
+name that is not in the table is a typed `404` naming what is, never a 501-shaped silence.
+
+**And the table is not the HTTP surface's — it is the release's.** §7.5 requires the MCP server to
+expose the same tools *"calling the identical implementations (no second code path)"*, so the
+route above is a thin shell around :func:`dispatch`, which takes a :class:`ToolRuntime` and a
+plain dict of arguments and knows nothing about HTTP. `vsir/mcp/server.py` calls the same
+function with the same runtime, which is why the two surfaces cannot drift: there is nothing to
+keep in step. The MCP SSE transport is mounted on **this** app and binds **this** port (§15
+Factor VII) — one process, one socket, two protocols over it.
 
 **Liveness and readiness answer different questions, and mixing them amplifies an outage.**
 
@@ -73,8 +81,9 @@ from vsir.serve import budget as budget_module
 from vsir.serve.audit import Usage
 from vsir.serve.auth import BearerAuth, Identity
 from vsir.serve.caps import ToolError
-from vsir.serve.envelope import Provenance
+from vsir.serve.envelope import Provenance, wire
 from vsir.serve.tools.lookup import lookup as lookup_tool
+from vsir.serve.tools.verify import verify as verify_tool
 from vsir.vlm.cache import VlmCallFailed, VlmError, VlmUnavailable
 
 #: A local boot check that has started failing after boot (a rotated variable, say).
@@ -260,10 +269,15 @@ class ToolRequest(BaseModel):
 class LookupRequest(ToolRequest):
     """``lookup(label, scope?, include_unverified=False, cap=20)`` — §7.2.2.
 
-    The request shapes live here, beside the route, until the tool's own module takes ownership of
-    its wrapper: `verify` at U015, `skim_*`/`resolve` at U017, `fetch` at U018, `read` at U020.
-    What may never move is where they are *validated* — one route, one table, one place that
-    charges the budget and writes the audit line.
+    The request shapes live here, beside the table, until the tool's own module takes ownership of
+    its wrapper: `skim_*`/`resolve` at U017, `fetch` at U018, `read` at U020. What may never move
+    is where they are *validated* — one table, one dispatcher, one place that charges the budget
+    and writes the audit line, and both transports go through it.
+
+    These models are also the **MCP input schemas** (§7.5): `mcp/server.py` publishes
+    ``model_json_schema()`` for each row of the table rather than hand-writing a JSON Schema per
+    tool, so an MCP client and an HTTP client are validated against the same declaration and a
+    new parameter cannot reach one surface without reaching the other.
     """
 
     label: str
@@ -273,6 +287,18 @@ class LookupRequest(ToolRequest):
     scope: dict[str, Any] = Field(default_factory=dict)
     include_unverified: bool = False
     cap: int = LOOKUP_CAP
+
+
+class VerifyRequest(ToolRequest):
+    """``verify(claims, page_ids)`` — §7.2.4.
+
+    No ``scope``: the pages are named outright, so there is nothing to filter. No ``image``
+    either, and that is I2/I3 rather than an omission — a photograph may *find* a candidate page,
+    it can never *confirm* a code.
+    """
+
+    claims: list[str]
+    page_ids: list[str]
 
 
 @dataclass(frozen=True)
@@ -299,6 +325,51 @@ class ToolSpec:
     call: Callable[[ToolContext, Any], tuple[BaseModel, Usage]]
     #: Charges the per-caller `read` quota before running (§7.3). `read`'s row sets it at U020.
     spends: bool = False
+    #: What an agent reads when it is choosing a move. Published as the MCP tool description
+    #: (§7.5) and as the route's OpenAPI summary, from one string, because a tool described two
+    #: ways is a tool two clients understand differently.
+    description: str = ""
+
+
+@dataclass(frozen=True)
+class ToolRuntime:
+    """Everything :func:`dispatch` needs, with no transport in it.
+
+    The seam §7.5 requires. HTTP builds one per app in the lifespan; `vsir/mcp/server.py` builds
+    one from the same configuration and the same table, so *"calling the identical
+    implementations"* is a fact about the object graph rather than a promise in a docstring.
+
+    ``tools`` is the very dict on ``app.state.tools`` and not a copy: a release that registers a
+    tool registers it once, for every surface at once.
+    """
+
+    config: Config
+    #: The Qdrant client on a caller's request path — its own timeout, so a store that stopped
+    #: answering becomes a `503` while the caller is still there to read it.
+    search: Any
+    tools: Mapping[str, ToolSpec]
+
+
+@dataclass(frozen=True)
+class ToolOutcome:
+    """The result of one tool call, before any transport has looked at it.
+
+    ``status`` is the **HTTP** status even when nobody is speaking HTTP: it is the vocabulary §7.3
+    and §11.3 are written in — `400` names a bound, `404` is absent, `429` is the quota, `503` is
+    somebody else's outage — and the MCP surface maps it onto ``isError`` rather than inventing a
+    second taxonomy of failure for the same events.
+    """
+
+    status: int
+    payload: Mapping[str, Any]
+
+    @property
+    def refused(self) -> bool:
+        return self.status >= 400
+
+    def body(self) -> bytes:
+        """The bytes a caller receives, on either transport (:func:`~vsir.serve.envelope.wire`)."""
+        return wire(self.payload)
 
 
 def _call_lookup(context: ToolContext, body: LookupRequest) -> tuple[BaseModel, Usage]:
@@ -316,28 +387,99 @@ def _call_lookup(context: ToolContext, body: LookupRequest) -> tuple[BaseModel, 
     return response, Usage.free()
 
 
+def _call_verify(context: ToolContext, body: VerifyRequest) -> tuple[BaseModel, Usage]:
+    """The same adapter shape for §7.2.4 — a Family B envelope instead of a Family A one.
+
+    Nothing here notices the difference, which is the point: `verify` returning ``ok`` with three
+    `absent` verdicts travels the identical path as a `lookup` returning one hit, because
+    ``status`` in Family B is about the **call** and the dispatcher only ever asked whether the
+    call ran (§7.1).
+    """
+    envelope = verify_tool(
+        context.client, context.cfg.pages_collection, body.claims, body.page_ids,
+        provenance=context.provenance, reads_remaining=context.reads_remaining,
+    )
+    return envelope, Usage.free()
+
+
+#: What each tool is *for*, in the words an agent needs to choose between them. Kept beside the
+#: table rather than lifted from the Python docstrings: those explain the implementation to a
+#: maintainer, and a tool description explains a **move** to a caller (§7.2, §8.2).
+LOOKUP_DESCRIPTION = (
+    "JUMP. Exact, phrase-only lookup of a printed code or label — a SET of pages, never a "
+    "ranking and never a similarity match. A code this returns is a code printed on the page. "
+    "Nothing matched is one of four typed absences, never an empty success: `not_found` (abstain, "
+    "but read `next.suggest`), `not_searchable` (the candidate pages have no text layer — "
+    "escalate to vision), `out_of_scope` (no document matched the filters — widen), "
+    "`found_only_in_superseded`. `include_unverified=true` additionally returns model-claimed "
+    "codes in `unverified_hits`, permanently `verified: false`; they are recall on a scanned "
+    "page and they are never evidence. Free."
+)
+VERIFY_DESCRIPTION = (
+    "CHECK. Is each of these codes actually printed on each of these pages? Per (claim, page), "
+    "so a draft citing two pages cannot borrow the neighbouring page's evidence. Three verdicts: "
+    "`present`, `absent` (with up to five `present_instead` codes observed on the page — a "
+    "different part, never a nearest match), and `unverifiable` (no text layer, an untrusted "
+    "extraction, or a page that is not current) — which is never the same as `absent`. Every "
+    "claim absent is still a successful call. Free."
+)
+
+
 def tool_table() -> dict[str, ToolSpec]:
-    """The tools this release exposes at ``POST /tools/{tool_name}``.
+    """The tools this release exposes — over HTTP at ``POST /tools/{tool_name}`` and over MCP.
 
     A function, not a module constant, for the reason §15.2 bans a module-level mutable store: a
     dict at import time is one object shared by every app in the process, and a test that pointed
     one app at a different table would be changing every other app's. Each :func:`create_app`
-    gets its own, parked on ``app.state``.
+    gets its own, parked on ``app.state`` and handed to the :class:`ToolRuntime`.
 
-    Seven of §7.2's eight are absent here and that is a fact about the release, not a gap in the
-    dispatcher: `verify` lands at U015, `skim_*` and `resolve` at U017, `fetch` at U018 and `read`
-    at U020. Until then their names are a typed `404` that lists what *is* available, because a
-    caller that asked for `read` needs to know it is not here — not receive an empty result.
+    Six of §7.2's eight are absent here and that is a fact about the release, not a gap in the
+    dispatcher: `skim_*` and `resolve` land at U017, `fetch` at U018 and `read` at U020. Until
+    then their names are a typed `404` that lists what *is* available, because a caller that
+    asked for `read` needs to know it is not here — not receive an empty result.
     """
-    return {"lookup": ToolSpec(name="lookup", request=LookupRequest, call=_call_lookup)}
+    return {
+        "lookup": ToolSpec(name="lookup", request=LookupRequest, call=_call_lookup,
+                           description=LOOKUP_DESCRIPTION),
+        "verify": ToolSpec(name="verify", request=VerifyRequest, call=_call_verify,
+                           description=VERIFY_DESCRIPTION),
+    }
 
 
-def _tool_refusal(code: str, detail: str, *, status: int, **details: Any) -> JSONResponse:
-    """A typed refusal from the tool surface: a machine-readable ``error`` and its bound."""
-    return JSONResponse(status_code=status, content={"error": code, "detail": detail, **details})
+def runtime_from_env(env: Mapping[str, str]) -> tuple[ToolRuntime, QdrantClient]:
+    """A :class:`ToolRuntime` for a process with no ASGI lifespan to build one for it.
+
+    `vsir mcp --stdio` and the `vsir lookup` / `vsir verify` one-shots are ordinary processes of
+    this release (§15 Factor XII) that need the same table, the same configuration and the same
+    store as `web`. Building it here rather than in each of them is what makes the one-shots
+    evidence about the shipped tool: `vsir lookup` runs the code path `POST /tools/lookup` runs,
+    down to the typed refusals, and a demo of it is a demo of the service.
+
+    The **boot self-check runs first** (§4.3), before the client is opened and before a single
+    argument is read: a floating model id or a live payload schema that disagrees with `INDEXED`
+    is a named non-zero exit, never a process that answers one call correctly and the next one
+    from a collection that moved underneath it.
+
+    The client is returned beside the runtime because the caller owns closing it — nothing here
+    holds a connection past the process that asked for one.
+    """
+    assert_boot_ok(env)
+    cfg = load_config(env)
+    client = QdrantClient(url=cfg.qdrant_url, timeout=SEARCH_TIMEOUT_S, check_compatibility=False)
+    return ToolRuntime(config=cfg, search=client, tools=tool_table()), client
 
 
-def _failure_response(failure: BaseException, *, tool: str) -> JSONResponse:
+def _tool_refusal(code: str, detail: str, *, status: int, **details: Any) -> ToolOutcome:
+    """A typed refusal from the tool surface: a machine-readable ``error`` and its bound.
+
+    Returns a transport-neutral :class:`ToolOutcome`, because a `filter_unknown_key` is the same
+    refusal whether it arrives over HTTP or over MCP and a caller must not have to learn it
+    twice.
+    """
+    return ToolOutcome(status=status, payload={"error": code, "detail": detail, **details})
+
+
+def _failure_response(failure: BaseException, *, tool: str) -> ToolOutcome:
     """Map an exception out of a tool onto §11.3's refusals. Never onto an empty result.
 
     The order is the contract. A typed :class:`~vsir.serve.caps.ToolError` is the tool naming its
@@ -379,15 +521,15 @@ def _failure_response(failure: BaseException, *, tool: str) -> JSONResponse:
                          status=500, tool=tool)
 
 
-def _run_tool(app: FastAPI, spec: ToolSpec, body: ToolRequest, *, identity: Identity,
-              correlation: Mapping[str, str]) -> JSONResponse:
+def run_tool(runtime: ToolRuntime, spec: ToolSpec, body: ToolRequest, *, identity: Identity,
+             correlation: Mapping[str, str]) -> ToolOutcome:
     """Budget → call → ``reads_remaining`` → audit. Sync: the Qdrant client is sync.
 
-    Runs in a worker thread, so the correlation ids are re-bound here from the values the
-    middleware parked on the scope rather than relied on to travel with the thread — the audit
+    Its caller runs it in a worker thread, so the correlation ids are re-bound here from the
+    values the transport captured rather than relied on to travel with the thread — the audit
     line of §7.4 is the last place to discover that a ``ContextVar`` did not make the hop.
     """
-    cfg: Config = app.state.config
+    cfg = runtime.config
     tool = spec.name
     with vsir_logging.correlate(tool=tool, **{k: v for k, v in correlation.items() if v}):
         timer = audit_module.Timer()
@@ -396,15 +538,15 @@ def _run_tool(app: FastAPI, spec: ToolSpec, body: ToolRequest, *, identity: Iden
             # ceiling is refused rather than billed for a call whose result is then thrown away.
             if spec.spends:
                 reads_remaining = budget_module.charge(
-                    app.state.search, cfg.runs_collection, user_id=identity.user_id,
+                    runtime.search, cfg.runs_collection, user_id=identity.user_id,
                     quota=cfg.read_quota, tool=tool)
             else:
                 reads_remaining = budget_module.remaining(
-                    app.state.search, cfg.runs_collection, user_id=identity.user_id,
+                    runtime.search, cfg.runs_collection, user_id=identity.user_id,
                     quota=cfg.read_quota)
 
             envelope, usage = spec.call(
-                ToolContext(client=app.state.search, cfg=cfg, identity=identity,
+                ToolContext(client=runtime.search, cfg=cfg, identity=identity,
                             reads_remaining=reads_remaining,
                             provenance=Provenance(release_id=cfg.release_id)),
                 body)
@@ -424,7 +566,49 @@ def _run_tool(app: FastAPI, spec: ToolSpec, body: ToolRequest, *, identity: Iden
                 run_id=correlation.get("run_id", ""),
                 session_id=correlation.get("session_id", ""),
             ))
-        return JSONResponse(status_code=200, content=envelope.model_dump(mode="json"))
+        return ToolOutcome(status=200, payload=envelope.model_dump(mode="json"))
+
+
+def dispatch(runtime: ToolRuntime, tool_name: str, arguments: Mapping[str, Any], *,
+             identity: Identity, correlation: Mapping[str, str]) -> ToolOutcome:
+    """Name → table → validation → :func:`run_tool`. **The** entry point for every transport.
+
+    Three steps, in this order, because each one's refusal is a different problem:
+
+    1. **the name.** Not in the table → a typed `404` listing what *is* served. A tool that is
+       not in this release is *absent*, not empty — the same argument §7.1 makes about results,
+       applied to the surface itself.
+    2. **the arguments.** Validated against that tool's own model with ``extra="forbid"``, so a
+       misspelt parameter is a `400` and never a quietly different query. This is the step the
+       risk register (R6) is about: an MCP client that ignored the published input schema is
+       refused **here**, server-side, rather than trusted to have read it.
+    3. **the call**, with the budget, the audit line and ``reads_remaining`` (:func:`run_tool`).
+
+    Sync throughout: the Qdrant client is sync, and both transports call this from a worker
+    thread rather than blocking their event loop.
+    """
+    spec = runtime.tools.get(tool_name)
+    if spec is None:
+        available = sorted(runtime.tools)
+        _log.warning("tool_not_found", tool=tool_name, available=available)
+        return _tool_refusal(
+            "tool_not_found",
+            f"no tool {tool_name!r} in release {runtime.config.release_id!r}; this release "
+            f"serves {available}. A tool that is not here is absent, not empty — §7.2's "
+            f"remaining names arrive with the milestones that build them",
+            status=404, tool=tool_name, available=available)
+
+    try:
+        body = spec.request.model_validate(dict(arguments))
+    except ValidationError as invalid:
+        return _tool_refusal(
+            "invalid_request",
+            f"the arguments do not match {tool_name}'s parameters (§7.2)",
+            status=400, tool=tool_name,
+            problems=[{"field": ".".join(str(part) for part in problem["loc"]),
+                       "error": problem["msg"]} for problem in invalid.errors()])
+
+    return run_tool(runtime, spec, body, identity=identity, correlation=correlation)
 
 
 def create_app(env: Mapping[str, str] | None = None) -> FastAPI:
@@ -466,8 +650,13 @@ def create_app(env: Mapping[str, str] | None = None) -> FastAPI:
                                          check_compatibility=False)
         app.state.search = QdrantClient(url=cfg.qdrant_url, timeout=SEARCH_TIMEOUT_S,
                                         check_compatibility=False)
+        # The transport-neutral view of this app. `tools` is the very dict on `app.state`, not a
+        # copy, so a suite (or a later milestone) that registers a tool registers it for the MCP
+        # surface at the same instant — there is no second table to keep in step (§7.5).
+        app.state.runtime = ToolRuntime(config=cfg, search=app.state.search,
+                                        tools=app.state.tools)
         _log.info("startup", port=cfg.port, collection=cfg.pages_collection,
-                  tools=sorted(app.state.tools))
+                  tools=sorted(app.state.tools), mcp=sorted(app.state.mcp_paths))
         try:
             yield
         finally:
@@ -499,6 +688,20 @@ def create_app(env: Mapping[str, str] | None = None) -> FastAPI:
     # correlation ids are bound before authentication runs and a `401` is correlatable too.
     app.add_middleware(BearerAuth, tokens=cfg.api_tokens)
     app.add_middleware(RequestContext)
+
+    # §15 Factor VII — *"the MCP SSE transport binds the same port"*. One process, one socket,
+    # two protocols over it, and the same default-deny middleware in front of both: `/sse` and
+    # `/messages/` are not in `PUBLIC_PATHS`, so they need a bearer token like every other
+    # non-probe path.
+    #
+    # Imported here rather than at module scope, and this is the one place in the package where
+    # that is deliberate: `vsir/mcp/server.py` imports `dispatch` and `ToolRuntime` from **this**
+    # module, because §7.5 requires it to call the identical implementations. A module-scope
+    # import back the other way would close that loop. The dependency is one-directional at
+    # import time and the MCP surface is the leaf, which is exactly the shape the rule describes.
+    from vsir.mcp import server as mcp_server
+
+    app.state.mcp_paths = mcp_server.mount(app)
 
     @app.get("/health", response_model=HealthResponse, tags=["probes"])
     async def health() -> HealthResponse:
@@ -564,22 +767,16 @@ def create_app(env: Mapping[str, str] | None = None) -> FastAPI:
         Auth has already happened, in middleware, for every path but the three probes — so there
         is no decorator here to forget and no route that is protected only by having remembered.
 
-        The body is validated against the named tool's own model, so a misspelt parameter is a
-        `400` rather than a silently different query. The tool then runs in a worker thread,
-        because the Qdrant client is sync and a blocking call on the event loop is an outage for
-        every other request in flight.
-        """
-        spec: ToolSpec | None = app.state.tools.get(tool_name)
-        if spec is None:
-            available = sorted(app.state.tools)
-            _log.warning("tool_not_found", tool=tool_name, available=available)
-            return _tool_refusal(
-                "tool_not_found",
-                f"no tool {tool_name!r} in release {cfg.release_id!r}; this release serves "
-                f"{available}. A tool that is not here is absent, not empty — §7.2's remaining "
-                f"names arrive with the milestones that build them",
-                status=404, tool=tool_name, available=available)
+        Everything after the JSON parse is :func:`dispatch`, which the MCP surface calls with the
+        same runtime: the name lookup, the validation, the budget, the audit line and the typed
+        refusals are one implementation and this route adds only the transport (§7.5). The
+        dispatch runs in a worker thread, because the Qdrant client is sync and a blocking call
+        on the event loop is an outage for every other request in flight.
 
+        The body is written with :func:`~vsir.serve.envelope.wire` rather than handed to
+        ``JSONResponse``, so *these* are the bytes the byte-identity criterion compares against —
+        one serialiser, and nothing for the two transports to disagree about.
+        """
         identity = auth_module.identity_of(request.scope)
         if identity is None:
             # Unreachable behind `BearerAuth`, and here anyway: if this route is ever mounted
@@ -592,21 +789,22 @@ def create_app(env: Mapping[str, str] | None = None) -> FastAPI:
         try:
             payload = await request.json() if await request.body() else {}
         except ValueError as malformed:
-            return _tool_refusal("invalid_json", f"the request body is not JSON: {malformed}",
-                                 status=400, tool=tool_name)
-        try:
-            body = spec.request.model_validate(payload)
-        except ValidationError as invalid:
-            return _tool_refusal(
-                "invalid_request",
-                f"the body does not match {tool_name}'s parameters (§7.2)",
-                status=400, tool=tool_name,
-                problems=[{"field": ".".join(str(part) for part in problem["loc"]),
-                           "error": problem["msg"]} for problem in invalid.errors()])
+            outcome = _tool_refusal("invalid_json", f"the request body is not JSON: {malformed}",
+                                    status=400, tool=tool_name)
+        else:
+            if not isinstance(payload, dict):
+                outcome = _tool_refusal(
+                    "invalid_request",
+                    f"a tool body is a JSON object of {tool_name}'s parameters, got "
+                    f"{type(payload).__name__}",
+                    status=400, tool=tool_name)
+            else:
+                outcome = await run_in_threadpool(
+                    dispatch, app.state.runtime, tool_name, payload, identity=identity,
+                    correlation=dict(request.scope.get(SCOPE_CORRELATION) or {}))
 
-        return await run_in_threadpool(
-            _run_tool, app, spec, body, identity=identity,
-            correlation=dict(request.scope.get(SCOPE_CORRELATION) or {}))
+        return Response(content=outcome.body(), status_code=outcome.status,
+                        media_type="application/json")
 
     # ── the run control plane and the two exports (§6.8, §6.9, §11.4) ────────────────────────────
 

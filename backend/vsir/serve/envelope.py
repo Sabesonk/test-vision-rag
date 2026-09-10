@@ -23,7 +23,8 @@ confidence.
 """
 from __future__ import annotations
 
-from typing import Generic, Literal, TypeVar
+import json
+from typing import Any, Generic, Literal, Mapping, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -33,6 +34,29 @@ from vsir.core.status import CHECK_STATES, Status
 #: §7.1 — a **server** constant. `cap` controls how many hits come back and nothing else, so a
 #: trust signal a client could flip by passing `cap=200` would be worse than no signal at all.
 WEAK_ABS = 20
+
+
+def wire(payload: Mapping[str, Any]) -> bytes:
+    """One envelope → the bytes a caller receives, on **every** transport (§7.5).
+
+    §7.5 requires the MCP server to call the identical implementations, and U015's acceptance
+    sharpens that into a property anybody can check: the `tools/call` result for a given request
+    is **byte-identical** to the HTTP response body for the same request. Two serialisers cannot
+    make that true by agreement — they make it true until one of them gains an ``indent`` — so
+    there is one, and both transports call it.
+
+    The settings are Starlette's ``JSONResponse.render`` verbatim, because the HTTP half is the
+    surface that already exists and moving *it* would be a wire change for every caller:
+    ``ensure_ascii=False`` (so a printed label with a diacritic goes out as the character rather
+    than an escape), ``allow_nan=False`` (``NaN`` is not JSON, and a silent one would be a body no
+    strict parser accepts), and the compact separators.
+
+    Key order is **insertion order** — the field order of the Pydantic model — and not sorted. A
+    response's field order is part of what a reviewer diffs, and §7.1 declares the fields in a
+    deliberate order: `status` first, because it is the field a caller switches on.
+    """
+    return json.dumps(payload, ensure_ascii=False, allow_nan=False, indent=None,
+                      separators=(",", ":")).encode("utf-8")
 
 
 def weakness(total: int, scope_pages: int) -> bool:
@@ -98,6 +122,14 @@ class NextMoves(BaseModel):
     status stays `not_found` and ``suggest: ["skim_pages"]`` says a different **move** could still
     answer. Inventing a seventh status for "no, but try this" is the alternative, and it would make
     every caller's switch statement wrong.
+
+    ``tokens_observed`` is the **evidence** for that suggestion, and §7.1 asks for it in the same
+    sentence: *"it returns `status: not_found` with `next.suggest: ["skim_pages"]` and the tokens
+    that did occur."* A suggestion with nothing behind it is a shrug the agent has to take on
+    trust; `["alarm", "152"]` says which words the corpus really contains, so the caller can tell
+    *"the phrase is not printed, but both words are here"* from *"none of this is in the corpus"*
+    without spending a `skim` to find out. It rides inside `next` rather than at the top level
+    because it is part of the affordance, not part of the result.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -106,6 +138,10 @@ class NextMoves(BaseModel):
     neighbours: list[str] = Field(default_factory=list)
     references: list[str] = Field(default_factory=list)
     suggest: list[str] = Field(default_factory=list)
+    #: The words of the query that **do** occur somewhere in the searched scope's text. Never a
+    #: near-miss code and never a candidate answer: these are the caller's own tokens, echoed back
+    #: because they were found, not tokens the corpus offered in place of the label (F16).
+    tokens_observed: list[str] = Field(default_factory=list)
 
 
 class DocScopeStat(BaseModel):
@@ -311,5 +347,5 @@ class ToolEnvelope(BaseModel, Generic[ResultT]):
 __all__ = [
     "CHECK_STATES", "WEAK_ABS", "ClaimVerdict", "DocHit", "DocScopeStat", "ImageRef", "LookupHit",
     "NextMoves", "PageHit", "Preview", "Provenance", "ResolveHit", "ScopeStats", "SearchResponse",
-    "SectionHit", "Status", "ToolEnvelope", "VerifyResult", "weakness",
+    "SectionHit", "Status", "ToolEnvelope", "VerifyResult", "weakness", "wire",
 ]
