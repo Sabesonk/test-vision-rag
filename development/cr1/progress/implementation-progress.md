@@ -7,9 +7,9 @@
 
 | | |
 |---|---|
-| **Complete** | 11 / 26 units (42%) |
-| **Current milestone** | M2b — ingest the pilot PDF, freeze the fixture (0 / 2 units); M0, M1 and M2a closed and tagged |
-| **Next unit** | U012 — Port the paid-for `impl` fixtures and the parity / negative sets |
+| **Complete** | 12 / 26 units (46%) |
+| **Current milestone** | M2b — ingest the pilot PDF, freeze the fixture (1 / 2 units); M0, M1 and M2a closed and tagged |
+| **Next unit** | U013 — The one paid `TC1E-SF` ingest and the `grounded_rate` baseline (**Spend: paid**; OQ-1 is still live — `data/source/TC1E-SF.pdf` is not present, so the unit's own first step is to re-check for it) |
 | **Blocked** | none |
 
 ---
@@ -41,7 +41,7 @@
 - [x] U011 Gates, publish, retirement, the run control plane, and exports
 
 ### M2b — ingest the pilot PDF; freeze the fixture (spend: S2 + embed, once)
-- [ ] U012 Port the paid-for `impl` fixtures and the parity / negative sets — spend: none
+- [x] U012 Port the paid-for `impl` fixtures and the parity / negative sets — spend: none
 - [ ] U013 The one paid `TC1E-SF` ingest and the `grounded_rate` baseline — spend: paid
 
 ### M3 — `lookup` + `verify` over HTTP and MCP (spend: none)
@@ -1671,6 +1671,165 @@ The second run of the same command: **`0 embedded, 42 reused` · 42 points · st
   window-level skip that makes a resume *cheap* is U025's, and the checkpoints it will read
   (`state`, `attempts`, `checkpoint`, `extract_key`) are already written per window. The R4
   threshold stays provisional at 0.8 until U013 sets it from the M2b distribution.
+
+---
+
+### U012 — Port the paid-for `impl` fixtures and the parity / negative sets
+
+**Milestone:** M2b · **Spend:** none · **Status:** `[x]` Complete · **Completed:** 2026-09-10
+
+**Demo output** — the plan's Demo Command, against the test stack's Qdrant on 6335:
+
+```
+$ bash scripts/test-api.sh -k "parity or withheld"
+
+tests/api/test_parity_lookup.py::…_is_still_found_by_phrase[0.03]                   PASSED
+tests/api/test_parity_lookup.py::…_is_still_found_by_phrase[10.2.3.1]               PASSED
+tests/api/test_parity_lookup.py::…_is_still_found_by_phrase[EAO 84-5140.0020]       PASSED
+tests/api/test_parity_lookup.py::…_is_still_found_by_phrase[SF 1.1A]                PASSED
+tests/api/test_parity_lookup.py::…_is_still_found_by_phrase[SAPP02D-06A0001]        PASSED
+   … 405 rows, one per identifier the old gate accepted (1,644 (page, identifier) pairs) …
+
+GAINS — 63 sighting(s), 19 distinct code(s) the old grammar dropped and the phrase index finds:
+  + FESTO VOFA-L26-T32C-M-G14-1C1-APP            1 page(s)   e.g. TC1E-SF@1.3#p001
+  + EAO 84-5140.0020                             1 page(s)   e.g. TC1E-SF@1.3#p001
+  + K640+K650+K647+K626                          7 page(s)   e.g. TC1E-SF@1.3#p003
+  + B&R X20SI4100                                1 page(s)   e.g. TC1E-SF@1.3#p001
+  + K644+K645+K651                               7 page(s)   e.g. TC1E-SF@1.3#p002
+  + Q1-Q3-Q5                                     3 page(s)   e.g. TC1E-SF@1.3#p013
+  + TELEMECANIQUE LC1-D38BL                      1 page(s)   e.g. TC1E-SF@1.3#p001
+  + F300 / R130                                  1 page(s)   e.g. TC1E-SF@1.3#p028
+  + S202-S203 · ZB4-BS844 · SCHNEIDER · batch 68  1 page(s) each, all TC1E-SF@1.3#p001
+  + 1 · 2 · 3 · 4 · 5 · =1 · >=1                 single-token gains, 37 sightings
+
+NO LEGACY COVERAGE — 14 area(s) parity says nothing about:
+  - §7.1 the six-value status enum — `impl` returned bare empty lists, so no absence is
+    distinguished and `next.suggest` has no baseline at all
+  - §7.1 `weak` / `needs_scope` against the server constant, and `scope_stats`
+  - §7.1 the two envelope families: `impl` has one ad-hoc dict shape and no `ToolEnvelope`
+  - §7.2.1 / §7.2.5 `skim_documents`, `skim_sections`, `resolve` — no `impl` equivalent
+  - §7.2.3 `verify` and the `present | absent | unverifiable` vocabulary
+  - §7.2.4 `present_instead` and the observed-token inventory of §6.8 — net new
+  - §7.3 every cap and its typed 400; §7.3/§8.4 `reads_remaining` and `budget_exhausted`
+  - §7.4 the audit line, and cost staying out of the response body
+  - §7.6 the four refusals — `impl` returned similarity values, which is what §7.6 forbids
+  - §8 the whole runner: triage, the six correction loops, the answer gate, `POST /ask`
+  - §5.7 `text_trust` / `grounded_rate` / `searchable_ratio` as contract fields
+  - §6.7 scoped retirement and `is_current`
+  - §15 the cloud-native properties: probes, structured logs, SIGTERM draining, replay mode
+
+tests/api/test_withheld_negative_set.py::…_not_findable_in_the_text_of_the_page_it_came_from
+   [TC1E-PERIODIC@1.1#p005:F302]                                                    PASSED
+   … 96 rows, one per raw in withheld.jsonl, each scoped to the page it was withheld from …
+tests/api/test_withheld_negative_set.py::…_opens_only_when_the_caller_opts_in[…]    PASSED (96)
+tests/api/test_withheld_negative_set.py::test_opting_in_never_changes_the_verified_surface PASSED
+tests/api/test_withheld_negative_set.py::…_becomes_verified_on_the_page_that_prints_it PASSED
+
+=============== 608 passed, 226 deselected, 7 warnings in 16.97s ===============
+```
+
+```
+$ cd backend && python -m vsir.eval.legacy          # what was ported, and what it is worth
+"TC1E-SF":          {pages 55, windows  2, accepted 1281, withheld  0, dropped 862, gains 26}
+"LTC1AV81":         {pages 34, windows 12, accepted  146, withheld  0, dropped 214, gains  4}
+"TC1E-PERIODIC":    {pages 25, windows  1, accepted   82, withheld 95, dropped 118, gains  0}
+"TC1AV8M2-LIFTING": {pages 24, windows  1, accepted   90, withheld  1, dropped 117, gains 32}
+"DS-5549-EATON":    {pages  3, windows  1, accepted   45, withheld  0, dropped  28, gains  1}
+"CE-TC1AV8":        {pages  1, windows  1, accepted    0, withheld  0, dropped  12, gains  0}
+ported_files 23 · export_run r-poc-5 · 142 pages · 1,644 accepted pairs · 96 withheld
+```
+
+**Tests**
+
+`bash scripts/test-unit.sh` → **1017 passed**, Layer 0/1 PASSED (conformance included).
+`bash scripts/test-api.sh` → **834 passed** against `qdrant/qdrant:v1.19.0` and the container.
+`bash scripts/test-api.sh -k "parity or withheld"` → **608 passed** in 17 s, zero spend, no key.
+
+**Invariants / failure rows closed**
+
+- **None newly** — the unit closes no invariant and no F-row, which is what its plan entry says.
+  What it produces is the **evidence that turns R7 from a hope into an assertion**: 405 identifier
+  shapes a real corpus printed, still found by `MatchPhrase` over `variants()`; 96 real
+  model-emitted codes proved unfindable through `text`.
+- **I2 / F14 re-exercised on real model output** — `test_no_withheld_code_reaches_the_text_of_any_
+  record` (L1) and the 96-row negative suite (L2). Asked as a *phrase*, not a substring: `Q5` is a
+  substring of `Q59` and the exact surface must never say so.
+- **I4 / F7 re-proved on real windows at zero spend** — §6.4 check (1) over all 19 ported windows;
+  check (2) over `TC1E-SF`'s two windows and `LTC1AV81`'s twelve; a one-page shift of a real window
+  raises `offset_check_failed` naming the check, the page and where the label really is.
+- **F8 re-proved on real folds** — two `LTC1AV81` sections straddle a single-page window boundary
+  and stitch into one section carrying both pages.
+- **F6 on real data** — `F302` and `F313`, withheld from `TC1E-PERIODIC` page 5, move to page 4
+  (which prints them) with `moved_from` naming page 5.
+- **F4** — `CE-TC1AV8` is scanned, has no text layer and answers `not_searchable`, never
+  `not_found`.
+
+**Notes**
+
+- **The export run is `r-poc-5`, and the choice is load-bearing.** "Ported from
+  `impl/data/exports/r-poc-*/`" names five different baselines. `r-poc-1`/`r-poc-2` quarantined
+  `TC1E-SF` and export nothing for it. `r-poc-3`/`r-poc-4` publish it but **withhold 114 `SF`
+  labels** — including `SF 1.1A`, which §12.3's acceptance table requires to return exactly one
+  page. Their negative set would therefore assert the opposite of the acceptance table. `r-poc-5`
+  is the last run, publishes all six documents, and is the only one whose `withheld.jsonl` is what
+  §12.1 describes: every row `source: "vlm"`, *model-emitted codes the text layer never backed*.
+  The reason is recorded in `data/fixtures/legacy/SOURCE.json`, not only here.
+- **There is no PDF, so `text` is an "observable projection" and is never called anything else.**
+  `impl`'s `data/uploads/` and `data/pages/` are empty (OQ-1: the pilot document arrives with
+  U013), so the page text those runs indexed cannot be recovered. What can be is the part the
+  artefacts *prove*: the identifiers the old gate found in each page's text layer — the whole
+  meaning of `text_layer_backed: true` — plus the one page of verbatim extraction `impl` recorded
+  (`INGESTION_WALKTHROUGH.md` §1b), lifted mechanically rather than retyped. Three rules keep it
+  honest: **nothing the model said is in it** (no unit title, no summary, no `printed_page_no` —
+  seeding model output into `text` would refute the very thing the negative set tests); it is a
+  **floor, not a page** (so a PASS is evidence, a FAIL is a defect, and an unprovable gain is
+  invisible rather than absent); and it never touches a serving collection.
+- **Two readings of one window, and the difference is a parameter.** `codes_from="window"` is the
+  faithful rename (`units[] → sections[]`, `identifiers[] → codes[]`, `refs[]` dropped per §2.5 B,
+  `summaries`/`topics` empty because the old schema has no such field) and is what the L1 offset
+  and stitching suites run on. `codes_from="export"` is the claim set the run **recorded per page**
+  — backed plus withheld — and is what the L2 corpus is seeded from, because `grounded_rate` is a
+  ratio and its denominator has to mean something: the window's own list also carries the strings
+  the old grammar dropped *before* the gate (17 on page 1 alone, "counted nowhere" in the
+  walkthrough's words), and rating a page against them measures the old grammar's drop rate rather
+  than its text layer — it sinks `LTC1AV81` and `TC1AV8M2-LIFTING` to `untrusted` for a reason that
+  has nothing to do with their text.
+- **The windows were placed, not assumed.** An old response is a bare `{"pages": [...]}` with
+  indices 1..N and no record of which absolute pages they were. `Baseline.placements` requires the
+  windows to tile 1..`pages` exactly once (from `manifest.json`) and, where a document has more
+  than one, requires **every** page of a placement to be positively confirmed by the `labels.jsonl`
+  row for that absolute page. `LTC1AV81` is the case that could have gone wrong — eleven one-page
+  windows plus one of 23, which is 12! orderings without evidence — and it resolves to exactly one
+  tiling. Anything other than one solution raises rather than picking.
+- **A recorded fixture limit, asserted so it stays known.** `DS-5549-EATON` is three pages of IEC
+  clause numbers (`10.2.3.2`, `10.2.3.3`), and the projection joins them into one string; Qdrant's
+  WORD tokenizer treats every separator alike, so page 2 ends up with the tokens `3 3` adjacent and
+  the phrase for page 3's printed label `3 / 3` is exactly `[3, 3]`. §6.4 check (2) refuses, which
+  is **correct on the text it was given**. The projection is what is wrong, not the check, so
+  `test_the_eaton_projection_spells_a_label_the_offset_check_must_refuse` asserts the refusal by
+  name; the parity corpus reads those windows through the export, where no page label was ever
+  recorded and so there is nothing to check rather than something to check against a projection.
+  U013's real text layer is what closes this properly.
+- **The gains are reported, never reconciled** (§12.3, verbatim). Every gain is verified against the
+  live index before it is called one, and checked to be absent from `labels.jsonl`. The two the
+  acceptance table names are both there: `EAO 84-5140.0020` and `B&R X20SI4100`, printed on the one
+  page `impl` recorded and dropped by the old grammar before the gate ever saw them — the
+  walkthrough's own worked example of a technician who cannot get the part number for the
+  emergency-stop button. Single-token gains (`1`, `3`) are reported too and sorted last: a
+  one-token code is found wherever that token occurs, and filtering them out would be a grammar.
+- **The ported bytes are read-only and provable.** `SOURCE.json` records path, source, sha256 and
+  size for all 23 files; `test_legacy_fixture_integrity` asserts each file against its digest, that
+  the ledger covers every file in the fixture, and — when `VSIR_IMPL_ROOT` points at an `impl`
+  tree — that the digests are the source tree's. A separate test asserts the raw responses still
+  carry only the old schema's seven page keys, so a future "helpful" migration is caught.
+- **Zero spend, held against a socket.** `test_the_whole_baseline_is_built_with_no_network_and_no_
+  api_key` deletes `GEMINI_API_KEY` and makes every outbound connection raise, then builds the
+  whole baseline anyway. The raw responses are deliberately **not** a `VSIR_FIXTURE` replay
+  directory: they answer the old schema under the old cache key, so serving them as replay would be
+  a lie — `vsir.eval.legacy.adapt` renames them for the L1 suite instead.
+- **`DS-2611-SICK` is ported and carries no parity rows.** §12.1 counts seven documents, so its
+  window is in the fixture; it never published in `r-poc-5`, so the export attributes nothing to it.
+  Recorded in `SOURCE.json` under `documents_without_export_rows` rather than left as a silent gap.
 
 ---
 

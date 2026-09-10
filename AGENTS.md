@@ -17,6 +17,7 @@ in `development/cr1/progress/implementation-progress.md`.
 | `data/fixtures/` | frozen extractions, checked in |
 | `data/fixtures/synthetic_pages/` | the §13 M1 corpus: hand-written page text + `expected.json` |
 | `data/fixtures/synthetic_3window/` | the M2a corpus's replay fixture: frozen S1 `facts/` + S2 `extract/`, keyed by §6.3 hash, + `expected.json` |
+| `data/fixtures/legacy/` | the ported `impl` baseline of §12.1: 19 old-schema S2 responses + `labels.jsonl` / `withheld.jsonl` / `manifest.json` from `r-poc-5`, + `SOURCE.json` |
 | `data/source/` | input PDFs, gitignored — except the generated `synthetic_3window.pdf` |
 
 ## Setup
@@ -148,6 +149,34 @@ both cases, **zero queryable pages** (F17).
 `VSIR_VLM_TIER=batch` refuses `vlm_tier_unsupported` — the tier is not a cache-key input, so
 switching it later re-bills nothing. `VSIR_VLM_RPM` is the client's token bucket, in calls a
 minute.
+
+The M2b parity baseline. `data/fixtures/legacy/` is 19 S2 responses `impl` already paid for, plus
+the export whose `labels.jsonl` is the §12.3 parity set and whose `withheld.jsonl` is the negative
+set. Nothing here spends and nothing here needs a key:
+
+```bash
+cd backend && ../backend/.venv/bin/python -m vsir.eval.legacy   # what is in it, and the gains
+bash scripts/test-api.sh -k "parity or withheld"                # the suites over it
+```
+
+The report prints, per document, the pages, windows, accepted identifiers, withheld codes and the
+codes the old grammar dropped that the phrase index now finds — plus
+`vsir.eval.legacy.NO_LEGACY_COVERAGE`, the list of §7/§8 paths parity says nothing about (R7).
+
+Re-port it from an `impl` tree (idempotent; it rewrites `SOURCE.json`'s digests from the bytes it
+copied, and `python -m pytest tests/unit/test_legacy_fixture_integrity.py` re-checks them against
+the source when `VSIR_IMPL_ROOT` points at one):
+
+```bash
+cd backend && ../backend/.venv/bin/python -m vsir.eval.legacy --port /path/to/impl
+VSIR_IMPL_ROOT=/path/to/impl bash scripts/test-unit.sh -k legacy_fixture_integrity
+```
+
+The export run is pinned to `r-poc-5` (`vsir.eval.legacy.EXPORT_RUN`) and the reason is recorded in
+`SOURCE.json`: it is the only one of `impl`'s five whose `withheld.jsonl` is what §12.1 describes.
+The raw responses are **not** a `VSIR_FIXTURE` replay directory — they answer the old schema under
+the old cache key, so replay would be a lie; `vsir.eval.legacy.adapt` renames them for the L1 suite
+instead.
 
 Regenerate the corpus (reproducible byte for byte; the PDF and every fixture file are committed):
 

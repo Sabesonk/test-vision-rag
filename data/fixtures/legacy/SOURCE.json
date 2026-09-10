@@ -1,0 +1,154 @@
+{
+  "documents_without_export_rows": [
+    {
+      "doc_id": "DS-2611-SICK",
+      "why": "ported because \u00a712.1 counts seven documents, but it never published in r-poc-5, so labels.jsonl and withheld.jsonl attribute nothing to it and it carries no parity rows."
+    }
+  ],
+  "export_run": "r-poc-5",
+  "export_run_rationale": "The last of impl's five runs and the only one whose withheld set is what Spec \u00a712.1 describes: every row source=vlm, model-emitted codes the text layer never backed. r-poc-1/2 quarantined TC1E-SF and export nothing for it; r-poc-3/4 published it but withheld 114 SF labels that r-poc-5 backs, which would contradict \u00a712.3's lookup(\"SF 1.1A\") -> exactly 1 page.",
+  "files": [
+    {
+      "bytes": 396845,
+      "path": "labels.jsonl",
+      "sha256": "3702b0c1702c2828f217b8aab5446fa421646953b09b9418c227ee47eb1cb077",
+      "source": "data/exports/r-poc-5/labels.jsonl"
+    },
+    {
+      "bytes": 9389,
+      "path": "manifest.json",
+      "sha256": "6d09a8921f6b726002d032d5ef94f297eb836a641e91f83f9a96cadd43ec0387",
+      "source": "data/exports/r-poc-5/manifest.json"
+    },
+    {
+      "bytes": 387,
+      "path": "raw/CE-TC1AV8/1f80a3e67f82d6ea9e2ac8b29390b068bd02f56d5960efd53466eb69c5a71444.json",
+      "sha256": "9cecf3102dcd4bc150a12e98ce4e3d7d08a9d7cc5ce468ee8e956c2ab0d5d489",
+      "source": "data/raw/CE-TC1AV8/1f80a3e67f82d6ea9e2ac8b29390b068bd02f56d5960efd53466eb69c5a71444.json"
+    },
+    {
+      "bytes": 586,
+      "path": "raw/DS-2611-SICK/3a4b4d22b12ff8ab2976c12ca868408772de8f6b95476713061a9fc6d2e37b2d.json",
+      "sha256": "4f21ef37751155d35cd9dd61d17db497a84e080b9000a5e029ae2b721efda215",
+      "source": "data/raw/DS-2611-SICK/3a4b4d22b12ff8ab2976c12ca868408772de8f6b95476713061a9fc6d2e37b2d.json"
+    },
+    {
+      "bytes": 1443,
+      "path": "raw/DS-5549-EATON/302ad231979a0ac8d81a72343eddc1660124d92788306bfa2223fe4e6e1acb96.json",
+      "sha256": "a9ee0b6934e41539636dc6223c83f17222c546311f4598acca98e4c7ec2cb5b6",
+      "source": "data/raw/DS-5549-EATON/302ad231979a0ac8d81a72343eddc1660124d92788306bfa2223fe4e6e1acb96.json"
+    },
+    {
+      "bytes": 4596,
+      "path": "raw/LTC1AV81/4088089c29e17daf0641b72534aeced99ede5629cd9481c8cdd4e18f399dea4f.json",
+      "sha256": "b997c92ad467fe5f947e8a383577045fa4c692af8f8d08421ffea100d485d57d",
+      "source": "data/raw/LTC1AV81/4088089c29e17daf0641b72534aeced99ede5629cd9481c8cdd4e18f399dea4f.json"
+    },
+    {
+      "bytes": 313,
+      "path": "raw/LTC1AV81/4d3d621081cafc26a8f61deb88d2fda59667e716b1c4ce71a0a503234013c888.json",
+      "sha256": "d44a33e81486695f8f868b73506a139e6c271ade6dc732d0882065cd29df6c90",
+      "source": "data/raw/LTC1AV81/4d3d621081cafc26a8f61deb88d2fda59667e716b1c4ce71a0a503234013c888.json"
+    },
+    {
+      "bytes": 729,
+      "path": "raw/LTC1AV81/5b45da686d011cc4258132ebf3e0fe3ac3fab0f590fc543cf184d410ad37a4fe.json",
+      "sha256": "eefaf3bc51cb194f91ac31a152215a263fa6e288eec51e4078f114f78dabd232",
+      "source": "data/raw/LTC1AV81/5b45da686d011cc4258132ebf3e0fe3ac3fab0f590fc543cf184d410ad37a4fe.json"
+    },
+    {
+      "bytes": 336,
+      "path": "raw/LTC1AV81/6af2e2c5c35417bf8ee3f4b73131477d2e759858dd84c0bfd728f1f0229e67ad.json",
+      "sha256": "33b78bb12f933986f0bc0c4d88a84c8799bf0e2574974cd427e328085e39ea5d",
+      "source": "data/raw/LTC1AV81/6af2e2c5c35417bf8ee3f4b73131477d2e759858dd84c0bfd728f1f0229e67ad.json"
+    },
+    {
+      "bytes": 309,
+      "path": "raw/LTC1AV81/7774937a3c05b2082a006905dd0aee3808cfb4bd6941b4aeb373967a2f0e244a.json",
+      "sha256": "61f1908a3ab477506a0c13a505aabdcbe487534a4e8b8bf532906291d4966f2d",
+      "source": "data/raw/LTC1AV81/7774937a3c05b2082a006905dd0aee3808cfb4bd6941b4aeb373967a2f0e244a.json"
+    },
+    {
+      "bytes": 319,
+      "path": "raw/LTC1AV81/859911549bab3c93ac3cd9c45cff2d1ae9c09d8cbf2aff78d13d68c2fec01f82.json",
+      "sha256": "9f2352e5ecf10e98b93d694047ab0f16fe26eb41caa4fa299baf11a5d1493a85",
+      "source": "data/raw/LTC1AV81/859911549bab3c93ac3cd9c45cff2d1ae9c09d8cbf2aff78d13d68c2fec01f82.json"
+    },
+    {
+      "bytes": 311,
+      "path": "raw/LTC1AV81/ace8b2bcc9839f823e6292e887a6972bab805964da4266bd6ba5aa2cb21e011f.json",
+      "sha256": "fc9417d97c09ef9d11a494c374351c148dd38c9eb8a0e7fc54c321102fb7593d",
+      "source": "data/raw/LTC1AV81/ace8b2bcc9839f823e6292e887a6972bab805964da4266bd6ba5aa2cb21e011f.json"
+    },
+    {
+      "bytes": 271,
+      "path": "raw/LTC1AV81/b22363a9d1a577b8edb81a2e8be65e56e7efbd63712c73b20fcffa8b2c04b281.json",
+      "sha256": "778ae9efdad341058e01862b6792c77297f6bd1d9db03ccd68135ed24a926e42",
+      "source": "data/raw/LTC1AV81/b22363a9d1a577b8edb81a2e8be65e56e7efbd63712c73b20fcffa8b2c04b281.json"
+    },
+    {
+      "bytes": 369,
+      "path": "raw/LTC1AV81/c0f3dd28b431ddc0953e98d1f390053dad53a0632eeed68cdda91a79438c5953.json",
+      "sha256": "06ca2add7363badc501abf819b02631979cf83d496ed5d178a933a27ae50b3d3",
+      "source": "data/raw/LTC1AV81/c0f3dd28b431ddc0953e98d1f390053dad53a0632eeed68cdda91a79438c5953.json"
+    },
+    {
+      "bytes": 333,
+      "path": "raw/LTC1AV81/c6e41cece51b41e3e7ad54f149f9a4f802d6142a91e788cce34f95147308f382.json",
+      "sha256": "f42831ff870c5a57a3d93842a185cd62569485eac0acc3a6e07fff66aa1ab15f",
+      "source": "data/raw/LTC1AV81/c6e41cece51b41e3e7ad54f149f9a4f802d6142a91e788cce34f95147308f382.json"
+    },
+    {
+      "bytes": 305,
+      "path": "raw/LTC1AV81/e7578785a3347cb7cc4c6a9f8d6be8a7a713ecd21936e8542d3b04bcdd6a8c7c.json",
+      "sha256": "7f7f6823b71fd3592a97593c925028d64890f224526bd4804c8b61102574d9a7",
+      "source": "data/raw/LTC1AV81/e7578785a3347cb7cc4c6a9f8d6be8a7a713ecd21936e8542d3b04bcdd6a8c7c.json"
+    },
+    {
+      "bytes": 335,
+      "path": "raw/LTC1AV81/e7d6a0dc446bb6abd2a73ac986b96d9b3b40e9c4ce2b2e43863184e76f7f50ac.json",
+      "sha256": "7a775f1b7e3e72f412fd7e8ab1a56198868de2d622cf9c446b33ff24bdff0bdd",
+      "source": "data/raw/LTC1AV81/e7d6a0dc446bb6abd2a73ac986b96d9b3b40e9c4ce2b2e43863184e76f7f50ac.json"
+    },
+    {
+      "bytes": 10430,
+      "path": "raw/TC1AV8M2-LIFTING/74b452f68935f131b094c729534282d3cbf8ecf2a971ad51aad01315ab4af74d.json",
+      "sha256": "bae2abf1890391a89f5e7922c2327600aad9ccf4e0797ba57f0bffeab83384e3",
+      "source": "data/raw/TC1AV8M2-LIFTING/74b452f68935f131b094c729534282d3cbf8ecf2a971ad51aad01315ab4af74d.json"
+    },
+    {
+      "bytes": 10429,
+      "path": "raw/TC1E-PERIODIC/d30c318a1eab2aa71fc75d67557293ca1aab90a36601271fa1b8992a56dba301.json",
+      "sha256": "5a6b715500f11385e2b86c7118f39c16b268d28579fe80812859f0dd5c4d0333",
+      "source": "data/raw/TC1E-PERIODIC/d30c318a1eab2aa71fc75d67557293ca1aab90a36601271fa1b8992a56dba301.json"
+    },
+    {
+      "bytes": 25329,
+      "path": "raw/TC1E-SF/acc6df2073d1c4eab69c6352a7bafd2a24e1542408235258e22f307dd97ed1c6.json",
+      "sha256": "ced3923ef673b125964239ed2162104c650f10eee249c7ff618814d3c2f4c42d",
+      "source": "data/raw/TC1E-SF/acc6df2073d1c4eab69c6352a7bafd2a24e1542408235258e22f307dd97ed1c6.json"
+    },
+    {
+      "bytes": 36287,
+      "path": "raw/TC1E-SF/b93c77c9f176baae6ae71951d53b9e65d565f1555d497491a4df47eb78439e53.json",
+      "sha256": "a5f5a25157d5951101ec76e5d9ea09b50b29e7a220e45ddb843d86f1965c56ba",
+      "source": "data/raw/TC1E-SF/b93c77c9f176baae6ae71951d53b9e65d565f1555d497491a4df47eb78439e53.json"
+    },
+    {
+      "bytes": 1083,
+      "path": "recorded_text.json",
+      "sha256": "35ff65b37764fc51ce0cbe9eb5a6bf5e4319a633cb8c69df6dbfbd1f01fe93f0",
+      "source": "INGESTION_WALKTHROUGH.md \u00a71b"
+    },
+    {
+      "bytes": 11137,
+      "path": "withheld.jsonl",
+      "sha256": "011efaa3ec224c0adfa40b98e4cbab805ebfb470dd872f89b87b694d37da92f5",
+      "source": "data/exports/r-poc-5/withheld.jsonl"
+    }
+  ],
+  "schema": "impl's old S2 schema, kept as-is. See vsir.eval.legacy.adapt for the rename.",
+  "schema_version": 1,
+  "source_root": "impl",
+  "source_root_note": "The previous implementation's tree, as Spec \u00a72.4 names it. Its absolute path is a property of a workstation, so it is not recorded here: set VSIR_IMPL_ROOT to point the integrity test at it, and it asserts against the recorded digests without it."
+}

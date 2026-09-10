@@ -1,0 +1,7 @@
+{
+  "note": "The only page of text layer `impl` recorded anywhere. It is the OPENING of the page: the same section reports page 1 at 829-3,554 characters, so this block is a floor on what the page prints and never a complete extraction. Lifted mechanically by `python -m vsir.eval.legacy --port`, never retyped.",
+  "pages": {
+    "TC1E-SF@1.3#p001": "Page 1 of 55\nC24 SAFETY COMPONENT CIRCUIT LIST (from batch 68)\nSF 1.1A) RAPID AIR DISCHARGE DUE TO EMERGENCY BUTTON BEING PRESSED ---> Category 3 PL=D Reached\nOUTPUT MONITORING\nSF 1.2a) CARTON DISCHARGE / CLOSING START-UP SHUTDOWN DUE TO EMERGENCY STOP BUTTON PRESSED (Q25)\nB221 --> K158 - SI3\n(B&R X20SI4100 - Safe Dig. In.- 2 channel wiring)\nYV1\nFESTO VOFA-L26-T32C-M-G14-1C1-APP (574011)\nB222 --> K158 - SI4\nQ59  (TELEMECANIQUE LC1-D38BL)\nS200 (Emergency stop button in control panel)\nEAO 84-5140.0020\nS201 (with manual door only) - S202-S203 (Set of emergency stop buttons: left, rear, cartoning unit)\nSCHNEIDER ZB4-BS844\n"
+  },
+  "source": "impl/INGESTION_WALKTHROUGH.md \u00a71b \u2014 `texts[0]`, verbatim"
+}

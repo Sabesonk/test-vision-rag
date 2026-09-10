@@ -1,0 +1,379 @@
+{
+  "run_id": "r-poc-5",
+  "schema_version": 1,
+  "generated_at": "2026-09-07T11:15:13.576991+00:00",
+  "embed_model": "gemini-embedding-2",
+  "extract_model": "gemini-pro-latest",
+  "prompt_version": "s2-v1",
+  "dim": 1536,
+  "collection": "page_records_1536",
+  "documents": [
+    {
+      "doc_id": "TC1E-SF",
+      "path": "/Users/sabesonk/Documents/dilmah_enginnering_usecase/dataset/AI Agent/Use & Maintenance/Attachments/TC1E Schemi funzioni di sicurezza_1.3_Valido da Lotto 68_EN.pdf",
+      "gates": {
+        "page_coverage": {
+          "pass": true,
+          "got": 55,
+          "expected": 55
+        },
+        "segment_coverage": {
+          "pass": true,
+          "got": 122,
+          "expected": 122
+        },
+        "no_allowlist_disclosure": {
+          "pass": true,
+          "undisclosed": 0
+        },
+        "class_totality": {
+          "pass": true,
+          "unclassed": 0
+        },
+        "allowlist": {
+          "pass": true,
+          "backed": 1281,
+          "withheld": 0,
+          "rate": 1.0
+        }
+      },
+      "revision_mismatch": {
+        "pinned": "1.3",
+        "s1_said": "1.0"
+      },
+      "revision": "1.3",
+      "doc_type": "safety_function_list",
+      "title": "C24 SAFETY COMPONENT CIRCUIT LIST",
+      "lang": [
+        "en"
+      ],
+      "effectivity_basis": "from batch 68",
+      "pages": 55,
+      "segments": 122,
+      "level": 2,
+      "windows": 2,
+      "has_text_layer": true,
+      "numbering_scheme": "mixed",
+      "duplicates": 0,
+      "unlabelled": 0,
+      "identifiers": {
+        "emitted": 1281,
+        "backed": 1281,
+        "withheld": 0,
+        "no_allowlist_pages": 0,
+        "by_class": {
+          "tag": 983,
+          "io_channel": 97,
+          "vendor_code": 11,
+          "sf": 122,
+          "section": 51,
+          "sheet": 8,
+          "ima_code": 9
+        }
+      },
+      "rejected_units": 8,
+      "published": true,
+      "seconds": 32.4
+    },
+    {
+      "doc_id": "TC1E-PERIODIC",
+      "path": "/Users/sabesonk/Documents/dilmah_enginnering_usecase/dataset/AI Agent/Use & Maintenance/Attachments/TC1E Verifiche periodiche su efficienza sistemi di sicurezza_1.1_EN.pdf",
+      "gates": {
+        "page_coverage": {
+          "pass": true,
+          "got": 25,
+          "expected": 25
+        },
+        "segment_coverage": {
+          "pass": true,
+          "got": 16,
+          "expected": null
+        },
+        "no_allowlist_disclosure": {
+          "pass": true,
+          "undisclosed": 0
+        },
+        "class_totality": {
+          "pass": true,
+          "unclassed": 0
+        },
+        "allowlist": {
+          "pass": true,
+          "backed": 82,
+          "withheld": 95,
+          "rate": 0.463
+        }
+      },
+      "revision": "1.1",
+      "doc_type": "procedure",
+      "title": "Safety component efficiency control (SRP/CS - Safety Related part of Control System) C24-E",
+      "lang": [
+        "en"
+      ],
+      "effectivity_basis": "from batch 59",
+      "pages": 25,
+      "segments": 16,
+      "level": 0,
+      "windows": 1,
+      "has_text_layer": true,
+      "numbering_scheme": "mixed",
+      "duplicates": 0,
+      "unlabelled": 0,
+      "identifiers": {
+        "emitted": 177,
+        "backed": 82,
+        "withheld": 95,
+        "no_allowlist_pages": 0,
+        "by_class": {
+          "section": 1,
+          "tag": 79,
+          "sheet": 2
+        }
+      },
+      "rejected_units": 0,
+      "published": true,
+      "seconds": 22.3
+    },
+    {
+      "doc_id": "TC1AV8M2-LIFTING",
+      "path": "/Users/sabesonk/Documents/dilmah_enginnering_usecase/dataset/AI Agent/Use & Maintenance/LIFTING AND HANDLING PROCEDURES_TC1AV8M2.pdf",
+      "gates": {
+        "page_coverage": {
+          "pass": true,
+          "got": 24,
+          "expected": 24
+        },
+        "segment_coverage": {
+          "pass": true,
+          "got": 22,
+          "expected": null
+        },
+        "no_allowlist_disclosure": {
+          "pass": true,
+          "undisclosed": 0
+        },
+        "class_totality": {
+          "pass": true,
+          "unclassed": 0
+        },
+        "allowlist": {
+          "pass": true,
+          "backed": 90,
+          "withheld": 1,
+          "rate": 0.989
+        }
+      },
+      "revision": "1.0",
+      "doc_type": "procedure",
+      "title": "TRASPORTO E MOVIMENTI / LIFTING AND HANDLING PROCEDURES",
+      "lang": [
+        "it",
+        "en"
+      ],
+      "effectivity_basis": null,
+      "pages": 24,
+      "segments": 22,
+      "level": 0,
+      "windows": 1,
+      "has_text_layer": true,
+      "numbering_scheme": "flat",
+      "duplicates": 0,
+      "unlabelled": 0,
+      "identifiers": {
+        "emitted": 91,
+        "backed": 90,
+        "withheld": 1,
+        "no_allowlist_pages": 0,
+        "by_class": {
+          "section": 79,
+          "sheet": 11
+        }
+      },
+      "rejected_units": 0,
+      "published": true,
+      "seconds": 40.7
+    },
+    {
+      "doc_id": "LTC1AV81",
+      "path": "/Users/sabesonk/Documents/dilmah_enginnering_usecase/dataset/AI Agent/Diagrams/LTC1AV81.PDF",
+      "gates": {
+        "page_coverage": {
+          "pass": true,
+          "got": 34,
+          "expected": 34
+        },
+        "segment_coverage": {
+          "pass": true,
+          "got": 34,
+          "expected": null
+        },
+        "no_allowlist_disclosure": {
+          "pass": true,
+          "undisclosed": 0
+        },
+        "class_totality": {
+          "pass": true,
+          "unclassed": 0
+        },
+        "allowlist": {
+          "pass": true,
+          "backed": 146,
+          "withheld": 0,
+          "rate": 1.0
+        }
+      },
+      "revision": "1.3",
+      "doc_type": "diagram",
+      "title": "DOCUMENTAZIONE PROGETTO IMPIANTO LUBRIFICAZIONE / LUBRICATING SYSTEM DESIGN DOCUMENTATION",
+      "lang": [
+        "it",
+        "en"
+      ],
+      "effectivity_basis": null,
+      "pages": 34,
+      "segments": 34,
+      "level": 1,
+      "windows": 12,
+      "has_text_layer": true,
+      "numbering_scheme": "mixed",
+      "duplicates": 0,
+      "unlabelled": 0,
+      "identifiers": {
+        "emitted": 146,
+        "backed": 146,
+        "withheld": 0,
+        "no_allowlist_pages": 0,
+        "by_class": {
+          "section": 35,
+          "sheet": 82,
+          "tag": 29
+        }
+      },
+      "rejected_units": 0,
+      "published": true,
+      "seconds": 44.7
+    },
+    {
+      "doc_id": "DS-5549-EATON",
+      "path": "/Users/sabesonk/Documents/dilmah_enginnering_usecase/dataset/AI Agent/Datasheet/TC1AV8DS2_1.0/Datasheet/5549/20220808134523_Eaton-170615-FRBMM-C4-1N-003-A-en_GB.pdf",
+      "gates": {
+        "page_coverage": {
+          "pass": true,
+          "got": 3,
+          "expected": 3
+        },
+        "segment_coverage": {
+          "pass": true,
+          "got": 6,
+          "expected": null
+        },
+        "no_allowlist_disclosure": {
+          "pass": true,
+          "undisclosed": 0
+        },
+        "class_totality": {
+          "pass": true,
+          "unclassed": 0
+        },
+        "allowlist": {
+          "pass": true,
+          "backed": 45,
+          "withheld": 0,
+          "rate": 1.0
+        }
+      },
+      "revision": "V93.0",
+      "doc_type": "datasheet",
+      "title": "DATASHEET - FRBMM-C4/1N/003-A",
+      "lang": [
+        "en"
+      ],
+      "effectivity_basis": null,
+      "pages": 3,
+      "segments": 6,
+      "level": 0,
+      "windows": 1,
+      "has_text_layer": true,
+      "numbering_scheme": "mixed",
+      "duplicates": 0,
+      "unlabelled": 0,
+      "identifiers": {
+        "emitted": 45,
+        "backed": 45,
+        "withheld": 0,
+        "no_allowlist_pages": 0,
+        "by_class": {
+          "vendor_code": 3,
+          "tag": 7,
+          "sheet": 5,
+          "section": 30
+        }
+      },
+      "rejected_units": 0,
+      "published": true,
+      "seconds": 15.2
+    },
+    {
+      "doc_id": "CE-TC1AV8",
+      "path": "/Users/sabesonk/Documents/dilmah_enginnering_usecase/dataset/AI Agent/Use & Maintenance/Attachments/CE_TC1AV8_ITA-EN.pdf",
+      "gates": {
+        "page_coverage": {
+          "pass": true,
+          "got": 1,
+          "expected": 1
+        },
+        "segment_coverage": {
+          "pass": true,
+          "got": 1,
+          "expected": null
+        },
+        "no_allowlist_disclosure": {
+          "pass": true,
+          "undisclosed": 0
+        },
+        "class_totality": {
+          "pass": true,
+          "unclassed": 0
+        },
+        "allowlist": {
+          "pass": true,
+          "backed": 0,
+          "withheld": 0,
+          "rate": 1.0
+        }
+      },
+      "revision": "1.0",
+      "doc_type": "declaration",
+      "title": "Dichiarazione CE di Conformit\u00e0 / EC Declaration of Conformity",
+      "lang": [
+        "it",
+        "en"
+      ],
+      "effectivity_basis": "Batch 69",
+      "pages": 1,
+      "segments": 1,
+      "level": 0,
+      "windows": 1,
+      "has_text_layer": false,
+      "numbering_scheme": "none",
+      "duplicates": 0,
+      "unlabelled": 1,
+      "identifiers": {
+        "emitted": 0,
+        "backed": 0,
+        "withheld": 0,
+        "no_allowlist_pages": 1,
+        "by_class": {}
+      },
+      "rejected_units": 0,
+      "published": true,
+      "seconds": 13.7
+    }
+  ],
+  "totals": {
+    "documents": 6,
+    "published": 6,
+    "labels": 240,
+    "withheld": 96
+  }
+}
