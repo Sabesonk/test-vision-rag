@@ -7,10 +7,11 @@
 
 | | |
 |---|---|
-| **Complete** | 24 / 31 units (77%) — 20 of the planned 26, plus U027, U028, U029 and U030 added after the plan was written (plan §4b) |
-| **Current milestone** | **M5 — complete**: the ladder rungs and the paid step. `skim_documents`/`skim_sections` (U019) group the very same fused candidates `skim_pages` returns, and `read` (U020) is the one tool that spends — three pages at the pinned dpi 220, every code it emits stamped `present`/`absent`/`unverifiable` by `core/verify.py`, a mandatory `sufficient`, and a cache a new question always misses. **All eight tools of §7.2 are served.** M0, M1, M2a, M3, M4 and M5 closed; M2b's non-paid half shipped |
-| **Next unit** | **U021** — tri-state triage, the five safeguards, and the `fetch`-vs-`read` routing decision (M6). Free: every one of those choices is made *before* any money moves (§8.2) |
-| **Then** | **U022** — the loop, the six correction loops, the answer gate (I8) and `POST /ask` — the first thing in this build that may return prose |
+| **Complete** | 26 / 32 units (81%) — 21 of the planned 26, plus U027, U028, U029, U030 and U031 added after the plan was written (plan §4b) |
+| **Current milestone** | **M6 — in progress**: the runner. U021 shipped Loop 0 — §8.2's tri-state triage as a real state machine with all five safeguards binding, and §8.1a's `fetch`-vs-`read` route — and it spends nothing on any path, which `vsir ask --explain` **proves with a call spy** rather than asserting. U022 is what remains: the loop, the six correction loops, the server-side answer gate (I8) and `POST /ask` — the first surface in this build that may return prose. **M0, M1, M2a, M3, M4 and M5 are closed** and all eight tools of §7.2 are served; M2b's non-paid half shipped |
+| **Latest** | **U031 — the typed API surface** (post-plan). Each of the eight tools has its own path publishing its own schema; the corpus is readable at `GET /documents`, `/documents/{doc_id}`, `/documents/{doc_id}/pages` and `GET /runs`; refusals finally have a **model**; and MCP serves the corpus as a `vsir://corpus` **resource**, so the tool surface is still the eight of §7.2. One dispatcher, one validator, one serialiser — asserted rather than promised. **Three defects found reviewing it before it shipped**, each now with a regression test |
+| **Next unit** | **U022** — the loop, the six correction loops, the answer gate (I8) and `POST /ask` — the first thing in this build that may return prose. It executes a machine it does not have to design: `runner/triage.py::TRANSITIONS` already declares `draft`/`verify`/`answer` and §8.1's edges between them |
+| **Then** | **U023 / U024** — the operator console and the Playwright replay suite (M7) |
 | **Read first** | **Plan §4c — six open defects found by running the system.** None breaks a build; all of them mislead somebody who trusts the output. P1 (a live run records no cost) and P2 (no VLM cache store, so a re-ingest re-bills) both land on U013 |
 | **Blocked** | **U013** — the paid re-bill only, and now on **OQ-1 alone**: `data/source/TC1E-SF.pdf` is still not present. **OQ-2 is closed** — a key is configured and was exercised live on 2026-09-10, ingesting a real 4-page datasheet to `published` through `POST /documents`. The ladder is no longer a blocker either: the shipped `plan()` refused the 55-page pilot at **step 05**, one step before the spend everyone thought it was waiting on a credential for, and `fixes/001` now folds it to `[[1, 30], [31, 55]]` — byte-for-byte what its own acceptance table declared. Nothing downstream is blocked (§17) |
 
@@ -97,6 +98,13 @@ Two things a later unit should not have to rediscover:
       pilot; §6.4 check (2) raised on one witness with 22 measured false positives; `label_verified`
       contradicted the page's own text. See `fixes/README.md` for the two measured deviations
 
+### Surface work added after the plan (spend: none)
+- [x] **U031 The typed API surface: eight named routes, the corpus, and MCP resources** — added
+      after the plan (§4b). One model module and one error model; `POST /tools/{name}` for each of
+      the eight beside the generic route it keeps; `GET /documents`, `/documents/{doc_id}`,
+      `/documents/{doc_id}/pages` and `GET /runs`; `vsir://corpus` and two resource templates on
+      MCP. **No new tool, no second dispatcher, and no second validator**
+
 ### M4 — `skim_pages`, `fetch`, `resolve` (spend: none)
 - [x] U017 `skim_pages`, deterministic fusion, image queries, and `resolve`
 - [x] **U029 The document store — `page_id` → bytes** — new (plan §4b); **U018's blocker, cleared**
@@ -108,7 +116,7 @@ Two things a later unit should not have to rediscover:
 
 
 ### M6 — the runner, the loop, the answer gate (spend: read)
-- [ ] U021 Tri-state triage, the safeguards, and fetch-vs-read routing — spend: none
+- [x] U021 Tri-state triage, the safeguards, and fetch-vs-read routing — spend: none
 - [ ] U022 The loop, the six correction loops, the answer gate, and `POST /ask` — spend: paid
 
 
@@ -3905,3 +3913,315 @@ found. For the F4 disclosure that is the wrong direction to fail in — the row 
 be seen — and no test covers it. Every document in the corpora today starts at 1, so it is latent.
 Whoever next touches `_blind_spots` should fall back to the document's *lowest* current page
 rather than to the literal page 1.
+
+---
+
+### U031 — The typed API surface: eight named routes, the corpus, and MCP resources
+
+**Milestone:** post-plan (§4b) · **Spend:** none · **Status:** `[x]` Complete · **Completed:** 2026-09-10
+
+Four things the release served correctly and **described** badly. None of them was a bug a test
+could see, because in every case the code was right and the contract was invisible.
+
+**One OpenAPI operation for eight tools.** `POST /tools/{tool_name}` is the right implementation —
+one route, one table, one dispatcher — and it published a single operation with an untyped body,
+so `/docs` showed one *"tool_name + JSON"* form for eight tools whose parameters have nothing in
+common, and a client generated from `/openapi.json` got one `call_tool(name, dict)` with no types
+on either side. An integrator had to read our source to learn that `read` takes `question`. Each
+tool now has its own path, **generated in a loop from the table** — so a tool cannot get a route
+without being in the table or be in the table without getting a route — and `ToolSpec` gained a
+`response` column so each route publishes its §7.1 envelope as well as its body.
+
+The load-bearing decision is that a named route **does not validate its own body**. A typed
+FastAPI parameter would have been the obvious way to publish the schema, and FastAPI's failure is
+a `422` with a JSON pointer where §7.3 promises a code an agent switches on. So the schema goes
+out through `openapi_extra` as a `$ref`, `_described()` puts the referenced models in
+`components.schemas` from the same table, and `dispatch` stays the only validator on either
+transport. `test_tool_routes.py` asserts both halves: byte-identity between a named route and the
+generic one, and `invalid_request` — never a `422` — for `includeUnverified`. The generic route
+stays mounted beneath the eight, unpublished, still answering an unknown name with the typed `404`
+that lists what *is* served.
+
+**Per-field notes that reached Sphinx and not the wire.** The eight input schemas moved to
+`serve/inputs.py`, and every `#:` comment on them became a `Field(description=...)`. That is the
+real content of the change: `model_json_schema()` is what `mcp/server.py` publishes as each tool's
+`input_schema`, so the notes explaining that `image` is base64, that `exclude` is pages already
+rejected, that `inline=false` returns a reference rather than bytes — the things an agent needs in
+order to choose a move — were legible to a developer reading our source and invisible to the model
+calling the tool. There is **not one Pydantic constraint** in that module, deliberately: a
+`Field(le=25)` on `limit` would turn `skim_limit_exceeded` into a generic validation error, and
+`caps.py` is where a bound lives precisely so it can carry its own code.
+
+**No typed error anywhere.** `ToolError.to_payload()` built a dict, and every `responses=` table
+carried a `description` with no `model` — so a document whose whole argument is *"switch on the
+code"* declared no shape for the thing carrying the code. `serve/errors.py` is now that shape, and
+it is the one model in the service with `extra="allow"`, because a refusal's details name the
+bound it hit (`limit`/`requested` on a cap, `retryable` on an outage) and those keys differ per
+code. `ControlError` became a subclass of it rather than a second declaration of `{error, detail}`.
+
+**A corpus you could search and not see.** `POST /documents` put documents in and nothing told you
+what went in, so an operator could ingest a corpus and had no way to look at it. `serve/manage.py`
+plus `GET /documents`, `GET /documents/{doc_id}`, `GET /documents/{doc_id}/pages` and `GET /runs` —
+all queries over the two collections ingestion already writes (register **E1**), computing nothing
+ingestion did not record and storing nothing of their own, `exact=True` throughout because an
+estimated page count short by two is indistinguishable from an ingest that dropped two pages.
+They show rather than tidy away: a **superseded revision is listed** with `is_current: false`
+because §6.7 keeps it (F9) and its pages are still fetchable; `searchable_ratio` is on every row
+and is asserted to equal what `skim_documents` reports for the same document; an unknown `doc_id`
+is a typed `404` and never a zero-page row. **All read-only** — retirement is §6.7's and runs
+inside a publish where the run record is its evidence, and the suite asserts the collection count
+is unchanged after every route is called and that `DELETE` is a `405`.
+
+**There is no chunk here to manage, and that is the design.** A *window* is a page range that
+stitching deletes again and it never becomes a retrieval boundary (`ingest/window.py`); window
+(attention), section (semantics) and page (index) stay separate throughout. So the units are
+documents, revisions, pages and runs, and the addressable one is the **page** under §5.2's
+`page_id` — asserted by taking a `page_id` off a listing and handing it to `verify`.
+
+**The corpus on MCP is a resource, not a ninth tool.** §7.5 fixes the surface at *the same eight
+tools*, and that is a statement about what an agent chooses between: the eight are **moves**, and
+an agent picking among nine where one is "list the corpus" is choosing between a search and a
+filing cabinet. `resources/list` serves one concrete `vsir://corpus` and declares
+`vsir://documents/{doc_id}` and `vsir://documents/{doc_id}/pages` as **templates**, so it stays
+O(1) and a thousand-binder corpus does not put a thousand rows in a client's picker. They resolve
+through `serve/manage.py`, so reading `vsir://corpus` is byte-identical to `GET /documents` and the
+import-graph rule still holds — no filter, no count, no scroll anywhere in `mcp/server.py`.
+
+**Three defects this surface had before it shipped**, all found reviewing it rather than by a
+failing test, and each now carrying its own regression test:
+
+| | Defect | Why it mattered |
+|---|---|---|
+| 1 | `next_offset` was gated on `last + 1 <= total` — a **count** compared with an **index** | `ingest/export.py` guards against exactly the document those two disagree on: one with a hole in its page numbering, where `total` is smaller than the last `page_no`. Paging ended early and reported a **truncated inventory as a complete one** |
+| 2 | With no published revision, `""` was passed as the revision to measure | Filters on `revision == ""`, matches nothing, and reports `searchable_ratio: 0.00` for a document that demonstrably has pages — the one number on the row an operator acts on, inverted, and inverted toward *"this binder is unsearchable"* about one that is merely unpublished |
+| 3 | `documents()` facets for ids then reads each one, and propagated a per-row `404` | Two round trips, and a publish or delete can land between them. One document retired while we counted **failed the entire listing** — fourteen documents unreturnable because a fifteenth went away. A row that no longer exists is not a row; the `404` belongs to `GET /documents/{doc_id}`, where the caller named it |
+
+**Tests** — four new files, 54 assertions, and the two full suites green:
+
+```
+tests/api/test_tool_routes.py        the eight paths, the schemas, byte-identity, no 422
+tests/api/test_corpus_management.py  counts, the superseded revision, the ratio, read-only, x3 defects
+tests/api/test_run_history.py        newest-first, `gated` is not `failed`, failed_gates named
+tests/api/test_mcp_resources.py      still eight tools, templates, byte-identical to HTTP
+
+bash scripts/test-unit.sh   ->  1321 passed · Layer 0/1 PASSED
+bash scripts/test-api.sh    ->  1419 passed, 13 skipped (baseline, pre-defect-fixes)
+```
+
+**Invariants / failure rows closed:** none new — this unit changes how the surface is *described*
+and what can be *read*, and asserts that neither changed how a call is answered. §7.5's
+byte-identity property is extended to cover resources.
+
+---
+
+### U021 — Tri-state triage, the five safeguards, and the `fetch`-vs-`read` route
+
+**Milestone:** M6 · **Spend:** none · **Status:** `[x]` Complete · **Completed:** 2026-09-10
+
+Loop 0, built as a real state machine and proved without a paid call. Three net-new modules under
+`backend/vsir/runner/` and one new command: `vsir ask --explain "<question>"` descends
+`skim_documents` → `skim_sections` → `skim_pages`, marks every candidate
+`relevant | uncertain | irrelevant` from its **row alone**, prints the `exclude` set the next skim
+would carry, chooses `fetch` or `read` per candidate, and ends with a spy proving it spent nothing.
+
+**The mark is made from four fields and nothing else** — `summary`, `why`, `grounded_rate`,
+`text_trust` — because that is all a triage row carries: a `PageHit` has no `text` field at all
+(P2), which the L0 suite asserts against the model rather than against the code that reads it. The
+rule ladder is short and every rung leans the same way:
+
+| | condition | mark |
+|---|---|---|
+| 1 | the query names an identifier **and** `why` contains `lexical` | `relevant`, `exact_hit`, **promoted** — the summary is never read |
+| 2 | the summary carries a term of the query | `relevant`, `summary_match` |
+| 3 | the text matched and the summary does not show it | `uncertain`, `lexical_unshown` |
+| 4 | `text_trust` is `untrusted`/`no_text`, or `grounded_rate < 0.8`, or there is no summary | `uncertain` |
+| 5 | a trusted, grounded summary with nothing of the query in it | `irrelevant`, `no_overlap` |
+
+Rows 3 and 4 are the **four ways a summary stops being evidence of absence**, and they are the
+whole of the design's asymmetry: every judgement errs toward carrying a candidate forward. A
+useless `uncertain` costs a place in a pool that is only drained when the answer was not found; a
+wrong `irrelevant` produces an abstention on a corpus that contained the answer. Safeguard 2 is
+not in the table because it is not a property of a row — with ≤ 3 candidates the whole set is
+lifted to `relevant` afterwards (reason `small_set`), since *"read them all"* is what §8.2 asks
+for and a set left half in the pool would still be a filtered small set.
+
+**Demo output** — the plan's demo command, against the published 42-page generated corpus
+(`bash scripts/stack.sh up`), boot-check JSON lines elided:
+
+```
+$ vsir ask --explain "the carton discharge won't restart after an E-stop reset"
+
+vsir ask --explain — release dev-0
+   question  "the carton discharge won't restart after an E-stop reset"
+   prompt    runner-v1 · sha256 e1cc7b09255c · 5 safeguard(s) bound · 8 tool(s) offered
+
+01 DESCEND — skim_documents(…, scope={})
+   status ok · rows 2 · total 84 · weak true · searched 84 page(s), 4 with no text
+   descend into {'doc_id': 'synthetic-3window'} → scope {'doc_id': 'synthetic-3window'}
+
+02 DESCEND — skim_sections(…, scope={'doc_id': 'synthetic-3window'})
+   status ok · rows 9 · total 42 · weak true · searched 42 page(s), 2 with no text
+   descend into {'section_id': ['synthetic-3window@1.0#s004']} → scope {…, 'section_id': [s004]}
+
+03 DESCEND — skim_pages(…, scope={'doc_id': …, 'section_id': [s004]})
+   status ok · rows 5 · total 5 · weak false · searched 5 page(s), 0 with no text
+
+04 TRIAGE — the tri-state marks (§8.2), free and before any spend
+   mark       reason           page_id                       why            rank  grounded  trust  matched
+   relevant   summary_match    synthetic-3window@1.0#p015    dense,lexical  1     1.00      ok     after,stop
+              Page 13 covers emergency stop chain stage 13 … It names K115
+   relevant   summary_match    synthetic-3window@1.0#p016    dense,lexical  2     1.00      ok     after,stop
+   relevant   summary_match    synthetic-3window@1.0#p014    dense,lexical  3     1.00      ok     after,stop
+   relevant   summary_match    synthetic-3window@1.0#p017    dense,lexical  4     1.00      ok     after,stop
+   relevant   summary_match    synthetic-3window@1.0#p013    dense,lexical  5     1.00      ok     after,stop
+
+   relevant 5 · uncertain 0 (the fallback pool, retained) · irrelevant 0
+   telemetry 5 mark(s) written as evaluation data — no tool call, and the loop reads the marks it
+             already holds (§8.2, §11.4)
+   PASS  every candidate carries exactly one of relevant | uncertain | irrelevant
+
+05 EXCLUDE — what the next skim is told not to re-offer
+   nothing marked irrelevant — there is no exclusion to make
+
+06 ROUTE — §8.1a, the deliberate choice (caller: vision-capable, 5 image slot(s),
+         reads_remaining 3)
+   synthetic-3window@1.0#p015    fetch   default_fetch
+   …                             fetch   default_fetch   (all five)
+   plan: fetch over [p015, p016, p014, p017, p013] · spends false
+
+07 MACHINE — the transitions this question is on (§8.1, §8.3)
+   descend --candidates--> triage --look_set--> look
+   the fallback pool holds 0 candidate(s): —
+   PASS  safeguard 1 — on `sufficient: false` the next state is the uncertain pool, not a wider scope
+         (look, insufficient) → drain_uncertain; and widening is only reachable from there:
+         (drain_uncertain, pool_empty) → widen
+
+08 SPEND — the spy
+   PASS  no paid tool was dispatched and the VLM backend was never reached
+         dispatched ['skim_documents', 'skim_sections', 'skim_pages'] · paid [] ·
+         VLM backend reached 0 time(s) (the release's spending tools: ['read'])
+   PASS  the read budget is untouched: every envelope reported the same reads_remaining
+         reads_remaining across 3 envelope(s): [46, 46, 46]
+
+ALL ASSERTIONS PASSED
+```
+
+Two more paths, same command:
+
+```
+# a text-only caller (§8.1a's delegation door) — the route flips and the §7.3 cap splits the set
+$ vsir ask --explain --no-vision "…"
+   synthetic-3window@1.0#p015    read    caller_not_vision_capable
+   synthetic-3window@1.0#p017    — none  deferred_over_cap
+   plan: read over [p015, p016, p014] · deferred [p017, p013] · spends true
+
+# an empty triage — §8.1's coverage branch, and it still proves it spent nothing
+$ vsir ask --explain "where is K999 wired"
+   no candidates to mark · status not_found · searched 84 page(s), 4 with no text layer
+   §8.1 branch: empty_no_text → vision_first
+   4 image-only page(s) in scope are unexamined: `fetch`/`read` those first.
+     "Not in these documents" is forbidden until they are (§8.5)
+   the rung offers another move rather than an absence: next.suggest ['lookup']
+   08 SPEND … ALL ASSERTIONS PASSED
+```
+
+**Invariants / failure rows closed:** none newly, and that is the plan's own answer — I8 is U022's
+and M6 owns no F-row. What this unit closes is **R1** and **R6**: R1 by the `uncertain` pool,
+*"do not filter a small set"* and `why: lexical` as a floor rather than a hint; R6 by making all
+five safeguards binding **in the state machine as well as the prompt**, which is what the
+acceptance criteria assert — the tests read `TRANSITIONS`, not the prompt text.
+
+**Tests:** 60 L0 (`test_triage.py` 23, `test_safeguards.py` 17, `test_route.py` 20) · 11 L2
+(`test_ask_explain.py`). L0/L1 `1321 passed`; L2/L3 `1430 passed, 13 skipped`. Nothing skipped or
+xfailed by this unit, and no test weakened to pass.
+
+**One operational note for whoever runs L2 next.** `docker-compose.test.yml` publishes fixed ports
+(6335, 8001) under the default project name, so **two `scripts/test-api.sh` runs on one machine
+destroy each other**: the second one's `up` collides on the container name, and the first one's
+`down -v` wipes the collections the second is mid-way through. That is what 214 failures and 628
+errors of *"Connection refused"* looked like here before it was diagnosed — contention, not a
+defect. The clean L2 numbers above were produced on an isolated stack:
+
+```bash
+printf 'services:\n  test-qdrant:\n    ports: !override\n      - "6435:6333"\n' \
+  '  backend-test:\n    ports: !override\n      - "8101:8000"\n' > /tmp/override.yml
+COMPOSE_PROJECT_NAME=vsir-u021 docker compose -f docker-compose.test.yml -f /tmp/override.yml \
+  up -d --build --wait test-qdrant backend-test
+cd backend && COMPOSE_PROJECT_NAME=vsir-u021 VSIR_TEST_QDRANT_URL=http://localhost:6435 \
+  VSIR_TEST_BASE_URL=http://localhost:8101 .venv/bin/python -m pytest --no-cov tests/api/ -q
+```
+
+`COMPOSE_PROJECT_NAME` matters for the pytest run too: `test_log_stream.py` shells out to
+`docker compose … logs backend-test`, and without it that reads the *other* project's container.
+
+**Notes:**
+
+- **Safeguard 1 is a row of a table, not an ordering between two branches.** `(look,
+  insufficient) → drain_uncertain` lives in `runner/triage.py::TRANSITIONS`, and `widen` is
+  reachable **only** from `drain_uncertain`. In a hand-written loop the safeguard is one line a
+  later edit can reorder with no test noticing; as data, two tests read it directly and there is no
+  `(look, insufficient) → widen` edge to add by accident. `next_state` raises `UnknownTransition`
+  rather than defaulting — a machine that fell through to *"keep going"* is how a runner drafts
+  from pages triage rejected.
+- **Safeguard 3 is a floor and an ordering, not a promotion.** §8.2 says a `lexical` hit
+  *"outranks"* a dense-only one, so it is the sort key's first tie-break (asserted at **equal
+  rank**, which is the AC's shape) and it makes `irrelevant` unreachable for such a row — but it
+  does not make it `relevant` on its own, because a prose query matches common words lexically.
+  Safeguard 4 is the one that promotes, and it needs **both** halves: an identifier in the query
+  *and* `lexical` in `why`.
+- **A length floor (≥ 4 characters), not a stopword list.** Summaries are multilingual (§5.2, D5),
+  so an English stopword list would strip nothing from a German summary while dropping words from
+  the English one — the failure would be silent and one-sided. A floor is language-neutral, and a
+  function word that survives it can only carry a page *forward*. It is visible in the demo:
+  `matched: after,stop` includes one word that is doing no work, which is the safe direction.
+- **Nothing here matches.** The overlap between a query's terms and a summary's tokens decides
+  whether to *look*; it never decides whether a code is printed on a page. That question keeps its
+  one code path (`exact_filter` over `variants()`, I3) and a mark can never reach a response as a
+  hit, a citation or a claim. Documented in the module and re-stated here because a reviewer's
+  first reaction to token overlap in this codebase should be suspicion.
+- **SA-4, settled in code:** the route default is `fetch`. §8.2's *"`relevant` → `read`"* is the
+  generic verb for the look step; §8.1a's bolded *"Default: `fetch`"* governs. `read` is chosen for
+  exactly two reasons — the caller cannot see, or its context cannot hold another raster — and if
+  delegation is needed with no read budget left there is **no route** (`budget_exhausted`) rather
+  than a silent extra call or a raster handed to a caller that cannot read it.
+- **The context budget is `image_slots`, not a token estimate.** §8.1a puts a raster at *"~1–2k
+  tokens per image"*, and the caller is the only party that knows what that leaves; a token
+  estimate here would be this service guessing at a model it does not host. `Caller` is a
+  **parameter**, not configuration: whether the caller can see is a property of the caller, so no
+  env var was added and §15 Factor VI is unchanged.
+- **`runner/route.py` is not in Spec §4.1's `runner/` list** (`loop.py prompt.py triage.py
+  answer.py`). It is the plan's deliverable for this unit, §8.1a is a section of its own, and the
+  repository already carries modules §4.1 does not enumerate (`core/nearmiss.py`,
+  `serve/caps.py`, `ingest/store.py`). Recorded as a deliberate, additive deviation.
+- **The runner prompt's text is Python, not a packaged `.md`.** `vlm/prompts/*.md` are inputs to a
+  *billed* call, pinned by digest to `VSIR_PROMPT_VERSION`; this one is composed per question from
+  the tools a release serves and the budget in force, so it has no fixed bytes to pin — and
+  putting it under the same label would re-key every frozen S2 response in the repository whenever
+  a safeguard's wording changed. `RUNNER_PROMPT_VERSION = "runner-v1"` moves on its own, and a test
+  asserts it is not a key in `PROMPT_DIGESTS`.
+- **One definition of the five safeguards, two consumers.** `triage.SAFEGUARDS` is the text; the
+  module enforces it and `runner/prompt.py` renders it. A test asserts the prompt carries all five
+  *in the machine's own words*, so a safeguard reworded in one place fails rather than drifting.
+- **Telemetry is an observation, never a step.** `record(result, sink=None)` writes nothing and
+  returns 0, and the look set, the pool and the machine's next state are identical either way —
+  the marks are already in the value the caller holds. One `debug` event per mark, because §8.2
+  wants `query → page → relevant?` as evaluation data and an aggregate cannot be joined back to
+  the page it judged.
+- **The demo proves `exclude` by using it.** When triage marks anything `irrelevant`, step 05
+  re-runs `skim_pages` with that `exclude` and asserts the rows do not come back; the L2 suite
+  does the same over HTTP with an off-topic query, which is also where the *"a page with no text
+  layer is never excluded"* row lives.
+- **`vsir ask` without `--explain` is a named refusal** (`answer_not_built`, non-zero exit) naming
+  U022 and the gate. An **empty** triage is not a refusal: it prints §8.1's coverage branch and
+  exits 0, because an absence the corpus genuinely has is a correct answer (§7.1).
+- **The L2 suite runs against the U019 multi-document corpus, not `synthetic_3window`.** The
+  plan names the 3-window fixture, and it is the wrong corpus for *this* unit: the descent's
+  first rung groups **documents** and that fixture is one document, so `skim_documents` would
+  have nothing to choose between and the `next.expand` step would be untested. The U019 corpus
+  has three manuals plus twelve leaflets, sections to descend into, and pages with no text layer
+  — which is also where the *"a scanned page is never excluded"* row gets its evidence. The
+  **demo** does run over the 3-window corpus, as published by `scripts/stack.sh up`.
+- **What U022 inherits:** `TRANSITIONS` already declares `draft`, `verify`, `answer` and the edges
+  §8.1's diagram draws (`verify` on `contradicted` → `triage`, on `cleared` → `answer`), so
+  `loop.py` executes a machine it does not also design. Nothing in this unit drafts, composes or
+  renders prose, and `answer.py` does not exist yet.

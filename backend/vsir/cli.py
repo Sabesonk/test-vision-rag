@@ -81,7 +81,10 @@ from vsir.serve import app as app_module
 from vsir.serve import auth as auth_module
 from vsir.serve import raster_cache
 from vsir.serve.app import config_of, create_app
-from vsir.serve.envelope import Provenance, ToolEnvelope, VerifyResult, wire
+from vsir.runner import prompt as prompt_module
+from vsir.runner import route as route_module
+from vsir.runner import triage as triage_module
+from vsir.serve.envelope import PageHit, Provenance, ToolEnvelope, VerifyResult, wire
 from vsir.vlm import VlmError, backend as vlm_backend
 from vsir.vlm import cache as vlm_cache
 from vsir.vlm import record as vlm_record
@@ -2772,6 +2775,313 @@ def _csv_arg(raw: str) -> list[str]:
     return [value.strip() for value in raw.split(",") if value.strip()]
 
 
+# ── `vsir ask` — the runner of §8 (U021: everything that costs nothing) ─────────────────────────
+
+#: The rungs of the descent, in the order §8.1 puts them: *"the same move at three zoom levels"*.
+DESCENT = ("skim_documents", "skim_sections", "skim_pages")
+
+#: What the triage table prints for a row whose summary is empty.
+NO_SUMMARY = "(no summary)"
+
+
+@dataclasses.dataclass
+class _Spy:
+    """The call spy `ask --explain` runs behind. It records, and on the paid backend it refuses.
+
+    Two independent observations, because they fail differently. ``tools`` is every name that
+    reached :func:`vsir.serve.app.dispatch`, so a paid *tool* is visible even if it never got as
+    far as a model; ``vlm`` counts every reach for the VLM backend itself, which is the seam a
+    paid call has to come through (`ToolContext.vlm`) — and reaching it raises, so a spend cannot
+    happen and then be reported afterwards.
+    """
+
+    spends: frozenset[str]
+    tools: list[str] = dataclasses.field(default_factory=list)
+    vlm: int = 0
+    #: ``reads_remaining`` off every envelope that came back — the budget, observed rather than
+    #: assumed. A free command must leave it where it found it (§7.1, §8.4).
+    remaining: list[int] = dataclasses.field(default_factory=list)
+
+    def backend(self) -> Any:
+        self.vlm += 1
+        raise AssertionError(
+            "`vsir ask --explain` reached for the VLM backend: triage and routing are decided "
+            "before any money moves (§8.2), so nothing in this command may spend")
+
+    @property
+    def paid(self) -> list[str]:
+        return [tool for tool in self.tools if tool in self.spends]
+
+
+def _ask_dispatch(runtime: Any, spy: _Spy, tool: str, arguments: Mapping[str, Any]) -> Any:
+    """One rung, through the shipped dispatcher, with the spy watching the name go past."""
+    spy.tools.append(tool)
+    outcome = app_module.dispatch(runtime, tool, dict(arguments),
+                                  identity=auth_module.local_identity(CLI_PROCESS),
+                                  correlation={})
+    if not outcome.refused and "reads_remaining" in outcome.payload:
+        spy.remaining.append(outcome.payload["reads_remaining"])
+    return outcome
+
+
+def _ask_rung(runtime: Any, spy: _Spy, tool: str, arguments: Mapping[str, Any],
+              step: str) -> Mapping[str, Any] | None:
+    """Run one narrowing rung and print what it decided. ``None`` when the call was refused."""
+    _step(step, f"DESCEND — {tool}({arguments.get('query')!r}, "
+                f"scope={arguments.get('scope') or {}})")
+    outcome = _ask_dispatch(runtime, spy, tool, arguments)
+    if outcome.refused:
+        print(f"   REFUSED  {_demo_refusal(outcome)}")
+        return None
+    payload = outcome.payload
+    stats = payload.get("scope_stats") or {}
+    print(f"   status {payload['status']} · rows {len(payload.get('hits') or ())} · "
+          f"total {payload['total']} · weak {str(payload['weak']).lower()} · "
+          f"searched {stats.get('pages', 0)} page(s), {stats.get('pages_no_text', 0)} with no text")
+    return payload
+
+
+def _ask_scope(payload: Mapping[str, Any], scope: Mapping[str, Any]) -> dict[str, Any]:
+    """The scope the next rung descends with: this rung's best row's ``next.expand``, added on.
+
+    The **runner** picks the group to descend into and the service never does (§7.6) — an
+    aggregate row hands back a scope precisely so that the choice is the caller's, and the rows
+    are already ordered by ``(best_rank, -pages_matched)``, so *"the first one"* is a decision
+    about the ranking rather than a second ranking of our own.
+    """
+    hits = list(payload.get("hits") or ())
+    expand = (hits[0].get("next") or {}).get("expand") if hits else None
+    if not expand:
+        print(f"   no expansion offered — descending with the scope in hand: {dict(scope) or {}}")
+        return dict(scope)
+    descended = {**scope, **expand}
+    print(f"   descend into {expand} → scope {descended}")
+    return descended
+
+
+def _print_triage(result: Any, rows: Mapping[str, Any]) -> None:
+    """The triage table: one row per candidate, the mark, and what the mark was made on.
+
+    ``rows`` is the skim's own hits by ``page_id``. A :class:`~vsir.runner.triage.Mark` carries
+    the judgement and the evidence for it, not a copy of the row it judged — so the two are
+    joined here, where they are printed, and nowhere in the runner.
+    """
+    print(f"   {'mark':<11}{'reason':<17}{'page_id':<30}{'why':<18}{'rank':<6}"
+          f"{'grounded':<10}{'trust':<11}matched")
+    for one in result.marks:
+        row = rows[one.page_id]
+        grounded = row.grounded_rate
+        print(f"   {one.mark:<11}{one.reason:<17}{one.page_id:<30}{','.join(one.why):<18}"
+              f"{one.rank:<6}{('—' if grounded is None else f'{grounded:.2f}'):<10}"
+              f"{row.text_trust:<11}{','.join(one.matched) or '—'}")
+        print(f"   {'':<11}{(row.summary[:100] or NO_SUMMARY)}")
+    print(f"\n   relevant {len(result.relevant)} · uncertain {len(result.uncertain)} "
+          f"(the fallback pool, retained) · irrelevant {len(result.irrelevant)}"
+          f"{' · safeguard 2 applied: ≤3 candidates, none filtered' if result.small_set else ''}")
+
+
+def _cmd_ask(args: argparse.Namespace) -> int:
+    """`vsir ask --explain` — the descent, the tri-state marks and the route, for free (§8.2).
+
+    Every move this command makes is one §8.2 calls *"free, before any money is spent"*, and the
+    last step is the evidence for that claim rather than the assertion of it: a spy counts the
+    tools that were dispatched and refuses the VLM backend outright, so a spend would be a
+    traceback and not a line of output.
+
+    Without ``--explain`` there is no answer to give yet — composing prose is U022's `POST /ask`
+    and its server-side gate (I8) — so the command says which milestone owns it and exits
+    non-zero rather than printing something that looks like an answer.
+    """
+    if not args.explain:
+        print("   REFUSED  answer_not_built: composing an answer is the answer gate's (§8.4, I8) "
+              "and lands with U022 in M6. `vsir ask --explain \"<question>\"` runs the free half "
+              "— the descent, the tri-state triage and the route — and spends nothing.")
+        return EXIT_REFUSED
+
+    print(f"vsir ask --explain — release {os.environ.get('VSIR_RELEASE_ID', 'unknown')}")
+    print(f"   question  {args.question!r}")
+    try:
+        runtime, client = app_module.runtime_from_env(dict(os.environ))
+    except BootRefused as refusal:
+        _log.error("boot_refused", failed_checks=refusal.failed_checks, detail=str(refusal))
+        print(f"   REFUSED  boot: {refusal}")
+        return EXIT_REFUSED
+    except ConfigError as refusal:
+        _log.error("command_refused", reason="configuration", detail=str(refusal))
+        print(f"   configuration refused: {refusal}")
+        return EXIT_REFUSED
+
+    spy = _Spy(spends=frozenset(name for name, spec in runtime.tools.items() if spec.spends))
+    # The seam a paid call must come through, replaced by the spy for the life of this command.
+    # `ToolRuntime` is frozen, so this is a new runtime rather than a mutated one — the process's
+    # memoised backend is untouched and nothing here leaks into another command (§15 Factor VI).
+    watched = dataclasses.replace(runtime, vlm=spy.backend)
+    caller = route_module.Caller(reads_remaining=runtime.config.reads_per_question,
+                                 vision_capable=not args.no_vision)
+    system = prompt_module.build(prompt_module.PromptInputs(
+        tools=tuple(sorted(runtime.tools)), reads_per_question=runtime.config.reads_per_question,
+        vision_capable=caller.vision_capable))
+    # The prompt is printed as an identity, not as a wall of text: what a reviewer checks is that
+    # the five safeguards the machine below enforces are the five a model would be handed, and
+    # `--prompt` prints the text itself when that is the thing in question.
+    print(f"   prompt    {prompt_module.RUNNER_PROMPT_VERSION} · "
+          f"sha256 {prompt_module.digest(system)[:12]} · "
+          f"{len(triage_module.SAFEGUARDS)} safeguard(s) bound · "
+          f"{len(runtime.tools)} tool(s) offered")
+    if args.prompt:
+        print("\n" + system)
+    try:
+        return _ask_explain(watched, spy, args.question, caller)
+    finally:
+        client.close()
+
+
+def _ask_explain(runtime: Any, spy: _Spy, question: str, caller: Any) -> int:
+    """The four moves of §8.2 and §8.1a, printed. Returns the exit code."""
+    passed = True
+    scope: dict[str, Any] = {}
+    payload: Mapping[str, Any] | None = None
+    for number, tool in enumerate(DESCENT, start=1):
+        arguments: dict[str, Any] = {"query": question, "scope": scope}
+        if tool == "skim_pages":
+            arguments["limit"] = SKIM_LIMIT
+        payload = _ask_rung(runtime, spy, tool, arguments, f"0{number}")
+        if payload is None:
+            return EXIT_REFUSED
+        if tool != "skim_pages":
+            scope = _ask_scope(payload, scope)
+    assert payload is not None
+
+    hits = [PageHit.model_validate(hit) for hit in (payload.get("hits") or ())]
+    stats = payload.get("scope_stats") or {}
+    # Two ceilings, and the route is bound by the lower of them: `VSIR_READS_PER_QUESTION` is
+    # §8.4's per-question budget and the envelope's `reads_remaining` is the caller's standing
+    # quota (§7.3). A route planned against the larger one would plan a call the server refuses.
+    caller = dataclasses.replace(
+        caller, reads_remaining=min(caller.reads_remaining, payload["reads_remaining"]))
+
+    _step("04", "TRIAGE — the tri-state marks (§8.2), free and before any spend")
+    result = triage_module.triage(hits, query=question)
+    if not result.marks:
+        # §8.1's two empty branches. The spend step still runs: *"it cost nothing"* is the claim
+        # this command makes about every path through it, including the one that found nothing.
+        _ask_empty(payload, stats)
+        return _ask_done(_ask_spend(spy))
+    _print_triage(result, {hit.page_id: hit for hit in hits})
+    recorded = triage_module.record(result, question=question)
+    print(f"   telemetry {recorded} mark(s) written as evaluation data — no tool call, and the "
+          f"loop reads the marks it already holds (§8.2, §11.4)")
+    passed &= _check(
+        "every candidate carries exactly one of relevant | uncertain | irrelevant",
+        f"{len(result.marks)} candidate(s), marks "
+        f"{sorted({one.mark for one in result.marks})}, all in {list(triage_module.MARKS)}",
+        all(one.mark in triage_module.MARKS for one in result.marks)
+        and len(result.marks) == len(hits))
+
+    _step("05", "EXCLUDE — what the next skim is told not to re-offer")
+    passed &= _ask_exclude(runtime, spy, question, scope, result)
+
+    _step("06", f"ROUTE — §8.1a, the deliberate choice (caller: "
+                f"{'vision-capable' if caller.vision_capable else 'text-only'}, "
+                f"{caller.image_slots} image slot(s), reads_remaining {caller.reads_remaining})")
+    look = route_module.plan(result.look_set, caller)
+    for one in route_module.routes(result.look_set, caller):
+        print(f"   {one.page_id:<30}{(one.route or '— none'):<8}{one.reason}")
+    if not result.look_set:
+        print("   nothing marked relevant — the look step has no pages and the pool is next")
+    print(f"   plan: {look.route or 'no route'} over {list(look.pages)}"
+          f"{f' · deferred {list(look.deferred)}' if look.deferred else ''} · "
+          f"spends {str(look.spends).lower()}")
+
+    _step("07", "MACHINE — the transitions this question is on (§8.1, §8.3)")
+    passed &= _ask_machine(result)
+
+    return _ask_done(passed & _ask_spend(spy))
+
+
+def _ask_spend(spy: _Spy) -> bool:
+    """Step 08 — the evidence for §8.2's *"before any money is spent"*, on every path."""
+    _step("08", "SPEND — the spy")
+    return _check(
+        "no paid tool was dispatched and the VLM backend was never reached",
+        f"dispatched {spy.tools} · paid {spy.paid} · VLM backend reached {spy.vlm} time(s) "
+        f"(the release's spending tools: {sorted(spy.spends)})",
+        not spy.paid and spy.vlm == 0) & _check(
+        "the read budget is untouched: every envelope reported the same reads_remaining",
+        f"reads_remaining across {len(spy.remaining)} envelope(s): {spy.remaining}",
+        len(set(spy.remaining)) == 1)
+
+
+def _ask_done(passed: bool) -> int:
+    print(f"\n{'ALL ASSERTIONS PASSED' if passed else 'ASSERTIONS FAILED'}")
+    return EXIT_OK if passed else EXIT_REFUSED
+
+
+def _ask_empty(payload: Mapping[str, Any], stats: Mapping[str, Any]) -> None:
+    """§8.1's two empty branches, chosen by coverage. A typed absence is a successful run.
+
+    Neither branch is an answer and neither is an error: *"the scope was searchable"* is an
+    abstention that names what was searched, and *"there are pages with no text"* is an
+    instruction to look at them before saying anything about the corpus (§8.5 forbids the other
+    wording while they are unread).
+    """
+    no_text = int(stats.get("pages_no_text", 0) or 0)
+    signal = triage_module.empty_signal(no_text)
+    print(f"   no candidates to mark · status {payload['status']} · "
+          f"searched {stats.get('pages', 0)} page(s), {no_text} with no text layer")
+    print(f"   §8.1 branch: {signal} → {triage_module.next_state(triage_module.DESCEND, signal)}")
+    suggest = (payload.get("next") or {}).get("suggest") or []
+    if suggest:
+        # §7.1's affordance: a `not_found` a different *move* could still answer says so, and the
+        # runner is the party that takes it — abstaining on a phrasing accident is F6's injury.
+        print(f"   the rung offers another move rather than an absence: next.suggest {suggest}")
+    if signal == triage_module.EMPTY_NO_TEXT:
+        print(f"   {no_text} image-only page(s) in scope are unexamined: `fetch`/`read` those "
+              f"first. \"Not in these documents\" is forbidden until they are (§8.5)")
+    else:
+        print("   the scope was searchable and held nothing: abstain, naming what was searched")
+
+
+def _ask_exclude(runtime: Any, spy: _Spy, question: str, scope: Mapping[str, Any],
+                 result: Any) -> bool:
+    """Prove the `exclude` argument by using it: re-skim, and check the rejected rows stay out."""
+    if not result.exclude:
+        print("   nothing marked irrelevant — there is no exclusion to make"
+              f"{' (safeguard 2: a set of ≤3 is never filtered)' if result.small_set else ''}")
+        return True
+    print(f"   exclude {list(result.exclude)}")
+    outcome = _ask_dispatch(runtime, spy, "skim_pages",
+                            {"query": question, "scope": dict(scope),
+                             "exclude": list(result.exclude), "limit": SKIM_LIMIT})
+    if outcome.refused:
+        print(f"   REFUSED  {_demo_refusal(outcome)}")
+        return False
+    returned = [hit["page_id"] for hit in (outcome.payload.get("hits") or ())]
+    return _check(
+        "an irrelevant candidate never comes back in the next skim's results",
+        f"re-skimmed with exclude={list(result.exclude)} → {len(returned)} row(s), "
+        f"overlap {sorted(set(returned) & set(result.exclude))}",
+        not set(returned) & set(result.exclude))
+
+
+def _ask_machine(result: Any) -> bool:
+    """The machine, read out of :data:`vsir.runner.triage.TRANSITIONS` rather than narrated."""
+    signal = result.signal
+    after_triage = triage_module.next_state(triage_module.TRIAGE, signal)
+    print(f"   {triage_module.DESCEND} --{triage_module.CANDIDATES}--> "
+          f"{triage_module.next_state(triage_module.DESCEND, triage_module.CANDIDATES)} "
+          f"--{signal}--> {after_triage}")
+    print(f"   the fallback pool holds {len(result.uncertain)} candidate(s): "
+          f"{[one.page_id for one in result.uncertain] or '—'}")
+    soft = triage_module.next_state(triage_module.LOOK, triage_module.INSUFFICIENT)
+    return _check(
+        "safeguard 1 — on `sufficient: false` the next state is the pool, not a wider scope",
+        f"({triage_module.LOOK}, {triage_module.INSUFFICIENT}) → {soft}; and widening is only "
+        f"reachable from there: ({triage_module.DRAIN_UNCERTAIN}, {triage_module.POOL_EMPTY}) → "
+        f"{triage_module.next_state(triage_module.DRAIN_UNCERTAIN, triage_module.POOL_EMPTY)}",
+        soft == triage_module.DRAIN_UNCERTAIN)
+
+
 # ── `vsir mcp` (§4.4, §7.5) ─────────────────────────────────────────────────────────────────────
 
 def _cmd_mcp(args: argparse.Namespace) -> int:
@@ -3275,6 +3585,32 @@ def build_parser() -> argparse.ArgumentParser:
     read_parser.add_argument("--json", action="store_true",
                              help="print the envelope verbatim (see `lookup --json`)")
     read_parser.set_defaults(handler=_cmd_read)
+
+    ask_parser = commands.add_parser(
+        "ask",
+        help="the runner of §8. `--explain` runs the free half — the descent, the tri-state "
+             "triage of §8.2 and the §8.1a route — and spends nothing; the answer itself is the "
+             "gate's (§8.4, I8) and lands with U022",
+    )
+    ask_parser.add_argument("question", help="the question, as a person would ask it")
+    ask_parser.add_argument(
+        "--explain", action="store_true",
+        help="print the plan instead of answering: every rung of the descent, every candidate's "
+             "mark and reason, the exclude set the next skim would carry, the route each page "
+             "would take, and a call spy confirming zero paid calls",
+    )
+    ask_parser.add_argument(
+        "--no-vision", action="store_true",
+        help="the caller cannot look at a raster (a text-only MCP client). §8.1a's default route "
+             "is `fetch` — the agent looks — and this is the input that makes it `read`, which "
+             "is delegation and is the one route that spends",
+    )
+    ask_parser.add_argument(
+        "--prompt", action="store_true",
+        help="also print the system prompt the safeguards are stated in (§8.2). The same five "
+             "rules the state machine enforces, from the same definition",
+    )
+    ask_parser.set_defaults(handler=_cmd_ask)
 
     demo_parser = commands.add_parser("demo", help="the reviewable demos of §4.4")
     demos = demo_parser.add_subparsers(dest="demo", metavar="<demo>", required=True)

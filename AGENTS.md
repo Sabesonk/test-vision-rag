@@ -357,9 +357,28 @@ until U018 and is now a real route, protected by the middleware that already ref
 the audit line and the budget ledger is `caller-<sha256(token)[:12]>`, never the token itself, so
 a rotated credential is a new caller id and no log line ever held the secret (§15.1).
 
-`POST /tools/{tool_name}` dispatches through the release's tool table — `fetch`, `lookup`,
-`resolve`, `skim_documents`, `skim_pages`, `skim_sections` and `verify` today. A name that is not
-in it — `read`, until U020 — is a typed `404` listing what *is* served, never an empty result. One append-only audit line goes to stdout per `read` and per `fetch` and none for a free
+**Each tool has its own path** — `POST /tools/lookup`, `POST /tools/read`, and so on for all
+eight of §7.2 — and every one of them is a two-line closure over the same transport, generated in
+a loop **from the tool table**, so a tool cannot get a route without being in the table or be in
+the table without getting a route. They exist for the description and not the dispatch: one
+generic operation published an untyped body for eight tools whose parameters have nothing in
+common, so `/docs` showed a single "tool_name + JSON" form and a generated client got one
+`call_tool(name, dict)`. Each route now publishes its own request schema and its own §7.1
+envelope.
+
+`POST /tools/{tool_name}` is still mounted **beneath** them and is no longer published. It
+catches every name the eight do not, which is the behaviour it should keep: a tool absent from
+this release is a typed `404` listing what *is* served, never an empty result. Registration order
+is what makes the literal paths win.
+
+The named routes do **not** validate their own bodies, and that is the load-bearing detail. A
+typed FastAPI parameter would answer a misspelt field with a `422` and a JSON pointer; §7.3
+promises a code an agent can switch on, so the schema is published through `openapi_extra` and
+`dispatch` stays the only validator on either transport. `test_tool_routes.py` asserts both
+halves: byte-identity between a named route and the generic one, and `invalid_request` — never a
+`422` — for `includeUnverified`.
+
+One append-only audit line goes to stdout per `read` and per `fetch` and none for a free
 tool; **cost is in that line and never in a response body**, where the caller gets the single
 integer `reads_remaining` (§7.4). The per-caller quota is `VSIR_READ_QUOTA` reads per UTC day,
 held as a `kind: budget` point in `vsir_runs` so N replicas enforce one ceiling, and exhausting it
@@ -371,9 +390,38 @@ run. `withheld.jsonl`, `impl`'s third file, is gone with the allowlist gate that
 a typed 404. The gauges are recomputed from `vsir_runs` on every scrape rather than counted in the
 process, so two replicas agree and a restart is not a hole in the series.
 
+**The corpus surface** — `GET /documents`, `GET /documents/{doc_id}`,
+`GET /documents/{doc_id}/pages`. `POST /documents` put documents in and nothing told you what
+went in: the only way to learn what the index held was to search it, so a document browser could
+not be built at all. All three are queries over the two collections ingestion already writes
+(register **E1**) — they compute nothing ingestion did not record and store nothing of their own,
+so they cannot drift from what a search sees. Counts are `exact=True` throughout: a management
+surface is where somebody decides whether an ingest was correct, and an estimated page count
+short by two is indistinguishable from an ingest that dropped two pages.
+
+Three things they deliberately show rather than tidy away. A **superseded revision is listed**,
+because §6.7 keeps it (F9) and its pages are still reachable by `page_id` — `is_current: false`
+with `pages: 1` is the fact an operator needs. `searchable_ratio` is on every document row, the
+same number `skim_documents` reports for the same document, because at `0.00` every code on every
+page is `unverifiable` rather than absent and a "not found" from that binder would be wrong.
+And an unknown `doc_id` is a typed `404 document_not_found`, never a zero-page row — a document
+never ingested and one whose revisions were all retired are different facts.
+
+**All three are read-only, and nothing here retires anything.** Retirement is §6.7's and it runs
+*inside* a publish, where the run record is its evidence for F12 and F9 at once. A bare "retire
+this revision" endpoint would be the one call on this surface that silently changes what every
+future search returns, so it is not here — `test_corpus_management.py` asserts the collection
+count is unchanged after every route is called, and that `DELETE` is a `405`.
+
+**The units are documents, revisions, pages and runs — there is no chunk.** By design: a *window*
+is a page range that stitching deletes again and it never becomes a retrieval boundary
+(`ingest/window.py`), and window (attention), section (semantics) and page (index) stay separate
+throughout. The addressable unit is the **page**, under the `page_id` of §5.2 — which is what
+`fetch`, `read` and `verify` take, so a listed `page_id` is one the tools accept (asserted).
+
 The MCP surface (§7.5) and the one-shots (§4.4). All three call `vsir.serve.app.dispatch` — the
-same table, the same validation, the same budget and the same typed refusals `POST /tools/{name}`
-uses — so there is no second code path and nothing to keep in step:
+same table, the same validation, the same budget and the same typed refusals the tool routes
+use — so there is no second code path and nothing to keep in step:
 
 ```bash
 backend/.venv/bin/vsir skim pages "emergency stop reset" --scope doc_id=SYN-M1   # NARROW, §7.2.1
@@ -460,6 +508,21 @@ the budget ledger is `local-mcp-stdio`, beside `local-cli` for the one-shots and
 `caller-<digest>` for a network caller. An operator who can run `vsir mcp --stdio` can already run
 `vsir publish`; a credential read from the same environment the server reads would be ceremony.
 
+**The corpus is on MCP as resources, not as a ninth tool.** §7.5 fixes the tool surface at *the
+same eight tools* as HTTP, and that is a statement about what an agent chooses between: the eight
+are **moves**, and an agent picking among nine where one of them is "list the corpus" is choosing
+between a search and a filing cabinet. MCP already has the right concept — a resource is context a
+client reads and attaches, not an action the model decides to take. So `resources/list` serves one
+concrete resource, `vsir://corpus`, and declares `vsir://documents/{doc_id}` and
+`vsir://documents/{doc_id}/pages` as **templates** a client fills from the ids it found there:
+`resources/list` stays O(1), and a thousand-binder corpus does not put a thousand entries in a
+client's picker. `tool_definitions` is untouched and `test_mcp_resources.py` asserts the table is
+still eight.
+
+They resolve through `serve/manage.py` — the very functions the HTTP routes call — so reading
+`vsir://corpus` is **byte-identical** to `GET /documents`, and the import-graph rule that keeps
+`tools/call` honest still holds: no filter, no count and no scroll anywhere in `mcp/server.py`.
+
 The `tools/call` result is **byte-identical** to the HTTP response body for the same request, on
 both transports — one serialiser (`vsir.serve.envelope.wire`), one dict. To check it by hand,
 remembering that MCP requires the `initialize` handshake first and that the SDK cancels in-flight
@@ -476,6 +539,44 @@ work on stdin EOF (hence the trailing `sleep`, which a real client does not need
 The tool descriptions and the input schemas an MCP client sees are generated from the release's
 own tool table: the schema is each tool's Pydantic request model, so `extra="forbid"` is
 advertised and a parameter cannot reach one surface without reaching the other.
+
+### The runner (U021)
+
+`vsir ask --explain` runs the free half of §8 — the descent, the tri-state triage and the route —
+against whatever this release has published. It spends nothing on any path, and the last step is
+the evidence rather than the claim: a spy counts the tools that were dispatched, refuses the VLM
+backend outright, and reports `reads_remaining` off every envelope that came back.
+
+```bash
+backend/.venv/bin/vsir ask --explain "the carton discharge won't restart after an E-stop reset"
+backend/.venv/bin/vsir ask --explain --no-vision "…"   # a text-only caller: the route becomes `read`
+backend/.venv/bin/vsir ask --explain --prompt "…"      # also print the system prompt
+```
+
+Eight steps: `skim_documents` → `skim_sections` → `skim_pages`, each descending with the previous
+rung's `next.expand`; then the triage table (mark, reason, `why`, `grounded_rate`, `text_trust`
+and the query terms the summary actually showed); the `exclude` set, **proved by re-skimming with
+it**; the route per candidate; the state machine's transitions; and the spend spy. It needs a
+reachable Qdrant and a collection with vectors — `bash scripts/stack.sh up` — and no credential.
+
+Three things the output is worth reading for:
+
+- **`irrelevant` is the only mark that becomes `exclude`.** The `uncertain` pool is printed beside
+  it and is deliberately not excluded: it is what a `sufficient: false` drains before anything
+  widens the scope (§8.2 safeguard 1), and step 07 prints that transition out of the shipped
+  table rather than describing it.
+- **≤ 3 candidates are never filtered** (safeguard 2), so a narrow descent legitimately shows
+  every row `relevant` with reason `small_set`.
+- **The default route is `fetch`** (§8.1a) — `read` appears only for a caller that cannot see or a
+  context that cannot hold another raster, and `--no-vision` is how to see that branch. A page
+  past the route's cap is reported `deferred_over_cap`, which is a second call the runner may
+  make, not a truncation.
+
+`vsir ask` **without** `--explain` is a named refusal (`answer_not_built`): composing prose is the
+answer gate's and lands with U022. An empty triage is not a refusal — it prints §8.1's coverage
+branch (`empty_no_text` → look at the image-only pages, `empty_searchable` → abstain naming what
+was searched) and exits 0.
+
 
 ## Test
 
