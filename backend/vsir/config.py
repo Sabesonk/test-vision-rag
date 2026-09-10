@@ -108,6 +108,12 @@ class Config:
     vlm_tier: str
     vlm_rpm: int
     embed_text_chars: int
+    #: §6.8 — the two sources `safety_flag` is computed from. Configuration, not a compiled-in
+    #: taxonomy: `impl` hardcoded a keyword list, corpora differ, and a list in the image is one
+    #: no deployment could correct. Empty means nothing is flagged, which is the honest default
+    #: for a facet whose values are the uploader's vocabulary and the model's own topics.
+    safety_doc_types: tuple[str, ...] = ()
+    safety_topics: tuple[str, ...] = ()
     # Secrets. repr=False so no traceback, log line or error message can carry them (§15.1).
     api_tokens: tuple[str, ...] = field(repr=False, default=())
     vlm_key: str = field(repr=False, default="")
@@ -171,6 +177,8 @@ class Config:
             "vlm_tier": self.vlm_tier,
             "vlm_rpm": self.vlm_rpm,
             "embed_text_chars": self.embed_text_chars,
+            "safety_doc_types": list(self.safety_doc_types),
+            "safety_topics": list(self.safety_topics),
             "fixture_dir": self.fixture_dir,
             "replay": self.replay,
             "auth_configured": len(self.api_tokens),  # a count is not a credential; the name
@@ -202,6 +210,11 @@ def _require(env: Mapping[str, str], var: str) -> str:
 def _optional(env: Mapping[str, str], var: str, default: str) -> str:
     raw = env.get(var)
     return default if raw is None or raw.strip() == "" else raw.strip()
+
+
+def _csv(raw: str) -> tuple[str, ...]:
+    """A comma-separated list variable, trimmed and de-duplicated, order preserved."""
+    return tuple(dict.fromkeys(value.strip() for value in raw.split(",") if value.strip()))
 
 
 def _as_int(var: str, raw: str, *, minimum: int | None = None) -> int:
@@ -274,6 +287,8 @@ def load_config(env: Mapping[str, str] | None = None) -> Config:
         embed_text_chars=_as_int(
             "VSIR_EMBED_TEXT_CHARS", _optional(env, "VSIR_EMBED_TEXT_CHARS", "2000"), minimum=1
         ),
+        safety_doc_types=_csv(_optional(env, "VSIR_SAFETY_DOC_TYPES", "")),
+        safety_topics=_csv(_optional(env, "VSIR_SAFETY_TOPICS", "")),
         api_tokens=api_tokens,
         vlm_key=_optional(env, "VSIR_VLM_KEY", ""),
     )

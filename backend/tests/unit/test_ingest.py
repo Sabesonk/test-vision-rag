@@ -139,18 +139,25 @@ def test_ingest_stops_where_it_is_told(env, capsys, synthetic_pdf, until):
 def test_the_store_backed_steps_refuse_by_name_with_no_store(env, capsys, synthetic_pdf, until):
     """§11.3 — each degradation row is a refusal, not a best-effort fallback.
 
-    Step 09 reads the embedding cache off the index and step 10 writes to it, so neither can run
-    without Qdrant. Running anyway would be worse than refusing in both directions: it would
-    re-bill every vector the index already holds, and then report a published document that was
-    never written.
+    Step 09 reads the embedding cache off the index, step 10 writes to it and step 11 flips
+    `is_current` on it, so none of the three can run without Qdrant. Running anyway would be worse
+    than refusing in both directions: it would re-bill every vector the index already holds, and
+    then report a published document that was never written.
+
+    **The refusal arrives at step 01, and that is U011's doing.** A store-backed run claims its
+    control record before the first window (D9), because a run that dies mid-flight has to be a
+    run that exists — so an unreachable store is now named before a single model call rather than
+    after the whole of extraction. The typed code is the same one either way (§11.3), and nothing
+    downstream of the refusal runs.
     """
     code = _run(synthetic_pdf, "--vlm", "stub", "--until", until)
     out = capsys.readouterr().out
 
     assert code == cli.EXIT_REFUSED
     assert "REFUSED  qdrant_unavailable" in out
-    assert "09 embedding" in out
-    assert "10 indexing" not in out
+    assert "01 manifest" in out
+    for step in ("06 S2 extraction", "09 embedding", "10 indexing", "11 gates and publish"):
+        assert step not in out
 
 
 def test_a_replay_miss_is_typed_and_never_a_live_call(env, capsys, synthetic_pdf):

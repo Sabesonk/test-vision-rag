@@ -78,13 +78,16 @@ VSIR_QDRANT_URL=http://localhost:6335 \
 ```
 
 `--until` takes
-`manifest | probe | render | facts | window | extract | derive | stitch | embed | index`; later
-units extend the list. `--raw` prints every window's verbatim response body instead of its first
-page form. Steps 01-03 need no fixture. From step 04 on, a `facts_key` or `extract_key` that is
-not in `VSIR_FIXTURE` is a typed `fixture_miss` and a non-zero exit — never a live call (D10).
-**`embed` and `index` are the two store-backed steps** (`vsir.cli.STORE_BACKED_STEPS`): step 09
-reads the embedding cache off the index and step 10 writes to it, so with no reachable Qdrant both
-refuse `qdrant_unavailable` rather than re-billing every vector the index already holds.
+`manifest | probe | render | facts | window | extract | derive | stitch | embed | index | publish`;
+later units extend the list. `--raw` prints every window's verbatim response body instead of its
+first page form. Steps 01-03 need no fixture. From step 04 on, a `facts_key` or `extract_key` that
+is not in `VSIR_FIXTURE` is a typed `fixture_miss` and a non-zero exit — never a live call (D10).
+**`embed`, `index` and `publish` are the store-backed steps** (`vsir.cli.STORE_BACKED_STEPS`):
+step 09 reads the embedding cache off the index, step 10 writes to it and step 11 flips
+`is_current` on it, so with no reachable Qdrant all three refuse `qdrant_unavailable` rather than
+re-billing every vector the index already holds. A store-backed run claims its **run point** at
+step 01, before the first model call — so an unreachable store is named before anything is spent,
+and a run that dies mid-flight is a run that exists.
 
 Steps 07-08 cost nothing and print what they decided: a per-page table with the printed label,
 `grounded_rate`, `codes_in_text` and any `moved_from`, then the section table with the window
@@ -119,6 +122,29 @@ deterministic function of the composition, not a frozen response: there is nothi
 in 1,536 floats, and the property the tests need is that the same composition always gives the
 same vector, which is why no embedding is in the fixture directory.
 
+Step 11 is the gates, the publish flip and retirement (§6.7, §11.1). It prints the five gates with
+their metric and detail, then what the flip and the three retirement clauses did. Nothing is
+queryable before it: step 10 writes every point `is_current=False` and this is the only thing that
+flips it (I7). The three operational commands that go with it:
+
+```bash
+backend/.venv/bin/vsir runs show <run_id>      # the §6.9 run record, read from vsir_runs (D9)
+backend/.venv/bin/vsir gates rerun <run_id>    # re-evaluate §11.1 against the INDEX; free, changes nothing
+backend/.venv/bin/vsir publish <run_id> --override grounded_rate --reason "<why>"
+```
+
+`--override` takes exactly one gate — `grounded_rate`, the only one whose threshold is a judgement
+(R4). `window_coverage` and `offset_check` refuse an override by name. `--reason` is required and
+is recorded in the run record and stamped on every page as the `published_with_override` flag.
+
+`vsir ingest --resume <run_id> [--steal]` continues an existing run under its own id. The lease is
+**advisory** — Qdrant has no compare-and-swap — so `--resume` refuses a live lease (`lease_held`)
+unless `--steal` is passed; a duplicated worker re-bills windows but cannot corrupt the index,
+because `point_id` is idempotent (I1) and nothing is queryable until the gates pass (I7). A
+`SIGTERM` checkpoints the run as `state: stopped` and releases the lease, which is the one state a
+resume takes without `--steal`. A `SIGKILL` leaves it `running` with a lease that expires — and, in
+both cases, **zero queryable pages** (F17).
+
 `VSIR_VLM_TIER=batch` refuses `vlm_tier_unsupported` — the tier is not a cache-key input, so
 switching it later re-bills nothing. `VSIR_VLM_RPM` is the client's token bucket, in calls a
 minute.
@@ -136,13 +162,24 @@ typed `fixture_miss` rather than a stale hit. Editing `backend/vsir/vlm/prompts/
 adding a new version to `PROMPT_DIGESTS` is refused by name (`prompt_unavailable`): a prompt is
 part of the release, not configuration.
 
-The HTTP probes, until `vsir serve` lands in U014:
+The HTTP surface, until `vsir serve` lands in U014 — the two probes, the run record, the two
+exports and the §11.4 gauges:
 
 ```bash
 backend/.venv/bin/uvicorn --factory vsir.serve.app:app_factory --port 8000   # from backend/
 curl -s localhost:8000/health            # liveness — green even with Qdrant down
 curl -s localhost:8000/ready             # readiness — 503 `qdrant_unavailable` with Qdrant down
+curl -s localhost:8000/runs/<run_id>     # the §6.9 run record; a typed 404 for an unknown run
+curl -s localhost:8000/runs/<run_id>/export/labels.jsonl           # one NDJSON line per page
+curl -s localhost:8000/runs/<run_id>/export/observed_tokens.jsonl  # one line per document
+curl -s localhost:8000/metrics           # ingest_grounded_rate_median, ingest_gate_failures_total
 ```
+
+Both exports are **generated from the index and streamed** — nothing is written to the instance's
+filesystem and there is no file to read from it (§6.8, §15 Factor VI), so any replica serves any
+run. `withheld.jsonl`, `impl`'s third file, is gone with the allowlist gate that produced it and is
+a typed 404. The gauges are recomputed from `vsir_runs` on every scrape rather than counted in the
+process, so two replicas agree and a restart is not a hole in the series.
 
 ## Test
 
@@ -193,6 +230,9 @@ Dev ports, for reference: backend `8000`, Qdrant `6333` REST and `6334` gRPC, fr
 
 - **Configuration is the environment.** A deployment-varying value is an env var in `.env.example`;
   never a literal, never a committed config file, never a secret in an image or a log line.
+  `VSIR_SAFETY_DOC_TYPES` and `VSIR_SAFETY_TOPICS` are the §6.8 export's two sources for
+  `safety_flag`; both default to empty, and a list compiled into the image would be the keyword
+  taxonomy §6.8 deletes.
 - **Qdrant is the only store**, two collections: `vsir_pages_<dim>` and `vsir_runs`. No relational
   database, no ORM, no migrations. `vsir_runs` is payload-only (`vectors_config={}`) and every
   point in it says which `kind` of control record it is.

@@ -38,6 +38,15 @@ def condition_matches(payload: dict, condition: Any) -> bool:
     if isinstance(condition, qm.Filter):
         return filter_matches(payload, condition)
     value = payload.get(condition.key)
+    if getattr(condition, "range", None) is not None:
+        # The export walks `page_no` in bounded ranges rather than following an opaque scroll
+        # cursor (§6.8), so the fake has to understand a range or the export is untestable at L0.
+        bounds, number = condition.range, value
+        if number is None:
+            return False
+        return all(check is None or test(number, check) for check, test in (
+            (bounds.gte, lambda n, c: n >= c), (bounds.gt, lambda n, c: n > c),
+            (bounds.lte, lambda n, c: n <= c), (bounds.lt, lambda n, c: n < c)))
     match = condition.match
     if isinstance(match, qm.MatchValue):
         return value == match.value
@@ -106,14 +115,23 @@ class FakeStore:
 
     def scroll(self, collection_name: str, scroll_filter: qm.Filter | None = None,
                limit: int = 10, with_payload: bool = True, with_vectors: bool = False,
-               order_by: str | None = None) -> tuple[list[_Point], None]:
+               order_by: str | None = None,
+               offset: Any = None) -> tuple[list[_Point], Any]:
+        """Paged, like the real one: a second element that is not ``None`` means *ask again*.
+
+        The export streams a document in chunks and follows that cursor (§6.8), so a fake that
+        always answered ``None`` would make a truncating export look complete.
+        """
         assert with_vectors is False, "a search never loads a vector it does not use"
         found = self._matching(scroll_filter)
         if order_by:
             found.sort(key=lambda payload: payload.get(order_by) or 0)
+        start = int(offset or 0)
+        page = found[start:start + limit]
+        following = start + limit if start + limit < len(found) else None
         return [_Point(id=point_id(self._page_id(payload)) if self._page_id(payload)
-                       else str(index), payload=payload)
-                for index, payload in enumerate(found[:limit])], None
+                       else str(start + index), payload=payload)
+                for index, payload in enumerate(page)], following
 
     def retrieve(self, _collection: str, ids: list[Any], with_payload: bool = True,
                  with_vectors: bool = False) -> list[_Point]:

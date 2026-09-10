@@ -48,9 +48,12 @@ from vsir.doctor import doctor
 from vsir.eval import synthetic
 from vsir.ingest import derive as derive_module
 from vsir.ingest import embed as embed_module
+from vsir.ingest import export as export_module
 from vsir.ingest import extract as extract_module
 from vsir.ingest import fingerprint as fingerprint_module
+from vsir.ingest import gates as gates_module
 from vsir.ingest import index as index_module
+from vsir.ingest import run as run_module
 from vsir.ingest import manifest, probe, render
 from vsir.ingest import stitch as stitch_module
 from vsir.ingest import window as window_module
@@ -560,13 +563,14 @@ def _cmd_demo_exact(args: argparse.Namespace) -> int:
 #: The steps `--until` can stop at, in pipeline order. Later units extend the list rather than
 #: adding a second command: §6.1 is one pipeline and `vsir ingest` is its one operational surface.
 INGEST_STEPS = ("manifest", "probe", "render", "facts", "window", "extract", "derive", "stitch",
-                "embed", "index")
+                "embed", "index", "publish")
 
 #: The steps that need a reachable Qdrant. Steps 01-08 are pure functions of the PDF and the
 #: fixture, which is what lets the whole of derivation and stitching be asserted at L0/L1; step 09
 #: reads the embedding cache off the index and step 10 writes to it, so both refuse
-#: `qdrant_unavailable` with no store rather than running without one (§11.3).
-STORE_BACKED_STEPS: tuple[str, ...] = ("embed", "index")
+#: `qdrant_unavailable` with no store rather than running without one (§11.3). Step 11 is the
+#: control plane and the publish flip, which are Qdrant by definition (D9, §6.7).
+STORE_BACKED_STEPS: tuple[str, ...] = ("embed", "index", "publish")
 
 _RULE_WIDTH = 78
 
@@ -610,6 +614,89 @@ class IngestRefused(Exception):
         self.details = details
 
 
+@dataclasses.dataclass
+class _RunHandle:
+    """A handle on the in-flight run, so ``SIGTERM`` can checkpoint it (§15 Factor IX, F17).
+
+    Deliberately **not** state. The run's truth is its point in `vsir_runs` (D9) and every step
+    writes there as it finishes; this holds the client and the last record written so the signal
+    handler can mark the run ``stopped`` without having to find it again. Nothing reads it to make
+    a decision, and a process that dies without unwinding leaves a run whose lease simply expires.
+    """
+
+    client: Any = None
+    runs_collection: str = ""
+    record: Any = None
+
+    def stopped(self, reason: str = "sigterm") -> None:
+        """What the signal handler calls: checkpoint the run, publish nothing (I7)."""
+        if self.client is None or self.record is None:
+            return
+        run_module.stop(self.client, self.runs_collection, self.record, reason=reason,
+                        step=self.record.step)
+
+
+def _owner() -> str:
+    """Who this worker is, for the advisory lease: host and pid, which is enough to find it.
+
+    Not a configured identity. The lease's job is to stop a *second* worker starting by accident
+    and to tell an operator which process to look at; a name an operator has to set would be one
+    more thing to get wrong, and the lease is advisory either way (D9).
+    """
+    return f"{os.uname().nodename}:{os.getpid()}"
+
+
+def _progress(handle: _RunHandle, cfg: Any, **fields: Any) -> Any:
+    """Renew the lease and record progress, or do nothing when the run is store-free.
+
+    Returns the record so the caller can keep the handle current: a step that finished and did not
+    renew is a step whose lease can expire under it, and an expired lease is what `--steal` is for.
+    """
+    if handle.client is None or handle.record is None:
+        return handle.record
+    return run_module.renew(handle.client, cfg.runs_collection, handle.record, **fields)
+
+
+def _note_windows(handle: _RunHandle, cfg: Any, *, doc: Any, plan: Any, keys: Sequence[str],
+                  checkpoint: str, state: str, extraction: Any = None,
+                  derivation: Any = None) -> None:
+    """Write one window point per window of the plan (§6.7, D9).
+
+    The window points are what `offset_check` reads at step 11 and what `--resume` reads at U025,
+    and they are written as each step finishes rather than at the end — a run killed at window 2
+    of 3 leaves two windows recorded, which is the difference between resumable and re-billable.
+    """
+    if handle.client is None or handle.record is None:
+        return
+    returned = {}
+    bisected: set[tuple[int, int]] = set()
+    if extraction is not None:
+        returned = {(w.window.start, w.window.end): w for w in extraction.windows}
+    if derivation is not None:
+        bisected = set(derivation.bisected)
+    for window, key in zip(plan.windows, keys):
+        span = (window.start, window.end)
+        found = returned.get(span)
+        run_module.note_window(handle.client, cfg.runs_collection, run_module.WindowState(
+            run_id=handle.record.run_id, doc_id=doc.doc_id, start=window.start, end=window.end,
+            state=state, attempts=1 if found is not None else 0, checkpoint=checkpoint,
+            extract_key=key, pages_returned=getattr(found, "page_forms", 0) if found else 0,
+            # Reaching this point at all means §6.4's checks passed for this window: `derive`
+            # raises rather than emitting records for a window it cannot place, and a bisected
+            # window is a **pass** whose repair is recorded — F13's ladder is not a defect.
+            offset_ok=True, bisected=span in bisected))
+
+
+def _open_store(cfg: Any) -> Any:
+    """The one Qdrant connection a store-backed run uses, or a typed `qdrant_unavailable`."""
+    try:
+        return QdrantClient(url=cfg.qdrant_url, timeout=60, check_compatibility=False)
+    except Exception as failure:  # noqa: BLE001 - anything here is "could not reach Qdrant"
+        raise IngestRefused("qdrant_unavailable",
+                            f"{scrub_url(cfg.qdrant_url)}: {type(failure).__name__}: {failure}",
+                            qdrant_url=scrub_url(cfg.qdrant_url)) from failure
+
+
 def _backend(cfg: Any) -> Any:
     """The VLM backend `VSIR_VLM` names — one configuration lookup, no branch (§15 Factor X).
 
@@ -623,15 +710,17 @@ def _backend(cfg: Any) -> Any:
         raise IngestRefused(refusal.code, str(refusal), **refusal.details) from refusal
 
 
-def _ingest(args: argparse.Namespace, cfg: Any) -> bool:
-    """Run steps 01-06 and print what each one decided. Returns whether the assertions passed.
+def _ingest(args: argparse.Namespace, cfg: Any, handle: _RunHandle) -> bool:
+    """Run steps 01-11 and print what each one decided. Returns whether the assertions passed.
 
     The run id is not a parameter: it is bound into the correlation context by the caller, so every
     event any of these steps logs carries it without a step having to remember to pass it on
-    (§11.4). Nothing here holds it, and nothing here holds state between calls.
+    (§11.4). Nothing here holds it, and nothing here holds state between calls — the run's own
+    state lives in `vsir_runs` and is written as each step finishes (D9).
     """
     source = Path(args.pdf)
     until = args.until
+    run_id = vsir_logging.correlation().get("run_id", "")
 
     # ── 01 manifest ──────────────────────────────────────────────────────────────────────────
     _step("01", "manifest — identity, from the filename, the metadata and the uploader")
@@ -652,6 +741,31 @@ def _ingest(args: argparse.Namespace, cfg: Any) -> bool:
     print(f"   source       {source}  ·  {doc.size_bytes:,} bytes")
     print("   no content sniffing: §6.1 step 01 takes facets from the filename, the file's own")
     print("   metadata and the uploader, and this module contains no grammar of any kind")
+    if handle.client is not None:
+        # The run point is written **before** the first window, not after the last: a run that
+        # dies mid-flight has to be a run that exists, in a state that says so, with a lease that
+        # expires (register E2 — `impl` kept this in a dict on a daemon thread, so a restart
+        # stranded a paid run with no report and nothing to resume).
+        handle.record = (
+            run_module.claim(handle.client, cfg.runs_collection, run_id, owner=_owner(),
+                             steal=args.steal)
+            if args.resume else
+            run_module.start(handle.client, cfg.runs_collection, run_id=run_id, doc_id=doc.doc_id,
+                             revision=doc.revision, release_id=cfg.release_id,
+                             collection=cfg.pages_collection, owner=_owner()))
+        if (handle.record.doc_id, handle.record.revision) != (doc.doc_id, doc.revision):
+            raise IngestRefused(
+                "run_document_mismatch",
+                f"run {run_id} is {handle.record.doc_id}@{handle.record.revision} and this "
+                f"invocation is {doc.doc_id}@{doc.revision}: resuming a run against a different "
+                f"document would write this document's pages under that run's id, and publish "
+                f"would then flip a set of points nobody meant (§6.7)",
+                run_id=run_id, run_doc=f"{handle.record.doc_id}@{handle.record.revision}",
+                invocation_doc=f"{doc.doc_id}@{doc.revision}")
+        print(f"   run          {handle.record.run_id} · state {handle.record.state} · "
+              f"lease {handle.record.lease.owner} until {handle.record.lease.expires_at}")
+        print(f"   control      {cfg.runs_collection} (D9): one point per run, one per window, "
+              f"and the observed-token inventory — never a dict on a daemon thread (register E2)")
     if until == "manifest":
         return True
 
@@ -669,6 +783,7 @@ def _ingest(args: argparse.Namespace, cfg: Any) -> bool:
     print(f"   front sample ({probe.PROBE_SAMPLE_PAGES} pages) {probed.sample_chars_per_page} "
           f"chars/page vs a {probe.BORN_DIGITAL_MIN_CHARS} threshold — extraction happened anyway,")
     print("   which is register A1: one `else` there throws away a mixed document's whole text")
+    handle.record = _progress(handle, cfg, step="probe", page_count=probed.page_count)
     if until == "probe":
         _print_pages(probed, rasters=None)
         return True
@@ -743,6 +858,9 @@ def _ingest(args: argparse.Namespace, cfg: Any) -> bool:
     warm = render.cache_info()
     print(f"   keying the windows re-read every page from the raster cache: "
           f"{warm['hits']} hits, {warm['misses']} renders in this process")
+    handle.record = _progress(handle, cfg, step="window", windows_total=len(plan.windows))
+    _note_windows(handle, cfg, doc=doc, plan=plan, keys=keys, checkpoint="window",
+                  state=run_module.QUEUED)
     if until == "window":
         return _assertions(args, source, doc, probed, plan, keys, extraction=None)
 
@@ -770,6 +888,9 @@ def _ingest(args: argparse.Namespace, cfg: Any) -> bool:
     print(f"   the model returned 0 characters of page text: `text` has exactly one writer, "
           f"ingest/probe.py (I2)")
     _print_window_out(extraction, raw=args.raw)
+    _note_windows(handle, cfg, doc=doc, plan=plan, keys=keys, checkpoint="extract",
+                  state=run_module.RUNNING, extraction=extraction)
+    handle.record = _progress(handle, cfg, step="extract")
     if until == "extract":
         return _assertions(args, source, doc, probed, plan, keys, extraction=extraction)
 
@@ -802,6 +923,10 @@ def _ingest(args: argparse.Namespace, cfg: Any) -> bool:
         print(f"   ungrounded {code} on page {page_no}: printed on no page, so it stays put, "
               f"counts against that page's grounded_rate and never enters `text` (I2)")
     _print_derived(derivation)
+    _note_windows(handle, cfg, doc=doc, plan=plan, keys=keys, checkpoint="derive",
+                  state=run_module.DONE, extraction=extraction, derivation=derivation)
+    handle.record = _progress(handle, cfg, step="derive",
+                              windows_done=len(getattr(extraction, "windows", ()) or ()))
     if until == "derive":
         return _assertions(args, source, doc, probed, plan, keys, extraction=extraction,
                            derivation=derivation, stitched=None)
@@ -821,21 +946,22 @@ def _ingest(args: argparse.Namespace, cfg: Any) -> bool:
         return _assertions(args, source, doc, probed, plan, keys, extraction=extraction,
                            derivation=derivation, stitched=stitched)
 
-    # ── 09 embedding + 10 indexing ───────────────────────────────────────────────────────────
-    return _embed_and_index(args, cfg, source=source, doc=doc, probed=probed, plan=plan,
+    # ── 09 embedding + 10 indexing + 11 gates and publish ────────────────────────────────────
+    return _embed_and_index(args, cfg, handle, source=source, doc=doc, probed=probed, plan=plan,
                             keys=keys, facts=facts, extraction=extraction,
                             derivation=derivation, stitched=stitched)
 
 
-def _embed_and_index(args: argparse.Namespace, cfg: Any, *, source: Path, doc: Any, probed: Any,
-                     plan: Any, keys: tuple[str, ...], facts: Any, extraction: Any,
-                     derivation: Any, stitched: Any) -> bool:
-    """Steps 09-10 of §6.1, and the one Qdrant connection they share.
+def _embed_and_index(args: argparse.Namespace, cfg: Any, handle: _RunHandle, *, source: Path,
+                     doc: Any, probed: Any, plan: Any, keys: tuple[str, ...], facts: Any,
+                     extraction: Any, derivation: Any, stitched: Any) -> bool:
+    """Steps 09-11 of §6.1, over the one Qdrant connection the run opened at step 01.
 
-    The client is opened here rather than by either step because both need it and neither owns it:
-    step 09 reads the embedding cache off the index (register B5) and step 10 writes to it. It is
-    closed in a ``finally``, so a refusal — a fingerprint mismatch above all — leaves no socket
-    and no partial write behind.
+    The connection belongs to the run rather than to a step, because four things need it and none
+    of them owns it: the control plane writes the run and window points from step 01 onward, step
+    09 reads the embedding cache off the index (register B5), step 10 writes to it, and step 11
+    flips and retires. It is closed by the caller in a ``finally``, so a refusal — a fingerprint
+    mismatch above all — leaves no socket and no partial write behind.
     """
     _step("09", "embedding — one page, one fused vector, and the receipt that avoids the re-bill")
     backend = embed_module.embedder(cfg)
@@ -847,66 +973,188 @@ def _embed_and_index(args: argparse.Namespace, cfg: Any, *, source: Path, doc: A
           f"composition {COMPOSITION_VERSION} · task_type is never sent (D4)")
     print(f"   fingerprint  {fingerprint.digest}  {fingerprint.as_dict()}")
 
+    client = handle.client
     try:
-        client = QdrantClient(url=cfg.qdrant_url, timeout=60, check_compatibility=False)
-    except Exception as failure:  # noqa: BLE001 - anything here is "could not reach Qdrant"
+        state = index_module.ensure_collection(
+            client, name=collection, dim=cfg.embed_dim, fingerprint=fingerprint,
+            runs_collection=cfg.runs_collection)
+        cached = index_module.cached_vectors(
+            client, collection, (page.page_id for page in stitched.pages))
+    except (fingerprint_module.FingerprintMismatch, index_module.IndexRefused):
+        raise
+    except Exception as failure:  # noqa: BLE001 - anything else here is the store being down
         raise IngestRefused("qdrant_unavailable",
                             f"{scrub_url(cfg.qdrant_url)}: {type(failure).__name__}: {failure}",
                             qdrant_url=scrub_url(cfg.qdrant_url)) from failure
-    try:
-        try:
-            state = index_module.ensure_collection(
-                client, name=collection, dim=cfg.embed_dim, fingerprint=fingerprint,
-                runs_collection=cfg.runs_collection)
-            cached = index_module.cached_vectors(
-                client, collection, (page.page_id for page in stitched.pages))
-        except (fingerprint_module.FingerprintMismatch, index_module.IndexRefused):
-            raise
-        except Exception as failure:  # noqa: BLE001 - anything else here is the store being down
-            raise IngestRefused("qdrant_unavailable",
-                                f"{scrub_url(cfg.qdrant_url)}: {type(failure).__name__}: {failure}",
-                                qdrant_url=scrub_url(cfg.qdrant_url)) from failure
-        print(f"   collection   {collection} ({'created' if state.created else 'existing'}) · "
-              f"control plane {cfg.runs_collection} · the §6.6 fingerprint is settled BEFORE a "
-              f"single vector is bought")
+    print(f"   collection   {collection} ({'created' if state.created else 'existing'}) · "
+          f"control plane {cfg.runs_collection} · the §6.6 fingerprint is settled BEFORE a "
+          f"single vector is bought")
 
-        embedding = embed_module.embed_document(
-            backend, stitched.pages, source=source, content_hash=probed.content_hash,
-            doc_title=facts.title, text_chars=cfg.embed_text_chars, cached=cached)
-        _log.info("ingest_step", step="embed", backend=backend.name, model=backend.model,
-                  dim=backend.dim, pages=len(embedding.records), reused=len(embedding.reused),
-                  billed=len(embedding.billed), text_dropped=embedding.text_dropped,
-                  collection=collection, fingerprint=fingerprint.digest)
-        print(f"   {len(embedding.records)} page(s) · {len(embedding.billed)} embedded, "
-              f"{len(embedding.reused)} reused from the index by embed_key (register B5) · "
-              f"{embedding.text_dropped} character(s) of page text dropped by the "
-              f"{cfg.embed_text_chars}-char cap, counted rather than silently cut")
-        _print_composition(embedding, cfg)
-        if args.until == "embed":
-            return _assertions(args, source, doc, probed, plan, keys, extraction=extraction,
-                               derivation=derivation, stitched=stitched, embedding=embedding)
-
-        # ── 10 indexing ──────────────────────────────────────────────────────────────────────
-        _step("10", "indexing — one point per page, three surfaces, every one is_current=False")
-        written = index_module.upsert(client, collection, embedding.records, embedding.vectors,
-                                      fingerprint=fingerprint,
-                                      runs_collection=cfg.runs_collection)
-        _log.info("ingest_step", step="index", collection=written.collection,
-                  points=written.count, with_lexical=written.with_lexical,
-                  with_captions=written.with_captions, is_current=False)
-        print(f"   {written.count} point(s) upserted into {written.collection} · "
-              f"{written.with_lexical} carry the `lexical` surface · {written.with_captions} carry "
-              f"`captions`, which impl declares, weights 0.4 and never writes (register D3)")
-        print(f"   {'page_id':<26} {'is_current':<11} point_id = uuid5(NAMESPACE_URL, page_id)")
-        for page_id, point in written.points:
-            print(f"   {page_id:<26} {'false':<11} {point}")
-        print("   nothing is queryable yet: step 11 is the only thing that flips is_current, and "
-              "every tool injects is_current=True server-side (I7, §6.7)")
+    embedding = embed_module.embed_document(
+        backend, stitched.pages, source=source, content_hash=probed.content_hash,
+        doc_title=facts.title, text_chars=cfg.embed_text_chars, cached=cached)
+    _log.info("ingest_step", step="embed", backend=backend.name, model=backend.model,
+              dim=backend.dim, pages=len(embedding.records), reused=len(embedding.reused),
+              billed=len(embedding.billed), text_dropped=embedding.text_dropped,
+              collection=collection, fingerprint=fingerprint.digest)
+    print(f"   {len(embedding.records)} page(s) · {len(embedding.billed)} embedded, "
+          f"{len(embedding.reused)} reused from the index by embed_key (register B5) · "
+          f"{embedding.text_dropped} character(s) of page text dropped by the "
+          f"{cfg.embed_text_chars}-char cap, counted rather than silently cut")
+    _print_composition(embedding, cfg)
+    if args.until == "embed":
         return _assertions(args, source, doc, probed, plan, keys, extraction=extraction,
-                           derivation=derivation, stitched=stitched, embedding=embedding,
-                           written=written, client=client)
-    finally:
-        client.close()
+                           derivation=derivation, stitched=stitched, embedding=embedding)
+
+    # ── 10 indexing ──────────────────────────────────────────────────────────────────────
+    _step("10", "indexing — one point per page, three surfaces, every one is_current=False")
+    written = index_module.upsert(client, collection, embedding.records, embedding.vectors,
+                                  fingerprint=fingerprint,
+                                  runs_collection=cfg.runs_collection)
+    _log.info("ingest_step", step="index", collection=written.collection,
+              points=written.count, with_lexical=written.with_lexical,
+              with_captions=written.with_captions, is_current=False)
+    print(f"   {written.count} point(s) upserted into {written.collection} · "
+          f"{written.with_lexical} carry the `lexical` surface · {written.with_captions} carry "
+          f"`captions`, which impl declares, weights 0.4 and never writes (register D3)")
+    print(f"   {'page_id':<26} {'is_current':<11} point_id = uuid5(NAMESPACE_URL, page_id)")
+    for page_id, point in written.points:
+        print(f"   {page_id:<26} {'false':<11} {point}")
+    print("   nothing is queryable yet: step 11 is the only thing that flips is_current, and "
+          "every tool injects is_current=True server-side (I7, §6.7)")
+    passed = _assertions(args, source, doc, probed, plan, keys, extraction=extraction,
+                         derivation=derivation, stitched=stitched, embedding=embedding,
+                         written=written, client=client)
+    if args.until == "index":
+        return passed
+
+    # ── 11 gates and publish ─────────────────────────────────────────────────────────────
+    return _gate_and_publish(args, cfg, handle, doc=doc, probed=probed,
+                             derivation=derivation, written=written,
+                             records=embedding.records, embedding=embedding) and passed
+
+
+def _gate_and_publish(args: argparse.Namespace, cfg: Any, handle: _RunHandle, *, doc: Any,
+                      probed: Any, derivation: Any, written: Any, records: Sequence[Any],
+                      embedding: Any = None) -> bool:
+    """Step 11 of §6.1 — the five gates of §11.1, then the publish flip and retirement (§6.7).
+
+    Prints the gate table before it acts, because the gates are the reviewable part: a document
+    held here is held for a named reason with its worst pages listed, and a document published is
+    published with every number that decided it on screen.
+    """
+    _step("11", "gates and publish — the only thing that flips is_current, and it flips nothing "
+                "until the gates pass")
+    client, collection = handle.client, cfg.pages_collection
+    window_states = run_module.windows(client, cfg.runs_collection, handle.record.run_id)
+    report = gates_module.evaluate(
+        records=records, page_count=probed.page_count,
+        windows=[state.outcome() for state in window_states], document=derivation.health)
+
+    print(f"   {'gate':<17}{'verdict':<10}{'metric':>9}  detail")
+    for result in report.results:
+        verdict = ("SKIPPED" if result.skipped else
+                   ("PASS" if result.passed else ("BLOCK" if result.blocking else "FLAG")))
+        metric = "—" if result.metric is None else f"{result.metric:.4g}"
+        print(f"   {result.name:<17}{verdict:<10}{metric:>9}  "
+              f"{'blocking' if result.blocking else 'disclosing'}")
+        print(f"                     {result.detail}")
+        for row in result.evidence[:5]:
+            print(f"                     · {row}")
+
+    handle.record = run_module.save(client, cfg.runs_collection, handle.record.model_copy(
+        update={"step": "gates", "gate_results": report.as_dict(),
+                "pages_indexed": written.count,
+                "cost": run_module.Cost(
+                    embeddings_billed=len(getattr(embedding, "billed", ()) or ()),
+                    embeddings_reused=len(getattr(embedding, "reused", ()) or ()),
+                    vlm_calls=sum(1 for state in window_states if state.attempts),
+                    cache_hits=len(getattr(embedding, "reused", ()) or ()))}))
+
+    for gate in args.override or ():
+        try:
+            handle.record = run_module.override(handle.record, gate=gate, reason=args.reason,
+                                                by=_owner())
+        except gates_module.OverrideRefused as refusal:
+            raise IngestRefused(refusal.code, str(refusal), **refusal.details) from refusal
+    if args.override:
+        handle.record = run_module.save(client, cfg.runs_collection, handle.record)
+
+    try:
+        handle.record = run_module.publish(
+            client, runs_collection=cfg.runs_collection, collection=collection,
+            record=handle.record, report=report, records=list(records), by=_owner())
+    except run_module.GateBlocked as blocked:
+        queryable = index_module.count(client, collection, {
+            "doc_id": doc.doc_id, "revision": doc.revision, "is_current": True})
+        print(f"\n   HELD     {list(blocked.details.get('blocked_by', ()))} — "
+              f"{queryable} page(s) of {doc.doc_id}@{doc.revision} are queryable (I7)")
+        print(f"   release it with: vsir publish {handle.record.run_id} --override "
+              f"{gates_module.GROUNDED_RATE} --reason \"<why>\"")
+        _log.warning("ingest_gated", run_id=handle.record.run_id,
+                     blocked_by=list(blocked.details.get("blocked_by", ())), queryable=queryable)
+        return False
+
+    _log.info("ingest_step", step="publish", run_id=handle.record.run_id,
+              state=handle.record.state, pages_indexed=handle.record.pages_indexed,
+              flags=handle.record.flags, **handle.record.retired)
+    print(f"\n   state        {handle.record.state} at {handle.record.published_at}")
+    print(f"   pages        {handle.record.pages_indexed} point(s) of {doc.doc_id}@{doc.revision} "
+          f"are is_current=True — and {probed.page_count} is the PDF's page count (I1)")
+    print(f"   flags        {handle.record.flags or '—'}")
+    print(f"   overrides    {[o.gate for o in handle.record.overrides] or '—'}")
+    print(f"   retirement   {handle.record.retired} — clause 1 deletes the SAME "
+          f"(doc_id, revision) from an earlier run (F12); clause 2 demotes the other revision "
+          f"and KEEPS it (F9); clause 3 never touches another document")
+    print(f"   exports      GET /runs/{handle.record.run_id}/export/labels.jsonl and "
+          f"/observed_tokens.jsonl — streamed from the index, 0 bytes written to disk (§6.8)")
+    return _publish_assertions(args, cfg, handle, doc=doc, probed=probed, written=written)
+
+
+def _publish_assertions(args: argparse.Namespace, cfg: Any, handle: _RunHandle, *, doc: Any,
+                        probed: Any, written: Any) -> bool:
+    """Step 11's rows, read back out of Qdrant — I1 and I7 as a tool would see them."""
+    client, collection = handle.client, cfg.pages_collection
+    print("")
+    current = index_module.count(client, collection,
+                                 {"doc_id": doc.doc_id, "revision": doc.revision,
+                                  "is_current": True})
+    passed = _check(f"{probed.page_count} page(s) queryable after publish, one per PDF page (I1)",
+                    f"count(doc_id={doc.doc_id}, revision={doc.revision}, is_current=True) = "
+                    f"{current}",
+                    current == probed.page_count == written.count)
+
+    unique = len(set(written.page_ids))
+    passed &= _check("every page_id is unique, so one page is one point (I1)",
+                     f"{unique} distinct page_id(s) over {written.count} point(s)",
+                     unique == written.count)
+
+    stored = run_module.require(client, cfg.runs_collection, handle.record.run_id)
+    passed &= _check("the run record is in the control plane, not in this process (D9, E2)",
+                     f"{cfg.runs_collection} holds run {stored.run_id}: state {stored.state}, "
+                     f"step {stored.step}, {len(stored.gate_results)} gate result(s), lease "
+                     f"released ({stored.lease.owner or 'none'})",
+                     stored.state == run_module.PUBLISHED and len(stored.gate_results) == len(
+                         gates_module.GATES) and not stored.lease.live())
+
+    lines = list(export_module.labels(client, collection, run_id=stored.run_id,
+                                      doc_id=doc.doc_id, revision=doc.revision,
+                                      safety_doc_types=cfg.safety_doc_types,
+                                      safety_topics=cfg.safety_topics))
+    fields = sorted(json.loads(lines[0]))  if lines else []
+    passed &= _check("labels.jsonl streams one line per page with the §6.8 field set",
+                     f"{len(lines)} line(s), fields {fields}",
+                     len(lines) == probed.page_count
+                     and fields == sorted(export_module.LABEL_FIELDS))
+
+    tokens = list(export_module.observed_tokens(client, cfg.runs_collection,
+                                                run_id=stored.run_id, doc_ids=[doc.doc_id]))
+    inventory = json.loads(tokens[0]) if tokens else {}
+    passed &= _check("observed_tokens.jsonl streams one line per document (§6.8, C7)",
+                     f"{len(tokens)} line(s); {inventory.get('token_count', 0)} code-like token(s) "
+                     f"observed over {inventory.get('pages', 0)} searchable page(s)",
+                     len(tokens) == 1 and inventory.get("doc_id") == doc.doc_id)
+    return passed
 
 
 def _print_composition(embedding: Any, cfg: Any) -> None:
@@ -1438,27 +1686,205 @@ def _cmd_ingest(args: argparse.Namespace) -> int:
         return EXIT_REFUSED
     args.fixture = args.fixture or cfg.fixture_dir
 
-    identifier = ids.run_id()
+    # A resumed run keeps its own id, because the id is what every point of the run carries: a
+    # resume under a fresh id would write a second set of points that publish's filter could not
+    # find and retirement would delete as stale (§6.7).
+    identifier = args.resume or ids.run_id()
+    handle = _RunHandle(runs_collection=cfg.runs_collection)
     with vsir_logging.correlate(run_id=identifier):
         print(f"vsir ingest — release {cfg.release_id} · run {identifier} · until {args.until}")
         _log.info("ingest_started", pdf=str(args.pdf), until=args.until, vlm=cfg.vlm,
-                  vlm_model=cfg.vlm_model, prompt_version=cfg.prompt_version, dpi=DPI_ANSWER)
+                  vlm_model=cfg.vlm_model, prompt_version=cfg.prompt_version, dpi=DPI_ANSWER,
+                  resume=bool(args.resume), steal=bool(args.steal))
+        if args.until in STORE_BACKED_STEPS:
+            try:
+                handle.client = _open_store(cfg)
+            except IngestRefused as refusal:
+                _log.error("ingest_refused", reason=refusal.code, detail=str(refusal),
+                           **refusal.details)
+                print(f"\n   REFUSED  {refusal.code}: {refusal}")
+                return EXIT_REFUSED
+        previous = _install_drain(handle)
         try:
-            passed = _ingest(args, cfg)
+            passed = _ingest(args, cfg, handle)
         except (IngestRefused, window_module.WindowError, render.RenderError,
                 embed_module.EmbedError, fingerprint_module.FingerprintMismatch,
-                index_module.IndexRefused) as refusal:
+                index_module.IndexRefused, run_module.RunRefused) as refusal:
             _log.error("ingest_refused", reason=refusal.code, detail=str(refusal),
                        **getattr(refusal, "details", {}))
             print(f"\n   REFUSED  {refusal.code}: {refusal}")
+            _record_failure(handle, cfg, reason=refusal.code, detail=str(refusal))
             return EXIT_REFUSED
         except FileNotFoundError as refusal:
             _log.error("ingest_refused", reason="source_missing", detail=str(refusal))
             print(f"\n   REFUSED  source_missing: {refusal}")
+            _record_failure(handle, cfg, reason="source_missing", detail=str(refusal))
             return EXIT_REFUSED
+        finally:
+            signal.signal(signal.SIGTERM, previous)
+            if handle.client is not None:
+                handle.client.close()
         _log.info("ingest_complete", until=args.until, passed=passed)
     print(f"\n{'ALL ASSERTIONS PASSED' if passed else 'ASSERTIONS FAILED'}")
     return EXIT_OK if passed else EXIT_REFUSED
+
+
+def _install_drain(handle: _RunHandle) -> Any:
+    """Replace the process-wide SIGTERM handler with one that checkpoints this run (§15 IX).
+
+    A closure over the handle rather than anything module-level, and the previous handler is
+    returned so the caller restores it: an ingest that has finished must not leave a handler
+    holding a closed client. What the handler does is small on purpose — mark the run `stopped`
+    and exit. It publishes nothing, so a kill loses at most the windows since the last checkpoint
+    and **never** leaves a queryable half-document (I7, F17).
+    """
+
+    def _on_sigterm(signum: int, _frame: FrameType | None) -> None:
+        _log.info("sigterm", signal=signum, action="checkpoint_and_exit",
+                  run_id=getattr(handle.record, "run_id", ""))
+        handle.stopped()
+        raise SystemExit(EXIT_OK)
+
+    return signal.signal(signal.SIGTERM, _on_sigterm)
+
+
+def _record_failure(handle: _RunHandle, cfg: Any, *, reason: str, detail: str) -> None:
+    """Write the refusal onto the run point, so a failed run says which step failed and why.
+
+    Best effort by necessity: the most likely reason a run failed is that the store did not
+    answer, and a failure to record a failure must not replace the operator's error message with
+    a different one.
+    """
+    if handle.client is None or handle.record is None:
+        return
+    try:
+        run_module.fail(handle.client, cfg.runs_collection, handle.record,
+                        step=handle.record.step, reason=reason, detail=detail)
+    except Exception as failure:  # noqa: BLE001 — see the docstring
+        _log.warning("run_failure_unrecorded", reason=reason,
+                     detail=f"{type(failure).__name__}: {failure}")
+
+
+# ── `vsir runs show` · `vsir gates rerun` · `vsir publish` (§4.4) ─────────────────────────────────
+
+def _with_store(handler: Any) -> Any:
+    """Load the configuration, open one Qdrant connection, close it however the command ends."""
+
+    def run(args: argparse.Namespace) -> int:
+        try:
+            cfg = load_config()
+        except ConfigError as refusal:
+            _log.error("command_refused", reason="configuration", detail=str(refusal))
+            print(f"   configuration refused: {refusal}")
+            return EXIT_REFUSED
+        try:
+            client = _open_store(cfg)
+        except IngestRefused as refusal:
+            _log.error("command_refused", reason=refusal.code, detail=str(refusal))
+            print(f"   REFUSED  {refusal.code}: {refusal}")
+            return EXIT_REFUSED
+        try:
+            return handler(args, cfg, client)
+        except (run_module.RunRefused, gates_module.OverrideRefused,
+                export_module.ExportRefused) as refusal:
+            _log.error("command_refused", reason=refusal.code, detail=str(refusal),
+                       **getattr(refusal, "details", {}))
+            print(f"   REFUSED  {refusal.code}: {refusal}")
+            return EXIT_REFUSED
+        finally:
+            client.close()
+
+    return run
+
+
+def _print_run(record: Any) -> None:
+    """The run record of §6.9, every field of it. What `GET /runs/{run_id}` returns, printed."""
+    print(f"run          {record.run_id}")
+    print(f"document     {record.doc_id}@{record.revision} · release {record.release_id} · "
+          f"schema {record.schema_version}")
+    print(f"state        {record.state} · step {record.step or '—'} · "
+          f"windows {record.windows_done}/{record.windows_total} · "
+          f"pages_indexed {record.pages_indexed} of {record.page_count}")
+    print(f"lease        {record.lease.owner or '—'} until {record.lease.expires_at or '—'} "
+          f"({'live' if record.lease.live() else 'not live'})")
+    print(f"published_at {record.published_at or '—'} · flags {record.flags or '—'}")
+    print(f"cost         {record.cost.model_dump()}")
+    if record.failed:
+        print(f"failed       step {record.failed.step}: {record.failed.reason} "
+              f"— {record.failed.detail}")
+    if record.retired:
+        print(f"retired      {record.retired}")
+    for override in record.overrides:
+        print(f"override     {override.gate} by {override.by} at {override.at}: "
+              f"\"{override.reason}\"")
+    print(f"\n{'gate':<17}{'verdict':<10}{'metric':>9}  detail")
+    for name, row in record.gate_results.items():
+        verdict = ("SKIPPED" if row.get("skipped") else
+                   ("PASS" if row.get("pass") else ("BLOCK" if row.get("blocking") else "FLAG")))
+        metric = "—" if row.get("metric") is None else f"{row['metric']:.4g}"
+        print(f"{name:<17}{verdict:<10}{metric:>9}  {row.get('detail', '')}")
+        for evidence in (row.get("evidence") or [])[:5]:
+            print(f"                                    · {evidence}")
+
+
+def _reevaluate(client: Any, cfg: Any, record: Any) -> Any:
+    """Re-run the five gates against what is **in the index** (§11.1).
+
+    Nothing from the ingesting process is used: the records are scrolled back out of the pages
+    collection and the window outcomes off the control plane, so `gates rerun` judges the document
+    that is actually stored rather than the one a process believed it stored (§15 Factor VI).
+    """
+    records = run_module.run_records(client, cfg.pages_collection, doc_id=record.doc_id,
+                                     revision=record.revision, run_id=record.run_id)
+    windows = [state.outcome() for state in
+               run_module.windows(client, cfg.runs_collection, record.run_id)]
+    page_count = record.page_count or len(records)
+    return records, gates_module.evaluate(records=records, page_count=page_count, windows=windows)
+
+
+def _cmd_runs_show(args: argparse.Namespace, cfg: Any, client: Any) -> int:
+    _print_run(run_module.require(client, cfg.runs_collection, args.run_id))
+    return EXIT_OK
+
+
+def _cmd_gates_rerun(args: argparse.Namespace, cfg: Any, client: Any) -> int:
+    record = run_module.require(client, cfg.runs_collection, args.run_id)
+    _records, report = _reevaluate(client, cfg, record)
+    saved = run_module.save(client, cfg.runs_collection,
+                            record.model_copy(update={"gate_results": report.as_dict()}))
+    _log.info("gates_rerun", run_id=saved.run_id, blocked_by=list(report.blocking(
+        saved.overridden)), flags=list(report.flags))
+    _print_run(saved)
+    blocked = report.blocking(saved.overridden)
+    print(f"\nblocked by   {list(blocked) or 'nothing'} · flags {list(report.flags) or 'none'}")
+    print("re-evaluated against the index, not against this process: the records were scrolled "
+          "back out of the collection and the window outcomes off the control plane")
+    return EXIT_OK
+
+
+def _cmd_publish(args: argparse.Namespace, cfg: Any, client: Any) -> int:
+    record = run_module.require(client, cfg.runs_collection, args.run_id)
+    for gate in args.override or ():
+        record = run_module.override(record, gate=gate, reason=args.reason, by=_owner())
+    records, report = _reevaluate(client, cfg, record)
+    record = run_module.save(client, cfg.runs_collection,
+                             record.model_copy(update={"gate_results": report.as_dict()}))
+    try:
+        published = run_module.publish(client, runs_collection=cfg.runs_collection,
+                                       collection=cfg.pages_collection, record=record,
+                                       report=report, records=list(records), by=_owner())
+    except run_module.GateBlocked as blocked:
+        print(f"   HELD     {list(blocked.details.get('blocked_by', ()))} still block "
+              f"{record.doc_id}@{record.revision}; zero pages of it are queryable (I7)")
+        raise
+    _print_run(published)
+    flagged = index_module.count(client, cfg.pages_collection, {
+        "doc_id": published.doc_id, "revision": published.revision, "is_current": True})
+    print(f"\npublished    {flagged} page(s) are is_current=True")
+    if published.overrides:
+        print(f"every page carries the {gates_module.FLAG_PUBLISHED_WITH_OVERRIDE!r} flag, and "
+              f"the reason is on the run record above")
+    return EXIT_OK
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -1485,7 +1911,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     ingest_parser = commands.add_parser(
         "ingest",
-        help="run the ingestion pipeline of §6.1 over one PDF; steps 01-10 at M2a",
+        help="run the ingestion pipeline of §6.1 over one PDF; steps 01-11 at M2a",
     )
     ingest_parser.add_argument("pdf", help="the source PDF")
     ingest_parser.add_argument(
@@ -1516,7 +1942,66 @@ def build_parser() -> argparse.ArgumentParser:
                                help="comma-separated machine/model subjects (§5.3)")
     ingest_parser.add_argument("--tags", default="", help="comma-separated uploader tags (§5.3)")
     ingest_parser.add_argument("--uploader", default="", help="who supplied the document")
+    ingest_parser.add_argument(
+        "--resume", default=None, metavar="RUN_ID",
+        help="continue an existing run under its own id, taking its lease (D9). The id is kept "
+             "because every point of the run carries it: a resume under a fresh id would write "
+             "points publish's filter cannot find and retirement would delete as stale",
+    )
+    ingest_parser.add_argument(
+        "--steal", action="store_true",
+        help="take a lease that is still live. The lease is advisory — Qdrant has no "
+             "compare-and-swap — so a duplicated worker re-bills windows but cannot corrupt the "
+             "index: point_id is idempotent (I1) and nothing is queryable until the gates flip "
+             "is_current (I7)",
+    )
+    ingest_parser.add_argument(
+        "--override", action="append", default=[], metavar="GATE",
+        help=f"publish past a held gate; §11.1 offers exactly {list(gates_module.OVERRIDABLE)}. "
+             f"Needs --reason, which is recorded in the run and stamped on every page",
+    )
+    ingest_parser.add_argument(
+        "--reason", default="",
+        help="why the override is justified. Not defaulted: it is the only thing that will later "
+             "explain why a document with a failing gate is in the index",
+    )
     ingest_parser.set_defaults(handler=_cmd_ingest)
+
+    runs_parser = commands.add_parser("runs", help="the run control plane of §6.9 (D9)")
+    runs_commands = runs_parser.add_subparsers(dest="runs_command", metavar="<subcommand>",
+                                               required=True)
+    runs_show = runs_commands.add_parser(
+        "show",
+        help="print the run record of §6.9 — state, step, gate results, overrides, lease, cost "
+             "and what retirement did; read from vsir_runs, so any process can answer",
+    )
+    runs_show.add_argument("run_id", help="the run id (a ULID, so id order is time order)")
+    runs_show.set_defaults(handler=_with_store(_cmd_runs_show))
+
+    gates_parser = commands.add_parser("gates", help="the publish gates of §11.1")
+    gates_commands = gates_parser.add_subparsers(dest="gates_command", metavar="<subcommand>",
+                                                 required=True)
+    gates_rerun = gates_commands.add_parser(
+        "rerun",
+        help="re-evaluate the five gates against what is IN THE INDEX and record the result; "
+             "free, and it publishes nothing",
+    )
+    gates_rerun.add_argument("run_id", help="the run to re-evaluate")
+    gates_rerun.set_defaults(handler=_with_store(_cmd_gates_rerun))
+
+    publish_parser = commands.add_parser(
+        "publish",
+        help="release a document a gate is holding (§4.4, §11.1): the reason is recorded in the "
+             "run and every page is flagged published_with_override",
+    )
+    publish_parser.add_argument("run_id", help="the run to publish")
+    publish_parser.add_argument(
+        "--override", action="append", default=[], metavar="GATE",
+        help=f"the gate to release; §11.1 offers exactly {list(gates_module.OVERRIDABLE)}",
+    )
+    publish_parser.add_argument("--reason", default="",
+                                help="why the override is justified — required with --override")
+    publish_parser.set_defaults(handler=_with_store(_cmd_publish))
 
     demo_parser = commands.add_parser("demo", help="the reviewable demos of §4.4")
     demos = demo_parser.add_subparsers(dest="demo", metavar="<demo>", required=True)
@@ -1553,10 +2038,11 @@ def build_parser() -> argparse.ArgumentParser:
 def install_sigterm_handler() -> None:
     """Exit cleanly on ``SIGTERM`` (§15 Factor IX).
 
-    At M0 there is nothing in flight to drain, so the honest handler is: say so on the event
-    stream, and exit 0 immediately. The server's drain and the ingest window checkpoint attach to
-    this same signal in U014 and U025 — a kill must lose at most one window and must never publish
-    a partial run (I7, F17).
+    The process-wide default: say so on the event stream, and exit 0 immediately. A command with
+    work in flight replaces it for the duration — `vsir ingest` installs :func:`_install_drain`,
+    which checkpoints the run as ``stopped`` first, so a kill loses at most the windows since the
+    last checkpoint and never publishes a partial run (I7, F17). The server's own drain is
+    uvicorn's, and it attaches in U014.
     """
 
     def _on_sigterm(signum: int, _frame: FrameType | None) -> None:

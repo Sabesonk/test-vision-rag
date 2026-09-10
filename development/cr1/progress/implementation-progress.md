@@ -7,9 +7,9 @@
 
 | | |
 |---|---|
-| **Complete** | 10 / 26 units (38%) |
-| **Current milestone** | M2a — ingest a generated PDF with a stubbed VLM (4 / 5 units); M0 and M1 closed and tagged |
-| **Next unit** | U011 — Gates, publish, retirement, the run control plane, and exports |
+| **Complete** | 11 / 26 units (42%) |
+| **Current milestone** | M2b — ingest the pilot PDF, freeze the fixture (0 / 2 units); M0, M1 and M2a closed and tagged |
+| **Next unit** | U012 — Port the paid-for `impl` fixtures and the parity / negative sets |
 | **Blocked** | none |
 
 ---
@@ -38,7 +38,7 @@
 - [x] U008 The VLM boundary, cache keys, replay mode, and S2 extraction
 - [x] U009 Derivation, health signals, label attribution, and stitching
 - [x] U010 Embedding, the three surfaces, the fingerprint, and indexing
-- [ ] U011 Gates, publish, retirement, the run control plane, and exports
+- [x] U011 Gates, publish, retirement, the run control plane, and exports
 
 ### M2b — ingest the pilot PDF; freeze the fixture (spend: S2 + embed, once)
 - [ ] U012 Port the paid-for `impl` fixtures and the parity / negative sets — spend: none
@@ -1490,6 +1490,162 @@ point of spend, not only at boot).
   the run/window points that will share `vsir_runs` with the fingerprint record written here.
   `index.count(client, name, scope)` is in place for I1's post-publish `count(doc, rev) ==
   pdf.page_count` assertion.
+
+---
+
+### U011 — Gates, publish, retirement, the run control plane, and exports
+
+**Milestone:** M2a · **Spend:** none · **Status:** `[x]` Complete · **Completed:** 2026-09-10
+
+**Demo output** — the plan's and Spec §13's Demo Command, against the test stack's Qdrant on 6335:
+
+```
+$ vsir ingest data/source/synthetic_3window.pdf --vlm stub && vsir runs show <run_id>
+
+11 gates and publish — the only thing that flips is_current, and it flips nothing until the gates
+   gate             verdict      metric  detail
+   window_coverage  PASS              1  blocking
+                     42/42 page(s) carry an S2 record
+   offset_check     PASS              1  blocking
+                     3 window(s) passed both §6.4 checks
+   grounded_rate    PASS              1  blocking
+                     median 1.0 over the 40 page(s) with a text layer (the 2 without one rate
+                     None and are ignored by the aggregate, §5.7)
+   text_coverage    PASS         0.9524  disclosing
+                     40/42 page(s) have a text layer (searchable_ratio 0.95)
+   label_monotonic  PASS              0  disclosing
+                     40 page(s) carry a numeric printed label, non-decreasing across all of them
+
+   state        published at 2026-09-10T02:26:17+00:00
+   pages        42 point(s) of synthetic-3window@1.0 are is_current=True — and 42 is the PDF's
+                page count (I1)
+   flags        —          overrides    —
+   retirement   {'deleted_stale_points': 0, 'superseded_demoted': 0,
+                 'other_revision_points_kept': 0}
+   exports      GET /runs/01M24J64SB8335ZW8A8AQEPYX6/export/labels.jsonl and
+                /observed_tokens.jsonl — streamed from the index, 0 bytes written to disk (§6.8)
+
+   PASS  42 page(s) queryable after publish, one per PDF page (I1)
+         count(doc_id=synthetic-3window, revision=1.0, is_current=True) = 42
+   PASS  every page_id is unique, so one page is one point (I1)
+   PASS  the run record is in the control plane, not in this process (D9, E2)
+         vsir_runs holds run 01M24J…: state published, step publish, 5 gate result(s), lease
+         released (none)
+   PASS  labels.jsonl streams one line per page with the §6.8 field set
+         42 line(s), fields [codes_in_text, doc_id, dpi, grounded_rate, label_verified, page_id,
+         page_no, printed_page_no, prompt_version, revision, safety_flag, sections, summaries,
+         vlm_model]
+   PASS  observed_tokens.jsonl streams one line per document (§6.8, C7)
+         1 line(s); 265 code-like token(s) observed over 40 searchable page(s)
+
+ALL ASSERTIONS PASSED
+
+$ vsir runs show 01M24J64SB8335ZW8A8AQEPYX6
+run          01M24J64SB8335ZW8A8AQEPYX6
+document     synthetic-3window@1.0 · release dev-0 · schema 1
+state        published · step publish · windows 3/3 · pages_indexed 42 of 42
+lease        — until — (not live)
+published_at 2026-09-10T02:26:17.637402+00:00 · flags —
+cost         {'input_tokens': 0, 'output_tokens': 0, 'cache_hits': 0, 'vlm_calls': 3,
+              'embeddings_billed': 42, 'embeddings_reused': 0}
+retired      {'deleted_stale_points': 0, 'superseded_demoted': 0, 'other_revision_points_kept': 0}
+[the five gate rows, as above]
+```
+
+The second run of the same command: **`0 embedded, 42 reused` · 42 points · still 42 queryable** —
+`point_id` is idempotent, so re-ingest overwrites and the totals do not double (I1, F12).
+
+`bash scripts/test-unit.sh` → **947 passed**, Layer 0/1 PASSED (conformance included).
+`bash scripts/test-api.sh` → **216 passed** against `qdrant/qdrant:v1.19.0` and the container.
+
+**Invariants / failure rows closed**
+
+- **I1** — `count(doc_id, revision, is_current=True) == pdf.page_count` after publish, every
+  `page_id` unique (`test_publish_page_count_and_unique_point_id`, L2).
+- **I4** — the `offset_check` gate requires both §6.4 checks on **every** window; a window that
+  failed either blocks and is named (`test_offset_check_catches_shifted_pages`, L2).
+- **I7** — `is_current=False` until every blocking gate passes; a blocked or killed run leaves
+  **zero** queryable pages (`test_unpublished_run_zero_queryable_pages`,
+  `test_kill_mid_run_zero_queryable_pages`, L2).
+- **F4 (M2a half)** — `text_coverage == 0.0` **skips** the `grounded_rate` gate entirely and the
+  document publishes with `mostly_scanned` (`test_fully_scanned_document_publishes`, L2).
+- **F7** — the offset proof is a blocking gate (`test_offset_check_catches_shifted_pages`, L2).
+- **F12 (M2a half)** — retirement clause 1, scoped to the same `(doc_id, revision)`
+  (`test_reingest_twice_same_point_count`, `test_a_shrinking_reingest_deletes_the_pages_that_are_gone`).
+- **F17** — a half-finished run answers nothing (`test_kill_mid_run_zero_queryable_pages`,
+  `test_sigterm_checkpoints_the_run_as_stopped_and_publishes_nothing`, L2).
+- **F9's evidence preserved** (closed at M8, not claimed here): clause 2 demotes and **keeps** the
+  prior revision (`test_publishing_new_revision_keeps_prior_points`, L2).
+- Spec §20.1 register items **E1** (HTTP never called `export()`), **E2** (job state as a dict on
+  daemon threads), **E4** (no cost observability), **E7** (orphan points on a shrinking re-ingest).
+- **D1**, **D9** owned; **SA-8** (the §15.1 "queue claim" *is* the run-granularity advisory lease)
+  and **SA-10** (clause 3's regression test) both discharged.
+
+**Notes**
+
+- **Only `grounded_rate` takes an override, and that is a decision.** §11.1 offers exactly one, and
+  `gates.OVERRIDABLE` is that list. `window_coverage` failing means pages are missing from the
+  index and `offset_check` failing means the pipeline cannot say which sheet a record describes —
+  neither is a judgement about a threshold, so no reason an operator types makes them publishable.
+  `check_override` refuses both by name and says why.
+- **`skipped` is not `pass`.** A fully scanned document's `grounded_rate` result carries
+  `skipped: true, metric: null` rather than a pass with a number — the same rule as §5.7's `None`,
+  one level up: reporting a measurement nobody made is how the M2b threshold gets set from a
+  fiction. The worst-pages list is populated **only when the gate holds the document**, because on
+  a published one it is a list of its best-behaved pages presented as a warning.
+- **`label_monotonic` compares only the labels that are plain integers.** The corpus runs
+  `i, ii, 1 … 40`; a check that ranked `ii` against `1` would flag every document in the corpus,
+  which is the fastest way to make a disclosure flag mean nothing. Unlabelled pages are skipped
+  rather than compared as zero.
+- **The run point is claimed at step 01, not at step 09.** A store-backed run has to be a run that
+  *exists* before the first model call, or a kill at window 2 of 3 leaves nothing to resume and
+  nothing to report (register E2). The visible consequence: with no reachable Qdrant,
+  `--until embed|index|publish` now refuses `qdrant_unavailable` **before** S2 rather than after
+  it — a strictly earlier, strictly cheaper refusal with the same typed code.
+  `test_the_store_backed_steps_refuse_by_name_with_no_store` was updated to assert exactly that,
+  and asserts that steps 06, 09, 10 and 11 never run. No requirement weakened.
+- **The lease is advisory and the code says so where it matters.** Qdrant has no compare-and-swap,
+  so `claim` cannot be mutual exclusion; what makes a duplicated worker safe is I1 and I7, and the
+  `--steal` test asserts the final point count is still `pdf.page_count`. A duplicated worker is a
+  **cost** bug, not a corruption bug.
+- **`SIGKILL` cannot leave `state: stopped`** — no handler runs. Spec §13's M2a acceptance says
+  "the run `state: stopped`"; the plan's AC reconciles it as "`stopped` (or `running` with an
+  expired lease)", and both paths are tested: `SIGTERM` checkpoints `stopped` and releases the
+  lease, `SIGKILL` leaves `running` with a lease that expires. **Zero queryable pages either way**,
+  which is the property F17 names.
+- **`published_with_override` is stamped additively**, grouped by the flag set a page ends up with:
+  a single filtered write of one constant list would erase the per-page disclosures derivation put
+  there (`ungrounded_codes`, `label_ambiguous`, …). Asserted by
+  `test_an_override_keeps_the_flags_derivation_put_on_a_page`.
+- **`safety_flag` is configuration, and the AST scan is the guard.** `VSIR_SAFETY_DOC_TYPES` and
+  `VSIR_SAFETY_TOPICS`, both empty by default and both in `.env.example`. `impl`'s keyword list is
+  named in the *test* and asserted absent from the module — including the stronger form, that the
+  module declares no module-level collection of strings beyond the §6.8 field sets. Matching is
+  membership, not substring: a substring rule is how a keyword list grows back one `in` at a time.
+- **The exports touch no disk, checked twice**: an AST scan (no write call, and no `pathlib`/`os`/
+  `shutil`/`tempfile` import at all) and a spy over `open` while a whole document is exported.
+  `withheld.jsonl` is a typed `404`, not an empty stream — an empty `200` would let a consumer
+  conclude the document withheld nothing.
+- **§11.4's gauges are recomputed from `vsir_runs` per scrape.** No client library was added
+  (§4.2): the Prometheus text format is ~20 lines, and what a library would buy is a process-wide
+  counter registry, which is the in-process state §15 Factor VI rules out.
+- **The serving process opens a second Qdrant client** (`CONTROL_TIMEOUT_S = 30`) for the run and
+  export endpoints. One timeout cannot be both honest answers: a probe that waits 30 seconds fails
+  to fail, and an export of a 1,440-page manual that gives up after 2 is a truncated contract
+  artefact.
+- **Deliberate extensions of the unit's file list:** `config.py` and `.env.example` (the two
+  `safety_flag` variables — §6.8 requires them and §15 III says where they live);
+  `tests/unit/fake_store.py` (`Range` conditions and real scroll paging, both of which the export
+  needs and neither of which the fake had); `tests/unit/test_ingest.py` (the refusal-point change
+  above); `tests/api/test_kill_mid_run.py` also drives `runs show` / `gates rerun` /
+  `publish --override` as real subprocesses, because it already owns the real-CLI fixture.
+- **OQ-3 / OQ-7 unchanged and still open:** exports are served over HTTP per §6.8 and nothing is
+  written to local disk. If Part A needs files, the answer is an attached object store, never the
+  instance's filesystem. Due before M8.
+- **Left for later units:** `--resume` re-runs the whole pipeline under the claimed run id; the
+  window-level skip that makes a resume *cheap* is U025's, and the checkpoints it will read
+  (`state`, `attempts`, `checkpoint`, `extract_key`) are already written per window. The R4
+  threshold stays provisional at 0.8 until U013 sets it from the M2b distribution.
 
 ---
 
