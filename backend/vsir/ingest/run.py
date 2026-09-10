@@ -231,6 +231,12 @@ class RunRecord(BaseModel):
     windows_total: int = 0
     pages_indexed: int = 0
     page_count: int = 0
+    #: SHA-256 of the source PDF, from step 02's probe. Recorded because nothing else could name
+    #: the bytes behind `doc_id@revision`: the page payload deliberately carries no path (§5.3,
+    #: register A5) and the store is keyed by document identity, so this is the only thing that
+    #: can tell a re-ingested file from the one these pages were indexed from. `ingest/store.py`
+    #: refuses to serve bytes that disagree with it rather than rendering a page nobody indexed.
+    content_hash: str = ""
     gate_results: dict[str, dict] = Field(default_factory=dict)
     overrides: list[Override] = Field(default_factory=list)
     flags: list[str] = Field(default_factory=list)

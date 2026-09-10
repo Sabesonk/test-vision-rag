@@ -138,6 +138,39 @@ backend/.venv/bin/vsir publish <run_id> --override grounded_rate --reason "<why>
 (R4). `window_coverage` and `offset_check` refuse an override by name. `--reason` is required and
 is recorded in the run record and stamped on every page as the `published_with_override` flag.
 
+### The document store (U029)
+
+Step 02 deposits the source PDF as `<doc_id>@<revision>.pdf` under **`VSIR_DOC_STORE`** — a mounted
+volume, `document-store:/srv/documents` in `docker-compose.yml`, and a directory under the platform
+temporary directory when the variable is unset. It is the **source**, not a raster: rasters are
+still re-rendered on demand into an in-process LRU and are never written down (§4.2). Until it
+existed there was nothing to re-render them *from*, so `page_id` resolved to no bytes at all.
+
+```bash
+export VSIR_DOC_STORE=/srv/documents
+backend/.venv/bin/vsir documents                              # what the store holds
+backend/.venv/bin/vsir documents --page 'TC1E-SF@1.3#p001'    # page_id -> bytes -> a raster
+```
+
+A document that is not there is a typed `document_not_stored` naming `doc_id@revision` and a
+non-zero exit — never a blank image. A `doc_id` or `revision` that cannot be a file name (a
+separator, a `..`, a leading dot) is `document_id_unsafe` at ingest, because a `page_id` can arrive
+from a caller's saved citation. Bytes that disagree with the run record's `content_hash` are
+`document_hash_mismatch`: the same `(doc_id, revision)` re-ingested from a corrected file would
+otherwise render the new document for the previous run's still-indexed pages.
+
+The store is what makes an **uploaded** run resumable after the instance that took it is gone — the
+spool went with it, the document did not:
+
+```bash
+backend/.venv/bin/vsir ingest --resume <run_id> --steal --until publish   # no path at all
+```
+
+The PDF argument is optional with `--resume`: the run record names `doc_id@revision`, the store
+resolves the file, and the `content_hash` on the record is checked before a byte is read. `--steal`
+because a worker that died holding a lease does not release it (D9); that is the lease's design,
+not the store's.
+
 `vsir ingest --resume <run_id> [--steal]` continues an existing run under its own id. The lease is
 **advisory** — Qdrant has no compare-and-swap — so `--resume` refuses a live lease (`lease_held`)
 unless `--steal` is passed; a duplicated worker re-bills windows but cannot corrupt the index,

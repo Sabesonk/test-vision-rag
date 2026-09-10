@@ -201,7 +201,7 @@ for (doc, rev), pages in sorted(live.items()):
 cmd_down() {
   require_docker
   if [[ "${1:-}" == "--wipe" ]]; then
-    bold "Stopping and dropping the index (the named volume goes too)"
+    bold "Stopping and dropping the index and the stored documents (both named volumes go)"
     "${COMPOSE[@]}" down -v
   else
     bold "Stopping; the index survives — `down --wipe` drops it"

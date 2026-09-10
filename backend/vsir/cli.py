@@ -57,6 +57,7 @@ from vsir.ingest import fingerprint as fingerprint_module
 from vsir.ingest import gates as gates_module
 from vsir.ingest import index as index_module
 from vsir.ingest import run as run_module
+from vsir.ingest import store as store_module
 from vsir.ingest import manifest, probe, render
 from vsir.ingest import stitch as stitch_module
 from vsir.ingest import window as window_module
@@ -88,6 +89,12 @@ from vsir.serve.tools.skim import SKIM_LIMIT
 EXIT_OK = 0
 EXIT_REFUSED = 1
 EXIT_INTERRUPTED = 130
+
+#: The dpi `vsir documents --page` renders at to prove `page_id` -> bytes. A thumbnail tier, not
+#: one of the two pinned dpis (§4.2): this is a diagnostic, so it must be cheap and it must not
+#: look like the raster that gets embedded (150) or the one `read` sees (220, an input to
+#: `read_key`, F19). Nothing keys on it and nothing keeps what it renders.
+PREVIEW_DPI = 72
 
 _log = vsir_logging.get_logger(__name__)
 
@@ -808,7 +815,21 @@ def _ingest(args: argparse.Namespace, cfg: Any, handle: _RunHandle) -> bool:
         # keeps `data/source/` gitignored and every downstream level free (OQ-1).
         written = vlm_record.freeze_text(args.record, probed)
         print(f"   recorded     {written}  ({probed.page_count} pages, {probed.probe_version})")
-    handle.record = _progress(handle, cfg, step="probe", page_count=probed.page_count)
+    # The document goes into the store here and nowhere else, and the position is the whole
+    # reason there is one writer: `doc_id` and `revision` are only authoritative after step 01,
+    # and `content_hash` only exists after step 02. `POST /documents` runs this subcommand
+    # (§15 Factor XII), so an upload deposits through exactly this line — the E1 failure was two
+    # code paths for one operation, where one of them silently did less than the whole job.
+    # `store.put` writes the `document_stored` event itself. Nothing is logged here, because a
+    # second `ingest_step` for step 02 would make the event stream say the pipeline ran a step
+    # twice — the steps a run reports are exactly `INGEST_STEPS`, and a reader counts them.
+    stored = store_module.DocumentStore.from_config(cfg).put(
+        doc.doc_id, doc.revision, source=source, content_hash=probed.content_hash)
+    print(f"   stored       {stored.path}  ·  {stored.size_bytes:,} bytes")
+    print("   the source, not a raster: rasters are still never persisted (§4.2) — this is what")
+    print("   `page_id` -> bytes resolves to, so a page can be rendered at query time (U029)")
+    handle.record = _progress(handle, cfg, step="probe", page_count=probed.page_count,
+                              content_hash=probed.content_hash)
     if until == "probe":
         _print_pages(probed, rasters=None)
         return True
@@ -825,7 +846,9 @@ def _ingest(args: argparse.Namespace, cfg: Any, handle: _RunHandle) -> bool:
           f"{sum(len(r.png) for r in rasters) / 1_048_576:.1f} MB held in memory")
     print(f"   raster cache: {cache['misses']} rendered, {cache['hits']} served from the LRU "
           f"(max {cache['maxsize']}) — a cache, never a source of truth (§4.2, register E3)")
-    print("   0 bytes written to the filesystem")
+    print("   rasters: 0 bytes written to the filesystem. The SOURCE pdf is in the document")
+    print("   store (step 02, U029) — that is what these are re-rendered from, and it is the")
+    print("   only thing this run puts on a disk")
     _print_pages(probed, rasters=rasters)
     if until == "render":
         return True
@@ -1795,10 +1818,13 @@ def _cmd_ingest(args: argparse.Namespace) -> int:
     handle = _RunHandle(runs_collection=cfg.runs_collection)
     with vsir_logging.correlate(run_id=identifier):
         print(f"vsir ingest — release {cfg.release_id} · run {identifier} · until {args.until}")
-        _log.info("ingest_started", pdf=str(args.pdf), until=args.until, vlm=cfg.vlm,
+        _log.info("ingest_started", pdf=str(args.pdf or ""), until=args.until, vlm=cfg.vlm,
                   vlm_model=cfg.vlm_model, prompt_version=cfg.prompt_version, dpi=DPI_ANSWER,
                   resume=bool(args.resume), steal=bool(args.steal))
-        if args.until in STORE_BACKED_STEPS:
+        # A resume with no path resolves its source out of the document store, so it needs the
+        # control plane whatever `--until` says: the run record is where the document's identity
+        # and its `content_hash` are (§6.9, U029).
+        if args.until in STORE_BACKED_STEPS or (args.resume and not args.pdf):
             try:
                 handle.client = _open_store(cfg)
             except IngestRefused as refusal:
@@ -1808,10 +1834,13 @@ def _cmd_ingest(args: argparse.Namespace) -> int:
                 return EXIT_REFUSED
         previous = _install_drain(handle)
         try:
+            if not args.pdf:
+                args.pdf = _resumed_source(args, cfg, handle)
             passed = _ingest(args, cfg, handle)
         except (IngestRefused, window_module.WindowError, render.RenderError,
                 embed_module.EmbedError, fingerprint_module.FingerprintMismatch,
-                index_module.IndexRefused, run_module.RunRefused) as refusal:
+                index_module.IndexRefused, run_module.RunRefused,
+                store_module.StoreRefused) as refusal:
             _log.error("ingest_refused", reason=refusal.code, detail=str(refusal),
                        **getattr(refusal, "details", {}))
             print(f"\n   REFUSED  {refusal.code}: {refusal}")
@@ -1829,6 +1858,48 @@ def _cmd_ingest(args: argparse.Namespace) -> int:
         _log.info("ingest_complete", until=args.until, passed=passed)
     print(f"\n{'ALL ASSERTIONS PASSED' if passed else 'ASSERTIONS FAILED'}")
     return EXIT_OK if passed else EXIT_REFUSED
+
+
+def _resumed_source(args: argparse.Namespace, cfg: Any, handle: _RunHandle) -> str:
+    """The PDF a `--resume` with no path continues from: the document store (U029, §6.9).
+
+    This is what makes an **upload** resumable across an instance restart, which `POST /documents`
+    had to disclose as a limitation until there was a store: the route spooled to `/tmp` and the
+    spool went with the instance, so `--resume` had no file to be pointed at and the operator had
+    no copy either. Now the run record names `doc_id@revision` and carries the `content_hash` the
+    run indexed under, and the store holds the bytes — so continuing a run needs the run id and
+    nothing else.
+
+    The hash is checked, not assumed. Resuming against a *different* file under the same
+    `(doc_id, revision)` would re-bill windows whose cache keys are anchored to the old bytes and
+    stitch the two halves of two documents together (§6.3); a named refusal is the only honest
+    outcome, and re-ingesting from scratch is the correct move after one.
+    """
+    if not args.resume:
+        raise IngestRefused(
+            "source_required",
+            "vsir ingest needs a PDF. The path is optional only with --resume, which resolves it "
+            "from the document store using the run's own doc_id@revision (§6.9, U029)")
+    if handle.client is None:
+        raise IngestRefused("qdrant_unavailable",
+                            "a resume with no path reads the run record to find its document, "
+                            "and the control plane is in Qdrant (D9)")
+    record = run_module.require(handle.client, cfg.runs_collection, args.resume)
+    stored = store_module.DocumentStore.from_config(cfg).locate(
+        record.doc_id, record.revision, expect_hash=record.content_hash)
+    # Step 01 derives an undeclared `doc_id` from the file's *stem*, and the file in the store is
+    # named `<doc_id>@<revision>.pdf` — so a resume that declared neither would call this
+    # document `stored-over-http-3-1` and be refused `run_document_mismatch` by its own run.
+    # The run record is authoritative for the run being resumed; what verifies that the *bytes*
+    # are the right ones is `content_hash` above, which is the stronger check of the two.
+    if not args.doc_id:
+        args.doc_id = record.doc_id
+    if not args.revision:
+        args.revision = record.revision
+    _log.info("resume_source_resolved", run_id=record.run_id, document=stored.name,
+              source=str(stored.path), content_hash=stored.content_hash)
+    print(f"   resuming     {record.run_id} · {stored.name} · {stored.path}")
+    return str(stored.path)
 
 
 def _install_drain(handle: _RunHandle) -> Any:
@@ -1965,6 +2036,66 @@ def _cmd_gates_rerun(args: argparse.Namespace, cfg: Any, client: Any) -> int:
     print(f"\nblocked by   {list(blocked) or 'nothing'} · flags {list(report.flags) or 'none'}")
     print("re-evaluated against the index, not against this process: the records were scrolled "
           "back out of the collection and the window outcomes off the control plane")
+    return EXIT_OK
+
+
+# ── `vsir documents` — the document store of §4.2 (U029) ────────────────────────────────────────
+
+def _cmd_documents(args: argparse.Namespace) -> int:
+    """What the store holds, and what one `page_id` resolves to. No Qdrant, no model, no spend.
+
+    §15 Factor XII: an operational action that cannot be a `vsir` subcommand is not a supported
+    operation — and *"can this page still be rendered?"* is the question the whole vision half of
+    retrieval depends on. Answering it by listing a directory over `docker exec` is exactly the
+    laptop-only script that factor rules out.
+    """
+    try:
+        cfg = load_config()
+    except ConfigError as refusal:
+        _log.error("command_refused", reason="configuration", detail=str(refusal))
+        print(f"   configuration refused: {refusal}")
+        return EXIT_REFUSED
+
+    store = store_module.DocumentStore.from_config(cfg)
+    print(f"document store  {store.root}"
+          f"{'' if cfg.doc_store else '   (unset: ' + store_module.STORE_ENV + ' names the mount)'}")
+    print("the SOURCE pdfs, never a raster: rasters are re-rendered on demand into an in-process")
+    print("LRU cache and are never persisted (§4.2) — this is what they are re-rendered from")
+    print()
+
+    if args.page:
+        try:
+            source = store.for_page(args.page)
+        except ValueError as malformed:
+            print(f"   REFUSED  page_id_malformed: {malformed}")
+            return EXIT_REFUSED
+        except store_module.StoreRefused as refusal:
+            _log.error("command_refused", reason=refusal.code, detail=str(refusal),
+                       **refusal.details)
+            print(f"   REFUSED  {refusal.code}: {refusal}")
+            return EXIT_REFUSED
+        raster = render.render_page(source.path, source.page_no, dpi=PREVIEW_DPI,
+                                    content_hash=source.document.content_hash)
+        print(f"page_id      {source.page_id}")
+        print(f"document     {source.document.name}  ·  page {source.page_no}")
+        print(f"source       {source.path}  ·  {source.document.size_bytes:,} bytes")
+        print(f"content_hash {source.document.content_hash}")
+        print(f"rendered     {raster.width}x{raster.height} px at dpi {PREVIEW_DPI}, "
+              f"{len(raster.png):,} bytes, held in memory · 0 bytes written")
+        _log.info("document_resolved", page_id=source.page_id, document=source.document.name,
+                  page_no=source.page_no, content_hash=source.document.content_hash)
+        return EXIT_OK
+
+    entries = store.entries()
+    if not entries:
+        print("   (empty) — nothing has been ingested into this store. A page of a document that")
+        print("   is not here is a typed `document_not_stored`, never a blank image (§11.3)")
+        return EXIT_OK
+    print(f"{'document':<40} {'bytes':>12}  {'content_hash':<16} stored_at")
+    for entry in entries:
+        print(f"{entry.name:<40} {entry.size_bytes:>12,}  {entry.content_hash[:16]:<16} "
+              f"{entry.stored_at}")
+    print(f"\n{len(entries)} document(s)")
     return EXIT_OK
 
 
@@ -2384,7 +2515,12 @@ def build_parser() -> argparse.ArgumentParser:
         "ingest",
         help="run the ingestion pipeline of §6.1 over one PDF; steps 01-11 at M2a",
     )
-    ingest_parser.add_argument("pdf", help="the source PDF")
+    ingest_parser.add_argument(
+        "pdf", nargs="?", default=None,
+        help="the source PDF. Optional with --resume, which resolves it from the document store "
+             "by the run's own doc_id@revision — which is what makes an uploaded run resumable "
+             "after the instance that took it is gone (U029)",
+    )
     ingest_parser.add_argument(
         "--until", choices=list(INGEST_STEPS), default=INGEST_STEPS[-1],
         help=f"stop after this step (default: {INGEST_STEPS[-1]}, the last one built)",
@@ -2488,6 +2624,18 @@ def build_parser() -> argparse.ArgumentParser:
     publish_parser.add_argument("--reason", default="",
                                 help="why the override is justified — required with --override")
     publish_parser.set_defaults(handler=_with_store(_cmd_publish))
+
+    documents_parser = commands.add_parser(
+        "documents",
+        help="the document store of §4.2 — the source PDFs a page raster is rendered from (U029)",
+    )
+    documents_parser.add_argument(
+        "--page", default="", metavar="PAGE_ID",
+        help="resolve one page_id to its document and render it, proving page_id -> bytes. "
+             "A document that is not in the store is a typed `document_not_stored` naming "
+             "doc_id@revision, never a blank image (§11.3)",
+    )
+    documents_parser.set_defaults(handler=_cmd_documents)
 
     serve_parser = commands.add_parser(
         "serve",

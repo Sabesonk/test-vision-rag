@@ -52,6 +52,16 @@ RUN useradd --uid 10001 --no-create-home --shell /usr/sbin/nologin vsir
 
 COPY --from=build /opt/venv /opt/venv
 
+# The document store's mount point, created here and owned by the runtime user — and it has to be
+# in the image rather than only in `docker-compose.yml`. Docker initialises a **fresh named volume**
+# from whatever is at its mount point in the image, ownership included; with nothing there it
+# creates the directory root-owned, and a container running as uid 10001 then cannot write to its
+# own volume. Found by running the stack: the first seed refused `document_store_unwritable` at
+# step 02, correctly and unhelpfully. Rasters are still never persisted (§4.2) — this is where
+# the SOURCE documents they are re-rendered from live (U029), and it is the one writable path
+# outside `/tmp` that `--read-only` allows.
+RUN mkdir -p /srv/documents && chown 10001:10001 /srv/documents
+
 USER 10001
 WORKDIR /srv
 

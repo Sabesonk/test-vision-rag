@@ -79,6 +79,13 @@ services:
       # resolves against that rather than against the caller's idea of the repository root. The
       # route refuses `400 fixture_not_found` naming what it tried, so this is not a silent trap.
       VSIR_FIXTURE: "/srv/data/fixtures/synthetic_3window"
+      # The document store (§4.2, U029): the named volume below, so the SOURCE pdf a page raster is
+      # rendered from survives `stack.sh down` and a container restart. Rasters are still never
+      # persisted — they are re-rendered on demand into an in-process LRU — but until this volume
+      # existed there was nothing to re-render them *from*: an upload's spool died with the
+      # container and `page_id` resolved to no bytes at all. Every process type of the release
+      # mounts the same one, which is what makes the answer independent of which replica serves it.
+      VSIR_DOC_STORE: "/srv/documents"
       # Only read when VSIR_VLM=gemini. Absent from the image and from this file: it arrives from
       # the environment, and never appears in a log line or a response (§15.1).
       VSIR_VLM_KEY: "${VSIR_VLM_KEY:-}"
@@ -86,6 +93,10 @@ services:
       # Read-only: the corpus and the frozen fixtures are inputs. Nothing in the pipeline writes
       # here — the exports stream from the index and touch no filesystem (§6.8).
       - ./data:/srv/data:ro
+      # Writable, and the only writable path outside the tmpfs: the source documents. `init` gets
+      # it too because the anchor is shared and a `doctor` run that never writes there is harmless
+      # — one mount list for every process type is worth more than trimming one of them.
+      - document-store:/srv/documents
     networks: [vsir-net]
     depends_on:
       qdrant:
@@ -111,9 +122,9 @@ services:
     tmpfs:
       # Rasters are re-rendered on demand and are never a source of truth (§4.2) — and this is
       # also where `POST /documents` spools an upload for the life of one run, which is why it is
-      # larger than the test stack's 512m. A spooled PDF dies with the container, so a run started
-      # by upload is not resumable across a restart; a CLI ingest is, because the operator still
-      # has the file.
+      # larger than the test stack's 512m. The spool dying with the container costs nothing now:
+      # step 02 deposits the document on the `document-store` volume above, so
+      # `vsir ingest --resume <run_id>` continues an uploaded run with no path at all (U029).
       - /tmp:rw,noexec,nosuid,size=2g
     depends_on:
       qdrant:
@@ -160,3 +171,8 @@ volumes:
   qdrant-storage:
     # Named, so the index survives `stack.sh down` and a machine restart. `down --wipe` is the
     # only thing that drops it, and it says so before it does.
+  document-store:
+    # The source PDFs (§4.2, U029). Named for the same reason and dropped by the same command: a
+    # `down --wipe` that took the index and left the documents would leave a store describing a
+    # corpus that is no longer indexed. Losing it costs page images, never an answer — the index
+    # is the source of truth for retrieval, and a missing document is a typed `document_not_stored`.

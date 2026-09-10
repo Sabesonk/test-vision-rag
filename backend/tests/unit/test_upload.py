@@ -50,8 +50,14 @@ def _config() -> Config:
 
 
 @pytest.fixture
-def cfg() -> Config:
-    return _config()
+def cfg(tmp_path) -> Config:
+    """A release whose document store is this test's own directory (U029).
+
+    `accept` pre-flights the store before it answers `202`, and an unset `VSIR_DOC_STORE` means a
+    directory under the platform temporary directory — so without this every test that accepts an
+    upload would write into the machine's shared one.
+    """
+    return dataclasses.replace(_config(), doc_store=str(tmp_path / "documents"))
 
 
 # ── what can be refused before anything is spawned (§7.3, §11.3) ─────────────────────────────────
@@ -377,6 +383,59 @@ def test_the_spend_switch_is_passed_on_so_the_child_agrees_with_the_boundary(cfg
     assert upload.child_env(cfg, vlm="", fixture="", base={})["VSIR_ALLOW_PAID"] == "0"
     permitted = dataclasses.replace(cfg, allow_paid=True)
     assert upload.child_env(permitted, vlm="", fixture="", base={})["VSIR_ALLOW_PAID"] == "1"
+
+
+# ── the document store: an upload that could never be rendered is refused (U029) ────────────────
+
+def test_the_child_deposits_into_the_store_this_instance_serves(cfg):
+    """The same failure shape as `VSIR_RUNS_COLLECTION`, one layer over.
+
+    An instance's configuration is an argument, not the process environment — so a child that
+    inherited a stale `VSIR_DOC_STORE` would deposit the document on a volume this instance does
+    not read, and every page of it would answer `document_not_stored` from a store that has it.
+    """
+    stale = {"VSIR_DOC_STORE": "/srv/somewhere-else", "PATH": "/usr/bin"}
+
+    child = upload.child_env(cfg, vlm="", fixture="", base=stale)
+
+    assert child["VSIR_DOC_STORE"] == cfg.doc_store
+
+
+def test_an_unset_store_is_still_written_so_nothing_stale_is_inherited(cfg):
+    """Empty is a value: it means "the default", and the default must be *this* instance's."""
+    release = dataclasses.replace(cfg, doc_store="")
+
+    child = upload.child_env(release, vlm="", fixture="", base={"VSIR_DOC_STORE": "/stale"})
+
+    assert child["VSIR_DOC_STORE"] == ""
+
+
+def test_an_upload_is_refused_when_the_store_cannot_be_written(cfg, tmp_path):
+    """A `202` that buys a document nobody can ever see an image of is worse than a refusal.
+
+    Ingestion would succeed: the store is only needed to *render*, so the run would index, gate
+    and publish, and every page of it would then be permanently imageless. So the boundary
+    checks it, where it is a status code the caller reads (§11.3).
+    """
+    blocked = tmp_path / "read-only"
+    blocked.mkdir(mode=0o500)
+    release = dataclasses.replace(cfg, doc_store=str(blocked / "documents"))
+    try:
+        with pytest.raises(upload.UploadRefused) as refusal:
+            upload.accept(release, filename="d.pdf", body=PDF, spool=tmp_path,
+                          fixture=str(tmp_path))
+    finally:
+        blocked.chmod(0o700)
+
+    assert refusal.value.code == "document_store_unwritable"
+    assert refusal.value.http_status == 503
+
+
+def test_a_writable_store_is_created_by_the_check_rather_than_assumed(cfg):
+    """The volume is mounted; the directory inside it is the release's to make."""
+    upload.check_store(cfg)
+
+    assert Path(cfg.doc_store).is_dir()
 
 
 # ── the spool ───────────────────────────────────────────────────────────────────────────────────

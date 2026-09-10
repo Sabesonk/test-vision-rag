@@ -994,6 +994,7 @@ def create_app(env: Mapping[str, str] | None = None) -> FastAPI:
         413: {"description": "larger than the spool bound"},
         415: {"description": "the bytes do not begin with %PDF-"},
         500: {"description": "the ingest process could not be started"},
+        503: {"description": "the document store is missing or not writable (§4.2, U029)"},
     })
     async def post_document(
         file: UploadFile = File(..., description="the source PDF"),

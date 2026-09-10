@@ -3009,9 +3009,12 @@ all: an operator with only the API could query documents but never add one.
 - **Enables:** [U030]
 
 ### Disclosed limitations
-- **A run started by upload is not resumable across an instance restart.** PyMuPDF needs a file, so
-  the upload is spooled for the life of one run and the spool goes with the instance. A CLI ingest
-  is resumable because the operator's copy is still on their filesystem. **U029 removes this.**
+- ~~**A run started by upload is not resumable across an instance restart.**~~ **Closed by U029
+  (2026-09-10).** It was true — the upload is spooled for the life of one run and the spool goes
+  with the instance — and the fix is not to keep the spool: step 02 deposits the source document
+  on the store volume, so `vsir ingest --resume <run_id>` resolves the bytes from the run record
+  and needs no path. Asserted by
+  `tests/api/test_store_round_trip.py::test_an_upload_started_run_resumes_from_the_store_with_no_path_at_all`.
 - **The spend switch is per-release, not per-caller.** `serve/auth.py` has no token scopes, so a
   caller who can spend can spend everything the release allows.
 
@@ -3078,7 +3081,7 @@ provider's schema dialect — is unverified until a real call is made. U013's pa
 
 ## Unit: The document store — the source PDF at query time (ID: U029)
 
-**Status:** 🔴 **Not started — and it blocks U018 and U020**
+**Status:** ✅ Complete (2026-09-10)
 **Milestone:** M4 (must land before U018)
 **Priority:** P0-Critical
 **Type:** ingest
@@ -3111,17 +3114,53 @@ last one is load-bearing for §8.5's honest abstention: `not_searchable` tells t
 to vision, and today the escalation has nowhere to go.
 
 ### Deliverables (files)
-- `backend/vsir/ingest/store.py` — **written**, net new: a content-addressed document store, one
-  mounted volume, `<doc_id>@<revision>.pdf`. Derivable from any `page_id` via
-  `ids.parse_page_id`, so **no path goes in a payload** and A5's fix stands: the payload names the
-  *document*, the store resolves the *file*.
-- `backend/vsir/serve/ingest.py` — **extended**: the upload writes to the store instead of deleting
-  its spool.
+- `backend/vsir/ingest/store.py` — **written**, net new: a document store, one mounted volume,
+  `<doc_id>@<revision>.pdf`. Derivable from any `page_id` via `ids.parse_page_id`, so **no path
+  goes in a payload** and A5's fix stands: the payload names the *document*, the store resolves
+  the *file*. Identity-addressed and **integrity-checked** rather than content-addressed:
+  `<sha256>.pdf` would need a hash in the payload, or a second index to find one, which is the
+  same coupling by another name — so the hash moves to the run record and `locate(expect_hash=…)`
+  refuses bytes that disagree with it.
+- `backend/vsir/cli.py` — **extended**, and this is the one deliverable that moved. *(Amended
+  2026-09-10, during implementation.)* The plan put the deposit in `serve/ingest.py` — *"the upload
+  writes to the store instead of deleting its spool"* — and that cannot be right: at upload time
+  the route does not know the document's identity. An undeclared `doc_id` is derived by §6.1 step
+  01 from the filename and `content_hash` does not exist until step 02, so the route would have had
+  to re-derive step 01's answer and drift from it (defect **P4** is what that drift already looks
+  like). So the deposit is **step 02 of the pipeline**, where `doc_id`, `revision` and
+  `content_hash` are all authoritative — and because `POST /documents` *runs* that pipeline
+  (§15 Factor XII), an upload deposits through the identical line a CLI ingest does. One writer,
+  which is the register **E1** lesson applied rather than restated. Also: `vsir ingest --resume`
+  takes the PDF path as **optional** and resolves it from the store, and `vsir documents` /
+  `vsir documents --page <page_id>` is the operational surface for what the store holds.
+- `backend/vsir/serve/ingest.py` — **extended**: `check_store` pre-flights the volume before the
+  `202`, because a run that indexes and publishes into a release with no writable store buys a
+  document whose every page is permanently imageless; and `child_env` passes `VSIR_DOC_STORE`, the
+  same class of bug as the `VSIR_RUNS_COLLECTION` one it sits beside.
 - `backend/vsir/ingest/run.py` — **extended**: persist `content_hash`. It is already computed by
   probe and logged, and never stored — so nothing can detect that the file behind
   `doc_id@revision` was swapped for different bytes.
-- `docker-compose.yml` — **extended**: the volume.
-- `backend/tests/unit/test_store.py`, `backend/tests/api/test_store_round_trip.py` — **written**.
+- `backend/vsir/config.py`, `.env.example` — **extended**: `VSIR_DOC_STORE`, optional and
+  defaulted. Deliberately **not** a thirteenth required variable: §4.3's contract is that unsetting
+  a required one is a named non-zero exit, and a release that never ingests must still boot.
+- `docker-compose.yml`, `scripts/stack.sh` — **extended**: the `document-store` named volume,
+  mounted at `/srv/documents` by every process type of the release.
+- `backend/Dockerfile` — **extended**: `/srv/documents`, created and owned by uid 10001. Docker
+  initialises a fresh named volume from the image's mount point, ownership included — with nothing
+  there the volume is root-owned and the non-root container cannot write to its own store. Found
+  by running `stack.sh up`, which refused the seed `document_store_unwritable`.
+- `backend/tests/unit/test_store.py`, `backend/tests/api/test_store_round_trip.py` — **written**;
+  `backend/tests/unit/test_ingest.py`, `backend/tests/unit/test_upload.py` — **extended**.
+
+### Demo Command
+*(Added 2026-09-10: the unit as planned had none.)*
+```bash
+export VSIR_DOC_STORE=/tmp/vsir-demo-documents VSIR_FIXTURE=data/fixtures/synthetic_3window
+vsir ingest data/source/synthetic_3window.pdf --vlm stub --until probe   # deposits at step 02
+vsir documents                                                          # what the store holds
+vsir documents --page 'synthetic-3window@1.0#p007'                      # page_id -> bytes -> raster
+vsir documents --page 'TC1E-SF@1.3#p001'                                # the typed refusal, exit 1
+```
 
 ### Requirements
 - `page_id → doc_id@revision → bytes` and nothing else. No new payload field, no `image_path`.
@@ -3131,13 +3170,13 @@ to vision, and today the escalation has nowhere to go.
   U027's first disclosed limitation.
 
 ### Acceptance Criteria
-- [ ] After an upload, `page_id → bytes` resolves for every page of the document.
-- [ ] The page payload gains **no** field; `INDEXED` is unchanged and the boot assertion still passes.
-- [ ] A document whose file is absent from the store gives a typed refusal naming
+- [x] After an upload, `page_id → bytes` resolves for every page of the document.
+- [x] The page payload gains **no** field; `INDEXED` is unchanged and the boot assertion still passes.
+- [x] A document whose file is absent from the store gives a typed refusal naming
       `doc_id@revision`, not a 500 and not a blank image.
-- [ ] `content_hash` is on the run record, and a store entry whose bytes disagree with it is refused
+- [x] `content_hash` is on the run record, and a store entry whose bytes disagree with it is refused
       rather than served.
-- [ ] `vsir ingest --resume` completes an upload-started run after the container is restarted.
+- [x] `vsir ingest --resume` completes an upload-started run after the container is restarted.
 
 ### Dependencies
 - **Depends On:** [U027, U011]
@@ -3689,7 +3728,7 @@ free proof ahead of every paid one.
 | — | **U028** | M2a/b | ✅ *shipped 2026-09-10* — the five corrections the first live Gemini run found |
 | — | **U030** | M3 | ✅ *shipped 2026-09-10* — `/console`, the OpenAPI security scheme, the local stack |
 | 17 | U017 | M4 | `skim_pages`, fusion, image queries, `resolve`. **The best next unit:** unblocked, needs no new storage, and it is the first thing to *read* the fused image+text vectors U010 has been writing all along — today they are written and never queried |
-| 18 | **U029** | M4 | **the document store — must land before U018.** `page_id → bytes`. Small, and without it the whole vision half of retrieval has nothing to render from |
+| 18 | **U029** | M4 | ✅ **shipped 2026-09-10.** the document store — `page_id → bytes`. Small, and without it the whole vision half of retrieval had nothing to render from |
 | 19 | U018 | M4 | the page-image endpoint, the raster cache and `fetch` — closes M4. **Needs U029** |
 | 20 | U019 | M5 | **free** — the aggregate rungs and `searchable_ratio`; parallel with U020 |
 | 21 | U020 | M5 | `read` — the paid tool; parallel with U019 |

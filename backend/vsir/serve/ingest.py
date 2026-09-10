@@ -18,11 +18,18 @@ What the caller gets back is ``202`` and a ``run_id``, immediately. Progress is
 
 *It makes the web process briefly stateful.* PyMuPDF needs a file, so an uploaded PDF is spooled to
 disk for the life of one run, and §15 Factor VI's *"nothing on the instance to read"* stops being
-literally true for that window. The consequence is concrete and is disclosed rather than papered
-over: a run started by upload is **not resumable across an instance restart**, because
-``vsir ingest --resume`` needs the source PDF and the spool went with the instance. A run started
-from the CLI is resumable, because the operator's copy is still on their filesystem. The spool is
-removed when the child exits, however it exits.
+literally true for that window. The spool is removed when the child exits, however it exits.
+
+**What used to be disclosed here — that a run started by upload is not resumable across an instance
+restart — is closed by U029.** It was true, and it was a real asymmetry: the spool went with the
+instance while a CLI ingest stayed resumable only because the operator's own copy was still on
+their filesystem. The document store fixes it at the source rather than by keeping the spool
+around: step 02 of the pipeline deposits the document under ``<doc_id>@<revision>.pdf`` on a
+mounted volume, and because this route *runs that pipeline*, an upload deposits through exactly the
+same line a CLI ingest does. ``vsir ingest --resume <run_id>`` then needs no path at all — it reads
+``doc_id@revision`` and ``content_hash`` off the run record and resolves the bytes from the store.
+The spool stays temporary and is still deleted, which is the honest arrangement: it is a transport
+buffer, and the durable copy is the store's.
 
 *It moves the spend decision to whoever can reach the port.* Ingestion bills S1, S2 and one
 embedding per page, and a page-count ceiling is not a budget. So this route refuses outright when
@@ -46,6 +53,7 @@ from typing import Any, Mapping
 from vsir import logging as vsir_logging
 from vsir.config import Config
 from vsir.core import ids
+from vsir.ingest import store as store_module
 from vsir.ingest.window import MAX_INLINE_BYTES
 
 _log = vsir_logging.get_logger(__name__)
@@ -137,6 +145,23 @@ def check_spend_allowed(cfg: Config) -> None:
         f"the release with VSIR_VLM=stub and a fixture",
         status=403, vlm=cfg.vlm, vlm_model=cfg.vlm_model,
     )
+
+
+def check_store(cfg: Config) -> None:
+    """Refuse an upload the release could never render a page image from (§4.2, U029).
+
+    The pipeline deposits the source document at step 02 and every page raster is re-rendered from
+    it on demand, so a release whose document store is missing or read-only can still ingest,
+    index and publish — and every one of those pages then answers ``document_not_stored`` for its
+    image, for ever. That is a `202` that quietly buys half a document, which is precisely the
+    class of failure this boundary exists to convert into a status code the caller sees.
+
+    A real write, not ``os.access``: see :meth:`~vsir.ingest.store.DocumentStore.ensure_writable`.
+    """
+    try:
+        store_module.DocumentStore.from_config(cfg).ensure_writable()
+    except store_module.StoreRefused as refusal:
+        raise UploadRefused(refusal.code, str(refusal), status=503, **refusal.details) from refusal
 
 
 def check_fixture(fixture: str, *, vlm: str) -> str:
@@ -254,6 +279,11 @@ def child_env(cfg: Config, *, vlm: str, fixture: str,
         "VSIR_VLM_RPM": str(cfg.vlm_rpm),
         "VSIR_SAFETY_DOC_TYPES": ",".join(cfg.safety_doc_types),
         "VSIR_SAFETY_TOPICS": ",".join(cfg.safety_topics),
+        # Written unconditionally, empty value included, and for the same reason as
+        # `VSIR_RUNS_COLLECTION` above: an inherited value from the process environment would let
+        # the child deposit the document on a volume this instance does not serve images from, so
+        # every page of it would answer `document_not_stored` from a store that has it (U029).
+        "VSIR_DOC_STORE": cfg.doc_store,
         "VSIR_VLM_KEY": cfg.vlm_key,
     })
     # Set, or **removed** — never merely skipped. `child` starts as a copy of this process's
@@ -352,6 +382,10 @@ def accept(cfg: Config, *, filename: str, body: bytes, until: str = "publish",
     # function's to fix.
     fixture = check_fixture(fixture if resolved_vlm == "gemini" else fixture or cfg.fixture_dir,
                             vlm=resolved_vlm)
+    # Last, because it is the only one of the four that is about the *release* rather than the
+    # request — but still before the `202`, because a run that publishes pages nobody can ever see
+    # an image of is worse than an upload that was refused.
+    check_store(cfg)
 
     run_id = ids.run_id()
     target = (spool or spool_dir()) / f"{run_id}.pdf"

@@ -7,10 +7,10 @@
 
 | | |
 |---|---|
-| **Complete** | 19 / 31 units (61%) — 16 of the planned 26, plus U027, U028 and U030 added after the plan was written (plan §4b) |
-| **Current milestone** | **M4 — in progress**: `skim_pages` and `resolve` shipped (U017); `fetch` and the page-image route remain, behind U029. M0, M1, M2a and M3 closed and tagged, M2b's non-paid half shipped |
-| **Next unit** | **U029 — the document store (`page_id` → bytes)**, new and not in the original 26 (plan §4b). Rasters are re-rendered on demand by design and nothing keeps the source PDF to render them from, so `fetch`, `read`, `GET /pages/{id}/image` and correction **Loop 5** all have nowhere to go until it exists. **U018 cannot be built without it** |
-| **Then** | **U018** — `GET /pages/{page_id}/image`, the raster cache and `fetch`, which closes M4. It also owns the percent-encoding of the `#` in a `page_id`: `image.url` is emitted today and is not dereferenceable until that route and that encoding land together |
+| **Complete** | 20 / 31 units (65%) — 16 of the planned 26, plus U027, U028, U029 and U030 added after the plan was written (plan §4b) |
+| **Current milestone** | **M4 — in progress**: `skim_pages` and `resolve` shipped (U017), the document store shipped (U029); `fetch` and the page-image route remain. M0, M1, M2a and M3 closed and tagged, M2b's non-paid half shipped |
+| **Next unit** | **U018** — `GET /pages/{page_id}/image`, the raster cache and `fetch`, which closes M4. **Its blocker is cleared**: U029 shipped the document store, so `page_id → doc_id@revision → bytes` resolves and there is something to render. U018 also owns the percent-encoding of the `#` in a `page_id`: `image.url` is emitted today and is not dereferenceable until that route and that encoding land together |
+| **Then** | **U019/U020** — the two aggregate rungs and `read`, in M5 |
 | **Read first** | **Plan §4c — six open defects found by running the system.** None breaks a build; all of them mislead somebody who trusts the output. P1 (a live run records no cost) and P2 (no VLM cache store, so a re-ingest re-bills) both land on U013 |
 | **Blocked** | **U013** — the paid re-bill only, and now on **OQ-1 alone**: `data/source/TC1E-SF.pdf` is still not present. **OQ-2 is closed** — a key is configured and was exercised live on 2026-09-10, ingesting a real 4-page datasheet to `published` through `POST /documents`. The ladder is no longer a blocker either: the shipped `plan()` refused the 55-page pilot at **step 05**, one step before the spend everyone thought it was waiting on a credential for, and `fixes/001` now folds it to `[[1, 30], [31, 55]]` — byte-for-byte what its own acceptance table declared. Nothing downstream is blocked (§17) |
 
@@ -99,8 +99,8 @@ Two things a later unit should not have to rediscover:
 
 ### M4 — `skim_pages`, `fetch`, `resolve` (spend: none)
 - [x] U017 `skim_pages`, deterministic fusion, image queries, and `resolve`
-- [ ] **U029 The document store — `page_id` → bytes** — new (plan §4b); **U018 cannot be built without it**
-- [ ] U018 The page-image endpoint, the raster cache, and `fetch` — **depends on U029**
+- [x] **U029 The document store — `page_id` → bytes** — new (plan §4b); **U018's blocker, cleared**
+- [ ] U018 The page-image endpoint, the raster cache, and `fetch` — U029 shipped, so it is unblocked
 
 ### M5 — the ladder rungs and `read` (spend: read)
 - [ ] U019 `skim_documents`, `skim_sections`, and `searchable_ratio` — spend: none
@@ -3125,3 +3125,170 @@ acceptance number was re-baselined (C10). Every test environment now uses the sa
 - **U029 (the document store) is next and blocks U018**, unchanged by this unit: `image.url` is a
   reference to a route that does not exist yet, and the L2 assertion on it is deliberately about the
   URL's shape. U018 owns the route **and** the percent-encoding of the `#` in a `page_id`.
+  *(U029 shipped 2026-09-10 — see below. U018 is unblocked.)*
+
+---
+
+### U029 — The document store: `page_id` → bytes
+
+**Milestone:** M4 · **Spend:** none · **Status:** `[x]` Complete · **Completed:** 2026-09-10
+
+The gap U018 could not be built over. Rasters are re-rendered on demand by design (§4.2) and
+**nothing kept the file to render them from**: a CLI ingest happened to work because the operator's
+copy was still on their filesystem, an upload spooled to `/tmp/<run_id>.pdf` and the reaper deleted
+it when the run exited, and neither the page payload nor the run record named a file — register
+**A5** removed `image_path` deliberately. Given `SICK-UE410-SD400@1.0#p002` there was no route from
+page → document → bytes.
+
+**Demo output** — the unit as planned had no Demo Command; this is the one added to the plan.
+
+```
+$ export VSIR_DOC_STORE=/tmp/vsir-demo-documents VSIR_FIXTURE=data/fixtures/synthetic_3window
+$ vsir ingest data/source/synthetic_3window.pdf --vlm stub --until probe
+
+01 manifest — identity, from the filename, the metadata and the uploader ─────
+   doc_id       synthetic-3window
+   revision     1.0   (undeclared — the default, and recorded as such (register A4))
+   source       data/source/synthetic_3window.pdf  ·  87,741 bytes
+
+02 probe — the text layer, and the only writer of `text` (I2) ────────────────
+   page_count 42 · pymupdf-1.28.2 · content_hash 4c9b4585d8f9922e…
+   pages with text 40/42 (searchable_ratio 0.95) · s2_input_mode render@220
+   stored       /tmp/vsir-demo-documents/synthetic-3window@1.0.pdf  ·  87,741 bytes
+   the source, not a raster: rasters are still never persisted (§4.2) — this is what
+   `page_id` -> bytes resolves to, so a page can be rendered at query time (U029)
+...
+ALL ASSERTIONS PASSED
+
+$ vsir documents
+document store  /tmp/vsir-demo-documents
+the SOURCE pdfs, never a raster: rasters are re-rendered on demand into an in-process
+LRU cache and are never persisted (§4.2) — this is what they are re-rendered from
+
+document                                        bytes  content_hash     stored_at
+synthetic-3window@1.0                          87,741  4c9b4585d8f9922e 2026-09-10T12:37:11+00:00
+
+1 document(s)
+
+$ vsir documents --page 'synthetic-3window@1.0#p007'
+page_id      synthetic-3window@1.0#p007
+document     synthetic-3window@1.0  ·  page 7
+source       /tmp/vsir-demo-documents/synthetic-3window@1.0.pdf  ·  87,741 bytes
+content_hash 4c9b4585d8f9922ebaa0e2b0b17db155773f6c2d67691f569f3fb8a64b557927
+rendered     595x842 px at dpi 72, 8,598 bytes, held in memory · 0 bytes written
+
+$ vsir documents --page 'TC1E-SF@1.3#p001'                                  # exit 1
+   REFUSED  document_not_stored: no source document for TC1E-SF@1.3 in the store at
+   /tmp/vsir-demo-documents. The page is indexed and its image cannot be rendered:
+   rasters are re-rendered on demand (§4.2), so the source has to be here. Re-ingest
+   the document, or mount the volume VSIR_DOC_STORE names
+
+$ vsir documents --page '../../../etc/passwd@1.0#p001'                      # exit 1
+   REFUSED  document_id_unsafe: doc_id '../../../etc/passwd' cannot name a file in the
+   document store: it must match ^[A-Za-z0-9][A-Za-z0-9._+-]*$ — alphanumeric, then any
+   of . _ + -. A separator or a '..' here would be a path traversal carried by a
+   citation, and mangling it instead would let two revisions share one file
+```
+
+**Tests** — L0/L1 `1191 passed`; L2/L3 `1167 passed, 13 skipped` (the 13 are U013's blocked
+re-bill, unchanged). New: `tests/unit/test_store.py` (30), `tests/api/test_store_round_trip.py` (9).
+Extended: `tests/unit/test_ingest.py` (+2), `tests/unit/test_upload.py` (+4).
+
+**Acceptance criteria** — all five, each with the test that holds it:
+
+| AC | Where |
+|---|---|
+| after an upload, `page_id → bytes` resolves for **every** page | `test_every_page_of_an_uploaded_document_resolves_to_bytes` — all 42, through a real upload whose spool is already deleted |
+| the page payload gains no field; `INDEXED` unchanged; boot assertion passes | `test_the_page_payload_gained_no_field_and_the_boot_assertion_still_passes` — asserts the absence of `image_path`/`content_hash`/`source_path` on a real point and re-runs `schema_problems` |
+| a missing document is a typed refusal naming `doc_id@revision` | `test_a_document_missing_from_the_store_is_a_typed_refusal_naming_it` (L2) and its L0 twin |
+| `content_hash` on the run record; disagreeing bytes refused | `test_bytes_that_disagree_with_the_run_record_are_refused_rather_than_served` |
+| *(beyond the ACs)* the deployed shape | `bash scripts/stack.sh up` seeds through the real pipeline into the volume, and a **separate one-off container** of the same image resolves `synthetic-3window@1.0#p007` to bytes and renders it — which is the property U018 actually needs: the replica that serves an image is not the process that ingested it |
+| `--resume` completes an upload-started run after a restart | `test_an_upload_started_run_resumes_from_the_store_with_no_path_at_all` — a `202`, the client thrown away, then a **separate process** given nothing but the run id |
+
+**Invariants / failure rows closed** — none newly. This unit claims no F-row: §10's *Closed at*
+column gives F18's `fetch` half to U018, and nothing here is an invariant of its own. What it does
+is make U018's row **reachable**.
+
+**Decisions worth keeping**
+
+- **Identity-addressed, integrity-checked — not content-addressed.** The plan said "content-
+  addressed" and named the file `<doc_id>@<revision>.pdf` in the same sentence; those are different
+  things and the second is right. `<sha256>.pdf` would need a hash *in the payload*, or a second
+  index to find one — the coupling A5 removed, by another name. So the name is the document's
+  identity, derivable from any `page_id`, and the hash moves to the run record where
+  `locate(expect_hash=…)` checks it.
+- **The deposit is step 02, not the upload route** — the one deviation from the plan's deliverable
+  list, and it is amended in the plan with the reason. The route cannot know the document's
+  identity: an undeclared `doc_id` is derived by step 01 from the filename and `content_hash` does
+  not exist until step 02, so the route would have had to re-derive step 01's answer and drift from
+  it — defect **P4** is what that drift already looks like. Because `POST /documents` *runs* the
+  pipeline (§15 Factor XII), an upload deposits through the identical line a CLI ingest does. One
+  writer: register **E1**'s lesson applied rather than restated. It also means the compose `seed`
+  service and every existing CLI ingest populate the store with no further work.
+- **A re-ingest of the same `(doc_id, revision)` overwrites, and that is safe *because* of the
+  hash.** Until publish retires the previous run's pages (§6.7) the index still points at them, and
+  rendering the new file for one of those pages would answer with a page nobody indexed. The run
+  record's `content_hash` makes the disagreement a named refusal instead of a wrong image. This is
+  the case the AC exists for and it is the only reason to store a hash at all.
+- **The traversal guard is not tidiness.** `parse_page_id` accepts any revision but `@` and `#`,
+  and a `page_id` arrives from a caller's saved citation (`resolve`, §7.2.3) — so
+  `TC1E-SF@../../../../etc/passwd#p001` was a path traversal with a citation as its payload. Unsafe
+  identifiers are **refused**, never mangled: mangling would collapse two revisions onto one file,
+  and then one document's bytes would be served for the other's pages. It fires at ingest, where
+  the operator can still correct what they typed.
+- **`VSIR_DOC_STORE` is optional, not a thirteenth required variable.** §4.3's contract is that
+  unsetting a *required* one is a named non-zero exit, and a release that never ingests must still
+  boot. Unset means a directory under the platform temporary directory — honest about being
+  ephemeral rather than pretending to be a volume. `docker-compose.yml` mounts the real one.
+- **The upload boundary pre-flights the store.** A release with no writable store still ingests,
+  indexes and publishes perfectly well, and every page of that document is then permanently
+  imageless. That is a `202` that quietly buys half a document, so it is a `503` the caller reads —
+  the same principle as the `fixture_not_found` refusal beside it.
+- **`vsir ingest`'s PDF argument is now optional with `--resume`.** The run record names
+  `doc_id@revision` and carries `content_hash`; the store holds the bytes. A resume also inherits
+  the run's declared identity, because step 01 would otherwise derive `stored-over-http-3-1` from
+  the store's own filename and the run would refuse itself `run_document_mismatch`. What verifies
+  the *bytes* is the hash, which is the stronger of the two checks.
+- **`--steal` is still needed after a restart** and that is the lease's design, not a gap here: a
+  worker that dies holding a lease does not release it (D9). The test says so rather than working
+  around it.
+
+**Spec / plan changes made**
+
+- **Spec §4.2** — a *Source documents* row beside the *Rasters* row. §4.2's *"no blob store, no
+  local source of truth"* is about **rasters** and stays true; a reader of that table today would
+  otherwise conclude nothing is on disk, which is now wrong.
+- **Spec §7.4** — the `POST /documents` row said *"A run started this way is **not** resumable
+  across an instance restart"*. It now says it is, from U029, and why.
+- **Plan U027** — its first disclosed limitation is struck with the test that closes it.
+- **Plan U029** — deliverables amended (above), a Demo Command added, ACs ticked.
+
+**Two defects the tests could not see, found by running the stack**
+
+Both are the U028 lesson again: 1,191 green tests say nothing about the deployed shape, because
+no test runs as uid 10001 against a Docker named volume.
+
+- **The volume was root-owned and the container could not write to it.** `bash scripts/stack.sh up`
+  refused the seed at step 02 with `document_store_unwritable: Permission denied
+  '/srv/documents/.staging'` — the refusal working exactly as designed, and useless. Docker
+  initialises a fresh named volume from whatever is at its mount point *in the image*, ownership
+  included; nothing was there, so it made the directory root-owned and the non-root runtime user
+  was locked out of its own volume. Fixed in `backend/Dockerfile` — `mkdir -p /srv/documents &&
+  chown 10001:10001` — which is also why the mount point cannot live only in the compose file.
+- **A refusal detail called `reason` crashed the logger.** `StoreUnwritable` carried
+  `reason=<OSError subclass>` and `cli.py` splats a refusal's details into
+  `_log.error("ingest_refused", reason=refusal.code, …)` — two values for one keyword, so a clean
+  named refusal came out as a traceback. The key is `os_error` now. It is the only collision in
+  the package (`vlm/client.py`'s `finish_reason` is a different name), but the trap is general:
+  a refusal's `details` share a namespace with the log line's own fields.
+
+**Notes / follow-ups**
+
+- **`docker-compose.test.yml` was not changed.** Its `backend-test` container serves; the L2 suites
+  build their apps in-process and point `VSIR_DOC_STORE` at a `tmp_path`, so the container needs no
+  volume. A container that *ingested* would.
+- **Nothing prunes the store.** A document retired by §6.7 keeps its file, deliberately — F9's
+  `found_only_in_superseded` reads from the superseded revision's pages, and those pages have
+  images. A store that grew without bound at corpus scale is an M8 question, not this one.
+- **U018 can now be built.** `store.for_page(page_id)` returns `(document, page_no)` and
+  `render.render_page` takes it from there; the L2 test already does exactly that at dpi 72.

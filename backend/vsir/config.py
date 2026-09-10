@@ -108,6 +108,11 @@ class Config:
     vlm_tier: str
     vlm_rpm: int
     embed_text_chars: int
+    #: The mounted volume the source PDFs live on (§4.2, `ingest/store.py`). Deployment-varying by
+    #: definition — it is a mount — and empty means a directory under the platform's temporary
+    #: directory, which is honest about being ephemeral rather than pretending to be a volume.
+    #: Rasters are still never persisted: this names where they are re-rendered *from*.
+    doc_store: str = ""
     #: §6.8 — the two sources `safety_flag` is computed from. Configuration, not a compiled-in
     #: taxonomy: `impl` hardcoded a keyword list, corpora differ, and a list in the image is one
     #: no deployment could correct. Empty means nothing is flagged, which is the honest default
@@ -180,6 +185,7 @@ class Config:
             "safety_doc_types": list(self.safety_doc_types),
             "safety_topics": list(self.safety_topics),
             "fixture_dir": self.fixture_dir,
+            "doc_store": self.doc_store,
             "replay": self.replay,
             "auth_configured": len(self.api_tokens),  # a count is not a credential; the name
             # avoids the redactor, which matches on token-shaped field names (logging.redact)
@@ -287,6 +293,7 @@ def load_config(env: Mapping[str, str] | None = None) -> Config:
         embed_text_chars=_as_int(
             "VSIR_EMBED_TEXT_CHARS", _optional(env, "VSIR_EMBED_TEXT_CHARS", "2000"), minimum=1
         ),
+        doc_store=_optional(env, "VSIR_DOC_STORE", ""),
         safety_doc_types=_csv(_optional(env, "VSIR_SAFETY_DOC_TYPES", "")),
         safety_topics=_csv(_optional(env, "VSIR_SAFETY_TOPICS", "")),
         api_tokens=api_tokens,

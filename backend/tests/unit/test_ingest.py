@@ -40,10 +40,15 @@ BASE_ENV = {
 
 
 @pytest.fixture
-def env(monkeypatch, synthetic_fixture):
+def env(monkeypatch, synthetic_fixture, tmp_path):
     for name, value in BASE_ENV.items():
         monkeypatch.setenv(name, value)
     monkeypatch.setenv("VSIR_FIXTURE", str(synthetic_fixture))
+    # Step 02 deposits the source document (U029). Pointed at the test's own directory rather
+    # than left to default: unset means a directory under the platform temporary directory, and
+    # a suite that writes into the machine's shared one is a suite that can be affected by, and
+    # can affect, whatever else ran there.
+    monkeypatch.setenv("VSIR_DOC_STORE", str(tmp_path / "documents"))
     return monkeypatch
 
 
@@ -62,6 +67,52 @@ def test_ingest_until_window_runs_green(env, capsys, synthetic_pdf, expected):
     assert "0 bytes written to the filesystem" in out
     for start, end in expected["windows"]:
         assert f"{start}-{end}" in out
+
+
+def test_the_source_document_is_deposited_in_the_store_and_resolves_from_a_page_id(
+        env, capsys, synthetic_pdf, tmp_path):
+    """U029 — the run keeps the file every page raster is re-rendered from (§4.2).
+
+    Asserted from the outside, through the resolution chain a serving process will use: a
+    `page_id` of the document this run just ingested, resolved to bytes. Checking that a file
+    appeared in a directory would pass for a store that nothing can address.
+    """
+    from vsir.core import ids
+    from vsir.ingest import manifest
+    from vsir.ingest.store import DocumentStore
+
+    assert _run(synthetic_pdf, "--vlm", "stub", "--until", "probe") == cli.EXIT_OK
+    capsys.readouterr()
+
+    # Step 01's own answer, not a second guess at it: the store is keyed by what the manifest
+    # decided, so a test that hardcoded the slug would pass while the two disagreed.
+    doc = manifest.build(synthetic_pdf)
+    store = DocumentStore(tmp_path / "documents")
+    source = store.for_page(ids.page_id(doc.doc_id, doc.revision, 1))
+
+    assert source.page_no == 1
+    assert source.path.read_bytes() == synthetic_pdf.read_bytes()
+    assert source.document.content_hash == probe.content_hash(synthetic_pdf)
+
+
+def test_the_run_records_the_content_hash_of_what_it_ingested(env, capsys, synthetic_pdf):
+    """Without it nothing can tell a re-ingested file from the one these pages came from.
+
+    The run point is only written when the store is reachable, and L0/L1 have no Qdrant — so
+    what is asserted here is that the value reaches the progress write at all. The round trip
+    through `vsir_runs` is `tests/api/test_store_round_trip.py`.
+    """
+    written = {}
+
+    def _capture(handle, cfg, **fields):
+        written.update(fields)
+        return handle.record
+
+    env.setattr(cli, "_progress", _capture)
+    assert _run(synthetic_pdf, "--vlm", "stub", "--until", "probe") == cli.EXIT_OK
+    capsys.readouterr()
+
+    assert written["content_hash"] == probe.content_hash(synthetic_pdf)
 
 
 def test_ingest_until_extract_runs_green(env, capsys, synthetic_pdf, expected):
