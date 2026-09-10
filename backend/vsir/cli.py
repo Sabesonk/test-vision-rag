@@ -73,6 +73,7 @@ from vsir.serve.caps import (
 from vsir.serve.envelope import Provenance, ToolEnvelope, VerifyResult
 from vsir.vlm import VlmError, backend as vlm_backend
 from vsir.vlm import cache as vlm_cache
+from vsir.vlm import record as vlm_record
 from vsir.serve.tools import lookup as lookup_module
 from vsir.serve.tools.lookup import lookup
 
@@ -701,17 +702,23 @@ def _open_store(cfg: Any) -> Any:
                             qdrant_url=scrub_url(cfg.qdrant_url)) from failure
 
 
-def _backend(cfg: Any) -> Any:
+def _backend(cfg: Any, record: str = "") -> Any:
     """The VLM backend `VSIR_VLM` names — one configuration lookup, no branch (§15 Factor X).
 
     The refusal is re-raised as an :class:`IngestRefused` so the command's exit path is the same
     for a missing fixture directory as for a missing credential: a named code and a non-zero exit,
     never a partial run (§4.3).
+
+    ``record`` wraps it in the §12.1 recorder, which is what makes the M2b re-bill buy a permanent
+    fixture instead of a one-off answer (`vlm/record.py`). Recording is a **flag on one run**, not
+    configuration: an ambient record mode would let a fixture accumulate responses from runs
+    nobody meant to freeze, and nothing about which responses are in a fixture may be accidental.
     """
     try:
-        return vlm_backend(cfg)
+        chosen = vlm_backend(cfg)
     except VlmError as refusal:
         raise IngestRefused(refusal.code, str(refusal), **refusal.details) from refusal
+    return vlm_record.recording(chosen, record) if record else chosen
 
 
 def _ingest(args: argparse.Namespace, cfg: Any, handle: _RunHandle) -> bool:
@@ -787,6 +794,12 @@ def _ingest(args: argparse.Namespace, cfg: Any, handle: _RunHandle) -> bool:
     print(f"   front sample ({probe.PROBE_SAMPLE_PAGES} pages) {probed.sample_chars_per_page} "
           f"chars/page vs a {probe.BORN_DIGITAL_MIN_CHARS} threshold — extraction happened anyway,")
     print("   which is register A1: one `else` there throws away a mixed document's whole text")
+    if args.record:
+        # §12.1's `text.json`: the extractor's own output, frozen beside the receipts, so a level
+        # that replays this fixture can rebuild every page record without the PDF — which is what
+        # keeps `data/source/` gitignored and every downstream level free (OQ-1).
+        written = vlm_record.freeze_text(args.record, probed)
+        print(f"   recorded     {written}  ({probed.page_count} pages, {probed.probe_version})")
     handle.record = _progress(handle, cfg, step="probe", page_count=probed.page_count)
     if until == "probe":
         _print_pages(probed, rasters=None)
@@ -811,11 +824,14 @@ def _ingest(args: argparse.Namespace, cfg: Any, handle: _RunHandle) -> bool:
 
     # ── 04 S1 document facts ─────────────────────────────────────────────────────────────────
     _step("04", "S1 document facts — cached per document, because the ladder rides on them")
-    backend = _backend(cfg)
+    backend = _backend(cfg, record=args.record)
     key = vlm_cache.facts_key(probed.content_hash, vlm_model=cfg.vlm_model,
                               prompt_version=cfg.prompt_version)
     print(f"   backend      {backend.name}  "
           f"(VSIR_VLM={cfg.vlm}, chosen by configuration — never by a code branch)")
+    if args.record:
+        print(f"   recording    {args.record}  "
+              f"(every verbatim body frozen under its §6.3 key — §12.1)")
     print(f"   facts_key    {_short(key)}  "
           f"(content hash ‖ {cfg.vlm_model} ‖ {cfg.prompt_version})")
     try:
@@ -891,6 +907,13 @@ def _ingest(args: argparse.Namespace, cfg: Any, handle: _RunHandle) -> bool:
           f"bisections this run: {list(extraction.bisections) or 'none'}")
     print(f"   the model returned 0 characters of page text: `text` has exactly one writer, "
           f"ingest/probe.py (I2)")
+    if args.record:
+        # The tally, not a directory listing: a bisected window is two receipts, so "how many did
+        # this run freeze" is a question only the recorder can answer (§6.2, §12.1).
+        print(f"   recorded     {len(backend.recorded)} receipt(s) under {args.record} — "
+              f"S1 and S2, each under the §6.3 key replay reads it back by")
+        for path in backend.recorded:
+            print(f"                {path}")
     _print_window_out(extraction, raw=args.raw)
     _note_windows(handle, cfg, doc=doc, plan=plan, keys=keys, checkpoint="extract",
                   state=run_module.RUNNING, extraction=extraction)
@@ -2002,6 +2025,13 @@ def build_parser() -> argparse.ArgumentParser:
         "--fixture", default=None,
         help="override VSIR_FIXTURE: the replay directory frozen S1/S2 responses are keyed into, "
              "and where the acceptance table beside the corpus is read from (D10)",
+    )
+    ingest_parser.add_argument(
+        "--record", default="", metavar="DIR",
+        help="freeze this run's VERBATIM S1/S2 bodies and the extractor's text into DIR, under "
+             "the §6.3 keys replay reads them back by. This is how one paid ingest buys a "
+             "permanent fixture (§12.1) — a flag on one run, never configuration, because "
+             "nothing about which responses are in a fixture may be accidental",
     )
     ingest_parser.add_argument(
         "--raw", action="store_true",

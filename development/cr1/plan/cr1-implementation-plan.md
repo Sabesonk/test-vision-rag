@@ -1417,7 +1417,14 @@ files written under `data/fixtures/TC1E-SF/`.
 - `data/fixtures/TC1E-SF/raw_window_2.json` — **written**: pages 31–55.
 - `data/fixtures/TC1E-SF/text.json` — **written**: PyMuPDF text per page, pinned extractor.
 - `data/fixtures/TC1E-SF/expected.json` — **written**: the Spec §12.3 acceptance table.
+- `backend/vsir/vlm/record.py` — **written**, net new: the recorder. A `Backend` that wraps the
+  configured one and freezes every verbatim body under its §6.3 key, plus `freeze_text()` for
+  §12.1's `text.json`.
+- `backend/vsir/cli.py` — **extended**: `vsir ingest --record DIR`.
 - `backend/vsir/eval/grounded_rate.py` — **written**, net new: the distribution report.
+- `backend/tests/unit/test_vlm_record.py` — **written**, L0/L1, including the record→replay round
+  trip.
+- `backend/tests/unit/test_grounded_rate_report.py` — **written**, L0/L1.
 - `backend/tests/paid/test_tc1e_sf_ingest.py` — **written**, L4, gated by `VSIR_ALLOW_PAID=1`.
 - `backend/tests/api/test_acceptance_real.py` — **written**, L2, replay-only.
 - `.env.example` — **updated**: `VSIR_GROUNDED_RATE_THRESHOLD` documented as *set from the M2b
@@ -1430,11 +1437,26 @@ files written under `data/fixtures/TC1E-SF/`.
   and real data.
 - Spec §11.1 / R4: report the `grounded_rate` distribution over pages with `has_text` and set the gate
   threshold from it, replacing U011's provisional 0.8. Record the rationale.
+- Spec §5.7: `VSIR_GROUNDED_RATE_THRESHOLD` is documented in `.env.example` as the **candidate**
+  threshold the §11.1 *report* scores against, and is deliberately **not** wired into the gate. The
+  number the gate uses stays the `vsir.core.health.TRUST_OK_MIN` pin, because §5.7 makes the trust
+  ladder a **released decision** — a deployment that could re-tune what "trusted" means could turn
+  F14 back on by editing an env var. Adopting a threshold is a release, not a hot edit.
 - Spec §2.3 **C10**: the acceptance-table page counts are **normative** for `TC1E-SF`. If the first
   real ingest disagrees, that is a **blocking finding** (offset or tokenisation) until proven a corpus
   difference; changing `expected.json` requires a recorded rationale in the run report.
 - Spec §12.1: once frozen, these files are replayed by `VSIR_VLM=stub` + `VSIR_FIXTURE` forever —
   no later unit may require a new paid call.
+- Spec §12.1's **mechanism**, a **finding raised during U013**: `vlm/cache.py::write` documents its
+  two callers as the M2a corpus generator "and the one paid ingest at M2b", but no code path ever
+  called it for a live response — so `data/fixtures/TC1E-SF/raw_window_*.json` had no producer and
+  §12.1's "one paid ingest buys a permanent test corpus" had no mechanism. `vlm/record.py` is that
+  producer, and it is a **wrapper on the VLM boundary rather than a pipeline step**, because §6.2's
+  bisection makes extra calls mid-flight: a per-step recorder would freeze the clean run's windows
+  and miss exactly the bisected run whose receipts are worth having. Recording is a **flag on one
+  run, never configuration** — an ambient record mode lets a fixture accumulate responses from runs
+  nobody meant to freeze. The rest of this unit is blocked on OQ-1/OQ-2; the recorder ships and is
+  tested at **L0/L1 against the stub, with zero spend**.
 - Spec §17 OQ-1 / OQ-2 apply **only to this unit's re-bill**. Default assumptions: the operator places
   the PDF at `data/source/TC1E-SF.pdf` (which stays gitignored), and until a key exists the pipeline
   runs in replay mode off the ported `impl` responses.
@@ -1455,6 +1477,8 @@ files written under `data/fixtures/TC1E-SF/`.
 - [ ] The run publishes **55** points; `count(TC1E-SF, 1.3, is_current=True) == 55`.
 - [ ] `window_coverage == 1.0` and `offset_check` passes for both windows.
 - [ ] `data/fixtures/TC1E-SF/{raw_window_1.json, raw_window_2.json, text.json, expected.json}` exist, are checked in, and `raw_window_1` covers pages 1–30 while `raw_window_2` covers 31–55.
+- [ ] `vsir ingest --record DIR` freezes every S1/S2 body under its §6.3 key plus `text.json`, and re-running the same ingest with `--fixture DIR` replays it with `cost.vlm_calls == 0` — proven at L0/L1 against the stub, so it is green before a cent is spent.
+- [ ] A call that raised (a truncation to bisect, an unreachable provider) freezes **nothing**: the fixture holds only responses the pipeline accepted (§6.2, F13).
 - [ ] Re-running the identical ingest costs **$0** — every window is an `extract_key` cache hit and `cost.cache_hits` equals the window count.
 - [ ] The parity check of U012 passes against `impl`'s `labels.jsonl` **on real text**, and every `withheld.jsonl` raw is unfindable in `text`.
 - [ ] The Spec §12.3 acceptance table is reconciled against C10: `lookup("SF 1.1A")` → exactly 1; `lookup("SF 5.5b")` → exactly 1; `lookup("SF 121.1")` → 1; `lookup("EAO 84-5140.0020")` → `total == 10`; `lookup("B&R X20SI4100")` → `total == 54`, `capped == True` at `cap=20`; `lookup("3")` unscoped → `weak == True`, `needs_scope == True`; `verify("SF 1.1A", [p008])` → `absent`. **Any discrepancy is recorded as a blocking finding with a written rationale before `expected.json` is changed.**
@@ -1479,6 +1503,7 @@ files written under `data/fixtures/TC1E-SF/`.
 - **Risk (OQ-1/OQ-2):** neither the PDF nor a key is available. **Mitigation (Spec §17 defaults):** everything upstream ships and stays green in replay mode off the ported `impl` responses; only this unit's re-bill, the C10 reconciliation and the R4 threshold are deferred. Nothing downstream is blocked — U020, U022 and U026 fall back to `synthetic_3window`.
 - **Risk (R4):** 55 pages is a small sample for a threshold that gates a 5,505-page corpus. **Mitigation:** the threshold is explicitly provisional until U026 re-validates it on the full corpus; the override path (`vsir publish --override`) exists precisely so a mis-set threshold cannot strand a document silently.
 - **Risk (C10):** the temptation to edit `expected.json` when reality disagrees. **Mitigation:** the acceptance criterion makes a discrepancy a blocking finding requiring a written rationale.
+- **Risk:** the recorder writes to local disk, which reads like a §15 Factor VI violation. **Mitigation:** it is a build artefact of a one-off admin command that a human then commits — the same status as `python -m vsir.eval.synthetic_pdf`'s output. Nothing serving reads it, no correctness depends on it surviving the process, and the running service never records, because `--record` is a CLI flag and not a configuration value a deployment could carry.
 
 ### Rollback Plan
 - **If this unit must be reverted:** delete the run's points by `(doc_id="TC1E-SF", revision, run_id)` filter and set the `vsir_runs` run point to `state: failed`. The frozen fixtures are inputs to tests, not index state — leave them; deleting them would make every downstream level require a new paid call.

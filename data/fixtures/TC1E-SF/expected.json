@@ -1,0 +1,110 @@
+{
+  "_note": "The Spec §12.3 acceptance table for the pilot document, written from the spec BEFORE the M2b ingest runs — which is the whole of C10. The table is normative for TC1E-SF: if the first real ingest disagrees, that is a blocking finding (offset or tokenisation) until proven a corpus difference, and changing a number here requires a recorded rationale in the run report. Authoring it after the ingest would let the safety net re-baseline itself against whatever the run happened to produce.",
+
+  "_status": "awaiting the U013 re-bill. The three artefacts beside this one — raw_window_1.json, raw_window_2.json, text.json — are what the one paid ingest buys (§12.1, OQ-1/OQ-2). Until they exist, the L2 suite that reads this file asserts the table's own shape and skips the corpus rows by name.",
+
+  "corpus": {
+    "doc_id": "TC1E-SF",
+    "revision": "1.3",
+    "pages": 55,
+    "windows": 2,
+    "window_ranges": [[1, 30], [31, 55]],
+    "why_the_revision": "impl's r-poc-5 manifest publishes TC1E-SF at 1.3, and §5.1 makes the operator's declared revision authoritative. A re-bill under a different revision is a different document to §6.7's retirement, not a new run of this one."
+  },
+
+  "lookup": [
+    {
+      "label": "SF 1.1A",
+      "total": 1,
+      "capped": false,
+      "status": "ok",
+      "why": "§12.3's first row. Any-order matching would return 3 pages — the tokens sf, 1 and 1a occur together on pages that never print the phrase. F1."
+    },
+    {
+      "label": "SF 5.5b",
+      "total": 1,
+      "capped": false,
+      "status": "ok",
+      "why": "§12.3. Any-order would give 2. F1."
+    },
+    {
+      "label": "SF 121.1",
+      "total": 1,
+      "capped": false,
+      "status": "ok",
+      "why": "§12.3 — reached through the whitespace-removed variant of §5.6, because the page prints the compact form. F3."
+    },
+    {
+      "label": "EAO 84-5140.0020",
+      "total": 10,
+      "cap": 20,
+      "capped": false,
+      "status": "ok",
+      "why": "§12.3 states this row as `total 10 (hits capped at cap, capped:true)`. SA-7: at the default cap=20 a total of 10 cannot be capped — §7.1 and §7.2.2 both define `capped` as `total > cap`, and `hits` is the whole set here. The parenthetical is a table-authoring defect, reconciled under C10 in favour of §7.1's definition, which is the one the response model enforces. The count of 10 is unchanged and stays normative.",
+      "reconciled": {
+        "row_as_written": "total 10 (hits capped at cap, capped:true)",
+        "finding": "SA-7",
+        "correction": "capped: false",
+        "authority": "§7.1 / §7.2.2 — capped ⇔ total > cap",
+        "unchanged": "total: 10"
+      }
+    },
+    {
+      "label": "B&R X20SI4100",
+      "total": 54,
+      "cap": 20,
+      "capped": true,
+      "hits": 20,
+      "status": "ok",
+      "why": "§12.3 — 54 > 20, so `hits` is one page of the set and `capped` says so. `total` is the SET size, not len(hits) (§7.1). The ampersand is a punctuation shape the old identifier grammar handled and the phrase index must handle through tokenisation alone."
+    },
+    {
+      "label": "3",
+      "scope": null,
+      "weak": true,
+      "needs_scope": true,
+      "caps": [5, 20, 200],
+      "weak_abs": 20,
+      "why": "§12.3 — at ANY cap. `weak` is computed from the server constant WEAK_ABS=20 and the scope's page count, never from the caller's `cap`: a trust signal a client parameter can flip is worse than none (§7.1)."
+    },
+    {
+      "label": "alarm 152",
+      "status": "not_found",
+      "hits": 0,
+      "suggest": ["skim_pages"],
+      "why": "§12.3 — never a wrong page and never a bare empty 200. The tokens are in the corpus and the phrase is not, so the status is honest and `next.suggest` stops the agent abstaining on a phrasing accident."
+    }
+  ],
+
+  "verify": [
+    {
+      "claim": "SF 1.1A",
+      "page_ids": ["TC1E-SF@1.3#p008"],
+      "status": "absent",
+      "why": "§12.3 — the tokens are present on the page and the phrase is not. One `exact_filter` answers `verify` and `lookup`, which is why F2 cannot disagree with F1 (I3)."
+    }
+  ],
+
+  "not_searchable": {
+    "why": "§12.3's last row and F4 — a page with no text layer answers `not_searchable`, never `not_found`. `grounded_rate` is None there and every aggregate ignores it (§5.7); a fully scanned document publishes and answers not_searchable rather than being quarantined.",
+    "expected_from_the_ingest": "the page numbers, if any, that probe reports has_text=false. TC1E-SF is born-digital in impl's manifest, so the M2b run is expected to report 0 — recorded here after the ingest, as a measurement rather than a prediction."
+  },
+
+  "parity": {
+    "source": "data/fixtures/legacy/labels.jsonl",
+    "rule": "every identifier the old entity_keys gate accepted for TC1E-SF is still findable by phrase, on the REAL text this ingest extracts rather than on the projection U012 asserts against",
+    "gains": "a code the old grammar dropped but the phrase index finds is a GAIN — record it, never reconcile it as a diff (§12.3, verbatim)"
+  },
+
+  "negative_set": {
+    "source": "data/fixtures/legacy/withheld.jsonl",
+    "rule": "every raw in withheld.jsonl is UNFINDABLE in the `text` surface — reachable only through include_unverified, always verified:false (I2, F14)"
+  },
+
+  "gates": {
+    "window_coverage": 1.0,
+    "offset_check": "pass on both windows",
+    "grounded_rate": "measured, not predicted — the distribution is reported by `python -m vsir.eval.grounded_rate` and R4 sets the pin from it. Recorded here after the ingest with the run report's rationale.",
+    "pages_indexed": 55
+  }
+}

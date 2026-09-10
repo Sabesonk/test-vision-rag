@@ -150,6 +150,40 @@ both cases, **zero queryable pages** (F17).
 switching it later re-bills nothing. `VSIR_VLM_RPM` is the client's token bucket, in calls a
 minute.
 
+Recording a fixture. `--record DIR` freezes the run's **verbatim** S1/S2 bodies under the §6.3
+keys replay reads them back by, plus `text.json` (§12.1's per-page extractor output). It is what
+makes one paid ingest buy a permanent test corpus — and it works against the stub too, which is
+how it is tested at zero spend:
+
+```bash
+export VSIR_FIXTURE=data/fixtures/synthetic_3window
+backend/.venv/bin/vsir ingest data/source/synthetic_3window.pdf --vlm stub \
+  --record /tmp/recorded --until extract          # writes facts/, extract/ and text.json
+backend/.venv/bin/vsir ingest data/source/synthetic_3window.pdf --vlm stub \
+  --fixture /tmp/recorded --until stitch          # ... and the recording replays
+```
+
+Recording is a **flag on one run, never configuration**: an ambient record mode would let a fixture
+accumulate responses from runs nobody meant to freeze. A call that raised — a truncation to bisect,
+an unreachable provider — freezes nothing, so the fixture holds only responses the pipeline
+accepted (§6.2, F13). Each half of a bisected window is its own receipt.
+
+The `grounded_rate` distribution report (§11.1, R4). It says what each candidate publish threshold
+would have done to a document, and refuses to propose one off a corpus the extractor never
+measured:
+
+```bash
+cd backend && ../backend/.venv/bin/python -m vsir.eval.grounded_rate --legacy   # a projection
+cd backend && ../backend/.venv/bin/python -m vsir.eval.grounded_rate --synthetic --json
+cd backend && ../backend/.venv/bin/python -m vsir.eval.grounded_rate --records pages.json \
+  --threshold 0.75
+```
+
+`--records` takes a JSON array or JSONL of `PageRecord.to_payload()` payloads — the run's pages as
+the index holds them. `VSIR_GROUNDED_RATE_THRESHOLD` is the same knob as `--threshold` and is read
+**by this report only**: the number the publish gate uses is the `vsir.core.health.TRUST_OK_MIN`
+pin, so adopting a threshold is a release rather than an env edit (§5.7, F14).
+
 The M2b parity baseline. `data/fixtures/legacy/` is 19 S2 responses `impl` already paid for, plus
 the export whose `labels.jsonl` is the §12.3 parity set and whose `withheld.jsonl` is the negative
 set. Nothing here spends and nothing here needs a key:

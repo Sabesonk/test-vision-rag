@@ -9,8 +9,8 @@
 |---|---|
 | **Complete** | 12 / 26 units (46%) |
 | **Current milestone** | M2b — ingest the pilot PDF, freeze the fixture (1 / 2 units); M0, M1 and M2a closed and tagged |
-| **Next unit** | U013 — The one paid `TC1E-SF` ingest and the `grounded_rate` baseline (**Spend: paid**; OQ-1 is still live — `data/source/TC1E-SF.pdf` is not present, so the unit's own first step is to re-check for it) |
-| **Blocked** | none |
+| **Next unit** | U014 — The serving app: auth, audit, budget, and degradation (**Spend: none**). The plan's own implementation order puts U014 before U013 for exactly this reason (§"Implementation Order": `… U012, U014, U013, U015 …`) |
+| **Blocked** | **U013** — the paid re-bill only, on **OQ-1** (no `data/source/TC1E-SF.pdf`) and **OQ-2** (`VSIR_VLM_KEY` empty). Everything in the unit that does not need the PDF or the key shipped on 2026-09-10 and is green; see the unit's entry for what remains and how it unblocks. Nothing downstream is blocked (§17) |
 
 ---
 
@@ -42,7 +42,7 @@
 
 ### M2b — ingest the pilot PDF; freeze the fixture (spend: S2 + embed, once)
 - [x] U012 Port the paid-for `impl` fixtures and the parity / negative sets — spend: none
-- [ ] U013 The one paid `TC1E-SF` ingest and the `grounded_rate` baseline — spend: paid
+- [!] U013 The one paid `TC1E-SF` ingest and the `grounded_rate` baseline — spend: paid — **blocked on OQ-1/OQ-2 for the re-bill only**; the recorder, the report, the acceptance table and all three test files shipped 2026-09-10
 
 ### M3 — `lookup` + `verify` over HTTP and MCP (spend: none)
 - [ ] U014 The serving app — auth, audit, budget, and degradation
@@ -2017,3 +2017,187 @@ question, which is the one `exact_filter` asks the index (I3). Minimal: no other
 
 Gap analysis at planning time found no true blocker — every other apparent contradiction is
 resolved by Spec §2.3, §3 or §17.
+
+---
+
+### U013 — The one paid `TC1E-SF` ingest and the `grounded_rate` baseline
+
+**Milestone:** M2b · **Spend:** paid · **Status:** `[!]` Blocked — **the re-bill only** · **Non-paid part completed:** 2026-09-10
+
+**Blocker.** Both of the unit's external dependencies are open, and both were re-checked at the
+start of this iteration as the unit's own first step requires:
+
+| | |
+|---|---|
+| **OQ-1** | `data/source/TC1E-SF.pdf` is not present. The directory holds only the generated `synthetic_3window.pdf`. The `impl` tree the fixtures were ported from is not mounted on this machine either, so there is no second place to look. |
+| **OQ-2** | `VSIR_VLM_KEY` is empty in `.env`. `scripts/test-paid.sh` refuses before pytest on exactly this. |
+
+Spec §17's documented default was taken: *"run in replay mode off the ported responses until a key
+is provided"*. **Every deliverable that does not need the PDF or the key shipped and is green.**
+Nothing downstream is blocked — §17 and the plan's risk table both say so, and the plan's own
+implementation order already sequences U014 ahead of U013.
+
+**A finding raised while doing it, and closed.** `vlm/cache.py::write` documents its callers as the
+M2a corpus generator *"and the one paid ingest at M2b"* — and **nothing had ever called it for a
+live response**. `data/fixtures/TC1E-SF/raw_window_*.json` therefore had no producer, and §12.1's
+whole economics (*"one paid ingest buys a permanent test corpus"*) had no mechanism: even with the
+PDF and the key in hand, U013 could not have been completed. The recorder closes that. It ships
+now, tested at L0/L1 against the stub at zero spend, so the re-bill is a command away the day the
+credential arrives. The plan's U013 entry is amended with the deliverable, two acceptance criteria
+and the Factor VI rationale.
+
+**A second finding, fixed.** `eval/synthetic.py::_record` computed the M1 corpus's `grounded_rate`
+and `codes_in_text` with a `token_set` intersection — the formula §5.7's *"Why a phrase"* paragraph
+exists to reject, and which `core/health.py`'s docstring predicts will *"ground six of a typical
+page's ten codes and put a healthy document under the 0.8 gate."* It did exactly that: `SF121.1` is
+printed on p003 as `SF121.1)`, which Qdrant's WORD tokenizer reads as `[sf121, 1]`, so the code was
+never a member of the page's token set even though `lookup` finds it there — the corpus disagreed
+with its own index about which codes it was evidence for (I3). The fix routes it through
+`core/health.py`, the module that owns the question. The corpus median moves from `1.0` with three
+pages scored `0.0` to `1.0` with one page at `0.5` (p004, the deliberate `K999` hallucination —
+1 of 2 codes ungrounded, which is the right answer). No test asserted the old values; all 1,065
+L0/L1 and 847 L2/L3 tests pass after it.
+
+**Demo output.** The unit's own Demo Command (`VSIR_ALLOW_PAID=1 vsir ingest
+data/source/TC1E-SF.pdf && vsir runs show <run_id>`) cannot run — OQ-1. These are the demos of the
+parts that shipped.
+
+*1 — the paid layer refuses three different ways, each by name, and never spends:*
+
+```
+$ VSIR_ALLOW_PAID=1 bash scripts/test-paid.sh
+  Paid tests (Layer 4 — REAL MODEL CALLS)
+REFUSED: VSIR_VLM_KEY is not set — a paid layer with no credential would fail per-call,
+         after billing whatever it managed to send. See .env.example.
+
+$ VSIR_ALLOW_PAID=0  pytest tests/paid/ -rs
+SKIPPED [1] test_tc1e_sf_ingest.py:53: VSIR_ALLOW_PAID is not 1 — this module spends money
+            and refuses to run without the explicit opt-in (§12.2)
+
+$ VSIR_ALLOW_PAID=1 VSIR_VLM_KEY=… pytest tests/paid/ -rs
+SKIPPED [1] test_tc1e_sf_ingest.py:56: OQ-1 is open: the pilot PDF is not at
+            …/data/source/TC1E-SF.pdf. The operator places it there (data/source/ stays
+            gitignored) or points VSIR_PILOT_PDF at it. Until then M2b's re-bill cannot run
+            and every other level replays off data/fixtures/legacy/ and
+            data/fixtures/synthetic_3window/ (§17, D10)
+
+$ VSIR_ALLOW_PAID=1 VSIR_PILOT_PDF=…/synthetic_3window.pdf pytest tests/paid/ -rs
+SKIPPED [1] test_tc1e_sf_ingest.py:61: OQ-2 is open: VSIR_VLM_KEY is unset. A paid layer with
+            no credential fails per call, after billing whatever it managed to send (§17)
+```
+
+*2 — the recorder, and the round trip that proves what it writes replays (zero spend, stub VLM):*
+
+```
+$ vsir ingest data/source/synthetic_3window.pdf --vlm stub --record /tmp/rec2 --until extract
+   recorded     /tmp/rec2/text.json  (42 pages, pymupdf-1.28.2)
+   recorded     4 receipt(s) under /tmp/rec2 — S1 and S2, each under the §6.3 key replay reads
+                it back by
+                /tmp/rec2/facts/933fef7b…790920.json
+                /tmp/rec2/extract/8c0238bc…912b3c.json
+                /tmp/rec2/extract/b5286f8c…56b347.json
+                /tmp/rec2/extract/b340f016…5cd896.json
+
+$ vsir ingest data/source/synthetic_3window.pdf --vlm stub --fixture /tmp/rec2 --until stitch
+   ALL ASSERTIONS PASSED
+```
+
+and asserted byte for byte at L0/L1 —
+`test_recording_the_m2a_corpus_reproduces_its_fixture_byte_for_byte`.
+
+*3 — the `grounded_rate` distribution report refuses to set R4's threshold off a corpus the
+extractor never measured:*
+
+```
+$ python -m vsir.eval.grounded_rate --legacy
+grounded_rate distribution — TC1E-SF@1.3 (Spec §11.1, §5.7, R4)
+
+  ⚠ NOT A MEASUREMENT. The text layer behind these rates was not written by the
+    pinned extractor (probe_version: legacy-projection-r-poc-5). R4 is set from a real
+    ingest; a constructed corpus reports its own construction. Read on for the shape,
+    not for the threshold.
+
+  pages                55
+  with a text layer    55   (searchable_ratio 1.0000)
+  median  1.0000    mean 1.0000    min 1.0000    max 1.0000
+
+  candidate thresholds — what each would have done to this document
+    threshold   document   headroom   pages below
+         0.80   publish      0.2000     0 (  0.0%)  ← the pin
+         0.95   publish      0.0500     0 (  0.0%)
+
+  recommendation  none   (the pin ships 0.8)   supported ceiling 0.95
+    TC1E-SF@1.3: median 1.0000, but the text layer behind it was not written by the pinned
+    extractor … the `impl` baseline's text is the projection of codes the old gate had already
+    proved printed, so every page rates 1.0 by definition. This sets no threshold — run the
+    report over a `pymupdf-…` ingest.
+```
+
+*4 — the acceptance table asserts itself today and skips the corpus rows by name:*
+
+```
+$ bash scripts/test-api.sh -k acceptance_real
+ACCEPTANCE (real): 3 of 3 paid artefacts absent (raw_window_1.json, raw_window_2.json,
+  text.json) — the corpus rows below are SKIPPED, not passed. OQ-1/OQ-2.
+========== 13 passed, 13 skipped, 834 deselected, 7 warnings in 0.36s ==========
+
+$ bash scripts/test-unit.sh          $ bash scripts/test-api.sh
+1065 passed                          847 passed, 13 skipped
+```
+
+**Shipped**
+
+| File | What |
+|---|---|
+| `backend/vsir/vlm/record.py` | **net new.** `RecordingBackend` wraps the configured backend and freezes every verbatim body under its §6.3 key with the register B1 sidecar; `freeze_text()` writes §12.1's `text.json`. A wrapper on the boundary rather than a step, because §6.2's bisection makes calls mid-flight that a per-step recorder would miss. A call that raised freezes nothing. |
+| `backend/vsir/cli.py` | `vsir ingest --record DIR`. A flag on one run, never configuration. |
+| `backend/vsir/eval/grounded_rate.py` | **net new.** The R4 distribution report: percentiles by nearest rank, a trust-ladder-aligned histogram, a candidate sweep, and a recommendation that may **lower** the pin on one document's evidence and may not raise it. |
+| `backend/vsir/eval/synthetic.py` | the §5.7 phrase fix above. |
+| `data/fixtures/TC1E-SF/expected.json` | the §12.3 acceptance table, **written from the spec before the ingest** — which is the whole of C10 — including the SA-7 reconciliation. |
+| `backend/tests/paid/test_tc1e_sf_ingest.py` | L4, three named guards, and the full re-bill body written against shipped entry points. |
+| `backend/tests/api/test_acceptance_real.py` | L2. 13 table-integrity assertions green today; 13 corpus rows skipping by name. |
+| `backend/tests/unit/test_vlm_record.py` (11) · `test_grounded_rate_report.py` (37) | L0/L1. |
+| `.env.example` | `VSIR_GROUNDED_RATE_THRESHOLD`, documented **including what it does not do**. |
+| `AGENTS.md` | `--record`, the round trip, and the report's commands. |
+
+**C10 / SA-7 — reconciled, with the rationale recorded.** §12.3 writes
+`lookup("EAO 84-5140.0020") → total 10 (hits capped at cap, capped:true)`. At the default `cap=20`
+that is not a response this system can build: §7.1 and §7.2.2 both define `capped` as
+`total > cap`, and the model enforces it. `expected.json` records `total: 10` **unchanged** and
+`capped: false` **corrected**, with the finding, the authority and the unchanged value in a
+`reconciled` block beside it — and `test_no_row_claims_capped_while_its_total_fits_inside_the_cap`
+asserts the property over every row, so no future row can reintroduce it.
+
+**R4 — deliberately not an env var, and why.** The plan asks for `VSIR_GROUNDED_RATE_THRESHOLD` in
+`.env.example`, and it is there. It is read **by the report only**. Wiring it into the gate would
+contradict §5.7 as `core/health.py` states it — *"a deployment that could re-tune what 'trusted'
+means would be a deployment that could turn F14 back on by editing an env var"* — so the gate keeps
+the `TRUST_OK_MIN` pin and adopting a threshold is a release. The env var earns its place as the
+candidate the report scores, which is the operator loop R4 actually needs. `.env.example` says all
+of this at the variable.
+
+**Invariants / failure rows closed:** none newly (I1, I4, I7 are U011's and are re-exercised on real
+data by the re-bill, which has not run). §12.3's PARITY rows stay closed on the ported projection
+(U012) and are **not** yet closed on real text.
+
+**What remains, and exactly how it unblocks.** When the operator places the PDF at
+`data/source/TC1E-SF.pdf` and a key in `VSIR_VLM_KEY`:
+
+```bash
+VSIR_ALLOW_PAID=1 bash scripts/test-paid.sh -k tc1e_sf_ingest
+```
+
+runs the single re-bill — `vsir ingest --vlm gemini --record data/fixtures/TC1E-SF`, S2 and the
+embeddings once, publishing 55 pages and freezing the fixture in the same pass. Then
+`bash scripts/test-api.sh -k acceptance_real` turns its 13 skips into passes, and
+`python -m vsir.eval.grounded_rate --records …` gives R4 its measurement. Three things are then
+still open and are **not** shipped: the C10 reconciliation of the *measured* counts against
+`expected.json` (a disagreement is a blocking finding, not a re-baseline), the `text_coverage`
+measurement `expected.json` currently records as *"a measurement rather than a prediction"*, and
+setting `TRUST_OK_MIN` from the distribution in a release with the rationale in the run report.
+
+**Notes.** The paid test's *body* — everything past the three guards — has never executed, and
+cannot until OQ-1/OQ-2 close. It is written against shipped entry points (`vsir.cli.main`,
+`run_module.require/run_records`, `cache.FixtureStore`) to keep that unexercised surface as small
+as possible, but it should be read as unproven code until the first real run. The same is true of
+the 13 skipped corpus rows in `test_acceptance_real.py`.

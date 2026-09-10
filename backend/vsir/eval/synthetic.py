@@ -32,10 +32,9 @@ from typing import Any, Iterable, Mapping
 
 from qdrant_client.http import models as qm
 
-from vsir.core import ids
+from vsir.core import health, ids
 from vsir.core.indexed import create_collection
 from vsir.core.record import PageContent, PageRecord, Provenance, StoredSection, Summary
-from vsir.core.tok import token_set
 
 #: Where the corpus lives, when it is not where this package was installed from. The Docker build
 #: context is `backend/`, so the checked-in fixture is **not** in the image: a container running
@@ -227,13 +226,14 @@ def _record(document: Mapping[str, Any], spec: Mapping[str, Any],
     printed = str(document.get("printed_page_no_format", "{page_no}")).format(
         page_no=page_no, pages=document.get("pages", 0))
 
-    # §5.7, verbatim. `have` is the page's token *set*, so a code spelled with a space —
-    # `SF 1.1A` — cannot intersect it and does not count as grounded. That is the specified
-    # formula and `impl`'s adjacent-token joins are explicitly not ported (§2.4); the phrase-aware
-    # replacement belongs to `core/health.py` (U009), which owns this derivation.
-    seen = {code.lower() for code in codes}
-    have = token_set(text)
-    grounded = (len(seen & have) / len(seen) if seen else 1.0) if has_text else None
+    # §5.7, through the one function that owns the question (`core/health.py`, U009). Membership
+    # is a **phrase** over `variants()` — the very question `exact_filter` asks the index (I3) —
+    # and not a `token_set` intersection: a set can only ever see single-token codes, so `SF 1.1A`
+    # and the compact `SF121.1)` are never members of one, and §5.6 deleted `impl`'s adjacent-token
+    # joins that used to paper over that. An intersection here would rate this corpus's compact
+    # labels 0.0 and hand every reader of `grounded_rate` a number §5.7 calls wrong.
+    grounded_codes = health.grounded_codes(codes, text) if has_text else ()
+    grounded = health.grounded_rate(len(codes), len(grounded_codes), has_text=has_text)
 
     return PageRecord(
         doc_id=doc_id,
@@ -267,7 +267,7 @@ def _record(document: Mapping[str, Any], spec: Mapping[str, Any],
             topics=[str(topic) for topic in spec.get("topics", [])],
             sections=[section.model_copy(update={"is_start": bool(spec.get("is_start", False))})],
             codes=codes,
-            codes_in_text=sorted(seen & have),
+            codes_in_text=health.codes_in_text(grounded_codes),
             grounded_rate=grounded,
             flags=[str(flag) for flag in spec.get("flags", [])],
         ),
