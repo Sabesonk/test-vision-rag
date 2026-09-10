@@ -212,6 +212,45 @@ The raw responses are **not** a `VSIR_FIXTURE` replay directory — they answer 
 the old cache key, so replay would be a lie; `vsir.eval.legacy.adapt` renames them for the L1 suite
 instead.
 
+The two evals of §12.3 and §12.4, as commands. Both need a reachable Qdrant, neither spends and
+neither has a key to spend with — they create, seed, query and drop collections of their own, and
+the serving collection is never written:
+
+```bash
+backend/.venv/bin/vsir eval acceptance && backend/.venv/bin/vsir eval abstention
+backend/.venv/bin/vsir eval acceptance --only parity     # synthetic | parity | real | all
+backend/.venv/bin/vsir eval abstention --corpus indexed --doc-id TC1E-SF
+```
+
+`eval acceptance` prints one row per §12.3 assertion — the assertion, what the table expects, what
+the index answered, `PASS`/`FAIL`/`SKIP` — in three sections. **SYNTHETIC** is the §13 M1 corpus
+and always runs. **PARITY** is the baseline `impl` already paid for: §12.3's PARITY block, the
+`withheld.jsonl` negative row, the **GAINS** report (which §12.3 says to *record*, so it is never
+a verdict) and `NO_LEGACY_COVERAGE`. **REAL** is the pilot document: the rows that assert
+`expected.json`'s faithfulness to §12.3 run today and the rows that need the M2b extraction are a
+named `SKIP` until OQ-1/OQ-2 close — the skip names the three absent artefacts, and the summary
+counts it, because a skip nobody notices is worse than a failure. Every expectation is read out of
+a checked-in `expected.json`; neither command holds a number of its own (C10).
+
+`eval abstention` mutates one character of codes from the observed-token inventory of the corpus
+it is pointed at and reports `abstention_correctness`, which D11 fixes at **1.00** — a single leak
+is a P0 stop, and the report names the leak, the real code it came from and the surface it reached.
+`--corpus synthetic` (the default) seeds the M1 pages and drops them; `--corpus indexed` reads
+`{VSIR_COLLECTION}_{VSIR_EMBED_DIM}` as it stands and writes nothing, which is how the number gets
+measured on a real document after an ingest. A collection holding more than one document refuses
+until `--doc-id` names one: a safety metric measured over an unnamed corpus is not a measurement.
+A refusal prints `abstention_correctness: not measured` and exits non-zero — 0 of 0 is never 1.00.
+
+Both are in CI on every commit (`.github/workflows/ci.yml`), named as their own step beside the
+§12.4 assertions so a failure is legible in the run summary:
+
+```bash
+bash scripts/test-api.sh -k "near_miss or eval_commands"
+```
+
+`vsir eval corpus` (§12.6) arrives at M8; asking for it now is refused by name listing the two
+that are served.
+
 Regenerate the corpus (reproducible byte for byte; the PDF and every fixture file are committed):
 
 ```bash

@@ -46,7 +46,7 @@ from vsir.core.verify import page_checks, verify_claims
 from vsir.core.tok import tok, token_set
 from vsir.core.variants import preserves_characters, variants
 from vsir.doctor import BootRefused, doctor
-from vsir.eval import synthetic
+from vsir.eval import abstention, acceptance, synthetic
 from vsir.ingest import derive as derive_module
 from vsir.ingest import embed as embed_module
 from vsir.ingest import export as export_module
@@ -2211,6 +2211,46 @@ def _cmd_publish(args: argparse.Namespace, cfg: Any, client: Any) -> int:
     return EXIT_OK
 
 
+# ── `vsir eval` — the evaluations of §12.3 and §12.4 (M3; `corpus` is §12.6's, at M8) ────────────
+
+def _cmd_eval_acceptance(args: argparse.Namespace, cfg: Any, client: Any) -> int:
+    """§12.3's acceptance table, printed row by row. Non-zero on any failing row (§12.3, C10).
+
+    Every expectation comes out of a checked-in `expected.json`; this command holds none of its
+    own. A row that cannot run yet is a named `SKIP` and does not fail the command — but the count
+    is in the summary and on the event stream, because a permanent skip nobody notices is the
+    failure mode the unit's risk register names.
+    """
+    print(f"vsir eval acceptance — release {cfg.release_id}, §12.3, section {args.only}")
+    report = acceptance.run(client, base=cfg.collection, dim=cfg.embed_dim,
+                            release_id=cfg.release_id, only=args.only,
+                            tc1e_fixture=args.tc1e_fixture or None)
+    acceptance.print_report(report)
+    _log.info("eval_acceptance", section=args.only, passed=report.passed, failed=report.failed,
+              skipped=report.skipped, gains=len(report.gains), ok=report.ok)
+    return EXIT_OK if report.ok else EXIT_REFUSED
+
+
+def _cmd_eval_abstention(args: argparse.Namespace, cfg: Any, client: Any) -> int:
+    """§12.4's adversarial eval. **A failure here is P0** — it is the injury, not a regression.
+
+    `--corpus indexed` is §12.4's own wording: the sample is mutated from the observed-token
+    inventory of *whatever corpus is indexed*, so after an ingest this is how the number gets
+    measured on the real document. That path only reads.
+    """
+    print(f"vsir eval abstention — release {cfg.release_id}, §12.4, corpus {args.corpus}")
+    report = abstention.run(client, base=cfg.collection, dim=cfg.embed_dim,
+                            release_id=cfg.release_id, corpus=args.corpus,
+                            collection=args.collection, doc_id=args.doc_id, sample=args.sample)
+    abstention.print_report(report)
+    log = _log.info if report.ok else _log.error
+    log("eval_abstention", corpus=args.corpus, collection=report.collection,
+        doc_id=report.doc_id, sample=report.sample, leaks=len(report.leaks),
+        abstention_correctness=report.abstention_correctness,
+        gate=abstention.CORRECTNESS_GATE, refusal=report.refusal, ok=report.ok)
+    return EXIT_OK if report.ok else EXIT_REFUSED
+
+
 def build_parser() -> argparse.ArgumentParser:
     """The command table of Spec §4.4, as far as it has been built."""
     parser = argparse.ArgumentParser(
@@ -2438,6 +2478,69 @@ def build_parser() -> argparse.ArgumentParser:
              "configuration and a reachable Qdrant (default: all)",
     )
     exact_demo.set_defaults(handler=_cmd_demo_exact)
+
+    eval_parser = commands.add_parser(
+        "eval",
+        help="the evaluations of §12.3 and §12.4; `corpus` (§12.6) arrives at M8",
+    )
+    evals = eval_parser.add_subparsers(dest="eval", metavar="<eval>", required=True)
+    acceptance_eval = evals.add_parser(
+        "acceptance",
+        help="the §12.3 acceptance table: one row per assertion, expected beside observed, "
+             "non-zero on any failure",
+    )
+    acceptance_eval.add_argument(
+        "--only",
+        choices=[*acceptance.SECTIONS, "all"],
+        default="all",
+        help="which corpus to run: `synthetic` is the §13 M1 pages and always available, "
+             "`parity` is the baseline impl already paid for, `real` is the pilot document "
+             "(default: all)",
+    )
+    acceptance_eval.add_argument(
+        "--tc1e-fixture",
+        metavar="DIR",
+        default="",
+        help=f"where the pilot document's frozen fixture lives; overrides "
+             f"${acceptance.TC1E_DIR_ENV} and the repository path",
+    )
+    acceptance_eval.set_defaults(handler=_with_store(_cmd_eval_acceptance))
+
+    abstention_eval = evals.add_parser(
+        "abstention",
+        help="the §12.4 adversarial eval: 100 codes one character off real ones, none of which "
+             "may answer. Reports abstention_correctness; a failure here is P0",
+    )
+    abstention_eval.add_argument(
+        "--corpus",
+        choices=list(abstention.CORPORA),
+        default="synthetic",
+        help="`synthetic` seeds the §13 M1 pages into a collection of its own and drops it; "
+             "`indexed` reads the configured collection as it stands and writes nothing "
+             "(default: synthetic)",
+    )
+    abstention_eval.add_argument(
+        "--collection",
+        metavar="NAME",
+        default="",
+        help="the collection --corpus indexed reads; defaults to $VSIR_COLLECTION_$VSIR_EMBED_DIM",
+    )
+    abstention_eval.add_argument(
+        "--doc-id",
+        dest="doc_id",
+        metavar="DOC",
+        default="",
+        help="whose observed-token inventory the sample is mutated from; required when the "
+             "collection holds more than one document",
+    )
+    abstention_eval.add_argument(
+        "--sample",
+        type=int,
+        default=abstention.DEFAULT_SAMPLE,
+        help=f"how many fabricated codes to generate (§12.4 asks for "
+             f"{abstention.DEFAULT_SAMPLE})",
+    )
+    abstention_eval.set_defaults(handler=_with_store(_cmd_eval_abstention))
 
     return parser
 

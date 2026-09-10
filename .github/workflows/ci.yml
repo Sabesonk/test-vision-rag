@@ -97,5 +97,10 @@ jobs:
 
       # Named separately so the run's summary says whether the safety eval passed, rather than
       # burying it in 136 dots. It has already run above; this is 4 seconds to make it legible.
+      #
+      # Both halves of §12.4 are in this step. `near_miss` is the eval as assertions; `eval_commands`
+      # drives the shipped `vsir eval acceptance` / `vsir eval abstention` subcommands (§4.4) inside
+      # the same managed stack, so the command an operator runs is exercised on every commit and not
+      # only the library behind it.
       - name: The abstention eval, named (§12.4 — a failure here is P0)
-        run: bash scripts/test-api.sh -k near_miss
+        run: bash scripts/test-api.sh -k "near_miss or eval_commands"

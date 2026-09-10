@@ -26,3 +26,7 @@ test-results/
 
 # Loop runner output
 log/
+
+# Claude Code local state: per-session settings and git worktrees (an embedded repository,
+# which must never be committed into this one).
+.claude/worktrees/

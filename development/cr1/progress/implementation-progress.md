@@ -7,9 +7,9 @@
 
 | | |
 |---|---|
-| **Complete** | 14 / 26 units (54%) |
-| **Current milestone** | M3 — `lookup` + `verify` over HTTP and MCP (2 / 3 units); M0, M1 and M2a closed and tagged, M2b's non-paid half shipped |
-| **Next unit** | U016 — `vsir eval acceptance` and `vsir eval abstention` (**Spend: none**). The §12.3 table and the §12.4 abstention eval become runnable commands and the eval is wired into CI; U015 closed M3's tool surface, so what remains is making the safety net something a reviewer executes rather than reads |
+| **Complete** | 15 / 26 units (58%) |
+| **Current milestone** | M3 — `lookup` + `verify` over HTTP and MCP (**3 / 3 units, complete**); M0, M1 and M2a closed and tagged, M2b's non-paid half shipped. Next milestone: M4 |
+| **Next unit** | U017 — `skim_pages`, deterministic fusion, image queries, and `resolve` (**Spend: none**, M4, P0-Critical). The page rung of the narrowing ladder with §7.2.1's score-free ordering, `exclude`, the `next` affordances and D12's image queries, plus `resolve` with `interpolated`. It is the first unit that reads a *vector*, so the three fused surfaces U010 wrote become load-bearing |
 | **Blocked** | **U013** — the paid re-bill only, on **OQ-1** (no `data/source/TC1E-SF.pdf`) and **OQ-2** (`VSIR_VLM_KEY` empty). Everything in the unit that does not need the PDF or the key shipped on 2026-09-10 and is green; see the unit's entry for what remains and how it unblocks. Nothing downstream is blocked (§17) |
 
 ---
@@ -47,7 +47,7 @@
 ### M3 — `lookup` + `verify` over HTTP and MCP (spend: none)
 - [x] U014 The serving app — auth, audit, budget, and degradation
 - [x] U015 `lookup` and `verify` over HTTP and MCP
-- [ ] U016 `vsir eval acceptance` and `vsir eval abstention`
+- [x] U016 `vsir eval acceptance` and `vsir eval abstention`
 
 ### M4 — `skim_pages`, `fetch`, `resolve` (spend: none)
 - [ ] U017 `skim_pages`, deterministic fusion, image queries, and `resolve`
@@ -364,7 +364,7 @@ closed. F10 stays open until U004's filter gate consumes the dict, as the plan s
 | M1 | `vsir demo exact --synthetic` | ⬜ | |
 | M2a | `vsir ingest data/source/synthetic_3window.pdf --vlm stub` | ⬜ | |
 | M2b | `VSIR_ALLOW_PAID=1 vsir ingest data/source/TC1E-SF.pdf` | ⬜ | |
-| M3 | `vsir serve & vsir lookup "SF 1.1A" && vsir eval acceptance` | ⬜ | |
+| M3 | `vsir serve & vsir lookup "SF 1.1A" && vsir eval acceptance` | ✅ | see the M3 milestone gate below |
 | M4 | `vsir demo narrow` | ⬜ | |
 | M5 | `VSIR_ALLOW_PAID=1 vsir read --pages … --question …` | ⬜ | |
 | M6 | `VSIR_ALLOW_PAID=1 vsir ask "carton discharge won't restart after an E-stop reset"` | ⬜ | |
@@ -2565,3 +2565,245 @@ before). The unit's own slice, `-k "lookup_tool or verify_tool or status_enum or
   uid 10001 — `scripts/test-api.sh` rebuilds it every run and the container suites are green.
 - **Nothing about `read` or `fetch` moved.** They are still absent from the table and still a typed
   `404` listing what is served — now `["lookup", "verify"]` — on both transports.
+
+---
+
+### U016 — `vsir eval acceptance` and `vsir eval abstention`
+
+**Milestone:** M3 · **Spend:** none · **Status:** `[x]` Complete · **Completed:** 2026-09-10
+
+**Demo output** — the plan's demo command, against the test stack's Qdrant on 6335. Both sections
+of §12.3 that have a corpus, then §12.4's metric. Abridged: the 47 SYNTHETIC rows are the same
+table `test_acceptance_synthetic.py` asserts and are elided here after the first few.
+
+```
+$ vsir eval acceptance && vsir eval abstention
+
+vsir eval acceptance — release dev-0, §12.3, section all
+
+SYNTHETIC — 47 assertion(s)
+  SYN-M1@1.0 current pages indexed              30                        30                       PASS
+  pages with no text layer (§5.7)               1                         1                        PASS
+  pages unsearchable for lookup (§5.7)          2                         2                        PASS
+  searchable_ratio of SYN-M1                    0.9667                    0.9667                   PASS
+  superseded revision 0.9 kept, not deleted     1 page(s) is_current=False 1 page(s) …=False        PASS
+  lookup("SF 1.1A") → printed SF 1.1A           total=1 p001              total=1 p001             PASS
+  lookup("SF 5.5b") → printed SF5.5b            total=1 p014              total=1 p014             PASS
+  lookup("SF 1.1A") never returns the token …   without p008              p001                     PASS
+  lookup("3", cap=5) is weak at any cap         weak total=26 capped=True weak=True total=26 …     PASS
+  lookup("alarm 152") → not_found + next.sug…   not_found ['skim_pages']  not_found ['skim_pages'] PASS
+  …and lists the tokens that did occur (§7.1)   ['alarm', '152']          ['alarm', '152']         PASS
+  lookup("K999") — claimed by the model, abs…   not_found, 0 hits         not_found, 0 hits        PASS
+  verify("SF 1.1A", [p008])                     absent present_instead=[] absent present_instead=[]PASS
+  verify("K73", [p006])                         absent present_instead=['k78']  …=['k78']          PASS
+  verify("SF 9.9", [p005])                      unverifiable reason=no_te unverifiable reason=no_t PASS
+  observed-token inventory size (§6.8)          55                        55                       PASS
+  … 31 further rows, all PASS
+
+PARITY — 9 assertion(s)
+  the parity set r-poc-5 recorded               1644 pairs / 405 identif  1644 pairs / 405 identif PASS
+  every identifier the old gate accepted is …   405 of 405                405 of 405               PASS
+  …on the pages the old run recorded it on      388 uncapped identifiers  388 agree                PASS
+  every raw in withheld.jsonl is unfindable …   0 of 96 findable          0 of 96 findable         PASS
+  …and reachable only when the caller opts in   96 under include_unverif  96 disclosed             PASS
+  lookup("SF 1.1A") on the ported baseline      total=1 TC1E-SF@1.3#p001  total=1 TC1E-SF@1.3#p001 PASS
+  lookup("SF 5.5b") on the ported baseline      total=1 TC1E-SF@1.3#p031  total=1 TC1E-SF@1.3#p031 PASS
+  the scanned document CE-TC1AV8 → not_searc…   not_searchable            not_searchable           PASS
+  every code reported as a GAIN is genuinely…   63 sighting(s)            63 findable              PASS
+
+REAL — 19 assertion(s)
+  the table names the pilot document at §12.…   TC1E-SF 55 pages / 2 win  TC1E-SF 55 pages / 2 win PASS
+  every lookup row of §12.3 is in the table…    7 rows: SF 1.1A … alarm   7 rows                   PASS
+  no row claims `capped` while its total fit…   0 rows                    0 rows                   PASS
+  the SA-7 reconciliation is recorded, not s…   finding SA-7, total unch  SA-7, total: 10          PASS
+  the weak row is a server constant and hold…   weak_abs=20, no per-row   weak_abs=20, caps=[5,20, PASS
+  the absent row suggests a move rather than…   not_found + ["skim_pages"]not_found + ['skim_pages']PASS
+  §12.3's verify row is `absent` where the t…   SF 1.1A on p008 → absent  SF 1.1A → absent         PASS
+  the PARITY and negative sets point at the …   labels.jsonl + withheld.j labels.jsonl + withheld. PASS
+  … and 3 more, all PASS
+  lookup("SF 1.1A") on real text                total=1 capped=False      —                        SKIP
+  lookup("EAO 84-5140.0020") on real text       total=10 capped=False     —                        SKIP
+  lookup("B&R X20SI4100") on real text          total=54 capped=True      —                        SKIP
+  … 7 more corpus rows                                                                             SKIP
+  SKIP · raw_window_1.json, raw_window_2.json, text.json absent from data/fixtures/TC1E-SF: OQ-1
+         (the pilot PDF) and OQ-2 (a Gemini key) are open, so the one M2b re-bill has not run.
+         These rows assert real text and cannot be faked; §12.3's PARITY rows run meanwhile on
+         data/fixtures/legacy/. U013's DoD is that this skip becomes a pass.
+
+GAINS — 19 code(s) the old grammar dropped and the phrase index finds (§12.3: record it, do not
+        reconcile it)
+  + FESTO VOFA-L26-T32C-M-G14-1C1-APP      1 page(s)   e.g. TC1E-SF@1.3#p001
+  + EAO 84-5140.0020                       1 page(s)   e.g. TC1E-SF@1.3#p001
+  + K640+K650+K647+K626                    7 page(s)   e.g. TC1E-SF@1.3#p003
+  + B&R X20SI4100                          1 page(s)   e.g. TC1E-SF@1.3#p001
+  + TELEMECANIQUE LC1-D38BL                1 page(s)   e.g. TC1E-SF@1.3#p001
+  … 14 more
+
+NO LEGACY COVERAGE — 14 area(s) parity says nothing about (R7)
+  - §7.1 the six-value status enum · §7.2.1 the skim rungs · §7.3 every cap · §8 the whole runner …
+
+acceptance: 65 passed, 0 failed, 10 skipped
+{"event": "eval_acceptance", "failed": 0, "gains": 19, "ok": true, "passed": 65,
+ "release_id": "dev-0", "section": "all", "skipped": 10}
+
+vsir eval abstention — release dev-0, §12.4, corpus synthetic
+
+CORPUS — SYN-M1 in vsir_pages_eval_abstention_synthetic_1536
+  55 observed token(s) (§6.8), 100 fabricated code(s), each one character off a real one
+  21 distinct source code(s): 0020→0000, 150→100, 152→102, 380→300 …
+
+LEAKS — a fabricated code that reached a caller on any surface (§12.4)
+  none: 100 of 100 abstained on every surface
+
+CONTROL — the real codes the fakes were mutated from are still findable
+  21 of 21 findable
+
+abstention_correctness: 1.00 (D11 gate: 1.00) — PASS
+{"abstention_correctness": 1.0, "corpus": "synthetic", "doc_id": "SYN-M1",
+ "event": "eval_abstention", "gate": 1.0, "leaks": 0, "sample": 100, "ok": true}
+
+DEMO EXIT=0
+```
+
+The negative control, because a report that cannot fail proves nothing. Two of them, and both are
+asserted (`test_a_failing_row_makes_the_command_exit_non_zero`,
+`test_a_leaking_near_miss_exits_non_zero_and_names_the_case`):
+
+```
+# one row broken at the index boundary: `lookup("K 158")` asked as `K 159`, which nothing prints
+  lookup("K 158") → printed K158                total=1 p001              total=0 —                FAIL
+  lookup("K 158") — is_current injected serv…   1 hit(s)                  0 hit(s) —               FAIL
+acceptance: 45 passed, 2 failed, 0 skipped        → exit 1
+
+# one "fabricated" code that is really printed, handed to the eval by the generator
+LEAKS — a fabricated code that reached a caller on any surface (§12.4)
+  ! k158 → k158 (char 1): lookup returned ['SYN-M1@1.0#p001']
+  ! k158 → k158 (char 1): verify present on ['SYN-M1@1.0#p001']
+abstention_correctness: 0.99 (D11 gate: 1.00) — FAIL        → exit 1
+```
+
+**Test evidence**
+
+```
+bash scripts/test-unit.sh                  1067 passed        (conformance greps green)
+bash scripts/test-api.sh                   1036 passed, 13 skipped   (240s)
+bash scripts/test-api.sh -k "near_miss or eval_commands"   32 passed   (the CI step)
+```
+
+The 13 skips are M2b's, unchanged: `test_acceptance_real.py`'s corpus rows and the paid suite.
+
+**Invariants/failure rows closed:** none newly, by design — the unit is the **runnable proof
+surface** for F1, F2, F3, F4, F14 and F16, and §10's "Closed at" column assigns each of those to an
+earlier milestone. What is new is that the proof is a command rather than three pytest files.
+
+**What shipped**
+
+- `vsir/eval/acceptance.py` — net new. Three sections, one `Row` per §12.3 assertion
+  (`section, assertion, expected, observed, outcome, reason`), a `Report` that counts them and
+  distinguishes **a skipped row from a refused section**, and `print_report`. Every expectation is
+  read out of a checked-in `expected.json`; the module holds exactly one literal of its own —
+  §12.3's seven lookup labels in §12.3's order, which is the spec's *text* and not a measurement.
+- `vsir/eval/abstention.py` — net new. `evaluate()` reads one collection and returns a `Report`
+  carrying `abstention_correctness`, every `Leak` by name, and the **control** (the real codes the
+  fakes were mutated from, which must still be findable). `CORRECTNESS_GATE = 1.00` is a pin in
+  code, for the same reason `TRUST_OK_MIN` is: relaxing D11's gate has to be a reviewable release.
+- `vsir/eval/__init__.py` — gained `searchable_payloads(client, collection, doc_id="")`, the one
+  reading of *"what is actually in the index"* both evals need. §6.8's rule (build the inventory
+  from what was **indexed**, not from the records) and §5.7's (drop the pages `lookup` cannot
+  search) live in one place instead of two.
+- `vsir/cli.py` — `vsir eval acceptance [--only synthetic|parity|real|all] [--tc1e-fixture DIR]`
+  and `vsir eval abstention [--corpus synthetic|indexed] [--collection NAME] [--doc-id DOC]
+  [--sample N]`, both through `_with_store` so a configuration error and an unreachable Qdrant are
+  the same named non-zero exit every other store-backed command gives.
+- `.github/workflows/ci.yml` — the named §12.4 step now runs
+  `-k "near_miss or eval_commands"`, so the **shipped subcommand** is exercised on every commit
+  and not only the library behind it.
+- `backend/tests/api/test_eval_commands.py` — 25 tests over the commands' own properties.
+
+**Decisions, stated**
+
+- **Three sections, and the `real` one splits along C10's seam.** §12.3's rows need a corpus, and
+  there are three: the M1 synthetic pages (always), the ported `impl` baseline (always — `impl`
+  paid for it), and the pilot document (not until the M2b re-bill). The pilot section therefore
+  runs *the rows that assert `expected.json`'s faithfulness to §12.3* — all seven labels present in
+  order, no row claiming `capped` while its total fits the cap, SA-7's reconciliation recorded
+  rather than applied — and emits the corpus rows as named `SKIP`s. That is the same split
+  `tests/api/test_acceptance_real.py` already makes, and it is the honest one: the table is checked
+  in *ahead* of the ingest, so its integrity is assertable today and its numbers are not.
+- **The command does not rebuild the frozen fixture, and that is deliberate.** Making the SKIP rows
+  into measurements needs `derive`+`stitch` over `raw_window_*.json`, which cannot be exercised
+  until the artefacts exist — writing it now would ship a path no test can reach. U013's Definition
+  of Done already owns *"these skips become passes"*, the skip names the three files and both open
+  questions, and `test_the_real_section_skips_by_name_rather_than_failing` flips to a `pytest.skip`
+  the moment the fixture lands, so the day it arrives the suite says so instead of staying green.
+  **Recorded as U013's remaining work**, beside the re-bill.
+- **A skipped row is not a failure; a refused section is.** `Report.ok` is `failed == 0 and not
+  refusals`. A row that cannot run yet is visible, counted in the summary line and on the event
+  stream, and does not fail the command (the plan's Edge Cases require exactly this). A section
+  whose *fixture* is missing produced no evidence at all, and calling that a pass would be the C10
+  failure one level up — so it is a refusal and a non-zero exit.
+- **GAINS is a report and can never be a verdict.** §12.3 is explicit: *"a code the old grammar
+  dropped but the phrase index finds is a **gain**: record it, do not treat it as a diff to
+  reconcile."* So the 19 codes print in their own section with no `PASS`/`FAIL` column, and
+  `test_the_gains_section_lists_the_codes_the_old_grammar_dropped` asserts that section carries no
+  verdict at all. What *is* a row is *"every code reported as a GAIN is genuinely findable"* — a
+  gain that is not in the index is a reporting bug, not a gain.
+- **`--corpus indexed` is §12.4's own wording, and it only reads.** *"near_misses() mutates one
+  character of codes taken from the observed-token inventory of **whatever corpus is indexed**."*
+  That path never creates, upserts or deletes: it is how the metric gets measured on a real
+  document after an ingest, and it is the M1-available half of §12.6's D11 gates. Asserted by a
+  point-count and payload-digest comparison either side of the run
+  (`test_neither_command_mutates_the_index`, parametrised over all three code paths).
+- **A collection holding more than one document refuses until `--doc-id` names one.** A near miss
+  is one document's code mutated; a safety metric measured over an unnamed corpus is not a
+  measurement. The refusal lists the documents it found.
+- **0 of 0 is never 1.00.** `abstention_correctness` of an unmeasured run is `0.0`, the report
+  prints `not measured`, and the exit is non-zero. A refusal that scored itself perfect is the one
+  way this eval could fail silently.
+- **`WEAK_ABS`-style pinning for the gate.** `CORRECTNESS_GATE = 1.00` is not an env var and not a
+  flag. §12.6 fixes it and calls a single miss a P0 stop; a deployment that could re-tune it could
+  turn F16 back on by editing a variable.
+- **The commands cannot reach a model, structurally and at runtime.** `vsir.vlm` is absent from
+  both modules' import graphs (`test_no_eval_module_can_reach_a_model_at_all`), the `run` fixture
+  deletes `VSIR_VLM_KEY`, `GEMINI_API_KEY` and `GOOGLE_API_KEY` before every invocation, and a
+  socket spy records every address the process connects to and asserts the store's port is reached
+  and 80/443 are not. The import-graph half is the total claim; the spy is the evidence about the
+  run.
+- **Ephemeral collections are namespaced per command.** `{VSIR_COLLECTION}_eval_acceptance_…` and
+  `{VSIR_COLLECTION}_eval_abstention_…`, through `synthetic_collection`/`legacy_collection` so
+  neither can ever *equal* the serving collection — and so neither collides with
+  `test_acceptance_synthetic.py`'s or `test_near_miss_codes_never_answer.py`'s own corpora. All of
+  them are dropped in a `finally`, asserted after every run.
+- **`vsir eval corpus` is refused by name.** §4.4's row is `acceptance | abstention | corpus` and
+  `corpus` is §12.6's, at M8. Asking for it now is argparse's own usage error listing the two that
+  are served — the CLI analogue of the typed 404 `POST /tools/{name}` gives for `read` and `fetch`.
+
+**Deviations from the plan, stated**
+
+- **`vsir/eval/__init__.py` was edited beyond a docstring.** It is on the Deliverables list, and
+  `searchable_payloads` is the one thing both evals need identically; putting it in either module
+  would have made the other import a private name across a module boundary.
+- **`.github/workflows/ci.yml` was found EMPTY in the working tree** — 0 bytes, uncommitted, so CI
+  ran nothing at all. Restored from `HEAD` and then extended. Recorded here because it is a
+  pre-existing defect this unit uncovered rather than one it introduced, and because an empty
+  workflow file is invisible: GitHub reports no failure for a workflow it cannot parse.
+- **`ASSERTION_WIDTH` / `VALUE_WIDTH` are public.** A row that rendered its two sides into one
+  column would satisfy every other assertion in the suite, so
+  `test_every_printed_row_shows_the_expectation_beside_the_measurement` slices the columns apart at
+  the module's own widths. A whitespace split cannot tell one padded column from two.
+- **The parity section is a module-scoped fixture in the L2 suite.** 660 index reads over 405
+  identifiers, 96 withheld codes and 63 gains is a few seconds, and four assertions are about one
+  report rather than four. Nothing in it is mutated by a test.
+
+**Notes**
+
+- **The 10 skipped rows are the M2b hole, and they are the only one.** `--only real` exits 0 with
+  9 passes and 10 skips today; when `raw_window_1.json`, `raw_window_2.json` and `text.json` land,
+  U013 turns them into measurements and the L2 test that guards the skip inverts.
+- The parity section's `derive`/`stitch` event lines interleave with the report on stdout. That is
+  §15 Factor XI working as specified — stdout *is* the event stream — and `vsir demo exact` has the
+  same property. A reader who wants only the report has `2>/dev/null | grep -v '^{'`.
+- `NO_LEGACY_COVERAGE` prints beside every parity run (R7). A green 405-row parity report is not
+  sign-off for the ~70% of §7/§8 `impl` never exercised, and the list says which parts.
+- Nothing about `read`, `fetch`, `skim_*` or `resolve` moved. They are still absent from the tool
+  table and still a typed `404` listing `["lookup", "verify"]`.
