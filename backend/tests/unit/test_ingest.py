@@ -15,6 +15,7 @@ import json
 import pytest
 
 from vsir import cli
+from vsir.config import DPI_ANSWER
 from vsir.eval import synthetic_pdf as generator
 from vsir.ingest import probe
 
@@ -59,14 +60,31 @@ def test_ingest_until_window_runs_green(env, capsys, synthetic_pdf, expected):
         assert f"{start}-{end}" in out
 
 
+def test_ingest_until_extract_runs_green(env, capsys, synthetic_pdf, expected):
+    """U008's Demo Command: steps 01-06, with S1 and S2 both replayed from the fixture (D10).
+
+    The verbatim response is what the reviewer is shown, so the run prints one page form per
+    window — and `page_index` being window-local is visible in it, which is the fact §6.4's offset
+    proof exists to defend.
+    """
+    code = _run(synthetic_pdf, "--vlm", "stub", "--until", "extract")
+    out = capsys.readouterr().out
+
+    assert code == cli.EXIT_OK
+    assert "ALL ASSERTIONS PASSED" in out
+    assert "FAIL" not in out
+    assert f"{expected['extraction']['page_forms']} page forms" in out
+    assert "the model returned 0 characters of page text" in out
+
+
 def test_ingest_reports_each_step_on_the_event_stream(env, capsys, synthetic_pdf):
     """§15 Factor XI — one JSON object per line, every one carrying the run id."""
-    _run(synthetic_pdf, "--until", "window")
+    _run(synthetic_pdf, "--until", "extract")
     events = [json.loads(line) for line in capsys.readouterr().out.splitlines()
               if line.startswith("{")]
 
     steps = [event["step"] for event in events if event["event"] == "ingest_step"]
-    assert steps == ["manifest", "probe", "render", "facts", "window"]
+    assert steps == ["manifest", "probe", "render", "facts", "window", "extract"]
     assert {event["release_id"] for event in events} == {"test-0"}
     assert all(event["run_id"] for event in events)
 
@@ -98,14 +116,17 @@ def test_a_replay_miss_is_typed_and_never_a_live_call(env, capsys, synthetic_pdf
     assert "ALL ASSERTIONS PASSED" not in out
 
 
-def test_a_backend_with_no_client_refuses_by_name(env, capsys, synthetic_pdf):
-    """At M2a the fixture is the only thing that can fill the S1 cache; the Gemini client is U008's.
-    A run that cannot make the call says so and exits non-zero — it never proceeds without facts."""
+def test_a_backend_with_no_credential_refuses_by_name(env, capsys, synthetic_pdf):
+    """§15 Factor III — the credential arrives at runtime, never from the image, so a live backend
+    with nothing in `VSIR_VLM_KEY` cannot run. It says so and exits non-zero: it never proceeds
+    without facts, and it never falls back to the fixture, which would answer the wrong question
+    (the frozen response is not this backend's output)."""
     code = _run(synthetic_pdf, "--vlm", "gemini", "--until", "facts")
     out = capsys.readouterr().out
 
     assert code == cli.EXIT_REFUSED
     assert "vlm_backend_unavailable" in out
+    assert "VSIR_VLM_KEY" in out
 
 
 def test_steps_before_the_vlm_still_run_without_a_fixture(env, capsys, synthetic_pdf):
@@ -149,19 +170,52 @@ def test_the_checked_in_corpus_is_what_the_generator_produces(synthetic_pdf):
 def test_the_frozen_s1_response_is_keyed_to_the_checked_in_pdf(synthetic_pdf, synthetic_fixture):
     """§6.3 — the fixture is content-addressable, so it cannot silently answer for another file."""
     from vsir.ingest import window
+    from vsir.vlm import FACTS, FixtureStore, facts_key
 
     def key_now() -> str:
-        return window.facts_key(probe.content_hash(synthetic_pdf),
-                                vlm_model=BASE_ENV["VSIR_VLM_MODEL"],
-                                prompt_version=BASE_ENV["VSIR_PROMPT_VERSION"])
+        return facts_key(probe.content_hash(synthetic_pdf),
+                         vlm_model=BASE_ENV["VSIR_VLM_MODEL"],
+                         prompt_version=BASE_ENV["VSIR_PROMPT_VERSION"])
 
     key = key_now()
     assert key == key_now(), "two runs over the same PDF must re-bill S1 zero times"
-    path = synthetic_fixture / "facts" / f"{key}.json"
+    entry = FixtureStore(synthetic_fixture).get(FACTS, key)
 
-    assert path.is_file(), f"no frozen S1 response at {path}"
-    facts = window.DocumentFacts.model_validate_json(path.read_text())
+    facts = window.DocumentFacts.model_validate_json(entry.body)
     assert [entry.page_no for entry in facts.toc] == [start for start, _ in generator.CHAPTERS]
+
+
+def test_the_frozen_s2_responses_are_keyed_to_the_windows_of_that_pdf(synthetic_pdf,
+                                                                      synthetic_fixture,
+                                                                      expected):
+    """§6.3 — one frozen response per window, addressed by the rasters S2 is shown.
+
+    Recomputed here rather than read from a manifest: the point of a content-addressable fixture
+    is that the *pipeline's own* keys find it. If the schema, the dpi, the model or the prompt
+    version moves, this test fails at the same moment replay starts missing — which is the
+    behaviour F11 wants, and the alternative (a manifest of names) would keep passing.
+    """
+    from vsir.ingest import render, window
+    from vsir.ingest.extract import S2_SCHEMA_HASH
+    from vsir.vlm import EXTRACT, FixtureStore, extract_key
+
+    probed = probe.run(synthetic_pdf)
+    plan = window.plan(probed.page_count, toc=generator.toc_entries(),
+                       size_bytes=probed.size_bytes)
+    store = FixtureStore(synthetic_fixture)
+
+    forms = 0
+    for win in plan.windows:
+        key = extract_key(
+            render.page_hashes(synthetic_pdf, win.page_numbers, dpi=DPI_ANSWER,
+                               content_hash=probed.content_hash),
+            vlm_model=BASE_ENV["VSIR_VLM_MODEL"],
+            prompt_version=BASE_ENV["VSIR_PROMPT_VERSION"], dpi=DPI_ANSWER,
+            schema_hash=S2_SCHEMA_HASH)
+        forms += len(json.loads(store.get(EXTRACT, key).body)["pages"])
+
+    assert len(plan.windows) == expected["extraction"]["windows"]
+    assert forms == expected["extraction"]["page_forms"]
 
 
 def test_two_sections_straddle_a_window_fold(expected):

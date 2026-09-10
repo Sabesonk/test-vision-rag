@@ -1,0 +1,443 @@
+{
+  "pages": [
+    {
+      "codes": [],
+      "lang": [
+        "en"
+      ],
+      "page_index": 1,
+      "page_kind": "cover",
+      "printed_page_no": "",
+      "sections": [
+        {
+          "is_start": true,
+          "title": "Front matter"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "This is the scanned cover sheet of the manual. It shows the title, the revision and the validity statement, and it carries no text layer at all."
+        }
+      ],
+      "topics": [
+        "cover sheet",
+        "revision"
+      ]
+    },
+    {
+      "codes": [],
+      "lang": [
+        "en"
+      ],
+      "page_index": 2,
+      "page_kind": "prose",
+      "printed_page_no": "",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Front matter"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "This sheet was photocopied onto the front of the manual and carries no text layer. It states that nothing printed on it can be verified against extracted text."
+        }
+      ],
+      "topics": [
+        "front matter"
+      ]
+    },
+    {
+      "codes": [
+        "K103",
+        "SI4"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 3,
+      "page_kind": "prose",
+      "printed_page_no": "1",
+      "sections": [
+        {
+          "is_start": true,
+          "title": "General information and symbols"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 1 is a short reference sheet in the general information and symbols section. It carries only K103 and SI4."
+        }
+      ],
+      "topics": [
+        "general information and symbols",
+        "reference"
+      ]
+    },
+    {
+      "codes": [
+        "K104",
+        "SI1"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 4,
+      "page_kind": "prose",
+      "printed_page_no": "2",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "General information and symbols"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 2 is a short reference sheet in the general information and symbols section. It carries only K104 and SI1."
+        }
+      ],
+      "topics": [
+        "general information and symbols",
+        "reference"
+      ]
+    },
+    {
+      "codes": [
+        "K105",
+        "SI2"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 5,
+      "page_kind": "prose",
+      "printed_page_no": "3",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "General information and symbols"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 3 is a short reference sheet in the general information and symbols section. It carries only K105 and SI2."
+        }
+      ],
+      "topics": [
+        "general information and symbols",
+        "reference"
+      ]
+    },
+    {
+      "codes": [
+        "K106",
+        "SI3"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 6,
+      "page_kind": "prose",
+      "printed_page_no": "4",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "General information and symbols"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 4 is a short reference sheet in the general information and symbols section. It carries only K106 and SI3."
+        }
+      ],
+      "topics": [
+        "general information and symbols",
+        "reference"
+      ]
+    },
+    {
+      "codes": [
+        "K107",
+        "SI4"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 7,
+      "page_kind": "prose",
+      "printed_page_no": "5",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "General information and symbols"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 5 is a short reference sheet in the general information and symbols section. It carries only K107 and SI4."
+        }
+      ],
+      "topics": [
+        "general information and symbols",
+        "reference"
+      ]
+    },
+    {
+      "codes": [
+        "K108",
+        "SI1"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 8,
+      "page_kind": "prose",
+      "printed_page_no": "6",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "General information and symbols"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 6 is a short reference sheet in the general information and symbols section. It carries only K108 and SI1."
+        }
+      ],
+      "topics": [
+        "general information and symbols",
+        "reference"
+      ]
+    },
+    {
+      "codes": [
+        "SF 1.9C",
+        "B209",
+        "K109",
+        "SI2",
+        "X20SI4100",
+        "Q59",
+        "LC1-D38BL",
+        "S309",
+        "EAO 84-5140.1009",
+        "ZB4-BS844"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 9,
+      "page_kind": "prose",
+      "printed_page_no": "7",
+      "sections": [
+        {
+          "is_start": true,
+          "title": "Machine layout and access points"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 7 covers machine layout and access points stage 7 within the machine layout and access points section. It names K109 as the monitored relay, SI2 as the safe input channel and Q59 as the contactor, with the two-channel wiring printed beside them. The stop category is recorded as verified at commissioning and after every replacement of K109."
+        }
+      ],
+      "topics": [
+        "machine layout and access points",
+        "wiring",
+        "stop category"
+      ]
+    },
+    {
+      "codes": [
+        "SF 1.10A",
+        "B210",
+        "K110",
+        "SI3",
+        "X20SI4100",
+        "Q60",
+        "LC1-D38BL",
+        "S310",
+        "EAO 84-5140.1010",
+        "ZB4-BS844"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 10,
+      "page_kind": "prose",
+      "printed_page_no": "8",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Machine layout and access points"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 8 covers machine layout and access points stage 8 within the machine layout and access points section. It names K110 as the monitored relay, SI3 as the safe input channel and Q60 as the contactor, with the two-channel wiring printed beside them. The stop category is recorded as verified at commissioning and after every replacement of K110."
+        }
+      ],
+      "topics": [
+        "machine layout and access points",
+        "wiring",
+        "stop category"
+      ]
+    },
+    {
+      "codes": [
+        "SF 1.11a",
+        "B211",
+        "K111",
+        "SI4",
+        "X20SI4100",
+        "Q61",
+        "LC1-D38BL",
+        "S311",
+        "EAO 84-5140.1011",
+        "ZB4-BS844"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 11,
+      "page_kind": "prose",
+      "printed_page_no": "9",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Machine layout and access points"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 9 covers machine layout and access points stage 9 within the machine layout and access points section. It names K111 as the monitored relay, SI4 as the safe input channel and Q61 as the contactor, with the two-channel wiring printed beside them. The stop category is recorded as verified at commissioning and after every replacement of K111."
+        }
+      ],
+      "topics": [
+        "machine layout and access points",
+        "wiring",
+        "stop category"
+      ]
+    },
+    {
+      "codes": [
+        "SF 1.12B",
+        "B212",
+        "K112",
+        "SI1",
+        "X20SI4100",
+        "Q62",
+        "LC1-D38BL",
+        "S312",
+        "EAO 84-5140.1012",
+        "ZB4-BS844"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 12,
+      "page_kind": "prose",
+      "printed_page_no": "10",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Machine layout and access points"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 10 covers machine layout and access points stage 10 within the machine layout and access points section. It names K112 as the monitored relay, SI1 as the safe input channel and Q62 as the contactor, with the two-channel wiring printed beside them. The stop category is recorded as verified at commissioning and after every replacement of K112."
+        }
+      ],
+      "topics": [
+        "machine layout and access points",
+        "wiring",
+        "stop category"
+      ]
+    },
+    {
+      "codes": [
+        "SF 1.13b",
+        "B213",
+        "K113",
+        "SI2",
+        "X20SI4100",
+        "Q63",
+        "LC1-D38BL",
+        "S313",
+        "EAO 84-5140.1013",
+        "ZB4-BS844"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 13,
+      "page_kind": "prose",
+      "printed_page_no": "11",
+      "sections": [
+        {
+          "is_start": true,
+          "title": "Emergency stop chain"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 11 covers emergency stop chain stage 11 within the emergency stop chain section. It names K113 as the monitored relay, SI2 as the safe input channel and Q63 as the contactor, with the two-channel wiring printed beside them. The stop category is recorded as verified at commissioning and after every replacement of K113."
+        }
+      ],
+      "topics": [
+        "emergency stop chain",
+        "wiring",
+        "stop category"
+      ]
+    },
+    {
+      "codes": [
+        "SF 1.14C",
+        "B214",
+        "K114",
+        "SI3",
+        "X20SI4100",
+        "Q64",
+        "LC1-D38BL",
+        "S314",
+        "EAO 84-5140.1014",
+        "ZB4-BS844"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 14,
+      "page_kind": "prose",
+      "printed_page_no": "12",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Emergency stop chain"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 12 covers emergency stop chain stage 12 within the emergency stop chain section. It names K114 as the monitored relay, SI3 as the safe input channel and Q64 as the contactor, with the two-channel wiring printed beside them. The stop category is recorded as verified at commissioning and after every replacement of K114."
+        }
+      ],
+      "topics": [
+        "emergency stop chain",
+        "wiring",
+        "stop category"
+      ]
+    }
+  ]
+}

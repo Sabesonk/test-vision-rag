@@ -56,6 +56,11 @@ REQUIRED_ENV = (
     "VSIR_RELEASE_ID",
 )
 MODEL_ENV = ("VSIR_VLM_MODEL", "VSIR_EMBED_MODEL")  # every id boot refuses to float (F11)
+# A model id may not end in this: pin the version, never a floating alias (§4.2, F11, register B6).
+# It lives here rather than beside the boot check because two places enforce it — `vsir doctor` at
+# boot and `vlm/client.py` at the point of spend, where a long-lived worker's configuration may
+# never have been through a boot check at all.
+FLOATING_SUFFIX = "-latest"
 VLM_BACKENDS = ("gemini", "stub")                   # dev/prod parity: config selects, never an `if`
 VLM_TIERS = ("standard", "batch")                   # §6.3; not an extract_key input
 LOG_LEVELS = ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")
@@ -101,6 +106,7 @@ class Config:
     reads_per_question: int
     fixture_dir: str
     vlm_tier: str
+    vlm_rpm: int
     embed_text_chars: int
     # Secrets. repr=False so no traceback, log line or error message can carry them (§15.1).
     api_tokens: tuple[str, ...] = field(repr=False, default=())
@@ -163,6 +169,7 @@ class Config:
             "log_level": self.log_level,
             "release_id": self.release_id,
             "vlm_tier": self.vlm_tier,
+            "vlm_rpm": self.vlm_rpm,
             "embed_text_chars": self.embed_text_chars,
             "fixture_dir": self.fixture_dir,
             "replay": self.replay,
@@ -263,6 +270,7 @@ def load_config(env: Mapping[str, str] | None = None) -> Config:
         ),
         fixture_dir=_optional(env, "VSIR_FIXTURE", ""),
         vlm_tier=_as_choice("VSIR_VLM_TIER", _optional(env, "VSIR_VLM_TIER", "standard"), VLM_TIERS),
+        vlm_rpm=_as_int("VSIR_VLM_RPM", _optional(env, "VSIR_VLM_RPM", "60"), minimum=1),
         embed_text_chars=_as_int(
             "VSIR_EMBED_TEXT_CHARS", _optional(env, "VSIR_EMBED_TEXT_CHARS", "2000"), minimum=1
         ),

@@ -1,0 +1,524 @@
+{
+  "pages": [
+    {
+      "codes": [
+        "SF 2.15A",
+        "B215",
+        "K115",
+        "SI4",
+        "X20SI4100",
+        "Q65",
+        "LC1-D38BL",
+        "S315",
+        "EAO 84-5140.1015",
+        "ZB4-BS844"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 1,
+      "page_kind": "prose",
+      "printed_page_no": "13",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Emergency stop chain"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 13 covers emergency stop chain stage 13 within the emergency stop chain section. It names K115 as the monitored relay, SI4 as the safe input channel and Q65 as the contactor, with the two-channel wiring printed beside them. The stop category is recorded as verified at commissioning and after every replacement of K115."
+        }
+      ],
+      "topics": [
+        "emergency stop chain",
+        "wiring",
+        "stop category"
+      ]
+    },
+    {
+      "codes": [
+        "SF 2.16a",
+        "B216",
+        "K116",
+        "SI1",
+        "X20SI4100",
+        "Q66",
+        "LC1-D38BL",
+        "S316",
+        "EAO 84-5140.1016",
+        "ZB4-BS844"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 2,
+      "page_kind": "prose",
+      "printed_page_no": "14",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Emergency stop chain"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 14 covers emergency stop chain stage 14 within the emergency stop chain section. It names K116 as the monitored relay, SI1 as the safe input channel and Q66 as the contactor, with the two-channel wiring printed beside them. The stop category is recorded as verified at commissioning and after every replacement of K116."
+        }
+      ],
+      "topics": [
+        "emergency stop chain",
+        "wiring",
+        "stop category"
+      ]
+    },
+    {
+      "codes": [
+        "SF 2.17B",
+        "B217",
+        "K117",
+        "SI2",
+        "X20SI4100",
+        "Q67",
+        "LC1-D38BL",
+        "S317",
+        "EAO 84-5140.1017",
+        "ZB4-BS844"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 3,
+      "page_kind": "prose",
+      "printed_page_no": "15",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Emergency stop chain"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 15 covers emergency stop chain stage 15 within the emergency stop chain section. It names K117 as the monitored relay, SI2 as the safe input channel and Q67 as the contactor, with the two-channel wiring printed beside them. The stop category is recorded as verified at commissioning and after every replacement of K117."
+        }
+      ],
+      "topics": [
+        "emergency stop chain",
+        "wiring",
+        "stop category"
+      ]
+    },
+    {
+      "codes": [
+        "SF 2.18b",
+        "B218",
+        "K118",
+        "SI3",
+        "X20SI4100",
+        "Q68",
+        "LC1-D38BL",
+        "S318",
+        "EAO 84-5140.1018",
+        "ZB4-BS844"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 4,
+      "page_kind": "prose",
+      "printed_page_no": "16",
+      "sections": [
+        {
+          "is_start": true,
+          "title": "Guard door interlocks"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 16 covers guard door interlocks stage 16 within the guard door interlocks section. It names K118 as the monitored relay, SI3 as the safe input channel and Q68 as the contactor, with the two-channel wiring printed beside them. The stop category is recorded as verified at commissioning and after every replacement of K118."
+        }
+      ],
+      "topics": [
+        "guard door interlocks",
+        "wiring",
+        "stop category"
+      ]
+    },
+    {
+      "codes": [
+        "SF 2.19C",
+        "B219",
+        "K119",
+        "SI4",
+        "X20SI4100",
+        "Q69",
+        "LC1-D38BL",
+        "S319",
+        "EAO 84-5140.1019",
+        "ZB4-BS844"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 5,
+      "page_kind": "prose",
+      "printed_page_no": "17",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Guard door interlocks"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 17 covers guard door interlocks stage 17 within the guard door interlocks section. It names K119 as the monitored relay, SI4 as the safe input channel and Q69 as the contactor, with the two-channel wiring printed beside them. The stop category is recorded as verified at commissioning and after every replacement of K119."
+        }
+      ],
+      "topics": [
+        "guard door interlocks",
+        "wiring",
+        "stop category"
+      ]
+    },
+    {
+      "codes": [
+        "SF 2.20A",
+        "B220",
+        "K120",
+        "SI1",
+        "X20SI4100",
+        "Q70",
+        "LC1-D38BL",
+        "S320",
+        "EAO 84-5140.1020",
+        "ZB4-BS844",
+        "EAO 84-5140.0020"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 6,
+      "page_kind": "prose",
+      "printed_page_no": "18",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Guard door interlocks"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 18 covers guard door interlocks stage 18 within the guard door interlocks section. It names K120 as the monitored relay, SI1 as the safe input channel and Q70 as the contactor, with the two-channel wiring printed beside them. The stop category is recorded as verified at commissioning and after every replacement of K120."
+        }
+      ],
+      "topics": [
+        "guard door interlocks",
+        "wiring",
+        "stop category"
+      ]
+    },
+    {
+      "codes": [
+        "SF 2.21a",
+        "B221",
+        "K121",
+        "SI2",
+        "X20SI4100",
+        "Q71",
+        "LC1-D38BL",
+        "S321",
+        "EAO 84-5140.1021",
+        "ZB4-BS844",
+        "K122"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 7,
+      "page_kind": "prose",
+      "printed_page_no": "19",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Guard door interlocks"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 19 covers guard door interlocks stage 19 within the guard door interlocks section. It names K121 as the monitored relay, SI2 as the safe input channel and Q71 as the contactor, with the two-channel wiring printed beside them. The stop category is recorded as verified at commissioning and after every replacement of K121."
+        }
+      ],
+      "topics": [
+        "guard door interlocks",
+        "wiring",
+        "stop category"
+      ]
+    },
+    {
+      "codes": [
+        "SF 2.22B",
+        "B222",
+        "K122",
+        "SI3",
+        "X20SI4100",
+        "Q72",
+        "LC1-D38BL",
+        "S322",
+        "EAO 84-5140.1022",
+        "ZB4-BS844"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 8,
+      "page_kind": "prose",
+      "printed_page_no": "20",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Guard door interlocks"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 20 covers guard door interlocks stage 20 within the guard door interlocks section. It names K122 as the monitored relay, SI3 as the safe input channel and Q72 as the contactor, with the two-channel wiring printed beside them. The stop category is recorded as verified at commissioning and after every replacement of K122."
+        }
+      ],
+      "topics": [
+        "guard door interlocks",
+        "wiring",
+        "stop category"
+      ]
+    },
+    {
+      "codes": [
+        "SF 2.23b",
+        "B223",
+        "K123",
+        "SI4",
+        "X20SI4100",
+        "Q73",
+        "LC1-D38BL",
+        "S323",
+        "EAO 84-5140.1023",
+        "ZB4-BS844"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 9,
+      "page_kind": "prose",
+      "printed_page_no": "21",
+      "sections": [
+        {
+          "is_start": true,
+          "title": "Two-hand control and enabling devices"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 21 covers two-hand control and enabling devices stage 21 within the two-hand control and enabling devices section. It names K123 as the monitored relay, SI4 as the safe input channel and Q73 as the contactor, with the two-channel wiring printed beside them. The stop category is recorded as verified at commissioning and after every replacement of K123."
+        }
+      ],
+      "topics": [
+        "two-hand control and enabling devices",
+        "wiring",
+        "stop category"
+      ]
+    },
+    {
+      "codes": [
+        "SF 2.24C",
+        "B224",
+        "K124",
+        "SI1",
+        "X20SI4100",
+        "Q74",
+        "LC1-D38BL",
+        "S324",
+        "EAO 84-5140.1024",
+        "ZB4-BS844"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 10,
+      "page_kind": "prose",
+      "printed_page_no": "22",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Two-hand control and enabling devices"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 22 covers two-hand control and enabling devices stage 22 within the two-hand control and enabling devices section. It names K124 as the monitored relay, SI1 as the safe input channel and Q74 as the contactor, with the two-channel wiring printed beside them. The stop category is recorded as verified at commissioning and after every replacement of K124."
+        }
+      ],
+      "topics": [
+        "two-hand control and enabling devices",
+        "wiring",
+        "stop category"
+      ]
+    },
+    {
+      "codes": [
+        "SF 2.25A",
+        "B225",
+        "K125",
+        "SI2",
+        "X20SI4100",
+        "Q75",
+        "LC1-D38BL",
+        "S325",
+        "EAO 84-5140.1025",
+        "ZB4-BS844"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 11,
+      "page_kind": "prose",
+      "printed_page_no": "23",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Two-hand control and enabling devices"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 23 covers two-hand control and enabling devices stage 23 within the two-hand control and enabling devices section. It names K125 as the monitored relay, SI2 as the safe input channel and Q75 as the contactor, with the two-channel wiring printed beside them. The stop category is recorded as verified at commissioning and after every replacement of K125."
+        }
+      ],
+      "topics": [
+        "two-hand control and enabling devices",
+        "wiring",
+        "stop category"
+      ]
+    },
+    {
+      "codes": [
+        "SF 2.26a",
+        "B226",
+        "K126",
+        "SI3",
+        "X20SI4100",
+        "Q76",
+        "LC1-D38BL",
+        "S326",
+        "EAO 84-5140.1026",
+        "ZB4-BS844"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 12,
+      "page_kind": "prose",
+      "printed_page_no": "24",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Two-hand control and enabling devices"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 24 covers two-hand control and enabling devices stage 24 within the two-hand control and enabling devices section. It names K126 as the monitored relay, SI3 as the safe input channel and Q76 as the contactor, with the two-channel wiring printed beside them. The stop category is recorded as verified at commissioning and after every replacement of K126."
+        }
+      ],
+      "topics": [
+        "two-hand control and enabling devices",
+        "wiring",
+        "stop category"
+      ]
+    },
+    {
+      "codes": [
+        "SF 2.27B",
+        "B227",
+        "K127",
+        "SI4",
+        "X20SI4100",
+        "Q77",
+        "LC1-D38BL",
+        "S327",
+        "EAO 84-5140.1027",
+        "ZB4-BS844"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 13,
+      "page_kind": "prose",
+      "printed_page_no": "25",
+      "sections": [
+        {
+          "is_start": true,
+          "title": "Light curtain muting"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 25 covers light curtain muting stage 25 within the light curtain muting section. It names K127 as the monitored relay, SI4 as the safe input channel and Q77 as the contactor, with the two-channel wiring printed beside them. The stop category is recorded as verified at commissioning and after every replacement of K127."
+        }
+      ],
+      "topics": [
+        "light curtain muting",
+        "wiring",
+        "stop category"
+      ]
+    },
+    {
+      "codes": [
+        "SF 2.28b",
+        "B228",
+        "K128",
+        "SI1",
+        "X20SI4100",
+        "Q78",
+        "LC1-D38BL",
+        "S328",
+        "EAO 84-5140.1028",
+        "ZB4-BS844"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 14,
+      "page_kind": "prose",
+      "printed_page_no": "26",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Light curtain muting"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 26 covers light curtain muting stage 26 within the light curtain muting section. It names K128 as the monitored relay, SI1 as the safe input channel and Q78 as the contactor, with the two-channel wiring printed beside them. The stop category is recorded as verified at commissioning and after every replacement of K128."
+        }
+      ],
+      "topics": [
+        "light curtain muting",
+        "wiring",
+        "stop category"
+      ]
+    }
+  ]
+}

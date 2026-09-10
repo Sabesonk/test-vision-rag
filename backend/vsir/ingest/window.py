@@ -1,4 +1,4 @@
-"""Steps 04-05 — the window ladder and the cache keys. Ported from ``impl/app/windows.py``.
+"""Steps 04-05 — the window ladder. Ported from ``impl/app/windows.py``.
 
 A window is a **page range, not a chunk**. Its boundary is an artefact of the model's attention
 limit and stitching deletes it again; it never becomes a retrieval boundary. Three granularities
@@ -16,17 +16,10 @@ consequence is stated in §6.2: `impl/corpus.yaml` records that the 1,440-page m
 592-page E-diagram are the only two documents that need Level 2, and it already excludes them.
 
 **What to write on the batch.** ``extract_key`` is the receipt that stops the pipeline paying
-twice. Every input that can change the model's answer is on it and nothing else is, so re-running
-on identical pages costs $0 and changing the prompt correctly re-bills. §6.3 rewrites `impl`'s
-version of it in two ways, both deliberate:
-
-* it is keyed on the **ordered page image hashes**, not on the file hash plus a plan hash. That is
-  strictly stronger: a window's key now depends on the pixels the model will actually see, so two
-  windows of the same document can never collide and a re-cut that happens to produce the same
-  page range still gets the same key only if it produces the same rasters;
-* ``s2_input_mode`` is gone from the key and ``dpi`` is in it. `impl` recorded a mode
-  (``"render@300"``) that no code path implemented (register A3); the dpi is a fact about the
-  render that did happen.
+twice, and it lives with the other three keys of §6.3 in :mod:`vsir.vlm.cache` — one module owns
+every question of the form *"has this exact question already been asked of this exact model?"*,
+because the four keys have to agree about what an input is. This module's job is to decide **which
+pages** each receipt covers; :func:`vsir.vlm.extract_key` turns that into the receipt.
 
 **Bisection (F13), written net new.** On ``MAX_TOKENS``, a truncated or schema-invalid response, or
 an offset failure: split the window and re-bill. Never pad, never guess the offset, never accept a
@@ -35,9 +28,8 @@ reports success. A single page that still exceeds the budget is :class:`WindowUn
 """
 from __future__ import annotations
 
-import hashlib
 from dataclasses import dataclass, replace
-from typing import Any, Iterable, Literal, Mapping, Sequence
+from typing import Any, Iterable, Literal, Mapping
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -268,27 +260,3 @@ def plan(page_count: int, *, toc: Iterable[TocEntry | Mapping[str, Any]] = (),
         document=document, page_count=page_count, cap=cap,
         chapters=len(chapters), oversized_chapters=oversized,
     )
-
-
-def facts_key(content_hash: str, *, vlm_model: str, prompt_version: str) -> str:
-    """§6.3 — ``sha256(document content hash ‖ resolved vlm model id ‖ prompt_version)``.
-
-    Cached **per document**, which is the fix for register B2: without it every re-run re-bills S1
-    and, because S1's contents list picks the ladder, a different answer silently re-cuts the
-    document and re-bills all of S2 behind it.
-    """
-    blob = "|".join((content_hash, vlm_model, prompt_version))
-    return hashlib.sha256(blob.encode("utf-8")).hexdigest()
-
-
-def extract_key(page_hashes: Sequence[str], *, vlm_model: str, prompt_version: str,
-                dpi: int, schema_hash: str) -> str:
-    """§6.3 — ``sha256(ordered page image hashes ‖ model ‖ prompt_version ‖ dpi ‖ schema hash)``.
-
-    ``VSIR_VLM_TIER`` is deliberately **not** an input: batch and standard produce the same output,
-    so putting the tier in the key would re-bill a full-corpus run for choosing the discount.
-    """
-    if not page_hashes:
-        raise ValueError("extract_key needs at least one page image hash")
-    blob = "|".join((",".join(page_hashes), vlm_model, prompt_version, str(dpi), schema_hash))
-    return hashlib.sha256(blob.encode("utf-8")).hexdigest()

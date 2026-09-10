@@ -1,0 +1,523 @@
+{
+  "pages": [
+    {
+      "codes": [
+        "SF 3.29C",
+        "B229",
+        "K129",
+        "SI2",
+        "X20SI4100",
+        "Q79",
+        "LC1-D38BL",
+        "S329",
+        "EAO 84-5140.1029",
+        "ZB4-BS844"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 1,
+      "page_kind": "prose",
+      "printed_page_no": "27",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Light curtain muting"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 27 covers light curtain muting stage 27 within the light curtain muting section. It names K129 as the monitored relay, SI2 as the safe input channel and Q79 as the contactor, with the two-channel wiring printed beside them. The stop category is recorded as verified at commissioning and after every replacement of K129."
+        }
+      ],
+      "topics": [
+        "light curtain muting",
+        "wiring",
+        "stop category"
+      ]
+    },
+    {
+      "codes": [
+        "SF 3.30A",
+        "B230",
+        "K130",
+        "SI3",
+        "X20SI4100",
+        "Q80",
+        "LC1-D38BL",
+        "S330",
+        "EAO 84-5140.1030",
+        "ZB4-BS844",
+        "K999"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 2,
+      "page_kind": "prose",
+      "printed_page_no": "28",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Light curtain muting"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 28 covers light curtain muting stage 28 within the light curtain muting section. It names K130 as the monitored relay, SI3 as the safe input channel and Q80 as the contactor, with the two-channel wiring printed beside them. The stop category is recorded as verified at commissioning and after every replacement of K130."
+        }
+      ],
+      "topics": [
+        "light curtain muting",
+        "wiring",
+        "stop category"
+      ]
+    },
+    {
+      "codes": [
+        "SF 3.31a",
+        "B231",
+        "K131",
+        "SI4",
+        "X20SI4100",
+        "Q81",
+        "LC1-D38BL",
+        "S331",
+        "EAO 84-5140.1031",
+        "ZB4-BS844"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 3,
+      "page_kind": "prose",
+      "printed_page_no": "29",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Light curtain muting"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 29 covers light curtain muting stage 29 within the light curtain muting section. It names K131 as the monitored relay, SI4 as the safe input channel and Q81 as the contactor, with the two-channel wiring printed beside them. The stop category is recorded as verified at commissioning and after every replacement of K131."
+        }
+      ],
+      "topics": [
+        "light curtain muting",
+        "wiring",
+        "stop category"
+      ]
+    },
+    {
+      "codes": [
+        "SF 3.32B",
+        "B232",
+        "K132",
+        "SI1",
+        "X20SI4100",
+        "Q82",
+        "LC1-D38BL",
+        "S332",
+        "EAO 84-5140.1032",
+        "ZB4-BS844"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 4,
+      "page_kind": "schematic",
+      "printed_page_no": "30",
+      "sections": [
+        {
+          "is_start": true,
+          "title": "Safety relay wiring"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 30 covers safety relay wiring stage 30 within the safety relay wiring section. It names K132 as the monitored relay, SI1 as the safe input channel and Q82 as the contactor, with the two-channel wiring printed beside them. The stop category is recorded as verified at commissioning and after every replacement of K132."
+        }
+      ],
+      "topics": [
+        "safety relay wiring",
+        "wiring",
+        "stop category"
+      ]
+    },
+    {
+      "codes": [
+        "SF 3.33b",
+        "B233",
+        "K133",
+        "SI2",
+        "X20SI4100",
+        "Q83",
+        "LC1-D38BL",
+        "S333",
+        "EAO 84-5140.1033",
+        "ZB4-BS844"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 5,
+      "page_kind": "schematic",
+      "printed_page_no": "31",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Safety relay wiring"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 31 covers safety relay wiring stage 31 within the safety relay wiring section. It names K133 as the monitored relay, SI2 as the safe input channel and Q83 as the contactor, with the two-channel wiring printed beside them. The stop category is recorded as verified at commissioning and after every replacement of K133."
+        }
+      ],
+      "topics": [
+        "safety relay wiring",
+        "wiring",
+        "stop category"
+      ]
+    },
+    {
+      "codes": [
+        "SF 3.34C",
+        "B234",
+        "K134",
+        "SI3",
+        "X20SI4100",
+        "Q84",
+        "LC1-D38BL",
+        "S334",
+        "EAO 84-5140.1034",
+        "ZB4-BS844"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 6,
+      "page_kind": "schematic",
+      "printed_page_no": "32",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Safety relay wiring"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 32 covers safety relay wiring stage 32 within the safety relay wiring section. It names K134 as the monitored relay, SI3 as the safe input channel and Q84 as the contactor, with the two-channel wiring printed beside them. The stop category is recorded as verified at commissioning and after every replacement of K134."
+        }
+      ],
+      "topics": [
+        "safety relay wiring",
+        "wiring",
+        "stop category"
+      ]
+    },
+    {
+      "codes": [
+        "SF 3.35A",
+        "B235",
+        "K135",
+        "SI4",
+        "X20SI4100",
+        "Q85",
+        "LC1-D38BL",
+        "S335",
+        "EAO 84-5140.1035",
+        "ZB4-BS844"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 7,
+      "page_kind": "schematic",
+      "printed_page_no": "33",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Safety relay wiring"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 33 covers safety relay wiring stage 33 within the safety relay wiring section. It names K135 as the monitored relay, SI4 as the safe input channel and Q85 as the contactor, with the two-channel wiring printed beside them. The stop category is recorded as verified at commissioning and after every replacement of K135."
+        }
+      ],
+      "topics": [
+        "safety relay wiring",
+        "wiring",
+        "stop category"
+      ]
+    },
+    {
+      "codes": [
+        "SF 3.36a",
+        "B236",
+        "K136",
+        "SI1",
+        "X20SI4100",
+        "Q86",
+        "LC1-D38BL",
+        "S336",
+        "EAO 84-5140.1036",
+        "ZB4-BS844"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 8,
+      "page_kind": "schematic",
+      "printed_page_no": "34",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Safety relay wiring"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 34 covers safety relay wiring stage 34 within the safety relay wiring section. It names K136 as the monitored relay, SI1 as the safe input channel and Q86 as the contactor, with the two-channel wiring printed beside them. The stop category is recorded as verified at commissioning and after every replacement of K136."
+        }
+      ],
+      "topics": [
+        "safety relay wiring",
+        "wiring",
+        "stop category"
+      ]
+    },
+    {
+      "codes": [
+        "SF 3.37B",
+        "B237",
+        "K137",
+        "SI2",
+        "X20SI4100",
+        "Q87",
+        "LC1-D38BL",
+        "S337",
+        "EAO 84-5140.1037",
+        "ZB4-BS844"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 9,
+      "page_kind": "table",
+      "printed_page_no": "35",
+      "sections": [
+        {
+          "is_start": true,
+          "title": "Part numbers and suppliers"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 35 covers part numbers and suppliers stage 35 within the part numbers and suppliers section. It names K137 as the monitored relay, SI2 as the safe input channel and Q87 as the contactor, with the two-channel wiring printed beside them. The stop category is recorded as verified at commissioning and after every replacement of K137."
+        }
+      ],
+      "topics": [
+        "part numbers and suppliers",
+        "wiring",
+        "stop category"
+      ]
+    },
+    {
+      "codes": [
+        "SF 3.38b",
+        "B238",
+        "K138",
+        "SI3",
+        "X20SI4100",
+        "Q88",
+        "LC1-D38BL",
+        "S338",
+        "EAO 84-5140.1038",
+        "ZB4-BS844"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 10,
+      "page_kind": "table",
+      "printed_page_no": "36",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Part numbers and suppliers"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 36 covers part numbers and suppliers stage 36 within the part numbers and suppliers section. It names K138 as the monitored relay, SI3 as the safe input channel and Q88 as the contactor, with the two-channel wiring printed beside them. The stop category is recorded as verified at commissioning and after every replacement of K138."
+        }
+      ],
+      "topics": [
+        "part numbers and suppliers",
+        "wiring",
+        "stop category"
+      ]
+    },
+    {
+      "codes": [
+        "SF 3.39C",
+        "B239",
+        "K139",
+        "SI4",
+        "X20SI4100",
+        "Q89",
+        "LC1-D38BL",
+        "S339",
+        "EAO 84-5140.1039",
+        "ZB4-BS844"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 11,
+      "page_kind": "table",
+      "printed_page_no": "37",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Part numbers and suppliers"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 37 covers part numbers and suppliers stage 37 within the part numbers and suppliers section. It names K139 as the monitored relay, SI4 as the safe input channel and Q89 as the contactor, with the two-channel wiring printed beside them. The stop category is recorded as verified at commissioning and after every replacement of K139."
+        }
+      ],
+      "topics": [
+        "part numbers and suppliers",
+        "wiring",
+        "stop category"
+      ]
+    },
+    {
+      "codes": [
+        "SF 3.40A",
+        "B240",
+        "K140",
+        "SI1",
+        "X20SI4100",
+        "Q90",
+        "LC1-D38BL",
+        "S340",
+        "EAO 84-5140.1040",
+        "ZB4-BS844"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 12,
+      "page_kind": "table",
+      "printed_page_no": "38",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Part numbers and suppliers"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 38 covers part numbers and suppliers stage 38 within the part numbers and suppliers section. It names K140 as the monitored relay, SI1 as the safe input channel and Q90 as the contactor, with the two-channel wiring printed beside them. The stop category is recorded as verified at commissioning and after every replacement of K140."
+        }
+      ],
+      "topics": [
+        "part numbers and suppliers",
+        "wiring",
+        "stop category"
+      ]
+    },
+    {
+      "codes": [
+        "SF 3.41a",
+        "B241",
+        "K141",
+        "SI2",
+        "X20SI4100",
+        "Q91",
+        "LC1-D38BL",
+        "S341",
+        "EAO 84-5140.1041",
+        "ZB4-BS844"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 13,
+      "page_kind": "table",
+      "printed_page_no": "39",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Part numbers and suppliers"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 39 covers part numbers and suppliers stage 39 within the part numbers and suppliers section. It names K141 as the monitored relay, SI2 as the safe input channel and Q91 as the contactor, with the two-channel wiring printed beside them. The stop category is recorded as verified at commissioning and after every replacement of K141."
+        }
+      ],
+      "topics": [
+        "part numbers and suppliers",
+        "wiring",
+        "stop category"
+      ]
+    },
+    {
+      "codes": [
+        "SF 3.42B",
+        "B242",
+        "K142",
+        "SI3",
+        "X20SI4100",
+        "Q92",
+        "LC1-D38BL",
+        "S342",
+        "EAO 84-5140.1042",
+        "ZB4-BS844"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 14,
+      "page_kind": "table",
+      "printed_page_no": "40",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Part numbers and suppliers"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 40 covers part numbers and suppliers stage 40 within the part numbers and suppliers section. It names K142 as the monitored relay, SI3 as the safe input channel and Q92 as the contactor, with the two-channel wiring printed beside them. The stop category is recorded as verified at commissioning and after every replacement of K142."
+        }
+      ],
+      "topics": [
+        "part numbers and suppliers",
+        "wiring",
+        "stop category"
+      ]
+    }
+  ]
+}

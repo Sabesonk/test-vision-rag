@@ -36,6 +36,7 @@ from vsir.core.tok import tok, token_set
 from vsir.core.variants import preserves_characters, variants
 from vsir.doctor import doctor
 from vsir.eval import synthetic
+from vsir.ingest import extract as extract_module
 from vsir.ingest import manifest, probe, render
 from vsir.ingest import window as window_module
 from vsir.ingest.extract import S2_SCHEMA_HASH
@@ -52,6 +53,8 @@ from vsir.serve.caps import (
     validate_scope,
 )
 from vsir.serve.envelope import Provenance, ToolEnvelope, VerifyResult
+from vsir.vlm import VlmError, backend as vlm_backend
+from vsir.vlm import cache as vlm_cache
 from vsir.serve.tools import lookup as lookup_module
 from vsir.serve.tools.lookup import lookup
 
@@ -541,7 +544,7 @@ def _cmd_demo_exact(args: argparse.Namespace) -> int:
 
 #: The steps `--until` can stop at, in pipeline order. Later units extend the list rather than
 #: adding a second command: §6.1 is one pipeline and `vsir ingest` is its one operational surface.
-INGEST_STEPS = ("manifest", "probe", "render", "facts", "window")
+INGEST_STEPS = ("manifest", "probe", "render", "facts", "window", "extract")
 
 _RULE_WIDTH = 78
 
@@ -580,33 +583,21 @@ class IngestRefused(Exception):
         self.details = details
 
 
-def _load_facts(cfg: Any, key: str) -> tuple[window_module.DocumentFacts, Path]:
-    """Step 04, served from the content-addressable cache keyed by `facts_key` (§6.3, D10).
+def _backend(cfg: Any) -> Any:
+    """The VLM backend `VSIR_VLM` names — one configuration lookup, no branch (§15 Factor X).
 
-    At M2a the only backend that can *fill* that cache is the replay fixture: the Gemini client,
-    the prompts and the stub arrive with the VLM boundary in U008, which is also where this reader
-    moves to (`vlm/cache.py`). A key that is not in the fixture is a typed `fixture_miss` — never a
-    live call, and never a fabricated answer (D10).
+    The refusal is re-raised as an :class:`IngestRefused` so the command's exit path is the same
+    for a missing fixture directory as for a missing credential: a named code and a non-zero exit,
+    never a partial run (§4.3).
     """
-    if not cfg.replay:
-        raise IngestRefused(
-            "vlm_backend_unavailable",
-            f"step 04 needs S1 document facts and VSIR_VLM={cfg.vlm} has no client at M2a: "
-            f"set VSIR_VLM=stub and VSIR_FIXTURE=<dir> to replay a frozen response (D10)",
-            vlm=cfg.vlm, fixture=cfg.fixture_dir,
-        )
-    path = Path(cfg.fixture_dir) / "facts" / f"{key}.json"
-    if not path.is_file():
-        raise IngestRefused(
-            "fixture_miss",
-            f"no frozen S1 response for facts_key {key} under {path.parent}",
-            facts_key=key, fixture=str(path.parent),
-        )
-    return window_module.DocumentFacts.model_validate_json(path.read_text()), path
+    try:
+        return vlm_backend(cfg)
+    except VlmError as refusal:
+        raise IngestRefused(refusal.code, str(refusal), **refusal.details) from refusal
 
 
 def _ingest(args: argparse.Namespace, cfg: Any) -> bool:
-    """Run steps 01-05 and print what each one decided. Returns whether the assertions passed.
+    """Run steps 01-06 and print what each one decided. Returns whether the assertions passed.
 
     The run id is not a parameter: it is bound into the correlation context by the caller, so every
     event any of these steps logs carries it without a step having to remember to pass it on
@@ -674,14 +665,23 @@ def _ingest(args: argparse.Namespace, cfg: Any) -> bool:
 
     # ── 04 S1 document facts ─────────────────────────────────────────────────────────────────
     _step("04", "S1 document facts — cached per document, because the ladder rides on them")
-    key = window_module.facts_key(probed.content_hash, vlm_model=cfg.vlm_model,
-                                  prompt_version=cfg.prompt_version)
-    facts, facts_path = _load_facts(cfg, key)
-    _log.info("ingest_step", step="facts", facts_key=key, cached=True,
-              toc_entries=len(facts.toc))
+    backend = _backend(cfg)
+    key = vlm_cache.facts_key(probed.content_hash, vlm_model=cfg.vlm_model,
+                              prompt_version=cfg.prompt_version)
+    print(f"   backend      {backend.name}  "
+          f"(VSIR_VLM={cfg.vlm}, chosen by configuration — never by a code branch)")
     print(f"   facts_key    {_short(key)}  "
           f"(content hash ‖ {cfg.vlm_model} ‖ {cfg.prompt_version})")
-    print(f"   replay HIT   {facts_path}")
+    try:
+        facts, facts_entry = extract_module.document_facts(
+            backend, source=source, probed=probed, vlm_model=cfg.vlm_model,
+            prompt_version=cfg.prompt_version, dpi=DPI_ANSWER)
+    except VlmError as refusal:
+        raise IngestRefused(refusal.code, str(refusal), **refusal.details) from refusal
+    _log.info("ingest_step", step="facts", facts_key=key, origin=facts_entry.origin,
+              toc_entries=len(facts.toc))
+    print(f"   {facts_entry.origin:<12} {facts_entry.path or backend.name}  "
+          f"({len(facts_entry.body):,} bytes, verbatim)")
     print(f"   title \"{facts.title}\" · lang {', '.join(facts.lang) or '—'} · "
           f"effectivity \"{facts.effectivity_basis}\"")
     usable = window_module.chapter_ranges(facts.toc, probed.page_count)
@@ -716,8 +716,58 @@ def _ingest(args: argparse.Namespace, cfg: Any) -> bool:
     warm = render.cache_info()
     print(f"   keying the windows re-read every page from the raster cache: "
           f"{warm['hits']} hits, {warm['misses']} renders in this process")
+    if until == "window":
+        return _assertions(args, source, doc, probed, plan, keys, extraction=None)
 
-    return _assertions(args, source, doc, probed, plan, keys)
+    # ── 06 S2 extraction ─────────────────────────────────────────────────────────────────────
+    _step("06", "S2 extraction — the call that spends the money, and the receipt that avoids it")
+    try:
+        extraction = extract_module.extract(
+            backend, source=source, plan=plan, probed=probed, vlm_model=cfg.vlm_model,
+            prompt_version=cfg.prompt_version, dpi=DPI_ANSWER)
+    except VlmError as refusal:
+        raise IngestRefused(refusal.code, str(refusal), **refusal.details) from refusal
+    _log.info("ingest_step", step="extract", windows=len(extraction.windows),
+              page_forms=extraction.page_forms, bisections=list(extraction.bisections),
+              origins=sorted({w.origin for w in extraction.windows}))
+    print(f"   schema       WindowOut · hash {_short(S2_SCHEMA_HASH, 24)} — computed from the "
+          f"schema, never a hand-bumped integer")
+    print(f"   {'#':<3} {'pages':<9} {'origin':<8} {'forms':>5} {'sect':>5} {'codes':>6}  "
+          f"{'bytes':>7}  extract_key")
+    for number, window in enumerate(extraction.windows, start=1):
+        print(f"   {number:<3} {f'{window.window.start}-{window.window.end}':<9} "
+              f"{window.origin:<8} {window.page_forms:>5} {window.sightings:>5} "
+              f"{window.codes:>6}  {len(window.entry.body):>7,}  {_short(window.key, 24)}")
+    print(f"   {extraction.page_forms} page forms over {len(extraction.windows)} window(s); "
+          f"bisections this run: {list(extraction.bisections) or 'none'}")
+    print(f"   the model returned 0 characters of page text: `text` has exactly one writer, "
+          f"ingest/probe.py (I2)")
+    _print_window_out(extraction, raw=args.raw)
+
+    return _assertions(args, source, doc, probed, plan, keys, extraction=extraction)
+
+
+def _print_window_out(extraction: Any, *, raw: bool) -> None:
+    """The verbatim response — which is the only thing step 06 actually produces (§6.3).
+
+    One page form per window by default, because that is the unit a reviewer reads: it is where
+    ``page_index`` being window-local is visible, and where "presence, never extent" is visible as
+    the *absence* of any span field. ``--raw`` prints every window's body in full, unmodified: it
+    is a receipt, and a receipt that has been reformatted for display is somebody's summary of one.
+    """
+    for number, window in enumerate(extraction.windows, start=1):
+        first = window.window.start
+        print(f"\n   window {number} ({first}-{window.window.end}) — the verbatim response"
+              + ("" if raw else f", page_index 1 of {window.page_forms}"))
+        body = (window.entry.body if raw
+                else json.dumps(window.out.pages[0].model_dump(), indent=2, sort_keys=True))
+        for line in body.splitlines():
+            print(f"     {line}")
+        if not raw:
+            print(f"     … {window.page_forms - 1} more page form(s); --raw prints the "
+                  f"whole body")
+        print(f"     page_index 1 is PDF page {window.window.absolute(1)}: "
+              f"abs = window.start + page_index - 1, computed in one place (§6.4)")
 
 
 def _print_pages(probed: Any, rasters: Any) -> None:
@@ -735,7 +785,7 @@ def _print_pages(probed: Any, rasters: Any) -> None:
 def _window_keys(source: Path, plan: Any, probed: Any, cfg: Any) -> tuple[str, ...]:
     """One `extract_key` per window, over the ordered page image hashes S2 will see (§6.3)."""
     return tuple(
-        window_module.extract_key(
+        vlm_cache.extract_key(
             render.page_hashes(source, win.page_numbers, dpi=DPI_ANSWER,
                                content_hash=probed.content_hash),
             vlm_model=cfg.vlm_model, prompt_version=cfg.prompt_version,
@@ -746,7 +796,7 @@ def _window_keys(source: Path, plan: Any, probed: Any, cfg: Any) -> tuple[str, .
 
 
 def _assertions(args: argparse.Namespace, source: Path, doc: Any, probed: Any,
-                plan: Any, keys: tuple[str, ...]) -> bool:
+                plan: Any, keys: tuple[str, ...], *, extraction: Any) -> bool:
     """Check the run against the numbers checked in beside the corpus, never against itself."""
     expected_path = Path(args.fixture or "") / "expected.json"
     if not expected_path.is_file():
@@ -812,6 +862,75 @@ def _assertions(args: argparse.Namespace, source: Path, doc: Any, probed: Any,
                     f"{sum(a == b for a, b in zip(hashes, table['render']['page_sha256']))}"
                     f"/{probed.page_count} page hashes match",
                     hashes == table["render"]["page_sha256"])
+    if extraction is not None:
+        passed &= _extraction_assertions(table["extraction"], probed, extraction)
+    return passed
+
+
+def _extraction_assertions(table: dict, probed: Any, extraction: Any) -> bool:
+    """Step 06's own rows: the offset, the schema, and the two traps the fixture wires in."""
+    passed = _check(f"{table['page_forms']} page forms over {table['windows']} window(s)",
+                    f"{extraction.page_forms} forms, "
+                    f"{len(extraction.windows)} window(s), "
+                    f"origins {sorted({w.origin for w in extraction.windows})}",
+                    extraction.page_forms == table["page_forms"]
+                    and len(extraction.windows) == table["windows"])
+
+    # §6.4 check (1), the structural half: every window's indices are exactly 1..N, so the
+    # absolute page of every form resolves and none of them lands twice.
+    resolved = {}
+    for window in extraction.windows:
+        for form in window.out.pages:
+            resolved[window.window.absolute(form.page_index)] = form
+    second = extraction.windows[1].window if len(extraction.windows) > 1 else None
+    passed &= _check("page_index is window-local, and the offset resolves each form once (§6.4)",
+                    (f"window 2 starts at PDF page {second.start} and its page_index 1 is PDF "
+                     f"page {second.absolute(1)}; " if second else "")
+                    + f"{len(resolved)} distinct absolute pages of {probed.page_count}",
+                    sorted(resolved) == list(range(1, probed.page_count + 1)))
+
+    kinds = {str(page_no): form.kind for page_no, form in sorted(resolved.items())}
+    passed &= _check("every page_kind is one of §5.2's eight, and matches the fixture",
+                    f"{sorted(set(kinds.values()))}",
+                    kinds == table["page_kinds"]
+                    and set(kinds.values()) <= set(extract_module.PAGE_KINDS))
+
+    missing = {page_no: form.missing_summary_langs()
+               for page_no, form in resolved.items() if form.missing_summary_langs()}
+    passed &= _check("one summary per language on every page, never a blended one (D5)",
+                    f"{len(resolved)} pages, {sum(len(f.summaries) for f in resolved.values())} "
+                    f"summaries, {len(missing)} page(s) missing one",
+                    not missing)
+
+    # F6: reported on one page, printed on its neighbour, and both inside the same window.
+    trap = table["reattribution"]
+    here, there = resolved[trap["page"]], trap["from_page"]
+    window_of = next(w.window for w in extraction.windows
+                    if w.window.start <= trap["page"] <= w.window.end)
+    passed &= _check("the reattribution trap: a code reported on the page beside the one that "
+                    "prints it (F6)",
+                    f"page {trap['page']} reports {trap['code']}, which is absent from its own "
+                    f"text and present in page {there}'s; both are inside window "
+                    f"{window_of.start}-{window_of.end}",
+                    trap["code"] in here.codes
+                    and trap["code"] not in probed.page(trap["page"]).text
+                    and trap["code"] in probed.page(there).text
+                    and window_of.start <= there <= window_of.end)
+
+    # I2/F14: reported by the model, printed nowhere. It must never reach the exact surface.
+    loose = table["ungrounded"]
+    passed &= _check("the ungrounded code: reported by the model, printed on no page (I2, F14)",
+                    f"page {loose['page']} reports {loose['code']}; it appears in "
+                    f"{sum(1 for p in probed.pages if loose['code'] in p.text)} page texts",
+                    loose["code"] in resolved[loose["page"]].codes
+                    and not any(loose["code"] in page.text for page in probed.pages))
+
+    # The structural guarantee of §5.2: extent is not a field the model could fill in even if it
+    # wanted to, which is what lets a section straddle a fold and survive it (F8).
+    section_fields = set(extract_module.SectionRef.model_fields)
+    passed &= _check("no field in which the model could claim how far a section reaches (§5.2)",
+                    f"SectionRef carries {sorted(section_fields)}",
+                    not section_fields & {"span", "pages", "page_range", "page_count", "extent"})
     return passed
 
 
@@ -889,6 +1008,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--fixture", default=None,
         help="override VSIR_FIXTURE: the replay directory frozen S1/S2 responses are keyed into, "
              "and where the acceptance table beside the corpus is read from (D10)",
+    )
+    ingest_parser.add_argument(
+        "--raw", action="store_true",
+        help="print every window's VERBATIM response body in full rather than its first page "
+             "form: it is the receipt (§6.3), and a receipt reformatted for display is a summary",
     )
     ingest_parser.add_argument("--doc-id", default=None,
                                help="declare the revision-stable document id (§5.1)")

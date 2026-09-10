@@ -7,9 +7,9 @@
 
 | | |
 |---|---|
-| **Complete** | 7 / 26 units (27%) |
-| **Current milestone** | M2a — ingest a generated PDF with a stubbed VLM (1 / 5 units); M0 and M1 closed and tagged |
-| **Next unit** | U008 — The VLM boundary, cache keys, replay mode, and S2 extraction |
+| **Complete** | 8 / 26 units (31%) |
+| **Current milestone** | M2a — ingest a generated PDF with a stubbed VLM (2 / 5 units); M0 and M1 closed and tagged |
+| **Next unit** | U009 — Derivation, health signals, label attribution, and stitching |
 | **Blocked** | none |
 
 ---
@@ -35,7 +35,7 @@
 
 ### M2a — ingest a generated PDF with a stubbed VLM (spend: none)
 - [x] U007 Manifest, probe, render, S1 facts, and the windowing ladder
-- [ ] U008 The VLM boundary, cache keys, replay mode, and S2 extraction
+- [x] U008 The VLM boundary, cache keys, replay mode, and S2 extraction
 - [ ] U009 Derivation, health signals, label attribution, and stitching
 - [ ] U010 Embedding, the three surfaces, the fingerprint, and indexing
 - [ ] U011 Gates, publish, retirement, the run control plane, and exports
@@ -1000,6 +1000,180 @@ that silently reorders a table.
   M2a the replay fixture is the only backend that can fill it — `--vlm gemini` refuses
   `vlm_backend_unavailable` by name. The fixture reader (≈15 lines in `cli.py`) moves to
   `vlm/cache.py` with U008.
+
+---
+
+### U008 — The VLM boundary, cache keys, replay mode, and S2 extraction
+
+**Milestone:** M2a · **Spend:** none · **Status:** `[x]` Complete · **Completed:** 2026-09-10
+
+**Demo output** — the unit's Demo Command, both halves (after `set -a && . ./.env && set +a`):
+
+```
+VSIR_VLM=stub VSIR_FIXTURE=data/fixtures/synthetic_3window \
+  vsir ingest data/source/synthetic_3window.pdf --until extract
+```
+```
+04 S1 document facts — cached per document, because the ladder rides on them ─
+   backend      stub  (VSIR_VLM=stub, chosen by configuration — never by a code branch)
+   facts_key    933fef7b9bfe5bd0…  (content hash ‖ gemini-3.8-flash-001 ‖ s2-v1)
+   replay       data/fixtures/synthetic_3window/facts/933fef7b….json  (1,036 bytes, verbatim)
+   title "C24 SYNTHETIC SAFETY MANUAL" · lang en · effectivity "from batch 68"
+
+06 S2 extraction — the call that spends the money, and the receipt that avoids it
+   schema       WindowOut · hash 585223c18e56d074a708294b… — computed from the schema,
+                never a hand-bumped integer
+   #   pages     origin   forms  sect  codes    bytes  extract_key
+   1   1-14      replay      14    14     72   10,937  8c0238bce17af70b0b1fb528…
+   2   15-28     replay      14    14    142   14,162  b5286f8c6ee00f5fdcc676ab…
+   3   29-42     replay      14    14    141   13,987  b340f016d6b7ae33db4e4baa…
+   42 page forms over 3 window(s); bisections this run: none
+   the model returned 0 characters of page text: `text` has exactly one writer,
+   ingest/probe.py (I2)
+
+   window 1 (1-14) — the verbatim response, page_index 1 of 14
+     {
+       "codes": [],
+       "lang": ["en"],
+       "page_index": 1,
+       "page_kind": "cover",
+       "printed_page_no": "",
+       "sections": [{"is_start": true, "title": "Front matter"}],
+       "summaries": [{"lang": "en", "text": "This is the scanned cover sheet of the manual.
+                       It shows the title, the revision and the validity statement, and it
+                       carries no text layer at all."}],
+       "topics": ["cover sheet", "revision"]
+     }
+     … 13 more page form(s); --raw prints the whole body
+     page_index 1 is PDF page 1: abs = window.start + page_index - 1, computed in one place (§6.4)
+```
+
+(the JSON is printed indented and key-sorted; re-flowed here only for width). Step 06's six new
+assertion rows, on top of U007's ten:
+
+```
+   PASS  42 page forms over 3 window(s)
+         42 forms, 3 window(s), origins ['replay']
+   PASS  page_index is window-local, and the offset resolves each form once (§6.4)
+         window 2 starts at PDF page 15 and its page_index 1 is PDF page 15;
+         42 distinct absolute pages of 42
+   PASS  every page_kind is one of §5.2's eight, and matches the fixture
+         ['cover', 'prose', 'schematic', 'table']
+   PASS  one summary per language on every page, never a blended one (D5)
+         42 pages, 42 summaries, 0 page(s) missing one
+   PASS  the reattribution trap: a code reported on the page beside the one that prints it (F6)
+         page 21 reports K122, which is absent from its own text and present in page 22's;
+         both are inside window 15-28
+   PASS  the ungrounded code: reported by the model, printed on no page (I2, F14)
+         page 30 reports K999; it appears in 0 page texts
+   PASS  no field in which the model could claim how far a section reaches (§5.2)
+         SectionRef carries ['is_start', 'title']
+
+ALL ASSERTIONS PASSED
+first-exit=0
+```
+
+The second half — the prompt version bumped, so every key moves:
+
+```
+VSIR_PROMPT_VERSION=v2 VSIR_VLM=stub VSIR_FIXTURE=data/fixtures/synthetic_3window \
+  vsir ingest data/source/synthetic_3window.pdf --until extract; echo "exit=$?"
+```
+```
+04 S1 document facts — cached per document, because the ladder rides on them ─
+   backend      stub  (VSIR_VLM=stub, chosen by configuration — never by a code branch)
+   facts_key    e620476f383b869f…  (content hash ‖ gemini-3.8-flash-001 ‖ v2)
+
+   REFUSED  fixture_miss: no frozen facts response for key e620476f383b869f… under
+            data/fixtures/synthetic_3window/facts: replay mode never makes a live call and
+            never invents one (D10)
+exit=1
+```
+
+`bash scripts/test-unit.sh` → **730 passed**, Layer 0/1 PASSED (was 630).
+`bash scripts/test-api.sh` → **137 passed** (unchanged; U008 adds no L2).
+
+**Acceptance criteria — all eight met, with the test that proves each:**
+
+| AC | Evidence |
+|---|---|
+| `extract_key` moves on prompt version, model id, dpi, any page image hash; identical otherwise | `test_extract_key_changes_with_every_input` (7 cases, incl. page **order** and page **count**), `test_extract_key_changes_with_prompt_version`, `test_extract_key_is_stable_for_identical_inputs` |
+| unchanged when only `VSIR_VLM_TIER` flips | `test_the_tier_is_not_an_extract_key_input` — asserted on the *signature* of all four keys, so a key that cannot be given the tier cannot be keyed on it |
+| `read_key` differs for a different question | `test_read_key_for_the_same_pages_but_a_different_question_differs`, plus `test_read_key_carries_every_extract_key_input_too` |
+| a network spy records **zero** outbound calls across a full `--until extract` run | `test_a_full_until_extract_run_makes_zero_outbound_calls` — and the spy has its own negative control, `test_the_network_spy_would_notice_a_call` |
+| a key absent from `VSIR_FIXTURE` is typed `fixture_miss`, no call, no fabrication | `test_a_miss_mid_run_refuses_without_calling_anything` (S1 present, S2 absent — the miss lands *at step 06*), `test_a_key_the_fixture_does_not_hold_is_a_typed_miss` |
+| `WindowOut` validates against §5.2 exactly | `test_the_models_carry_exactly_the_fields_the_spec_lists`, `test_page_index_is_required_and_window_local`, `test_the_page_kinds_are_the_eight_of_the_spec_and_a_stray_one_normalises`, `test_a_bilingual_page_gets_one_summary_per_language`, `test_codes_and_topics_are_lists_of_strings`, `test_the_frozen_corpus_validates_against_the_schema` |
+| an AST scan finds no regex taxonomy, no classification enum, no per-corpus keyword list | `test_no_regex_taxonomy_in_extraction_or_at_the_boundary`, `test_no_classification_enum_…`, `test_no_per_corpus_keyword_list_…` (scans every string collection in `extract.py` and `vlm/` for corpus vocabulary), `test_the_struck_names_of_the_old_shape_are_gone` |
+| no test-only branch; the backend is one config lookup with no conditional import | `test_no_test_only_branch_in_the_production_path` (§12.5 grep), `test_both_backends_are_imported_unconditionally_at_module_scope` (AST), `test_the_backend_is_selected_by_configuration_alone` |
+
+**Invariants / failure rows closed:** **F11 (key half)** — every cache key carries the resolved
+model id and the prompt version, so a cache cannot serve output from a different model or a
+different prompt (`test_extract_key_changes_with_prompt_version`, and the corpus-level proof that
+bumping `VSIR_PROMPT_VERSION` makes the whole fixture unfindable rather than stale). F11's boot
+half was closed at U001. No invariant is asserted here (Spec §9 assigns none to this unit).
+
+**Register items closed:** **B2** (S1 is cached, per document, under `facts_key` — `impl` re-bills
+it on every run and its contents list is what picks the window ladder, so a different answer
+silently re-cuts the document and re-bills all of S2 behind it), **B6** (the pinned model is
+re-verified at the point of spend, not only at boot). **B1**'s provenance concern is addressed by
+the `Entry` sidecar: `finish_reason` and `usage` travel with every frozen response, so a bare
+`{"pages": […]}` is never an unidentifiable orphan.
+
+**Notes**
+
+- **A real defect was found and fixed while testing the client.** The pin check (`_pinned`) was
+  inside `_call`, which is inside the retry loop's `try`, so a floating model id was **retried
+  three times** — `VlmUnavailable`'s own class name contains `unavailable`, which is one of
+  `impl`'s `RETRYABLE` markers — and then surfaced as `vlm_call_failed` rather than the named
+  refusal F11 asks for. The pin is now resolved once, before the rate-limit token is spent and
+  before the loop; and the loop re-raises any `VlmError` of ours ahead of the retry test, because
+  a typed refusal is the answer, not a failure to get one
+  (`test_a_floating_model_id_is_refused_at_the_point_of_spend` asserts the call was never made).
+- **`facts_key` and `extract_key` moved out of `ingest/window.py` into `vlm/cache.py`**, which is
+  where the plan's Deliverables put them, and every frozen response's name moved with them: the
+  digest is now over **length-prefixed** inputs. That is not cosmetic — with a plain separator
+  `("a|b", "c")` and `("a", "b|c")` collide, and one of those inputs (`prompt_version`) is
+  operator-supplied (`test_two_different_input_splits_cannot_share_a_key`). The committed fixture
+  is regenerated under the new names; `data/fixtures/synthetic_3window/facts/93061d0c….json` is
+  replaced by `933fef7b….json`.
+- **The demo's second half refuses at step 04, not step 06.** `prompt_version` is an input to
+  `facts_key` as well as `extract_key`, so the earliest key that moves refuses first. That is the
+  correct behaviour — the run never proceeds without document facts — and the *extract*-side miss
+  is proved separately, at the step where it bites, by
+  `test_a_miss_mid_run_refuses_without_calling_anything`.
+- **The prompt digest is a second guard the cache key cannot provide.** `prompt_version` is a
+  label, and a label describes the text only while the two move together; editing `s2.md` without
+  releasing a new version fails `prompt_unavailable` by name rather than serving cached output
+  produced by instructions that no longer exist. `PROMPT_DIGESTS` is the published digest per
+  version, and the two prompts are asserted to still carry §5.2's binding rules — the summary rule
+  verbatim, "presence, never extent", and all eight `page_kind` values.
+- **`VSIR_VLM_TIER=batch` is refused by name, not silently downgraded.** The Batch API submission
+  path is not built; serving a batch request from the standard endpoint would bill a full-corpus
+  run at twice the rate the programme's cost basis assumes and report success. Because the tier is
+  **not** a key input, a run started on `standard` can be finished on `batch` for free when that
+  path lands.
+- **`VSIR_VLM_RPM` is new configuration** (default 60), added to `.env.example`: the client's token
+  bucket, in calls a minute. It bounds the burst, never the total — `impl` rate-limits nothing, so
+  a full-corpus run's opening move is to fire every window at once and then serve out its own 429s
+  at exponentially increasing delay, one wasted round trip per window in the stage that is 99 % of
+  spend.
+- **One test file beyond the plan's three:** `backend/tests/unit/test_vlm_client.py` (24 tests). The
+  plan lists `test_extract_schema.py`, `test_cache_keys.py` and `test_replay.py`, and all three are
+  here; the client's own guarantees — the pin at the point of spend, the prompt digest, the token
+  bucket, the retry ladder, the truncation refusal, the credential never in a `repr` — needed a
+  home, and each injects the transport or the clock, so nothing in it opens a socket. It is what
+  caught the defect above.
+- **The S2 fixture is a transcript, not a rule.** `vsir.eval.synthetic_pdf` writes one frozen
+  `WindowOut` per window, deterministic in the page number so the corpus stays reproducible byte
+  for byte, and wires in two hazards the next unit needs: page 21 reports **K122**, which is
+  printed on page 22 and inside the same window (the F6 reattribution trap), and page 30 reports
+  **K999**, which is printed on no page at all (the I2/F14 ungrounded code). The generator computes
+  the keys with the pipeline's own functions, so a change to any key input rewrites the fixture
+  under new names on the next run rather than leaving a stale hit.
+- **Left for U009:** every one of those two traps is only *armed* here. The move itself, the
+  `moved_from` record, `grounded_rate` and the offset proof's second check (an independent
+  observation that a model-read `printed_page_no` phrase-matches **this** page's text) are
+  derivation's, and so is `core/health.py`.
 
 ---
 

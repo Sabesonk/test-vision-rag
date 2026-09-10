@@ -41,6 +41,7 @@ from vsir.config import (
     DISTANCE,
     DPI_ANSWER,
     DPI_INDEX,
+    FLOATING_SUFFIX,
     MODEL_ENV,
     REQUIRED_ENV,
     Config,
@@ -63,8 +64,6 @@ INDEX_NOT_READY = "index_not_ready"
 #: How long a boot check waits on Qdrant. A boot check is not the place to hang.
 QDRANT_TIMEOUT_S = 2
 
-# A model id may not end in this: pin the version, never a floating alias (§4.2, F11, register B6).
-FLOATING_SUFFIX = "-latest"
 
 # Spec §4.2's pinned set. `vsir doctor` prints the resolved versions (Factor II); the versions
 # themselves are pinned by requirements.lock and by the image digest, not asserted here.

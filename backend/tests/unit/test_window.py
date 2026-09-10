@@ -1,6 +1,4 @@
-"""L0/L1 — steps 04-05, the ladder and the cache keys (Spec §6.2, §6.3, §6.4, F13).
-
-Two things are being proved here, and they fail in opposite directions.
+"""L0/L1 — steps 04-05, the window ladder (Spec §6.2, §6.4, F13).
 
 The **ladder** must never quietly do the thing it cannot do. `impl`'s third rung is a blind
 30-page fold with a carry chain, and v1 does not implement it (§2.5 B), so a document that needs
@@ -8,29 +6,32 @@ one has to fail by name — a blind cut that straddles a safety function across 
 raises nothing. Likewise a window that comes back truncated must bisect and re-bill: keeping the
 partial answer loses 30 pages of a manual and reports success (F13).
 
-The **keys** must never quietly serve the wrong answer. `extract_key` exists so that re-running on
-identical pages costs nothing; it earns that only if every input that can change the model's answer
-is in it. So the tests are one per input, each asserting the key *moves*, plus one asserting it
-does not move for anything else.
+The four cache keys moved to `vlm/cache.py` with the VLM boundary (U008) and so did their tests —
+`test_cache_keys.py`. What is still asserted here is the ladder's *use* of one: each window of a
+plan, and each half of a bisection, must key differently, because a window's receipt is a fact
+about the pages it actually covers.
 """
 from __future__ import annotations
 
 import pytest
 
-from vsir.config import CAP_PAGES_PER_WINDOW, DPI_ANSWER, DPI_INDEX
+from vsir.config import CAP_PAGES_PER_WINDOW, DPI_ANSWER
 from vsir.eval import synthetic_pdf as generator
 from vsir.ingest import probe, render
 from vsir.ingest import window as w
-from vsir.ingest.extract import S2_SCHEMA_HASH, WindowOut, schema_hash
+from vsir.ingest.extract import S2_SCHEMA_HASH
+from vsir.vlm import extract_key
 
 MODEL = "gemini-3.8-flash-001"
 PROMPT = "s2-v1"
-HASHES = ("a" * 64, "b" * 64, "c" * 64)
 
 
-def _key(hashes=HASHES, *, model=MODEL, prompt=PROMPT, dpi=DPI_ANSWER, schema=S2_SCHEMA_HASH):
-    return w.extract_key(hashes, vlm_model=model, prompt_version=prompt, dpi=dpi,
-                         schema_hash=schema)
+def _key(source, window, probed):
+    """One window's `extract_key`, over the rasters S2 would actually be shown (§6.3)."""
+    return extract_key(
+        render.page_hashes(source, window.page_numbers, dpi=DPI_ANSWER,
+                           content_hash=probed.content_hash),
+        vlm_model=MODEL, prompt_version=PROMPT, dpi=DPI_ANSWER, schema_hash=S2_SCHEMA_HASH)
 
 
 # ── the ladder ──────────────────────────────────────────────────────────────────────────────────
@@ -46,13 +47,7 @@ def test_the_synthetic_corpus_plans_exactly_three_windows(synthetic_pdf, expecte
     assert plan.covers(probed.page_count)
     assert plan.parallel is True
 
-    keys = {
-        w.extract_key(render.page_hashes(synthetic_pdf, win.page_numbers, dpi=DPI_ANSWER,
-                                         content_hash=probed.content_hash),
-                      vlm_model=MODEL, prompt_version=PROMPT, dpi=DPI_ANSWER,
-                      schema_hash=S2_SCHEMA_HASH)
-        for win in plan.windows
-    }
+    keys = {_key(synthetic_pdf, win, probed) for win in plan.windows}
     assert len(keys) == len(plan.windows)
 
 
@@ -137,14 +132,8 @@ def test_a_bisected_window_re_bills(synthetic_pdf):
     parent = plan.windows[0]
     left, right = w.bisect_window(parent, "truncated")
 
-    keys = {
-        window: w.extract_key(
-            render.page_hashes(synthetic_pdf, window.page_numbers, dpi=DPI_ANSWER,
-                               content_hash=probed.content_hash),
-            vlm_model=MODEL, prompt_version=PROMPT, dpi=DPI_ANSWER, schema_hash=S2_SCHEMA_HASH)
-        for window in (parent, left, right)
-    }
-    assert len(set(keys.values())) == 3
+    keys = {_key(synthetic_pdf, window, probed) for window in (parent, left, right)}
+    assert len(keys) == 3
 
 
 @pytest.mark.parametrize("reason", w.BISECT_REASONS)
@@ -208,64 +197,3 @@ def test_a_window_is_a_page_range_and_refuses_not_to_be():
         w.Window(10, 9, 0)
     with pytest.raises(ValueError):
         w.Window(0, 5, 0)
-
-
-# ── the keys (§6.3) ─────────────────────────────────────────────────────────────────────────────
-
-def test_facts_key_is_stable_across_runs():
-    """AC: the same document, the same configuration, the same key — so S1 is billed once."""
-    first = w.facts_key("abc", vlm_model=MODEL, prompt_version=PROMPT)
-
-    assert first == w.facts_key("abc", vlm_model=MODEL, prompt_version=PROMPT)
-    assert len(first) == 64
-
-
-@pytest.mark.parametrize(("field", "value"), [
-    ("content_hash", "def"), ("vlm_model", "gemini-3.8-pro-001"), ("prompt_version", "s2-v2"),
-])
-def test_facts_key_changes_with_every_input(field, value):
-    """Register B2 — caching S1 is what makes the ladder reproducible, and a key that missed one
-    of these would make it reproducibly *wrong*."""
-    inputs = {"content_hash": "abc", "vlm_model": MODEL, "prompt_version": PROMPT}
-    baseline = w.facts_key(inputs.pop("content_hash"), **inputs)
-    changed = dict(content_hash="abc", vlm_model=MODEL, prompt_version=PROMPT)
-    changed[field] = value
-
-    assert w.facts_key(changed.pop("content_hash"), **changed) != baseline
-
-
-def test_extract_key_is_stable_for_identical_inputs():
-    assert _key() == _key()
-    assert len(_key()) == 64
-
-
-@pytest.mark.parametrize(("label", "changed"), [
-    ("a page image hash", {"hashes": ("a" * 64, "b" * 64, "z" * 64)}),
-    ("the page order", {"hashes": ("b" * 64, "a" * 64, "c" * 64)}),
-    ("the page count", {"hashes": HASHES[:2]}),
-    ("the model id", {"model": "gemini-3.8-pro-001"}),
-    ("the prompt version", {"prompt": "s2-v2"}),
-    ("the dpi", {"dpi": DPI_INDEX}),
-    ("the schema", {"schema": "0" * 64}),
-])
-def test_extract_key_changes_with_every_input(label, changed):
-    assert _key(**changed) != _key(), label
-
-
-def test_extract_key_needs_at_least_one_page():
-    with pytest.raises(ValueError):
-        _key(())
-
-
-def test_the_schema_hash_follows_the_schema():
-    """`impl` put a hand-maintained integer in the key, which is only correct while somebody
-    remembers to bump it. Add a field and every window re-bills, which is the honest answer."""
-    assert S2_SCHEMA_HASH == schema_hash(WindowOut)
-    assert schema_hash({"type": "object"}) != S2_SCHEMA_HASH
-
-
-def test_the_tier_is_not_an_extract_key_input():
-    """§6.3 — batch and standard produce the same output, so the discount must not re-bill."""
-    import inspect
-
-    assert "tier" not in inspect.signature(w.extract_key).parameters

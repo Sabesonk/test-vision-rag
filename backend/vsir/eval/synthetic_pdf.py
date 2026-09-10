@@ -21,6 +21,18 @@ in a comment:
   ``BORN_DIGITAL_MIN_CHARS``. `impl` would have called the whole document scanned and thrown away
   40 perfectly extractable pages on a one-line ``else``. This build extracts unconditionally, and
   a test proves it on this file.
+* **the reattribution trap (F6).** The frozen S2 response for page 21 reports a code that is
+  printed on page **22** — the model read it off the facing sheet. Both pages are inside window 2,
+  which is what §6.5 requires for the code to move to the page whose text contains it, with
+  ``moved_from`` recorded on the receiving page.
+* **the ungrounded code (I2, F14).** Page 30's response carries a code printed on **no** page — a
+  misread, which is the ordinary way a vision model gets a character wrong. It must stay put, count
+  against that page's ``grounded_rate``, and never become findable in the exact surface.
+
+The frozen S2 responses are what make step 06 replayable at zero cost (D10). They are keyed by
+``extract_key``, so they move when the model id, the prompt version, the dpi **or the S2 schema**
+moves — re-run this module after any of those, which is the point: an edit to the schema means the
+model was asked a different question and its old answer does not contain the new field.
 
 Run it as a process, which is what keeps it inside the image and out of anyone's laptop (§15
 Factor XII):
@@ -36,6 +48,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
+from types import MappingProxyType
 from typing import Iterable, Sequence
 
 import pymupdf
@@ -296,6 +309,148 @@ def document_facts() -> dict[str, object]:
     }
 
 
+# ── the frozen S2 responses (step 06, D10) ──────────────────────────────────────────────────────
+#
+# What a generalised S2 prompt would return for these rasters, recorded rather than derived by a
+# rule: this is a *fixture*, so it is a transcript of an answer, and the pipeline reading it must
+# not be able to tell it apart from a live one. Everything below is deterministic in the page
+# number for exactly one reason — the corpus has to be reproducible byte for byte (§16).
+
+#: The bare part numbers printed on every full page, in reading order. Reported without the vendor
+#: name because the vendor name is not part of the code: "B&R X20SI4100" prints a manufacturer and
+#: a part, and §5.2's instruction is to copy the code verbatim, not the line it sits on.
+VENDOR_CODES = ("X20SI4100", "LC1-D38BL", "ZB4-BS844")
+
+#: The reattribution trap (F6, §6.5). Page 21's response carries page 22's ``K`` code — the model
+#: read it off the facing sheet. Both pages are inside window 2 (15-28), which is the condition
+#: §6.5 puts on the move: a code only travels to a page whose text contains it, and only within
+#: the window that saw both.
+REATTRIBUTED_PAGE = 21
+REATTRIBUTED_FROM_PAGE = 22
+
+#: The ungrounded code (I2, F14). Printed on no page of this document: a misread, which is the
+#: ordinary way a vision model gets a character wrong. It must stay on page 30, count against that
+#: page's ``grounded_rate``, and never become findable in the exact surface.
+UNGROUNDED_PAGE = 30
+UNGROUNDED_CODE = "K999"
+
+#: Which §5.2 page kind each section reads as. Eight kinds describe a *sheet of paper*, so this
+#: table is a property of how the fixture is drawn, not a taxonomy of any corpus.
+SECTION_PAGE_KINDS = MappingProxyType({
+    "Safety relay wiring": "schematic",
+    "Part numbers and suppliers": "table",
+})
+
+
+def page_kind_of(page_no: int) -> str:
+    """One of §5.2's eight, as a model would read this sheet."""
+    if page_no == 1:
+        return "cover"
+    if page_no in SCANNED_PAGES:
+        return "prose"
+    return SECTION_PAGE_KINDS.get(section_of(page_no), "prose")
+
+
+def page_codes(page_no: int) -> tuple[str, ...]:
+    """Every code the model reports on this page, in reading order — verbatim, unsorted.
+
+    Not deduplicated and not sorted, because §5.2 is explicit that the response is verbatim and
+    unclassified: sorting is the first step toward normalising, and `impl`'s prompt says why in one
+    line — a one-character change names a different component.
+    """
+    if page_no in SCANNED_PAGES:
+        return ()
+    code = _codes(page_no)
+    if page_no in SHORT_PAGES:
+        return (code["k"], code["si"])
+    reported = [code["sf"], code["b"], code["k"], code["si"], VENDOR_CODES[0], code["q"],
+                VENDOR_CODES[1], code["s"], code["eao"], VENDOR_CODES[2]]
+    if page_no == CROP_TRAP_PAGE:
+        reported.append(CROP_TRAP_LABEL)
+    if page_no == REATTRIBUTED_PAGE:
+        reported.append(_codes(REATTRIBUTED_FROM_PAGE)["k"])
+    if page_no == UNGROUNDED_PAGE:
+        reported.append(UNGROUNDED_CODE)
+    return tuple(reported)
+
+
+def page_summary(page_no: int) -> str:
+    """2-3 sentences on what is SPECIFIC to this page (§5.2's binding prompt rule, D5).
+
+    Specific, and provably so: every sentence names this page's own label and its own codes, so no
+    two pages of the fixture get the same summary. A generic description would make every page's
+    dense vector look like every other page's and the `captions` surface stop discriminating at
+    all, which is the surface D2 keeps because this field finally gives it content.
+    """
+    label = printed_label(page_no)
+    if page_no == 1:
+        return ("This is the scanned cover sheet of the manual. It shows the title, the revision "
+                "and the validity statement, and it carries no text layer at all.")
+    if page_no in SCANNED_PAGES:
+        return ("This sheet was photocopied onto the front of the manual and carries no text "
+                "layer. It states that nothing printed on it can be verified against extracted "
+                "text.")
+    code = _codes(page_no)
+    section = section_of(page_no)
+    if page_no in SHORT_PAGES:
+        return (f"Page {label} is a short reference sheet in the {section.lower()} section. It "
+                f"carries only {code['k']} and {code['si']}.")
+    return (f"Page {label} covers {_purpose(page_no).lower()} within the {section.lower()} "
+            f"section. It names {code['k']} as the monitored relay, {code['si']} as the safe "
+            f"input channel and {code['q']} as the contactor, with the two-channel wiring printed "
+            f"beside them. The stop category is recorded as verified at commissioning and after "
+            f"every replacement of {code['k']}.")
+
+
+def page_topics(page_no: int) -> tuple[str, ...]:
+    """A few short lowercase labels for what the page is about (§5.2)."""
+    if page_no == 1:
+        return ("cover sheet", "revision")
+    if page_no in SCANNED_PAGES:
+        return ("front matter",)
+    section = section_of(page_no).lower()
+    if page_no in SHORT_PAGES:
+        return (section, "reference")
+    return (section, "wiring", "stop category")
+
+
+def page_form(page_no: int, *, window_start: int) -> dict[str, object]:
+    """One ``PageOut``, as the model would return it for this sheet.
+
+    ``page_index`` is **window-local**: the excerpt's first page is 1 whatever the document calls
+    it, which is the whole reason §6.4's offset proof exists. The printed label is left empty on
+    the scanned sheets because nothing is printed on them — their ``i``/``ii`` comes from the PDF's
+    own label table, which is the text layer's evidence and not the model's (§6.5).
+    """
+    return {
+        "page_index": page_no - window_start + 1,
+        "printed_page_no": "" if page_no in SCANNED_PAGES else printed_label(page_no),
+        "page_kind": page_kind_of(page_no),
+        "lang": ["en"],
+        "sections": [{"title": section_of(page_no),
+                      "is_start": any(first == page_no for first, _, _ in SECTIONS)}],
+        "summaries": [{"lang": "en", "text": page_summary(page_no)}],
+        "codes": list(page_codes(page_no)),
+        "topics": list(page_topics(page_no)),
+    }
+
+
+def window_out(start: int, end: int) -> dict[str, object]:
+    """One ``WindowOut`` for the inclusive PDF page range ``start..end``."""
+    return {"pages": [page_form(page_no, window_start=start)
+                      for page_no in range(start, end + 1)]}
+
+
+def window_body(start: int, end: int) -> str:
+    """The verbatim response body, as it is frozen into the fixture.
+
+    Indented and key-sorted so a reviewer can read the diff when the corpus is regenerated. That
+    formatting is part of the body and therefore part of what replay serves — which is correct:
+    the body is the receipt, and reformatting a receipt for display makes it somebody's summary.
+    """
+    return json.dumps(window_out(start, end), indent=2, sort_keys=True) + "\n"
+
+
 def _trap_top_fraction(pdf: Path) -> float:
     """Where the crop-trap label actually sits on the sheet, measured from the built file.
 
@@ -343,6 +498,20 @@ def expected_table(pdf: Path, *, page_hashes: Sequence[str]) -> dict[str, object
         "sections": [{"first": a, "last": b, "title": t} for a, b, t in SECTIONS],
         "straddling_sections": ["Emergency stop chain", "Light curtain muting"],
         "render": {"dpi": DPI_ANSWER, "page_sha256": list(page_hashes)},
+        "extraction": {
+            "windows": 3,
+            "page_forms": PAGE_COUNT,
+            "page_kinds": {str(n): page_kind_of(n) for n in range(1, PAGE_COUNT + 1)},
+            "codes_per_page": {str(n): len(page_codes(n)) for n in range(1, PAGE_COUNT + 1)},
+            # F6: the code the model read off the facing sheet, and where it is really printed.
+            "reattribution": {
+                "page": REATTRIBUTED_PAGE,
+                "code": _codes(REATTRIBUTED_FROM_PAGE)["k"],
+                "from_page": REATTRIBUTED_FROM_PAGE,
+            },
+            # I2/F14: reported by the model, printed nowhere. Must never become findable.
+            "ungrounded": {"page": UNGROUNDED_PAGE, "code": UNGROUNDED_CODE},
+        },
     }
 
 
@@ -355,31 +524,51 @@ def _page_hashes(pdf: Path) -> list[str]:
 
 
 def build(source_dir: Path, fixture_dir: Path, *, vlm_model: str, prompt_version: str) -> dict:
-    """Write the PDF, the frozen S1 facts and the acceptance table. Returns a report."""
+    """Write the PDF, the frozen S1 and S2 responses, and the acceptance table. Returns a report.
+
+    The keys are computed with the pipeline's own functions rather than re-derived here, which is
+    the only way a fixture and the code that reads it can be guaranteed to agree: if
+    ``extract_key``'s inputs change, this module writes the responses under the new names on the
+    next run and the old ones stop being found — a typed ``fixture_miss`` rather than a stale hit.
+    """
+    from vsir.ingest import extract as extract_module
     from vsir.ingest import probe as probe_module
     from vsir.ingest import window as window_module
+    from vsir import vlm
 
     pdf = source_dir / f"{DOC_STEM}.pdf"
     data = write_pdf(pdf)
+    content_hash = probe_module.content_hash(pdf)
 
-    facts_key = window_module.facts_key(
-        probe_module.content_hash(pdf), vlm_model=vlm_model, prompt_version=prompt_version
-    )
-    facts_path = fixture_dir / "facts" / f"{facts_key}.json"
-    facts_path.parent.mkdir(parents=True, exist_ok=True)
-    facts_path.write_text(json.dumps(document_facts(), indent=2, sort_keys=True) + "\n")
+    facts_key = vlm.facts_key(content_hash, vlm_model=vlm_model, prompt_version=prompt_version)
+    facts_path = vlm.write(fixture_dir, vlm.FACTS, facts_key,
+                           json.dumps(document_facts(), indent=2, sort_keys=True) + "\n")
+
+    page_hashes = _page_hashes(pdf)
+    plan = window_module.plan(PAGE_COUNT, toc=toc_entries(), size_bytes=len(data),
+                              document=DOC_STEM)
+    extract_keys: dict[str, str] = {}
+    for window in plan.windows:
+        key = vlm.extract_key(
+            page_hashes[window.start - 1:window.end],
+            vlm_model=vlm_model, prompt_version=prompt_version, dpi=DPI_ANSWER,
+            schema_hash=extract_module.S2_SCHEMA_HASH,
+        )
+        vlm.write(fixture_dir, vlm.EXTRACT, key, window_body(window.start, window.end))
+        extract_keys[f"{window.start}-{window.end}"] = key
 
     expected_path = fixture_dir / "expected.json"
     expected_path.write_text(
-        json.dumps(expected_table(pdf, page_hashes=_page_hashes(pdf)),
-                   indent=2, sort_keys=True) + "\n"
+        json.dumps(expected_table(pdf, page_hashes=page_hashes), indent=2, sort_keys=True) + "\n"
     )
     return {
         "pdf": str(pdf),
         "bytes": len(data),
-        "content_hash": probe_module.content_hash(pdf),
+        "content_hash": content_hash,
         "facts_key": facts_key,
         "facts": str(facts_path),
+        "extract_keys": extract_keys,
+        "s2_schema_hash": extract_module.S2_SCHEMA_HASH,
         "expected": str(expected_path),
     }
 
