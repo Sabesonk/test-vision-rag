@@ -22,11 +22,12 @@ filter builder would make it invisible at the one place a reader needs to see it
 """
 from __future__ import annotations
 
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any, Mapping, Sequence
 
 from qdrant_client.http import models as qm
 
 from vsir.core.indexed import TEXT_FIELDS, reject_unknown_keys
+from vsir.core.tok import tok
 from vsir.core.variants import variants
 
 
@@ -108,3 +109,44 @@ def phrases_of(query_filter: qm.Filter) -> list[str]:
             if phrase is not None:
                 found.append(phrase)
     return found
+
+
+# ── the same question, asked locally ────────────────────────────────────────────────────────────
+#
+# `exact_filter` asks the index. Derivation (§6.1 step 07) and the near-miss generator (§12.4) have
+# to ask the identical question of a string in hand, before the page has been indexed at all — so
+# the predicate lives here, beside the filter, rather than growing a second time somewhere else.
+# It is the same mechanism in the other spelling: `variants()` for the spellings, `tok()` for the
+# tokens, and contiguity for the phrase. `tok()` mirrors Qdrant's WORD tokenizer (§5.6) and
+# `tests/api/test_tokenizer_differential.py` measures that against a live `qdrant/qdrant:v1.19.0`,
+# which is what makes "locally" and "of the index" the same answer rather than two nearby ones.
+
+
+def contains_phrase(tokens: Sequence[str], phrase: str) -> bool:
+    """Whether ``tok(phrase)`` occurs as a **contiguous run** of ``tokens``, in order.
+
+    Contiguity and order are the whole content of ``phrase_matching=True`` (§5.5): a set
+    membership test would match ``sf`` and ``1`` anywhere on the page, which is F1.
+    """
+    needle = tok(phrase)
+    if not needle:
+        return False
+    haystack = list(tokens)
+    width = len(needle)
+    return any(haystack[at:at + width] == needle
+               for at in range(len(haystack) - width + 1))
+
+
+def printed_in(tokens: Sequence[str], label: str) -> bool:
+    """Whether **any** spelling of ``label`` is printed in an already-tokenised page.
+
+    Takes tokens rather than text so a caller checking many labels against one page tokenises that
+    page once — derivation checks every code the model reported on a page, and the near-miss eval
+    checks a hundred candidates against the whole corpus.
+    """
+    return any(contains_phrase(tokens, spelling) for spelling in variants(label))
+
+
+def printed_on(label: str, text: str) -> bool:
+    """Whether any spelling of ``label`` is printed in ``text``. The one-shot form."""
+    return printed_in(tok(text), label)

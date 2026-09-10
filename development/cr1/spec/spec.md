@@ -105,7 +105,7 @@ a general chat product.
 | **C5** | `fetch(..., dpi=220)` default (`PLAN` §3.7) vs `dpi=150` default (`PLAN` §3.9) | **default `dpi=150`**; `dpi ∈ {150, 220, 300, 400}`; `dpi > 220` requires `region` | cheapest default, explicit escalation |
 | **C6** | Five absence states (`PLAN` §5.1 I5) vs six (`FAILPROOF` §1 I5) | **a six-value enum** — `ok`, four distinct absences (`not_found`, `not_searchable`, `out_of_scope`, `found_only_in_superseded`) and `error` — declared from M1 so no later breaking change (§7.1) | a guard that hides data owns the absence it creates |
 | **C7** | `present_instead` = "prefix filter on observed tokens" with no home | An **observed-token inventory** written at publish time (§6.8); prefix lookup only, capped at 5, advisory, and structurally unable to affect `lookup`/`verify` (§7.2.4) | otherwise F16's guard has nowhere to live |
-| **C8** | Part A contract promises per-segment `verified_identifiers[]` from the allowlist gate (POC doc §5); plan2 deletes the gate | The export keeps the same semantics under a new name: per-page **`codes_in_text`** = `codes ∩ tokens(text)`, a byproduct of `grounded_rate`. Records are **pages**, not segments; `page_id` replaces `segment_id` (D1) | Part A must not lose its attachment evidence because an internal gate moved |
+| **C8** | Part A contract promises per-segment `verified_identifiers[]` from the allowlist gate (POC doc §5); plan2 deletes the gate | The export keeps the same semantics under a new name: per-page **`codes_in_text`** = the page's codes that are **printed on it as a phrase** (§5.6), a byproduct of `grounded_rate`. Records are **pages**, not segments; `page_id` replaces `segment_id` (D1) | Part A must not lose its attachment evidence because an internal gate moved |
 | **C9** | "Prove `lookup` on the real corpus before deleting anything" — assumes the corpus is at hand | M2 is split: **M2a** proves ingest on a generated PDF with a stub VLM (no corpus, no spend), **M2b** ingests the pilot PDF | the corpus and API key are open questions (§17) and must not block a working deliverable |
 | **C11** | A server-side `RetrievalState` holding `scope` and `exclude_list` across turns (`MCP_ARCHITECTURE` §4.4; `PLAN` §4.4) | **Struck. The service is stateless** (§7.5, §15 Factor VI): `scope` and `exclude` are parameters and `effective_scope` is echoed back | `AGENTIC-RETRIEVAL` §9 and F8 already require this — server-held scope is both a correctness failure (searching a subset while believing you searched the chapter) and a twelve-factor violation that blocks horizontal scaling |
 | **C12** | *(reversed on evidence — the earlier reading of this row was wrong.)* plan2's record feeds the **page raster into the dense vector** — `dense = image + title + summary + text + codes` (`GENERIC` §5; `PLAN` §2.4) | **Confirmed and kept: the dense vector is a fused image+text embedding.** `impl/app/embedder.py::embed_page_interleaved` already does exactly this — *"One page → ONE vector, image and text interleaved in a single Content… here we WANT the raster and the page's own text fused into one vector"* — using `gemini-embedding-2`, which `impl/config.yaml` documents as *"multimodal: text + image in one space"*. See D4 for the contract | the raster is the reasoning substrate (§1.3), and for a born-digital PDF the extractor read the native text layer at a fidelity the raster never captured — interleaving puts **both** in the dense channel, which is why `impl` chose it. The one honest gap: `effort_and_llm_cost_estimation.md` §A3 budgets image embeddings only for the 764 deferred plate images, so per-page image embedding is **unbudgeted** — at $0.00012/image it is ≈ $0.66 per full 5,505-page run, worth a line in the cost model rather than a design change |
@@ -496,13 +496,22 @@ Qdrant, and multi-token labels are handled by phrases plus `variants()`.
 ### 5.7 Health signals
 
 ```python
-seen     = {c.lower() for c in page.codes}       # what the model saw
-have     = token_set(page.text)                  # what the text layer has
-codes_in_text = sorted(seen & have)              # the export's allowlist (C8)
+# "Is this code printed on this page?" is ONE question with ONE answer (§5.6, I3): a phrase over
+# variants(), which on the Python side is vsir.core.exact.printed_on(code, text) — the very
+# question exact_filter asks the index. A token_set() intersection is NOT that question.
+seen          = list(page.codes)                               # what the model saw, verbatim
+grounded      = [c for c in seen if printed_on(c, page.text)]  # ... and the text layer backs
+codes_in_text = sorted({" ".join(c.split()).lower()            # the export's allowlist (C8):
+                        for c in grounded})                    # normalised, e.g. "sf 1.2a"
 
 # grounded_rate is DEFINED ONLY where there is a text layer to be grounded in:
-grounded_rate = (len(seen & have) / len(seen) if seen else 1.0) if page.has_text else None
+grounded_rate = (len(grounded) / len(seen) if seen else 1.0) if page.has_text else None
 ```
+
+**Why a phrase.** A `token_set(text)` intersection can only ever see single-token codes — `SF 1.3A`
+and `EAO 84-5140.1003` tokenise to runs of three and four tokens, so they are never members of it,
+and §5.6 dropped the adjacent-token joins that used to paper over that. Asking `printed_on()`
+instead makes `codes_in_text` and what `lookup` would find on the page one and the same answer (I3).
 
 **Why the `None`.** A scanned page has codes the model read off the raster and no text layer at
 all, so a numeric 0.0 there does not mean "extraction is broken" — it means "there was nothing to

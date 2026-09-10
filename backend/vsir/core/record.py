@@ -73,6 +73,22 @@ class StoredSection(BaseModel):
     is_start: bool = False
 
 
+class MovedCode(BaseModel):
+    """One code reattributed to this page from a neighbour, and where it came from (§6.5, F6).
+
+    A pair, not a string. The injury F6 names is *"cites a page for a code that is on its
+    neighbour"*, and the repair is only auditable if the record says **which** page the sighting
+    moved off: a bare code would record that something moved and lose the one fact a reviewer
+    needs to check the move.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    #: Verbatim, as the model reported it (§5.2). Never normalised on the way through.
+    code: str
+    from_page_id: str
+
+
 class PageContent(BaseModel):
     """Zone D — returned, never filtered. Nested under ``content`` so that stays true."""
 
@@ -81,12 +97,17 @@ class PageContent(BaseModel):
     printed_page_no: str = ""
     label_verified: bool = False
     interpolated: bool = False
+    #: Populated **only** where the page's printed label is ambiguous (§6.5, F5): two readings the
+    #: page itself cannot arbitrate between. Then `printed_page_no` is empty, because the
+    #: alternative is a silent pick — and a silent pick is what makes an agent follow a
+    #: cross-reference to the wrong page.
+    label_candidates: list[str] = Field(default_factory=list)
     summaries: list[Summary] = Field(default_factory=list)
     topics: list[str] = Field(default_factory=list)
     sections: list[StoredSection] = Field(default_factory=list)
     codes: list[str] = Field(default_factory=list)
     codes_in_text: list[str] = Field(default_factory=list)
-    moved_from: list[str] = Field(default_factory=list)
+    moved_from: list[MovedCode] = Field(default_factory=list)
     #: §5.7 — `None` where `has_text` is false, and every aggregate ignores those pages.
     grounded_rate: float | None = None
     flags: list[str] = Field(default_factory=list)

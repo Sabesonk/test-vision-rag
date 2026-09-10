@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import dataclasses
 import json
 import os
 import signal
@@ -36,8 +37,10 @@ from vsir.core.tok import tok, token_set
 from vsir.core.variants import preserves_characters, variants
 from vsir.doctor import doctor
 from vsir.eval import synthetic
+from vsir.ingest import derive as derive_module
 from vsir.ingest import extract as extract_module
 from vsir.ingest import manifest, probe, render
+from vsir.ingest import stitch as stitch_module
 from vsir.ingest import window as window_module
 from vsir.ingest.extract import S2_SCHEMA_HASH
 from vsir.serve.caps import (
@@ -544,7 +547,7 @@ def _cmd_demo_exact(args: argparse.Namespace) -> int:
 
 #: The steps `--until` can stop at, in pipeline order. Later units extend the list rather than
 #: adding a second command: §6.1 is one pipeline and `vsir ingest` is its one operational surface.
-INGEST_STEPS = ("manifest", "probe", "render", "facts", "window", "extract")
+INGEST_STEPS = ("manifest", "probe", "render", "facts", "window", "extract", "derive", "stitch")
 
 _RULE_WIDTH = 78
 
@@ -743,8 +746,104 @@ def _ingest(args: argparse.Namespace, cfg: Any) -> bool:
     print(f"   the model returned 0 characters of page text: `text` has exactly one writer, "
           f"ingest/probe.py (I2)")
     _print_window_out(extraction, raw=args.raw)
+    if until == "extract":
+        return _assertions(args, source, doc, probed, plan, keys, extraction=extraction)
 
-    return _assertions(args, source, doc, probed, plan, keys, extraction=extraction)
+    # ── 07 derivation ────────────────────────────────────────────────────────────────────────
+    _step("07", "derivation — the claim beside the evidence, and both checks of the offset proof")
+    derivation = derive_module.derive(
+        extraction, probed=probed, doc=doc, run_id=vsir_logging.correlation().get("run_id", ""),
+        release_id=cfg.release_id, vlm_model=cfg.vlm_model, prompt_version=cfg.prompt_version,
+        dpi=DPI_ANSWER, doc_lang=facts.lang)
+    _log.info("ingest_step", step="derive", pages=len(derivation.pages),
+              moves=len(derivation.moves),
+              grounded_median=derivation.health.grounded_median,
+              text_trust=derivation.health.text_trust,
+              searchable_ratio=derivation.health.searchable_ratio)
+    print(f"   §6.4 check (1) structural: every window returned page_index 1..N, so "
+          f"abs = window.start + page_index - 1 resolves each form once")
+    print(f"   §6.4 check (2) independent observation: {_observed(derivation)} model-read label(s) "
+          f"phrase-match their OWN page's text; a match on a neighbour raises OffsetError")
+    print(f"   grounded_rate median {derivation.health.grounded_median} over the "
+          f"{derivation.health.pages_with_text} page(s) that have text — the "
+          f"{derivation.health.page_count - derivation.health.pages_with_text} that do not rate "
+          f"None and are ignored by the aggregate (§5.7)")
+    print(f"   text_trust {derivation.health.text_trust} · searchable_ratio "
+          f"{derivation.health.searchable_ratio:.2f} · no allowlist gate, no identifier grammar, "
+          f"no keyword list (§2.4, §2.5 B)")
+    for move in derivation.moves:
+        print(f"   reattributed {move.code}: page {move.from_page_no} -> {move.to_page_no}, "
+              f"inside window {move.window[0]}-{move.window[1]} (F6)")
+    for page_no, code in derivation.ungrounded:
+        print(f"   ungrounded {code} on page {page_no}: printed on no page, so it stays put, "
+              f"counts against that page's grounded_rate and never enters `text` (I2)")
+    _print_derived(derivation)
+    if until == "derive":
+        return _assertions(args, source, doc, probed, plan, keys, extraction=extraction,
+                           derivation=derivation, stitched=None)
+
+    # ── 08 stitching ─────────────────────────────────────────────────────────────────────────
+    _step("08", "stitching — the window folds deleted again, and section extent created once")
+    stitched = stitch_module.stitch(derivation.pages, doc_id=doc.doc_id, revision=doc.revision)
+    _log.info("ingest_step", step="stitch", pages=len(stitched.pages),
+              sections=len(stitched.sections), straddling=len(stitched.straddling))
+    print(f"   {len(stitched.sections)} section(s) from "
+          f"{sum(len(p.sightings) for p in derivation.pages)} per-page sighting(s) — extent is "
+          f"(min, max) over sightings and is created here, nowhere else (§5.2)")
+    print(f"   section_id and series_id are keyword ARRAYS: a straddling page carries both, and a "
+          f"scope matches on any element (§5.3, F8)")
+    _print_sections(stitched, plan)
+    return _assertions(args, source, doc, probed, plan, keys, extraction=extraction,
+                       derivation=derivation, stitched=stitched)
+
+
+def _observed(derivation: Any) -> int:
+    """How many pages check (2) actually had evidence for — a label and a text layer to check it
+    against. Printed rather than implied, because a check that silently applied to nothing would
+    read exactly like a check that passed."""
+    return sum(1 for page in derivation.pages
+               if page.record.has_text and page.record.content.printed_page_no)
+
+
+def _print_derived(derivation: Any) -> None:
+    """The per-page derivation table — the unit's Working Deliverable."""
+    print()
+    print(f"   {'page':>4}  {'page_id':<28} {'label':<6} {'ver':<4} {'grounded':>8}  "
+          f"{'codes':>5} {'in_text':>7}  moved_from / flags")
+    for page in derivation.pages:
+        record = page.record
+        rate = "—" if record.content.grounded_rate is None else f"{record.content.grounded_rate:.2f}"
+        moved = " ".join(f"{m.code}<-{m.from_page_id.rsplit('#', 1)[-1]}"
+                         for m in record.content.moved_from)
+        notes = " ".join(filter(None, [moved, ",".join(record.content.flags)]))
+        print(f"   {record.page_no:>4}  {record.provenance.page_id:<28} "
+              f"{record.content.printed_page_no or '—':<6} "
+              f"{str(record.content.label_verified).lower():<4} {rate:>8}  "
+              f"{len(record.content.codes):>5} {len(record.content.codes_in_text):>7}  {notes}")
+
+
+def _print_sections(stitched: Any, plan: Any) -> None:
+    """The section table, and the folds each section survived."""
+    folds = [window.end for window in plan.windows[:-1]]
+    print()
+    print(f"   {'section_id':<28} {'pages':<9} {'start':>5} {'obs':>4}  {'folds':<7} "
+          f"series_id / title")
+    for section in stitched.sections:
+        low, high = section.page_range
+        crossed = [fold for fold in folds if low <= fold < high]
+        print(f"   {section.section_id:<28} {f'{low}-{high}':<9} {section.start_page:>5} "
+              f"{len(section.pages):>4}  {str(crossed) if crossed else '—':<7} "
+              f"{section.series_id}  \"{section.title}\"")
+    for section in stitched.sections:
+        low, high = section.page_range
+        crossed = [fold for fold in folds if low <= fold < high]
+        if not crossed:
+            continue
+        pages = [record for record in stitched.pages
+                 if section.section_id in record.section_id]
+        print(f"   \"{section.title}\" crosses the window fold at {crossed[0]}|{crossed[0] + 1} "
+              f"and carries ONE section_id on all {len(pages)} of its pages: "
+              f"{[record.page_no for record in pages]}")
 
 
 def _print_window_out(extraction: Any, *, raw: bool) -> None:
@@ -796,7 +895,8 @@ def _window_keys(source: Path, plan: Any, probed: Any, cfg: Any) -> tuple[str, .
 
 
 def _assertions(args: argparse.Namespace, source: Path, doc: Any, probed: Any,
-                plan: Any, keys: tuple[str, ...], *, extraction: Any) -> bool:
+                plan: Any, keys: tuple[str, ...], *, extraction: Any,
+                derivation: Any = None, stitched: Any = None) -> bool:
     """Check the run against the numbers checked in beside the corpus, never against itself."""
     expected_path = Path(args.fixture or "") / "expected.json"
     if not expected_path.is_file():
@@ -864,6 +964,10 @@ def _assertions(args: argparse.Namespace, source: Path, doc: Any, probed: Any,
                     hashes == table["render"]["page_sha256"])
     if extraction is not None:
         passed &= _extraction_assertions(table["extraction"], probed, extraction)
+    if derivation is not None:
+        passed &= _derivation_assertions(table, probed, extraction, derivation)
+    if stitched is not None:
+        passed &= _stitch_assertions(table, plan, stitched)
     return passed
 
 
@@ -931,6 +1035,132 @@ def _extraction_assertions(table: dict, probed: Any, extraction: Any) -> bool:
     passed &= _check("no field in which the model could claim how far a section reaches (§5.2)",
                     f"SectionRef carries {sorted(section_fields)}",
                     not section_fields & {"span", "pages", "page_range", "page_count", "extent"})
+    return passed
+
+
+def _derivation_assertions(table: dict, probed: Any, extraction: Any,
+                           derivation: Any) -> bool:
+    """Step 07's rows: I2's provenance, the offset proof, the `None`, and the two code traps."""
+    records = {page.page_no: page.record for page in derivation.pages}
+    texts = derive_module.probe_texts(probed)
+
+    # I2, and the assertion §12.5 names as its real enforcement — the grep cannot see this.
+    mismatched = [page_no for page_no, record in records.items()
+                  if record.text != texts[page_no]]
+    passed = _check("every record's `text` is the probe's, character for character (I2, §12.5)",
+                    f"{len(records) - len(mismatched)}/{len(records)} pages match "
+                    f"probe_text[page_no]; ingest/probe.py is the only writer",
+                    not mismatched)
+
+    ids_ok = all(record.provenance.page_id == ids.page_id(record.doc_id, record.revision, page_no)
+                 for page_no, record in records.items())
+    passed &= _check("abs_page == window.start + page_index - 1 on every emitted page (§6.4)",
+                    f"pages {min(records)}-{max(records)}, {len(records)} record(s), each "
+                    f"page_id built from its own absolute page",
+                    sorted(records) == list(range(1, probed.page_count + 1)) and ids_ok)
+
+    # §6.4 check (2), armed: shift one window by a page and the model's own labels give it away.
+    shifted = extraction.windows[1] if len(extraction.windows) > 1 else extraction.windows[0]
+    moved = dataclasses.replace(
+        shifted, window=window_module.Window(shifted.window.start + 1, shifted.window.end + 1,
+                                             shifted.window.level))
+    try:
+        derive_module.check_offset(moved, probed)
+        caught: Any = None
+    except derive_module.OffsetError as refusal:
+        caught = refusal
+    passed &= _check("the off-by-one trap: a window shifted by one page is caught by the "
+                    "independent observation, not by luck (I4, F7)",
+                    (f"window {shifted.window.start}-{shifted.window.end} shifted to "
+                     f"{moved.window.start}-{moved.window.end} raises {caught.code}: label "
+                     f"\"{caught.details['label']}\" is printed on page "
+                     f"{caught.details['printed_on']}, not on {caught.details['page_no']}"
+                     if caught else "no OffsetError was raised — the check is not armed"),
+                    caught is not None
+                    and caught.details.get("check") == "independent_observation")
+
+    without = table["pages_without_text"]
+    none_rated = sorted(page_no for page_no, record in records.items()
+                       if record.content.grounded_rate is None)
+    passed &= _check("grounded_rate is None exactly where has_text is false, and the median "
+                    "ignores those pages (§5.7)",
+                    f"pages {none_rated} rate None; the median over the remaining "
+                    f"{derivation.health.pages_with_text} is "
+                    f"{derivation.health.grounded_median}",
+                    none_rated == without and derivation.health.grounded_median is not None)
+
+    labels = {str(page_no): record.content.printed_page_no
+              for page_no, record in records.items()}
+    verified = sum(1 for record in records.values() if record.content.label_verified)
+    passed &= _check("every printed label is the one the page carries, and none was picked "
+                    "silently (§6.5, F5)",
+                    f"{verified}/{len(records)} labels confirmed against the page itself; "
+                    f"0 ambiguous, 0 interpolated",
+                    labels == table["printed_labels"]
+                    and not any(record.content.label_candidates
+                                for record in records.values()))
+
+    trap = table["extraction"]["reattribution"]
+    receiver = records[trap["from_page"]]
+    donor = records[trap["page"]]
+    origin = ids.page_id(doc_id := receiver.doc_id, receiver.revision, trap["page"])
+    passed &= _check("the reattributed code moved to the page whose text prints it, and said "
+                    "where it came from (F6)",
+                    f"{trap['code']} left page {trap['page']} and arrived on "
+                    f"{trap['from_page']} as "
+                    f"{[m.model_dump() for m in receiver.content.moved_from]}",
+                    [m.model_dump() for m in receiver.content.moved_from]
+                    == [{"code": trap["code"], "from_page_id": origin}]
+                    and trap["code"] not in donor.content.codes)
+
+    loose = table["extraction"]["ungrounded"]
+    stayed = records[loose["page"]]
+    passed &= _check("the ungrounded code stayed put, cost its page grounded_rate, and is in no "
+                    "page's codes_in_text (I2, F14)",
+                    f"{loose['code']} is still on page {loose['page']}, whose grounded_rate is "
+                    f"{stayed.content.grounded_rate:.3f}; it appears in "
+                    f"{sum(1 for r in records.values() if loose['code'].lower() in r.content.codes_in_text)} "
+                    f"codes_in_text list(s) and {sum(1 for r in records.values() if loose['code'] in r.text)} "
+                    f"page text(s)",
+                    loose["code"] in stayed.content.codes
+                    and stayed.content.grounded_rate < 1.0
+                    and not any(loose["code"].lower() in record.content.codes_in_text
+                                for record in records.values()))
+    return passed
+
+
+def _stitch_assertions(table: dict, plan: Any, stitched: Any) -> bool:
+    """Step 08's rows: one section per canonical key, and the folds gone (F8)."""
+    observed = [{"first": section.page_range[0], "last": section.page_range[1],
+                 "title": section.title} for section in stitched.sections]
+    passed = _check(f"{len(table['sections'])} sections with the extent the fixture declares",
+                   f"{len(stitched.sections)} section(s): "
+                   + " · ".join(f"{s['first']}-{s['last']}" for s in observed),
+                   observed == table["sections"])
+
+    folds = [window.end for window in plan.windows[:-1]]
+    straddling = {section.title: section for section in stitched.sections
+                  if any(section.page_range[0] <= fold < section.page_range[1]
+                         for fold in folds)}
+    passed &= _check("a section cut by a window fold is ONE section, on both sides (F8)",
+                    f"{sorted(straddling)} cross the fold(s) at {folds}; each has one "
+                    f"section_id over pages "
+                    + " · ".join(f"{s.page_range[0]}-{s.page_range[1]}"
+                                 for s in straddling.values()),
+                    sorted(straddling) == sorted(table["straddling_sections"]))
+
+    carried = all(
+        {record.section_id[0] for record in stitched.pages
+         if section.page_range[0] <= record.page_no <= section.page_range[1]} == {section.section_id}
+        for section in straddling.values()
+    )
+    passed &= _check("every page of a straddling section carries the same section_id, as an "
+                    "array (§5.3)",
+                    f"one id across each fold; series_id "
+                    f"{[s.series_id for s in straddling.values()]} carries no revision, so a "
+                    f"scope on it survives one (F8, U025)",
+                    carried and all("@" not in section.series_id
+                                    for section in stitched.sections))
     return passed
 
 

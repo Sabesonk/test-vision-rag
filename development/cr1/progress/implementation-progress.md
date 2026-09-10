@@ -7,9 +7,9 @@
 
 | | |
 |---|---|
-| **Complete** | 8 / 26 units (31%) |
-| **Current milestone** | M2a — ingest a generated PDF with a stubbed VLM (2 / 5 units); M0 and M1 closed and tagged |
-| **Next unit** | U009 — Derivation, health signals, label attribution, and stitching |
+| **Complete** | 9 / 26 units (35%) |
+| **Current milestone** | M2a — ingest a generated PDF with a stubbed VLM (3 / 5 units); M0 and M1 closed and tagged |
+| **Next unit** | U010 — Embedding, the three surfaces, the fingerprint, and indexing |
 | **Blocked** | none |
 
 ---
@@ -36,7 +36,7 @@
 ### M2a — ingest a generated PDF with a stubbed VLM (spend: none)
 - [x] U007 Manifest, probe, render, S1 facts, and the windowing ladder
 - [x] U008 The VLM boundary, cache keys, replay mode, and S2 extraction
-- [ ] U009 Derivation, health signals, label attribution, and stitching
+- [x] U009 Derivation, health signals, label attribution, and stitching
 - [ ] U010 Embedding, the three surfaces, the fingerprint, and indexing
 - [ ] U011 Gates, publish, retirement, the run control plane, and exports
 
@@ -688,6 +688,10 @@ and every one of the twelve `INDEXED` scope keys filters for real against a live
   so that the gap is visible in the fixture rather than hidden by a local fix. **Left unfixed, a
   document whose codes are printed with spaces would fail the `grounded_rate ≥ 0.8` publish gate
   (§11.1) for a reason that is entirely an artefact of set intersection.**
+  **Resolved in U009** — the spec's §5.7 snippet and §2.3 C8 now ask the phrase question, and
+  `core/health.py` implements it through `core/exact.py::printed_in`. The M2a corpus's median went
+  from 0.6 to 1.0. The M1 seed here still computes the literal formula on purpose: it is a
+  *fixture*, and its `expected.json` is the absolute acceptance table of C10.
 - **Fixed while here:** a pre-existing `DeprecationWarning: invalid escape sequence '\ '` from
   `core/ids.py`'s `parse_page_id` docstring (an RST `\ ` continuation in a non-raw string, which
   becomes a `SyntaxWarning` on a later Python). The docstring is now raw.
@@ -1177,6 +1181,145 @@ the `Entry` sidecar: `finish_reason` and `usage` travel with every frozen respon
 
 ---
 
+### U009 — Derivation, health signals, label attribution, and stitching
+
+**Milestone:** M2a · **Spend:** none · **Status:** `[x]` Complete · **Completed:** 2026-09-10
+
+**Demo output** — `vsir ingest data/source/synthetic_3window.pdf --vlm stub --until stitch`
+(after `export VSIR_FIXTURE=data/fixtures/synthetic_3window`):
+
+```
+07 derivation — the claim beside the evidence, and both checks of the offset proof
+   §6.4 check (1) structural: every window returned page_index 1..N, so abs = window.start +
+   page_index - 1 resolves each form once
+   §6.4 check (2) independent observation: 40 model-read label(s) phrase-match their OWN page's
+   text; a match on a neighbour raises OffsetError
+   grounded_rate median 1.0 over the 40 page(s) that have text — the 2 that do not rate None and
+   are ignored by the aggregate (§5.7)
+   text_trust ok · searchable_ratio 0.95 · no allowlist gate, no identifier grammar, no keyword
+   list (§2.4, §2.5 B)
+   reattributed K122: page 21 -> 22, inside window 15-28 (F6)
+   ungrounded K999 on page 30: printed on no page, so it stays put, counts against that page's
+   grounded_rate and never enters `text` (I2)
+
+   page  page_id                      label  ver  grounded  codes in_text  moved_from / flags
+      1  synthetic-3window@1.0#p001   i      true        —      0       0  no_text
+      2  synthetic-3window@1.0#p002   ii     true        —      0       0  no_text
+      3  synthetic-3window@1.0#p003   1      true     1.00      2       2
+     …
+     21  synthetic-3window@1.0#p021   19     true     1.00     10      10
+     22  synthetic-3window@1.0#p022   20     true     1.00     10      10  K122<-p021,codes_reattributed
+     30  synthetic-3window@1.0#p030   28     true     0.91     11      10  ungrounded_codes
+
+08 stitching — the window folds deleted again, and section extent created once
+   9 section(s) from 42 per-page sighting(s) — extent is (min, max) over sightings and is created
+   here, nowhere else (§5.2)
+   section_id and series_id are keyword ARRAYS: a straddling page carries both, and a scope
+   matches on any element (§5.3, F8)
+
+   section_id                   pages     start  obs  folds   series_id / title
+   synthetic-3window@1.0#s004   13-17        13    5  [14]    …#s:emergency-stop-chain
+   synthetic-3window@1.0#s007   27-31        27    5  [28]    …#s:light-curtain-muting
+   "Emergency stop chain" crosses the window fold at 14|15 and carries ONE section_id on all 5 of
+   its pages: [13, 14, 15, 16, 17]
+   "Light curtain muting" crosses the window fold at 28|29 and carries ONE section_id on all 5 of
+   its pages: [27, 28, 29, 30, 31]
+
+assertions — data/fixtures/synthetic_3window/expected.json
+   … 16 rows from steps 01-06 …
+   PASS  every record's `text` is the probe's, character for character (I2, §12.5)
+         42/42 pages match probe_text[page_no]; ingest/probe.py is the only writer
+   PASS  abs_page == window.start + page_index - 1 on every emitted page (§6.4)
+         pages 1-42, 42 record(s), each page_id built from its own absolute page
+   PASS  the off-by-one trap: a window shifted by one page is caught by the independent
+         observation, not by luck (I4, F7)
+         window 15-28 shifted to 16-29 raises offset_check_failed: label "13" is printed on page
+         [15], not on 16
+   PASS  grounded_rate is None exactly where has_text is false, and the median ignores those
+         pages (§5.7)
+         pages [1, 2] rate None; the median over the remaining 40 is 1.0
+   PASS  every printed label is the one the page carries, and none was picked silently (§6.5, F5)
+         42/42 labels confirmed against the page itself; 0 ambiguous, 0 interpolated
+   PASS  the reattributed code moved to the page whose text prints it, and said where it came
+         from (F6)
+         K122 left page 21 and arrived on 22 as
+         [{'code': 'K122', 'from_page_id': 'synthetic-3window@1.0#p021'}]
+   PASS  the ungrounded code stayed put, cost its page grounded_rate, and is in no page's
+         codes_in_text (I2, F14)
+         K999 is still on page 30, whose grounded_rate is 0.909; it appears in 0 codes_in_text
+         list(s) and 0 page text(s)
+   PASS  9 sections with the extent the fixture declares
+         9 section(s): 1-2 · 3-8 · 9-12 · 13-17 · 18-22 · 23-26 · 27-31 · 32-36 · 37-42
+   PASS  a section cut by a window fold is ONE section, on both sides (F8)
+         ['Emergency stop chain', 'Light curtain muting'] cross the fold(s) at [14, 28]
+   PASS  every page of a straddling section carries the same section_id, as an array (§5.3)
+         one id across each fold; series_id carries no revision, so a scope on it survives one
+
+ALL ASSERTIONS PASSED
+```
+
+`bash scripts/test-unit.sh` → **835 passed** (was 761) including the §12.5 conformance greps.
+`bash scripts/test-api.sh` → **137 passed**, the §12.4 abstention eval among them.
+
+**Invariants/failure rows closed:** F5 (M2a half — label precedence, `label_verified`, ambiguity →
+a list) · F6 (per-page `grounded_rate` + reattribution recording `moved_from`) · F8 (stitching half
+— canonical section key + carry-in across the fold, `series_id` written). I4's two checks are
+**implemented** here and asserted by U011's gate, per Spec §9. I2's structural half — the §12.5 L1
+assertion `record.text == probe_text[page_no]` — now exists and passes on all 42 pages.
+
+**Notes**
+
+- **A spec correction was required before the unit could be written, and it was load-bearing.**
+  §5.7 defined `codes_in_text` as `seen & have` with `have = token_set(page.text)` — a whole-token
+  set intersection. That cannot see a multi-token code, and three other passages of the same spec
+  require that it can: §6.8's own worked export row contains `"sf 1.2a"`, and §5.6 says `impl`'s
+  adjacent-token joins are **not** ported because "multi-token labels are handled by phrases plus
+  `variants()`". Measured on this corpus, the set intersection grounds 6 of a typical page's 10
+  codes — `SF 1.3A`, `EAO 84-5140.1003`, `LC1-D38BL` and `ZB4-BS844` all fail — for a document
+  median of **0.6**, under §11.1's 0.8 blocking gate. A healthy document would have been
+  quarantined. §5.7's snippet and §2.3's C8 row now ask the phrase question, which is the one
+  `exact_filter` asks the index (I3). No other section changed.
+- **`core/exact.py` gained the Python spelling of that question** — `contains_phrase`,
+  `printed_in`, `printed_on` — rather than derivation growing a matcher of its own. It is one
+  function family beside the filter it mirrors, and `core/nearmiss.py::is_printed` now delegates
+  to it instead of carrying a second copy. A deliberate extension of the unit's file list, for
+  I3's sake: two implementations of "is this printed here?" is exactly the drift `impl`'s guide
+  records having had once already.
+- **`content.moved_from` was `list[str]` and is now `list[MovedCode]`** (`{code, from_page_id}`),
+  which is what §6.5 and the unit's AC specify. A bare code records that something moved and loses
+  the one fact a reviewer needs. `content.label_candidates: list[str]` is new for the same reason:
+  F5's ambiguity has to land somewhere, and `printed_page_no` stays **empty** when it fires —
+  putting a candidate there is the silent pick the row is about.
+- **The off-by-one check looks at the immediate neighbours only, which is §6.4's rule verbatim.**
+  The argument for why that is sufficient is now asserted rather than assumed: a shift larger than
+  one makes two windows claim the same pages, and `derive` refuses on a derived page set that is
+  not exactly `1..page_count` (`check="coverage"`). Widening the band to a document-wide search
+  was considered and rejected — it would raise on any page whose printed label happens to be
+  mentioned elsewhere in the binder, and the repair for a false positive is a re-billed window.
+- **Two `impl` defects were not ported.** Guide 07 §7.1's contested-head bug — `head_page_uncertain`
+  fired only when *no* page claimed the head, so a unit with four competing claims came out
+  certain — is fixed as the guide asks: the declaring pages are counted and anything other than
+  exactly one is uncertain. And `to_pages`'s *"log a warning and drop the page"* on an out-of-range
+  index is gone; that path is now a typed `offset_check_failed` that bisects.
+- **A code printed on *both* neighbours does not move.** §6.5 says a sighting moves "to the page
+  whose text contains it", singular. Where two adjacent pages qualify, the page keeps the sighting,
+  flags `ambiguous_reattribution` and pays for it in `grounded_rate` — resolving the tie by picking
+  a side is the shape of F5.
+- **Page-level trust thresholds are pins, not configuration:** `ok >= 0.8` (the same number §11.1
+  gates the median on, deliberately one number and not two), `untrusted < 0.2`. Both are marked
+  provisional pending the M2b distribution (R4). §11.3's document-level collapse reaches the pages
+  through `health.demote`, and never overwrites `no_text`.
+- **Follow-up for U017:** `resolve` must read `content.label_candidates` as well as
+  `printed_page_no`, or an ambiguous page becomes unresolvable by any label. F5's M4 half already
+  requires *"ambiguity → **every** candidate at `resolve`"*, so this is where the candidates come
+  from.
+- **Left for U011:** `safety_flag` (§6.8) is computed from `doc_type` + `topics`, both present on
+  the record now, but it belongs to the export and is not written here. The §11.1 gates read
+  `Derivation.health` — `grounded_median`, `fully_scanned`, `searchable_ratio` — which this unit
+  produces and nothing yet enforces.
+
+---
+
 ### M1 milestone gate — closed 2026-09-10, tagged `cr1-m1`
 
 **M1 is the whole correctness proof and it spent nothing.**
@@ -1323,5 +1466,14 @@ raster (C12/D4 win over §4.2's "Text only" row); **SA-2/SA-3** the sparse surfa
 **SA-4** the default answer route is `fetch`, not `read`.
 
 ### Spec changes made
-None. Gap analysis found no true blocker — every apparent contradiction is resolved by Spec §2.3,
-§3 or §17.
+
+**U009 — §5.7's `codes_in_text` / `grounded_rate` snippet, and §2.3's C8 row.** The membership
+test was a `token_set(page.text)` intersection, which cannot see a multi-token code; §6.8's own
+export example (`"sf 1.2a"`) and §5.6's porting-hazard note (the adjacent-token joins are dropped
+*because* "multi-token labels are handled by phrases plus `variants()`") both require that it can.
+Measured on the M2a corpus the intersection reading gives a median `grounded_rate` of 0.6 against
+§11.1's 0.8 blocking gate — a healthy document quarantined. Both passages now ask the phrase
+question, which is the one `exact_filter` asks the index (I3). Minimal: no other section touched.
+
+Gap analysis at planning time found no true blocker — every other apparent contradiction is
+resolved by Spec §2.3, §3 or §17.

@@ -47,3 +47,84 @@ def expected(synthetic_pdf: Path) -> dict:
     path = SYNTHETIC_FIXTURE / "expected.json"
     assert path.is_file(), f"{path} is missing — rebuild it with `python -m vsir.eval.synthetic_pdf`"
     return json.loads(path.read_text())
+
+
+# ── the derived corpus (U009) ───────────────────────────────────────────────────────────────────
+#
+# Steps 01-08 over the generated PDF, replayed from the frozen fixture, once per session. The
+# extraction is free (D10) but rendering 42 pages at dpi 220 is not free of *time*, and five L1
+# suites ask the same question of the same document — so the pipeline runs once and the suites
+# read it. Nothing here is mutated by a test: every object below is frozen or a Pydantic model,
+# and a suite that needs a variation builds it with `dataclasses.replace` / `model_copy`.
+
+SYNTHETIC_ENV = {
+    "VSIR_PORT": "8000",
+    "VSIR_QDRANT_URL": "http://localhost:6333",
+    "VSIR_COLLECTION": "vsir_pages",
+    "VSIR_VLM": "stub",
+    "VSIR_VLM_MODEL": "gemini-3.8-flash-001",
+    "VSIR_EMBED_MODEL": "gemini-embedding-2",
+    "VSIR_PROMPT_VERSION": "s2-v1",
+    "VSIR_API_TOKENS": "test-only-not-a-credential",
+    "VSIR_READ_QUOTA": "50",
+    "VSIR_ALLOW_PAID": "0",
+    "VSIR_LOG_LEVEL": "INFO",
+    "VSIR_RELEASE_ID": "test-0",
+}
+
+
+@pytest.fixture(scope="session")
+def synthetic_config(synthetic_fixture: Path):
+    """The corpus's configuration, built from a mapping rather than the process environment.
+
+    `load_config(env=...)` is the same function the process boots with — no test-only path, and
+    no `monkeypatch` leaking one suite's environment into another's (§15 Factor III).
+    """
+    from vsir.config import load_config
+
+    return load_config({**SYNTHETIC_ENV, "VSIR_FIXTURE": str(synthetic_fixture)})
+
+
+@pytest.fixture(scope="session")
+def extracted(synthetic_pdf: Path, synthetic_config):
+    """Steps 01-06: `(manifest, probe, facts, plan, extraction)` over the generated corpus."""
+    from vsir.ingest import extract as extract_module
+    from vsir.ingest import manifest, probe
+    from vsir.ingest import window as window_module
+    from vsir.vlm import backend as vlm_backend
+
+    cfg = synthetic_config
+    doc = manifest.build(synthetic_pdf)
+    probed = probe.run(synthetic_pdf)
+    client = vlm_backend(cfg)
+    facts, _ = extract_module.document_facts(
+        client, source=synthetic_pdf, probed=probed, vlm_model=cfg.vlm_model,
+        prompt_version=cfg.prompt_version)
+    plan = window_module.plan(probed.page_count, toc=facts.toc, size_bytes=probed.size_bytes,
+                              document=doc.doc_id)
+    extraction = extract_module.extract(
+        client, source=synthetic_pdf, plan=plan, probed=probed, vlm_model=cfg.vlm_model,
+        prompt_version=cfg.prompt_version)
+    return doc, probed, facts, plan, extraction
+
+
+@pytest.fixture(scope="session")
+def derived(extracted, synthetic_config):
+    """Step 07 over the whole corpus — the `Derivation` the L1 suites assert against."""
+    from vsir.ingest import derive as derive_module
+
+    doc, probed, facts, _plan, extraction = extracted
+    cfg = synthetic_config
+    return derive_module.derive(
+        extraction, probed=probed, doc=doc, run_id="01J000000000000000000000",
+        release_id=cfg.release_id, vlm_model=cfg.vlm_model, prompt_version=cfg.prompt_version,
+        doc_lang=facts.lang)
+
+
+@pytest.fixture(scope="session")
+def stitched(derived, extracted):
+    """Step 08 over the whole corpus — the finished records and their sections."""
+    from vsir.ingest import stitch as stitch_module
+
+    doc = extracted[0]
+    return stitch_module.stitch(derived.pages, doc_id=doc.doc_id, revision=doc.revision)

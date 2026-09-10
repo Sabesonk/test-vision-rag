@@ -35,9 +35,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Iterable, Iterator, Sequence
 
+from vsir.core.exact import printed_in
 from vsir.core.observed_tokens import Inventory
 from vsir.core.tok import tok
-from vsir.core.variants import variants
 
 #: The substitution alphabet: what a code can be misread as. Digits and lowercase letters, which
 #: is exactly the character set Qdrant's WORD tokenizer leaves in a token (§5.6).
@@ -84,17 +84,12 @@ def mutations(token: str) -> Iterator[tuple[str, int]]:
 def is_printed(candidate: str, printed: Sequence[Sequence[str]]) -> bool:
     """Whether any spelling of ``candidate`` occurs as a phrase in ``printed``.
 
-    The same question `lookup` asks the index, asked locally: is ``tok(variant)`` a contiguous run
-    of some page's tokens, for any of the three variants (§5.6)? It is what makes a "fabricated"
-    code genuinely fabricated — see the module docstring on ``sf1``.
+    The same question `lookup` asks the index, asked locally — and asked through the same
+    predicate derivation uses (:func:`~vsir.core.exact.printed_in`), so a "fabricated" code here
+    and an ungrounded code at ingest cannot mean two slightly different things. ``printed`` is
+    already tokenised because the eval checks a hundred candidates against the whole corpus.
     """
-    needles = [tok(spelling) for spelling in variants(candidate)]
-    return any(
-        sequence[at:at + len(needle)] == list(needle)
-        for needle in needles if needle
-        for sequence in printed
-        for at in range(len(sequence) - len(needle) + 1)
-    )
+    return any(printed_in(sequence, candidate) for sequence in printed)
 
 
 def near_misses(inventory: Inventory, n: int = DEFAULT_SAMPLE, *,

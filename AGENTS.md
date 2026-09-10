@@ -70,15 +70,21 @@ from the frozen fixture (D10). No Qdrant, no network, no spend:
 
 ```bash
 export VSIR_FIXTURE=data/fixtures/synthetic_3window
-backend/.venv/bin/vsir ingest data/source/synthetic_3window.pdf --vlm stub --until extract
+backend/.venv/bin/vsir ingest data/source/synthetic_3window.pdf --vlm stub --until stitch
 backend/.venv/bin/vsir ingest data/source/synthetic_3window.pdf --until extract --raw  # full bodies
 backend/.venv/bin/vsir ingest data/source/synthetic_3window.pdf --until probe   # 01-02 only
 ```
 
-`--until` takes `manifest | probe | render | facts | window | extract`; later units extend the
-list. `--raw` prints every window's verbatim response body instead of its first page form. Steps
-01-03 need no fixture. From step 04 on, a `facts_key` or `extract_key` that is not in
-`VSIR_FIXTURE` is a typed `fixture_miss` and a non-zero exit — never a live call (D10).
+`--until` takes `manifest | probe | render | facts | window | extract | derive | stitch`; later
+units extend the list. `--raw` prints every window's verbatim response body instead of its first
+page form. Steps 01-03 need no fixture. From step 04 on, a `facts_key` or `extract_key` that is
+not in `VSIR_FIXTURE` is a typed `fixture_miss` and a non-zero exit — never a live call (D10).
+
+Steps 07-08 cost nothing and print what they decided: a per-page table with the printed label,
+`grounded_rate`, `codes_in_text` and any `moved_from`, then the section table with the window
+folds each section survived. Both of §6.4's offset checks run at step 07, and a failure is a typed
+`offset_check_failed` — the run bisects and re-bills rather than emitting a record for a window
+whose pages it cannot place.
 
 `--vlm gemini` is a live call and needs `VSIR_VLM_KEY` (from the platform secret store, never the
 image); without it the run refuses `vlm_backend_unavailable`. `VSIR_VLM_TIER=batch` refuses

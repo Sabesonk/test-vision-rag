@@ -77,14 +77,44 @@ def test_ingest_until_extract_runs_green(env, capsys, synthetic_pdf, expected):
     assert "the model returned 0 characters of page text" in out
 
 
+def test_ingest_until_stitch_runs_green(env, capsys, synthetic_pdf, expected):
+    """U009's Demo Command: steps 01-08, and every assertion reads from `expected.json` (C10).
+
+    The reviewable claims are the ones the unit exists for — the offset trap firing, the
+    reattributed code naming where it came from, and one `section_id` on both sides of a fold.
+    """
+    code = _run(synthetic_pdf, "--vlm", "stub", "--until", "stitch")
+    out = capsys.readouterr().out
+
+    assert code == cli.EXIT_OK
+    assert "ALL ASSERTIONS PASSED" in out
+    assert "FAIL" not in out
+    trap = expected["extraction"]["reattribution"]
+    assert f"reattributed {trap['code']}: page {trap['page']} -> {trap['from_page']}" in out
+    assert f"ungrounded {expected['extraction']['ungrounded']['code']}" in out
+    for title in expected["straddling_sections"]:
+        assert f'"{title}" crosses the window fold at' in out
+    assert "grounded_rate median 1.0" in out
+
+
+def test_ingest_until_derive_stops_before_the_section_ids(env, capsys, synthetic_pdf):
+    """`--until` is a real stop, not a filter on what gets printed."""
+    assert _run(synthetic_pdf, "--vlm", "stub", "--until", "derive") == cli.EXIT_OK
+    out = capsys.readouterr().out
+
+    assert "07 derivation" in out
+    assert "08 stitching" not in out
+
+
 def test_ingest_reports_each_step_on_the_event_stream(env, capsys, synthetic_pdf):
     """§15 Factor XI — one JSON object per line, every one carrying the run id."""
-    _run(synthetic_pdf, "--until", "extract")
+    _run(synthetic_pdf, "--until", "stitch")
     events = [json.loads(line) for line in capsys.readouterr().out.splitlines()
               if line.startswith("{")]
 
     steps = [event["step"] for event in events if event["event"] == "ingest_step"]
-    assert steps == ["manifest", "probe", "render", "facts", "window", "extract"]
+    assert steps == ["manifest", "probe", "render", "facts", "window", "extract", "derive",
+                     "stitch"]
     assert {event["release_id"] for event in events} == {"test-0"}
     assert all(event["run_id"] for event in events)
 
