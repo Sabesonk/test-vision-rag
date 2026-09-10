@@ -189,7 +189,7 @@ Read it as a checklist before declaring parity.
 | `_is_safety()`'s hardcoded keyword list | **removed** | see the safety-flag rule in §6.8 — derived from `doc_type` + model `topics`, never a keyword list |
 | `refs[]` in the S2 schema | **removed** | measured at **0 reads** anywhere in `impl` (`GENERIC` §2.3); cross-references live in `next.references` |
 | `class_totality` publish gate | **removed** | `window_coverage` + `grounded_rate` (§11.1) |
-| The **Level 2 window ladder** and its carry chain | **not included in v1** | see §6.2 — this is the one exclusion that changes what the POC can ingest |
+| The **Level 2 window ladder** and its carry chain | ~~not included in v1~~ **superseded — the fold ships; the carry chain does not** (fixes/001) | The exclusion's reason left with `units[]`: §5.2 deleted section **extent**, which is the only thing `impl`'s chain carried, and step 08 reassembles a section from presence alone. Keeping it refused 14 documents and 2,719 pages — 48% of the real corpus, including the pilot `TC1E-SF`, which is why M2b could not complete. See §6.2 |
 | `config.yaml` / `corpus.yaml` as runtime config | **removed** | env-only (§15 Factor III). `corpus.yaml`'s *content* survives as §12 fixture metadata, not as config |
 | Phase-1 `pages` collection and the phase-1 image-only app | **not ported** | only the page-record design is carried over. (`IMPROVEMENTS` E8 notes the container on `:8100` still runs the phase-1 app) |
 
@@ -554,21 +554,53 @@ schema-invalid response, or an offset failure: **bisect and re-bill** — never 
 offset-guess, never accept a partial window (F13). A single page that still exceeds budget fails
 the run with typed `window_unsplittable`.
 
-**What is excluded, and what it costs (§2.5 B).** `impl` has a three-rung window ladder:
-Level 0/1 cut on the document's own structure from the S1 table of contents and are therefore
-**parallelisable**, while **Level 2 is a blind cut that must run sequentially with a carry chain** —
-*"batch 2 needs to know what batch 1 ended with"* (`impl/pipeline-guide/04-windowing-and-keys.md`
-§5). **v1 implements Level 0/1 plus bisection only. Level 2 and its carry chain are out of scope.**
+**The three rungs, and why Level 2 is in v1 (superseded §2.5 B; fixes/001).** Level 0 sends the
+whole document, Level 1 cuts on the document's own chapter structure, and Level 2 folds at the cap
+where there is no structure to cut on. Every rung produces windows of at most the cap covering the
+document exactly once, and **every rung is parallel**. The rungs differ only in where the
+boundaries come from — the document, its chapters, or the cap — which is what the level number
+reports in the run record.
 
-The consequence is concrete and bounds the POC: `impl/corpus.yaml` records that the **1,440-page
-manual and the 592-page E-diagram are the only two documents that need Level 2**, and excludes them
-from the corpus slice for exactly that reason. So:
+This spec previously excluded Level 2, on the grounds that `impl`'s was *"a blind cut that must run
+sequentially with a carry chain"* — *"batch 2 needs to know what batch 1 ended with"*
+(`impl/pipeline-guide/04-windowing-and-keys.md` §5). That was a true statement about `impl`, whose
+model reported section **extent**, so a window beginning mid-section had to be told where it was.
+§5.2 deleted extent: `sections[]` is presence per page and step 08 computes extent as `(min, max)`
+over sightings keyed by `derive.section_key`, so two windows that never saw each other reassemble
+one section — which is what F8 is and what `ingest/stitch.py` already does. **The carry chain's
+reason was removed along with `units[]`; the exclusion stayed behind.** A window is a page range,
+never a retrieval boundary, so nothing else about a fold is unsafe here.
 
-- every document in the POC slice (6 documents, 142 pages) ingests without Level 2;
-- **the 1,440-page manual cannot be ingested by v1** — attempting it must fail with a typed
-  `ladder_level_2_required`, naming the document, **never** a blind cut that silently straddles a
-  safety function across a fold (which is F8's failure, one level up);
-- M8's resume test therefore runs on a **generated large PDF**, not on that manual (§13 M8).
+The exclusion's cost was measured over the real corpus rather than reasoned about — 208 documents,
+5,630 pages, giving Level 1 the best possible break by feeding it each file's own outline:
+
+| | with the exclusion | without it |
+|---|---|---|
+| documents that plan | 194 / 208 | **208 / 208** |
+| pages refused | **2,719 (48%)** | 0 |
+| windows billed | 1,510 | 369 |
+
+Eleven of the fourteen refusals declare no outline at all — vendor catalogues of 32-116 pages. One
+of the other three is the pilot **`TC1E-SF`**, 55 pages with a single 55-page chapter, so **M2b
+could not complete**: it failed at step 05, one step before the spend it was thought to be waiting
+on a credential for, and `data/fixtures/TC1E-SF/expected.json` had declared its
+`window_ranges: [[1, 30], [31, 55]]` all along. The claim this section used to make — *"every
+document in the POC slice ingests without Level 2"* — was already contradicted by
+`data/fixtures/legacy/manifest.json`, which records `TC1E-SF` at `level: 2` in `impl`'s own
+`r-poc-5` run.
+
+The window count falls because the cap now bounds a window **below** as well as above. Nothing
+bounded it below, so a densely outlined file billed one call per sheet: `ETC1AV81` declares 8,187
+bookmarks over 592 pages and cut into 592 one-page windows where 20 do the same work. `window.pack`
+folds a chapter under `MIN_WINDOW_PAGES` into its neighbour and leaves larger chapters alone — a
+floor on the merge, not a fill to the cap, because a Level 1 that packs to the cap has taken its
+boundaries from the cap and is Level 2 wearing Level 1's number.
+
+`ladder_level_2_required` is **retained as a code and no longer raised**: deleting it would break
+an operator already switching on it. `window_unsplittable` remains the terminus of bisection.
+
+- M8's resume test still runs on a **generated large PDF** rather than the 1,440-page manual (§13
+  M8) — the manual now ingests, but a resume test wants a deterministic corpus, not a large one.
 
 A known fragility carried with the ladder: it *"depends on an uncached model call"* — S1 — so §6.3
 caches S1 per document, which `impl` does not (`IMPROVEMENTS` B2).
