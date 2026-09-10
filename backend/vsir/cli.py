@@ -1788,7 +1788,7 @@ def _cmd_ingest(args: argparse.Namespace) -> int:
     # A resumed run keeps its own id, because the id is what every point of the run carries: a
     # resume under a fresh id would write a second set of points that publish's filter could not
     # find and retirement would delete as stale (§6.7).
-    identifier = args.resume or ids.run_id()
+    identifier = args.resume or args.run_id or ids.run_id()
     handle = _RunHandle(runs_collection=cfg.runs_collection)
     with vsir_logging.correlate(run_id=identifier):
         print(f"vsir ingest — release {cfg.release_id} · run {identifier} · until {args.until}")
@@ -2273,6 +2273,14 @@ def build_parser() -> argparse.ArgumentParser:
                                help="comma-separated machine/model subjects (§5.3)")
     ingest_parser.add_argument("--tags", default="", help="comma-separated uploader tags (§5.3)")
     ingest_parser.add_argument("--uploader", default="", help="who supplied the document")
+    ingest_parser.add_argument(
+        "--run-id", default=None, metavar="RUN_ID", dest="run_id",
+        help="start a NEW run under this id instead of minting one. For a caller that has to be "
+             "able to poll §6.9's control plane before the run has done anything — which is what "
+             "`POST /documents` needs, because it answers 202 with a run_id and the run itself is "
+             "this subcommand (§15 Factor XII). Distinct from --resume, which continues a run "
+             "that already exists and refuses `run_not_found` if it does not",
+    )
     ingest_parser.add_argument(
         "--resume", default=None, metavar="RUN_ID",
         help="continue an existing run under its own id, taking its lease (D9). The id is kept "

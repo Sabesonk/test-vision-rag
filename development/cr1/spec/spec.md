@@ -1037,6 +1037,7 @@ Each is a **typed 400**, never a clamp, never a silent truncation.
 
 | Method + path | Purpose | Auth |
 |---|---|---|
+| `POST /documents` | **ingestion over HTTP** — multipart PDF in, `202` and a `run_id` out. Not a second implementation of §6.1: it spools the bytes and runs `vsir ingest --run-id <id>`, the same subcommand from the same image, so §15 Factor XII holds and register **E1** cannot recur. Refuses `403 spend_not_permitted` while `VSIR_ALLOW_PAID` is unset and the release names a live model — the one place that variable decides anything. **A run started this way is not resumable across an instance restart**, because `--resume` needs the source PDF and the spool went with the instance | bearer |
 | `POST /tools/{tool_name}` | the eight tools of §7.2, one envelope each | bearer |
 | `POST /ask` | the runner; **the only surface that may return prose** (§8.4) | bearer |
 | `GET /pages/{page_id}/image?dpi=&region=` | **the page raster**, rendered on demand — the browser-renderable half of `fetch` (§7.2.5), same caps and same typed 400s as §7.3. Ported from `impl`'s `/api/v1/page-image/{page_id}` | bearer |

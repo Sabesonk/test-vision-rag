@@ -62,7 +62,7 @@ from dataclasses import dataclass
 from typing import (Any, AsyncIterator, Awaitable, Callable, Iterator, Literal, Mapping,
                     MutableMapping, Sequence)
 
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, File, Form, Request, Response, UploadFile
 from fastapi.responses import JSONResponse, PlainTextResponse, StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from qdrant_client import QdrantClient
@@ -78,6 +78,7 @@ from vsir.ingest import run as run_module
 from vsir.serve import audit as audit_module
 from vsir.serve import auth as auth_module
 from vsir.serve import budget as budget_module
+from vsir.serve import ingest as ingest_module
 from vsir.serve.audit import Usage
 from vsir.serve.auth import BearerAuth, Identity
 from vsir.serve.caps import ToolError
@@ -805,6 +806,57 @@ def create_app(env: Mapping[str, str] | None = None) -> FastAPI:
 
         return Response(content=outcome.body(), status_code=outcome.status,
                         media_type="application/json")
+
+    # ── ingestion over HTTP: the transport for `vsir ingest` (§6.1, §15 Factor XII) ───────────────
+
+    @app.post("/documents", status_code=202, tags=["ingest"], responses={
+        400: {"description": "an empty body, an unknown step, or an unknown VLM backend"},
+        401: {"description": "no bearer token (§7.4)"},
+        403: {"description": "the release bills a live model and VSIR_ALLOW_PAID is not set"},
+        413: {"description": "larger than the spool bound"},
+        415: {"description": "the bytes do not begin with %PDF-"},
+        500: {"description": "the ingest process could not be started"},
+    })
+    async def post_document(
+        file: UploadFile = File(..., description="the source PDF"),
+        until: str = Form("publish", description="stop after this §6.1 step"),
+        vlm: str = Form("", description="override VSIR_VLM for this run: `stub` or `gemini`"),
+        fixture: str = Form("", description="override VSIR_FIXTURE — the replay directory (D10)"),
+        doc_id: str = Form("", description="the revision-stable document id (§5.1)"),
+        revision: str = Form("", description="the revision; the operator's value is authoritative"),
+        doc_type: str = Form("", description="the document type"),
+        subjects: str = Form("", description="comma-separated machine/model subjects (§5.3)"),
+        tags: str = Form("", description="comma-separated uploader tags (§5.3)"),
+        uploader: str = Form("", description="who supplied the document"),
+        request: Request = None,  # type: ignore[assignment]
+    ) -> Any:
+        """Accept a PDF and start `vsir ingest` on it. **202 and a `run_id`, not a result.**
+
+        The route is a transport and nothing else — see :mod:`vsir.serve.ingest` for why that is
+        the whole design rather than a shortcut, and for the two properties an upload gives up that
+        a CLI ingest keeps.
+
+        Progress is ``GET /runs/{run_id}``: the control plane, not this process, so a poll works
+        from any replica (§6.9, D9). Nothing the run writes is queryable until its blocking gates
+        pass — step 10 writes ``is_current=False`` and step 11 is the only thing that flips it
+        (I7, §6.7) — so defaulting ``until`` to the full pipeline is safe: a document that fails a
+        gate leaves the index exactly as it was.
+        """
+        identity = auth_module.identity_of(request.scope) if request is not None else None
+        body = await file.read()
+        try:
+            accepted = await run_in_threadpool(
+                ingest_module.accept, cfg,
+                filename=file.filename or "", body=body, until=until, vlm=vlm, fixture=fixture,
+                declared={"doc_id": doc_id, "revision": revision, "doc_type": doc_type,
+                          "subjects": subjects, "tags": tags, "uploader": uploader},
+                caller=identity.user_id if identity else "")
+        except ingest_module.UploadRefused as refusal:
+            _log.warning("upload_refused", reason=refusal.code, detail=refusal.message,
+                         user_id=identity.user_id if identity else "unknown",
+                         **refusal.details)
+            return JSONResponse(status_code=refusal.http_status, content=refusal.to_payload())
+        return JSONResponse(status_code=202, content=accepted.to_payload())
 
     # ── the run control plane and the two exports (§6.8, §6.9, §11.4) ────────────────────────────
 
