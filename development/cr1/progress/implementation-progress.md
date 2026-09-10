@@ -110,6 +110,7 @@ Two things a later unit should not have to rediscover:
 - [ ] U021 Tri-state triage, the safeguards, and fetch-vs-read routing — spend: none
 - [ ] U022 The loop, the six correction loops, the answer gate, and `POST /ask` — spend: paid
 
+
 ### M7 — operator console (spend: none, fixture-backed)
 - [ ] U023 The operator console — viewer, agent panel, trust badges
 - [ ] U024 The Playwright replay suite and `scripts/test-e2e.sh`
@@ -410,11 +411,11 @@ closed. F10 stays open until U004's filter gate consumes the dict, as the plan s
 | M | Demo command | Status | Evidence |
 |---|---|---|---|
 | M0 | `vsir doctor && bash scripts/test-unit.sh` | ✅ | see below |
-| M1 | `vsir demo exact --synthetic` | ⬜ | |
-| M2a | `vsir ingest data/source/synthetic_3window.pdf --vlm stub` | ⬜ | |
+| M1 | `vsir demo exact --synthetic` | ✅ | see the M1 milestone gate below |
+| M2a | `vsir ingest data/source/synthetic_3window.pdf --vlm stub` | ✅ | see the M2a milestone gate below |
 | M2b | `VSIR_ALLOW_PAID=1 vsir ingest data/source/TC1E-SF.pdf` | ⬜ | |
 | M3 | `vsir serve & vsir lookup "SF 1.1A" && vsir eval acceptance` | ✅ | see the M3 milestone gate below |
-| M4 | `vsir demo narrow` | ⬜ | |
+| M4 | `vsir demo narrow` | ✅ | exit 0; see the M4 milestone gate below |
 | M5 | `VSIR_ALLOW_PAID=1 vsir read --pages … --question …` | ⬜ | |
 | M6 | `VSIR_ALLOW_PAID=1 vsir ask "carton discharge won't restart after an E-stop reset"` | ⬜ | |
 | M7 | `bash scripts/test-e2e.sh` then browse `http://localhost:5174` | ⬜ | |
@@ -1879,6 +1880,88 @@ ported_files 23 · export_run r-poc-5 · 142 pages · 1,644 accepted pairs · 96
 - **`DS-2611-SICK` is ported and carries no parity rows.** §12.1 counts seven documents, so its
   window is in the fixture; it never published in `r-poc-5`, so the export attributes nothing to it.
   Recorded in `SOURCE.json` under `documents_without_export_rows` rather than left as a silent gap.
+
+---
+
+### M4 milestone gate — closed 2026-09-10, tagged `cr1-m4`
+
+**Demo** (Spec §0 and §13): `vsir demo narrow` — **exit 0, ALL ASSERTIONS PASSED**, run as a
+one-off container of the same image against the stack `scripts/stack.sh up` seeds. The full
+transcript is in the U018 entry below; the seven steps are: narrow to five triage rows carrying
+only `ImageRef`s, dereference the first row's URL to bytes, `fetch` two pages with the pixels,
+the same `fetch` with `inline=false`, a 400 dpi region crop, the four bounds, and the cache
+proved evictable and byte-identical when cold.
+
+**Verified against the running container over real HTTP**, not only through the test client —
+because a green suite said nothing about the live path once before (U028):
+
+```
+GET /pages/synthetic-3window@1.0%23p019/image?dpi=150
+  with a bearer token   200  image/png  74,076 bytes  (PNG 1240x1755, 8-bit RGB)
+  without a token       401
+  ?dpi=400 (no region)  {"error":"dpi_requires_region","requested":400,"region_required_above":220}
+  ?dpi=100              {"error":"dpi_not_allowed","allowed":[36,72,150,220,300,400]}
+  #p999                 404
+
+POST /tools/skim_pages → the row's own url and thumb_url, dereferenced verbatim
+  /pages/synthetic-3window@1.0%23p019/image?dpi=150   200  PNG 1240x1755  74,076 bytes
+  /pages/synthetic-3window@1.0%23p019/image?dpi=72    200  PNG  595x842   27,862 bytes
+
+POST /tools/fetch
+  inline=false          status ok · url present · bytes_b64 null · 1240x1755
+  6 pages               {"error":"fetch_budget_exceeded","bound":"pages","limit":5,"requested":6}
+  5 pages at dpi 220    {"error":"fetch_budget_exceeded","bound":"megapixels","limit":12.0,
+                         "requested":23.4}
+```
+
+Both bounds distinguish themselves by `bound`, which is what §11.3 means by *naming* the bound: a
+caller told only `fetch_budget_exceeded` after five pages would retry with five pages again.
+
+`bash scripts/test-unit.sh` → **1216 passed** (31 of them the §12.5 conformance greps) ·
+`bash scripts/test-api.sh` → **1277 passed, 13 skipped**. The 13 are M2b's, blocked on OQ-1 and
+skipping by name — unchanged since M3.
+
+**Acceptance verified by subagent** against Spec §13 M4, adversarially and with `file:line`
+evidence per clause. Result: **✓ on five of the six acceptance clauses and on every Deliverable
+row**; one clause is **✗ and could not have been anything else** — see below. Five findings, all
+dispositioned:
+
+| finding | disposition |
+|---|---|
+| **✗ "every aggregate row a `preview.thumb_url`" — no implementation, no test, and none possible at M4.** `DocHit`, `SectionHit` and `Preview` are declared in `serve/envelope.py:170/186/105` and constructed **nowhere** in production code; the only `Preview(...)` in the tree is a model-shape unit test. The rungs that emit aggregate rows are `skim_documents`/`skim_sections`, which §13 **M5** lists as its own deliverable | **spec corrected, not signed off.** §13 M4's Acceptance sentence had inherited D12's phrasing wholesale, and D12 (*"every page-level hit carries an `ImageRef` and every aggregate row a `preview` thumbnail"*) is a **design decision and is right** — the milestone assignment was wrong. A milestone cannot be gated on a property of rows it does not produce. The clause moves to §13 M5 where the rungs live, recorded as a new correction row in §2.3. **Not claimed as met here**, because it is vacuous rather than satisfied |
+| **No end-to-end dereference of a `ResolveHit.image.url`** (moderate). `test_an_image_reference_out_of_a_real_envelope_dereferences_to_a_png` was parametrised over `skim_pages` and `lookup` only; resolve hits were asserted in *shape* alone. One shared builder is an argument, not a proof — `image_ref` is called from three modules and the third had never had a reference dereferenced | **fixed** — `resolve` added to the parametrize, with a real printed label off the ingested corpus (`{"printed_label": "17"}` → `synthetic-3window@1.0#p019`). All three page-level rungs now take their own URL verbatim and get a 200 PNG back |
+| **The milestone-demo ledger contradicted the unit entries** (low): M4's row read `⬜` with no evidence while the U018 entry held the full green transcript — and M1's and M2a's rows read `⬜` too, although both milestones are tagged and both gates are recorded below | **fixed** — all three rows now carry ✅ and point at their gate section. M2b stays `⬜`; it is blocked on OQ-1 and that is the honest state |
+| **The plan file still said `🔵 Not Started` for U017 and U018**, with every acceptance checkbox unticked, four and one commits after they shipped | **fixed** — both statuses and every acceptance / DoD checkbox updated to match what the tests and the demo actually prove |
+| ~ **`next.references` ships permanently empty** (informational). §7.2.1 declares it as *"[printed labels]"* and `skim.py:347` never populates it | **already recorded, no action.** U017's notes below carry it as a closed deviation with §2.5 **B**'s reasoning — refs[] is struck, and the empty list is the declared shape rather than a gap. Re-raised here only because a reviewer reading the envelope and not the ledger would read it as a bug |
+
+**One property worth stating because it is the whole point of the milestone.** `serve/raster_cache.py`
+holds **no cache** despite its name: the LRU is `ingest/render.py::_cached`, keyed by the source
+file's content hash. A second cache keyed by `page_id` is the obvious optimisation and is a
+correctness bug — a `(doc_id, revision)` re-ingested from corrected bytes keeps its page ids, so
+it would serve the superseded pixels for the life of the process. Asserted by
+`test_the_serving_cache_is_the_renderers_cache`.
+
+**M3's one deferred obligation is discharged.** The M3 gate recorded that *"the audit line is
+exercised only through a test-registered spy tool … `AUDITED_TOOLS` and the emit site get their
+first real exercise at **M4**"*. They do: `fetch` is the first real audited tool, and
+`test_one_fetch_writes_one_audit_line_with_exactly_ten_fields` pins all ten §7.4 fields on a real
+call, with `cache_hit` asserted in **both** states and `test_no_page_text_or_image_bytes_reach_the_event_stream`
+holding §15.1's retention row.
+
+**Invariants asserted from M4 (Spec §9):** none newly — §9 assigns no invariant to M4. What M4
+does is put M1's four through two more surfaces: I2 holds because `fetch`'s `text` is the payload
+`ingest/probe.py` wrote and nothing re-extracted, and I6 holds because `exclude` filters on
+**point ids** rather than on a payload field, so it needs no `INDEXED` key.
+
+**Failure rows closed at M4 (Spec §10):** **F5 (M4 half)** — an ambiguous printed label returns
+every candidate, never a silent pick (U017); **F8 (stateless half)** — no server session,
+`effective_scope` echoed on every Family A response, and two processes return the identical
+ordered list (U017); **F18 (`fetch` half)** — the §7.3 caps, each a typed 400 naming its bound
+(U018). `read`'s share of F18 is M5's and `series_id` is M8's; neither is claimed.
+
+**M4's units:** U017 (`skim_pages`, deterministic fusion, image queries, `resolve`), U029 (the
+document store — `page_id` → bytes, added after the plan and the unit that unblocked U018), U018
+(the page-image route, the raster cache, `fetch`).
 
 ---
 

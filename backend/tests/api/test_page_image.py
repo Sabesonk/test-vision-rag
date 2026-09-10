@@ -116,7 +116,7 @@ def test_a_wrong_token_is_refused_without_naming_what_it_should_have_been(raster
 
 # ── the reference an envelope hands back is the URL that works ──────────────────────────────────
 
-@pytest.mark.parametrize("tool", ["skim_pages", "lookup"])
+@pytest.mark.parametrize("tool", ["skim_pages", "lookup", "resolve"])
 def test_an_image_reference_out_of_a_real_envelope_dereferences_to_a_png(rastered, tool):
     """U017 emitted the reference; this is the assertion that it points at something (U018).
 
@@ -124,9 +124,15 @@ def test_an_image_reference_out_of_a_real_envelope_dereferences_to_a_png(rastere
     reconstruction, no re-encoding, no knowledge of the grammar on the test's side. Before this
     unit that request reached `/pages/{doc_id}@{revision}` with the page number as a fragment the
     server never sees — a reference that was present, well-formed and undereferenceable.
+
+    **All three page-level rungs**, because §7.1 puts an `ImageRef` on every page-level hit and
+    one shared builder is an argument rather than a proof: `image_ref` is called from three
+    modules, and a rung left out of this list is a rung whose references nothing has ever
+    dereferenced.
     """
-    arguments = ({"query": "guard door interlocks", "limit": 3} if tool == "skim_pages"
-                 else {"label": "K120"})
+    arguments = {"query": "guard door interlocks", "limit": 3} if tool == "skim_pages" else \
+                {"label": "K120"} if tool == "lookup" else \
+                {"printed_label": "17"}
     envelope = rastered.client.post(f"/tools/{tool}", headers=rastered.header, json=arguments)
     assert envelope.status_code == 200, envelope.text
     hits = envelope.json()["hits"]

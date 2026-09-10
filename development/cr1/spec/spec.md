@@ -110,6 +110,7 @@ a general chat product.
 | **C11** | A server-side `RetrievalState` holding `scope` and `exclude_list` across turns (`MCP_ARCHITECTURE` §4.4; `PLAN` §4.4) | **Struck. The service is stateless** (§7.5, §15 Factor VI): `scope` and `exclude` are parameters and `effective_scope` is echoed back | `AGENTIC-RETRIEVAL` §9 and F8 already require this — server-held scope is both a correctness failure (searching a subset while believing you searched the chapter) and a twelve-factor violation that blocks horizontal scaling |
 | **C12** | *(reversed on evidence — the earlier reading of this row was wrong.)* plan2's record feeds the **page raster into the dense vector** — `dense = image + title + summary + text + codes` (`GENERIC` §5; `PLAN` §2.4) | **Confirmed and kept: the dense vector is a fused image+text embedding.** `impl/app/embedder.py::embed_page_interleaved` already does exactly this — *"One page → ONE vector, image and text interleaved in a single Content… here we WANT the raster and the page's own text fused into one vector"* — using `gemini-embedding-2`, which `impl/config.yaml` documents as *"multimodal: text + image in one space"*. See D4 for the contract | the raster is the reasoning substrate (§1.3), and for a born-digital PDF the extractor read the native text layer at a fidelity the raster never captured — interleaving puts **both** in the dense channel, which is why `impl` chose it. The one honest gap: `effort_and_llm_cost_estimation.md` §A3 budgets image embeddings only for the 764 deferred plate images, so per-page image embedding is **unbudgeted** — at $0.00012/image it is ≈ $0.66 per full 5,505-page run, worth a line in the cost model rather than a design change |
 | **C10** | Acceptance-table page counts (`FAILPROOF` §3) stated as expected values | Normative for `TC1E-SF`. If the first real ingest disagrees, that is a **blocking finding** (offset/tokenisation) until proven a corpus difference; changing `expected.json` requires a recorded rationale in the run report | otherwise the safety net silently re-baselines itself |
+| **C13** | *(a correction to this spec, not to plan2.)* §13 **M4**'s acceptance took D12's sentence whole and gated the milestone on all of it — *"every page-level hit carries a dereferenceable `image.url` and every aggregate row a `preview.thumb_url`"* | **The aggregate half moves to M5.** M4 is accepted on the page-level `image.url` and on no triage row carrying `bytes_b64`; the `preview.thumb_url` clause now sits in M5's acceptance beside `skim_documents` / `skim_sections`. **D12 is unchanged and remains correct** — both of its halves still hold; only the milestone that owed the second one was wrong | M4's own Deliverable list contains no aggregate rung: the rungs that emit `DocHit` and `SectionHit` rows are M5's deliverable, which is why `DocHit`, `SectionHit` and `Preview` are declared in `serve/envelope.py` and constructed nowhere. A milestone cannot be gated on a property of rows it does not produce — the clause would pass vacuously over an empty set, and an acceptance criterion that cannot fail is not one |
 
 ### 2.4 Inheritance from the previous implementation
 
@@ -1495,10 +1496,10 @@ first.**
   cache, **image queries** (D12), and `resolve` with `interpolated`.
 - **Demo:** `vsir demo narrow` — one query narrows the fixture to `p001`/`p002` and then fetches a
   `region` crop at dpi 400.
-- **Acceptance:** F5 closed; every page-level hit carries a dereferenceable `image.url` and every
-  aggregate row a `preview.thumb_url`, while **no triage row contains `bytes_b64`** (an asserted
-  test, not a convention); an image-only `skim_pages` returns rows whose `why` is exactly
-  `["dense"]`; **F8's stateless half** (`effective_scope` echoed, no server session);
+- **Acceptance:** F5 closed; every page-level hit carries a dereferenceable `image.url` while
+  **no triage row contains `bytes_b64`** (an asserted test, not a convention); an image-only
+  `skim_pages` returns rows whose `why` is exactly `["dense"]`; **F8's stateless half**
+  (`effective_scope` echoed, no server session);
   **F18 for `fetch`** — an over-budget call returns `fetch_budget_exceeded` naming the bound and
   `dpi=400` without `region` is a typed 400. `read`'s share of F18 belongs to M5, and `series_id`
   across revisions to M8; neither is claimed here.
@@ -1513,7 +1514,10 @@ first.**
 - **Demo:** `VSIR_ALLOW_PAID=1 vsir read --pages TC1E-SF@1.3#p001,…#p002 --question "…"`
 - **Acceptance:** Loop 1 stamps a deliberately misread code `status: absent` with
   `present_instead`; F19 verified (same pages + new question = cache miss); **F18 for `read`** — a
-  4-page call is a typed 400; every code on a text-free page comes back `unverifiable`.
+  4-page call is a typed 400; every code on a text-free page comes back `unverifiable`; and every
+  aggregate row carries a `preview.thumb_url` (D12) — the group's best-ranked matched page,
+  falling back to page 1, a reference and never bytes. M4 could not own that clause: these are
+  the rungs that emit aggregate rows (C13).
 
 ### M6 · The runner, the loop, the answer gate — *spend: read*
 

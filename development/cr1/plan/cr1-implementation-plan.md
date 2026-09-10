@@ -1948,23 +1948,23 @@ the image-only query returning rows whose `why` is exactly `["dense"]`, and `res
 - **External:** Qdrant; the ported `embed_query_image` (stubbed by config at M4).
 
 ### Acceptance Criteria
-- [ ] `skim_pages` returns at most `limit` rows, `limit` defaults to 10 and is rejected above 25.
-- [ ] Two identical `(query, image, scope, exclude)` calls return the identical ordered list of `page_id`s, across two processes.
-- [ ] `rank` is a 1-based ordinal with no gaps, and **no response model in the fused path declares a field named `score`** (asserted by an AST scan, not a grep).
-- [ ] `why` on a row hit by both the dense and lexical branches is `["dense", "lexical"]`; on a lexical-only row it is `["lexical"]`.
-- [ ] `decompose("reset K158")` sends `K158` to the phrase filter and only `reset` to the embedding — asserted on the branch inputs.
-- [ ] RRF output matches a hand-computed `Σ w/(k + rank)` at `k=60` with weights `1.0 / 1.0 / 0.4` for a fixed set of branch rankings.
-- [ ] `exclude=[page_id_x]` never returns `page_id_x`, and the remaining order is unchanged apart from the removal.
-- [ ] **No triage row contains full page text, and no triage row contains `bytes_b64`** — an asserted test over the serialised response, not a convention.
-- [ ] Every page-level hit carries an `image.url` that returns 200 when dereferenced with a bearer token (the endpoint arrives in U018; until then, assert the URL's shape and that it names the `page_id` and a dpi from the allowed set).
-- [ ] Every hit carries `next` with `expand`, `neighbours` and `references`.
-- [ ] An **image-only** `skim_pages` (no `query`) returns rows whose `why` is exactly `["dense"]`, and the lexical/captions branches were not executed (asserted by a call spy).
-- [ ] A multimodal query sends **no instruction prefix** to the embedding model (asserted on the request payload).
-- [ ] `lookup` and `verify` reject an `image` parameter — an image can never reach the exact surface.
-- [ ] `resolve("<ambiguous label>")` returns **every** candidate with `label_verified` and `interpolated` per candidate.
-- [ ] `resolve` executes an indexed-facet query — a call spy asserts it never scrolls and filters in Python (E9).
-- [ ] `effective_scope` is echoed on every response and equals the requested scope after `is_current=True` injection.
-- [ ] `skim_pages(scope={"bogus": 1})` returns `filter_unknown_key {keys: ["bogus"]}`.
+- [x] `skim_pages` returns at most `limit` rows, `limit` defaults to 10 and is rejected above 25.
+- [x] Two identical `(query, image, scope, exclude)` calls return the identical ordered list of `page_id`s, across two processes.
+- [x] `rank` is a 1-based ordinal with no gaps, and **no response model in the fused path declares a field named `score`** (asserted by an AST scan, not a grep).
+- [x] `why` on a row hit by both the dense and lexical branches is `["dense", "lexical"]`; on a lexical-only row it is `["lexical"]`.
+- [x] `decompose("reset K158")` sends `K158` to the phrase filter and only `reset` to the embedding — asserted on the branch inputs.
+- [x] RRF output matches a hand-computed `Σ w/(k + rank)` at `k=60` with weights `1.0 / 1.0 / 0.4` for a fixed set of branch rankings.
+- [x] `exclude=[page_id_x]` never returns `page_id_x`, and the remaining order is unchanged apart from the removal.
+- [x] **No triage row contains full page text, and no triage row contains `bytes_b64`** — an asserted test over the serialised response, not a convention.
+- [x] Every page-level hit carries an `image.url` that returns 200 when dereferenced with a bearer token (the endpoint arrives in U018; until then, assert the URL's shape and that it names the `page_id` and a dpi from the allowed set).
+- [x] Every hit carries `next` with `expand`, `neighbours` and `references`.
+- [x] An **image-only** `skim_pages` (no `query`) returns rows whose `why` is exactly `["dense"]`, and the lexical/captions branches were not executed (asserted by a call spy).
+- [x] A multimodal query sends **no instruction prefix** to the embedding model (asserted on the request payload).
+- [x] `lookup` and `verify` reject an `image` parameter — an image can never reach the exact surface.
+- [x] `resolve("<ambiguous label>")` returns **every** candidate with `label_verified` and `interpolated` per candidate.
+- [x] `resolve` executes an indexed-facet query — a call spy asserts it never scrolls and filters in Python (E9).
+- [x] `effective_scope` is echoed on every response and equals the requested scope after `is_current=True` injection.
+- [x] `skim_pages(scope={"bogus": 1})` returns `filter_unknown_key {keys: ["bogus"]}`.
 
 ### Test Plan
 **Levels:** [L2]
@@ -1973,11 +1973,11 @@ the image-only query returning rows whose `why` is exactly `["dense"]`, and `res
 **Edge Cases (typed 4xx / §11.3):** `filter_unknown_key`; `limit=26`; an image-only query; a query that decomposes to identifiers only; an empty scope; `503 qdrant_unavailable`.
 
 ### Definition of Done
-- [ ] Acceptance criteria met
-- [ ] All planned tests implemented and passing, none skipped or xfailed
-- [ ] Demo command runs green and its output is recorded in the progress file
-- [ ] No new dependency added outside Spec §4.2
-- [ ] Conformance greps still pass
+- [x] Acceptance criteria met
+- [x] All planned tests implemented and passing, none skipped or xfailed
+- [x] Demo command runs green and its output is recorded in the progress file
+- [x] No new dependency added outside Spec §4.2
+- [x] Conformance greps still pass
 
 ### Risks and Mitigations
 - **Risk (R1, Spec §18):** recall is not guaranteed — a summary can omit the line that mattered. **Mitigation:** the `uncertain` pool and "do not filter a small set" (U021), `why: lexical` as a hard signal, and `searchable_ratio` (U019) — a miss surfaces as an honest abstention, never a wrong page.
@@ -1990,7 +1990,7 @@ the image-only query returning rows whose `why` is exactly `["dense"]`, and `res
 
 ## Unit: The page-image endpoint, the raster cache, and `fetch` (ID: U018)
 
-**Status:** 🔵 Not Started
+**Status:** 🟢 Complete (2026-09-10)
 **Milestone:** M4
 **Priority:** P0-Critical
 **Type:** tool
@@ -2083,17 +2083,17 @@ requested: 6}` and `dpi=400` **without** a region returning `dpi_requires_region
   caps in `serve/caps.py`, the LRU renderer in `ingest/render.py` — is already decided or written.
 
 ### Acceptance Criteria
-- [ ] `GET /pages/{page_id}/image?dpi=150` with a bearer token returns 200 and an image payload; without a token it returns 401.
-- [ ] The same request twice within the cache's lifetime invokes the render function **once** (asserted by a call-count spy); after forcing eviction it renders again and returns a byte-identical image.
-- [ ] A filesystem-write spy confirms **no** raster is written outside the configured `tmpfs` cache path, and a cold process returns a byte-identical image for the same `(page_id, dpi, region)`.
-- [ ] `fetch` with 6 page_ids returns `fetch_budget_exceeded {limit: 5, requested: 6}` and **no** partial 5-page 200.
-- [ ] `fetch` whose resolved rasters exceed 12 MP returns `fetch_budget_exceeded` naming the megapixel bound — never a silent dpi clamp.
-- [ ] `fetch(dpi=100)` returns `dpi_not_allowed`; `fetch(dpi=36)` and `fetch(dpi=72)` succeed (the thumbnail tiers).
-- [ ] `fetch(dpi=400, region=None)` returns `dpi_requires_region`; the same call with a region succeeds and returns a crop.
-- [ ] `fetch(..., inline=True)` (the default) returns both `url` and `bytes_b64`; `inline=False` returns `url` and **no** `bytes_b64`.
-- [ ] `fetch(include=["text","summary"])` returns no image at all and performs zero renders.
-- [ ] `region` is normalised `[x0,y0,x1,y1]` and an out-of-range region is a typed 400, not a clipped guess.
-- [ ] `vsir demo narrow` exits 0 and its output contains the narrowing, the crop, and both deliberate typed 400s.
+- [x] `GET /pages/{page_id}/image?dpi=150` with a bearer token returns 200 and an image payload; without a token it returns 401.
+- [x] The same request twice within the cache's lifetime invokes the render function **once** (asserted by a call-count spy); after forcing eviction it renders again and returns a byte-identical image.
+- [x] A filesystem-write spy confirms **no** raster is written outside the configured `tmpfs` cache path, and a cold process returns a byte-identical image for the same `(page_id, dpi, region)`.
+- [x] `fetch` with 6 page_ids returns `fetch_budget_exceeded {limit: 5, requested: 6}` and **no** partial 5-page 200.
+- [x] `fetch` whose resolved rasters exceed 12 MP returns `fetch_budget_exceeded` naming the megapixel bound — never a silent dpi clamp.
+- [x] `fetch(dpi=100)` returns `dpi_not_allowed`; `fetch(dpi=36)` and `fetch(dpi=72)` succeed (the thumbnail tiers).
+- [x] `fetch(dpi=400, region=None)` returns `dpi_requires_region`; the same call with a region succeeds and returns a crop.
+- [x] `fetch(..., inline=True)` (the default) returns both `url` and `bytes_b64`; `inline=False` returns `url` and **no** `bytes_b64`.
+- [x] `fetch(include=["text","summary"])` returns no image at all and performs zero renders.
+- [x] `region` is normalised `[x0,y0,x1,y1]` and an out-of-range region is a typed 400, not a clipped guess.
+- [x] `vsir demo narrow` exits 0 and its output contains the narrowing, the crop, and both deliberate typed 400s.
 
 ### Test Plan
 **Levels:** [L2]
@@ -2102,11 +2102,11 @@ requested: 6}` and `dpi=400` **without** a region returning `dpi_requires_region
 **Edge Cases (typed 4xx / §11.3):** every §7.3 bound; a cold cache; an evicted entry; a region outside the page; 401; a page whose PDF is unreachable (a typed 5xx, never an empty result).
 
 ### Definition of Done
-- [ ] Acceptance criteria met
-- [ ] All planned tests implemented and passing, none skipped or xfailed
-- [ ] Demo command runs green and its output is recorded in the progress file
-- [ ] No new dependency added outside Spec §4.2
-- [ ] Conformance greps still pass
+- [x] Acceptance criteria met
+- [x] All planned tests implemented and passing, none skipped or xfailed
+- [x] Demo command runs green and its output is recorded in the progress file
+- [x] No new dependency added outside Spec §4.2
+- [x] Conformance greps still pass
 
 ### Risks and Mitigations
 - **Risk:** the raster cache becomes a durable volume and quietly turns into a source of truth (§15.2 ban). **Mitigation:** the Dockerfile mounts it as `tmpfs`; the cold-process byte-identity criterion proves nothing depends on it.
