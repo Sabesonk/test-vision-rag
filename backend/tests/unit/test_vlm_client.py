@@ -22,11 +22,14 @@ credential. `test_replay.py` proves the same about the whole ingest run.
 from __future__ import annotations
 
 import pytest
+from pydantic import ValidationError
 
 from vsir.ingest.extract import WindowOut
+from vsir.ingest.window import DocumentFacts
 from vsir.vlm import (EXTRACT, MAX_ATTEMPTS, PROMPT_DIGESTS, PROMPT_DIR, PROMPT_STAGES,
                       GeminiBackend, PromptUnavailable, Request, TokenBucket, VlmCallFailed,
                       VlmTierUnsupported, VlmTruncated, VlmUnavailable, hint, prompt)
+from vsir.vlm import client
 
 MODEL = "gemini-3.8-flash-001"
 PROMPT = "s2-v1"
@@ -288,9 +291,50 @@ def test_the_call_is_structured_output_at_temperature_zero_in_one_content():
     assert seen["model"] == MODEL
     assert len(seen["contents"]) == 1, "a bare list returns one aggregated response (D4's lesson)"
     assert seen["config"].temperature == 0.0
-    assert seen["config"].response_schema is WindowOut
     assert seen["config"].response_mime_type == "application/json"
     assert seen["config"].system_instruction == prompt("s2", PROMPT).text
+    # The model class described the shape and `response_schema` has no field for half of what
+    # Pydantic renders, so what goes on the wire is the translation of it, not the class. This
+    # assertion used to read `is WindowOut`, which is what the first live call returned
+    # `400 INVALID_ARGUMENT: Unknown name "additional_properties"` for.
+    assert seen["config"].response_schema == client.response_schema(WindowOut)
+
+
+def test_the_schema_that_is_sent_carries_nothing_the_api_has_no_field_for():
+    """The property, not the shape: no unsupported keyword survives anywhere in the tree.
+
+    Recursive because the failure was nested — the 400 named both the root and
+    `properties[6].value.items`, which is `DocumentFacts.toc`'s item model.
+    """
+    def walk(node):
+        if isinstance(node, dict):
+            for key, value in node.items():
+                assert key not in client.UNSUPPORTED_SCHEMA_KEYS, f"{key} would be a 400"
+                walk(value)
+        elif isinstance(node, list):
+            for item in node:
+                walk(item)
+
+    for model in (WindowOut, DocumentFacts):
+        walk(client.response_schema(model))
+
+
+def test_a_nested_model_is_inlined_rather_than_referenced():
+    """`response_schema` is sent as a tree with no document to resolve a `$ref` against."""
+    schema = client.response_schema(DocumentFacts)
+
+    assert "$defs" not in schema
+    assert "$ref" not in repr(schema)
+    entries = schema["properties"]["toc"]["items"]
+    assert entries["type"] == "object" and "page_no" in entries["properties"]
+
+
+def test_the_strict_class_still_parses_the_response():
+    """Only the *description* is relaxed. `extra="forbid"` keeps refusing an unexpected field on
+    the way back in, which is the half worth keeping: a surprise key in a paid response is
+    something to refuse, not to drop."""
+    with pytest.raises(ValidationError):
+        DocumentFacts.model_validate({"title": "x", "unexpected": 1})
 
 
 def test_the_rasters_go_last_and_the_hint_is_our_own_arithmetic():

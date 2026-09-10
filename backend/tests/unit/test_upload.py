@@ -24,6 +24,19 @@ from vsir.serve import ingest as upload
 PDF = b"%PDF-1.7\n%\xc7\xec\x8f\xa2\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF\n"
 
 
+class _Child:
+    """A `Popen` stand-in: enough surface for `accept` to log it and for the reaper to finish."""
+
+    pid = 4242
+    returncode = 0
+
+    def communicate(self):
+        return ("", None)
+
+    def wait(self):
+        return 0
+
+
 def _config() -> Config:
     """A replay-mode release: free by construction, so the spend switch is not in the way."""
     return Config(
@@ -232,6 +245,54 @@ def test_a_live_release_may_have_no_fixture(tmp_path):
     """`gemini` calls the model; a fixture is where ``--record`` would write, and is optional."""
     assert upload.check_fixture("", vlm="gemini") == ""
     assert upload.check_fixture(str(tmp_path), vlm="gemini") == str(tmp_path.resolve())
+
+
+def test_a_live_run_inherits_no_fixture_from_the_release(cfg, monkeypatch, tmp_path):
+    """`VSIR_FIXTURE` is also where `cli.py` reads the run's acceptance table from.
+
+    For a replay that is one directory describing one corpus and both meanings agree. For a live
+    ingest of an arbitrary uploaded PDF neither applies — and inheriting it meant every upload was
+    checked against **another document's** expectations: a 4-page datasheet failed the synthetic
+    corpus's label offset and its crop trap on page 20, surfacing as
+    `page_out_of_range: page 20 is outside 1..4`. The document was fine; the table was not about it.
+    """
+    spawned: dict = {}
+    monkeypatch.setattr(upload, "_spawn", lambda *a, **k: spawned.update(k) or _Child())
+
+    live = dataclasses.replace(cfg, vlm="gemini", allow_paid=True,
+                               fixture_dir="/srv/data/fixtures/synthetic_3window")
+    upload.accept(live, filename="d.pdf", body=PDF, spool=tmp_path)
+
+    assert "VSIR_FIXTURE" not in spawned["env"], (
+        "a live run must not be handed the release's replay directory, because cli.py would then "
+        "check an uploaded document against that corpus's acceptance table")
+
+
+def test_not_passing_a_fixture_removes_an_inherited_one(cfg):
+    """"Do not pass it" cannot be expressed by not writing the key.
+
+    `child_env` starts as a copy of this process's environment, and the API container sets
+    `VSIR_FIXTURE` for its own replay default — so skipping the write left the inherited value in
+    place and the live run went on being checked against the synthetic corpus. It has to be popped.
+    """
+    inherited = {"VSIR_FIXTURE": "/srv/data/fixtures/synthetic_3window", "PATH": "/usr/bin"}
+
+    child = upload.child_env(dataclasses.replace(cfg, vlm="gemini"), vlm="gemini", fixture="",
+                             base=inherited)
+
+    assert "VSIR_FIXTURE" not in child
+    assert child["PATH"] == "/usr/bin", "only that one key is removed"
+
+
+def test_a_replay_run_still_inherits_the_releases_fixture(cfg, monkeypatch, tmp_path):
+    """The other half: replay has nowhere else to get its frozen responses from."""
+    spawned: dict = {}
+    monkeypatch.setattr(upload, "_spawn", lambda *a, **k: spawned.update(k) or _Child())
+    monkeypatch.setattr(upload, "check_fixture", lambda fixture, *, vlm: fixture)
+
+    upload.accept(cfg, filename="d.pdf", body=PDF, spool=tmp_path)
+
+    assert spawned["env"]["VSIR_FIXTURE"] == cfg.fixture_dir
 
 
 def test_the_resolved_fixture_is_what_reaches_the_child_not_the_configured_one(cfg):

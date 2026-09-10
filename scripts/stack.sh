@@ -44,9 +44,34 @@ require_docker() {
 }
 
 cmd_up() {
-  local seed=1
-  [[ "${1:-}" == "--no-seed" ]] && seed=0
+  local seed=1 live=0
+  for arg in "$@"; do
+    case "$arg" in
+      --no-seed) seed=0 ;;
+      --live)    live=1; seed=0 ;;   # nothing is seeded with real money by accident
+      *) echo "unknown option: $arg" >&2; exit 1 ;;
+    esac
+  done
   require_docker
+
+  if [[ $live -eq 1 ]]; then
+    # Exported so compose's `${VSIR_VLM:-stub}` and `${VSIR_ALLOW_PAID:-0}` resolve to these.
+    # A shell variable beats `.env` in compose interpolation, which is what makes this an
+    # override rather than an edit.
+    export VSIR_VLM=gemini
+    export VSIR_ALLOW_PAID=1
+    [[ -n "${VSIR_VLM_KEY:-}" ]] || {
+      echo "VSIR_VLM_KEY is not set — a live stack with no credential fails per call, after"  >&2
+      echo "billing whatever it managed to send. Load it first:"                              >&2
+      echo "  set -a && . ./.env && set +a"                                                   >&2
+      exit 1
+    }
+    bold "LIVE: VSIR_VLM=gemini · VSIR_ALLOW_PAID=1"
+    dim  "  Every ingest now calls ${VSIR_VLM_MODEL:-gemini-3.8-flash} for S1 and once per window"
+    dim  "  for S2, and ${VSIR_EMBED_MODEL:-gemini-embedding-2} once per page. This costs real money."
+    dim  "  Nothing is seeded in this mode. Freeze a paid run for free replay with:"
+    dim  "     bash scripts/stack.sh seed your.pdf --record /srv/data/fixtures/your-doc"
+  fi
 
   bold "Building the image (same Dockerfile as production and the test stack)"
   "${COMPOSE[@]}" build --quiet api
@@ -88,6 +113,27 @@ cmd_status() {
   bold "Containers"
   "${COMPOSE[@]}" ps --format "  {{.Service}}\t{{.Status}}\t{{.Publishers}}" 2>/dev/null \
     || "${COMPOSE[@]}" ps
+
+  echo
+  bold "Mode"
+  # Read from the running container, not from this shell: what bills money is the API's own
+  # environment, and a shell variable set since it started would report a comfortable lie.
+  local vlm paid model
+  vlm=$(docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' \
+        "$("${COMPOSE[@]}" ps -q api 2>/dev/null | head -1)" 2>/dev/null | sed -n 's/^VSIR_VLM=//p' | head -1)
+  paid=$(docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' \
+        "$("${COMPOSE[@]}" ps -q api 2>/dev/null | head -1)" 2>/dev/null | sed -n 's/^VSIR_ALLOW_PAID=//p' | head -1)
+  model=$(docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' \
+        "$("${COMPOSE[@]}" ps -q api 2>/dev/null | head -1)" 2>/dev/null | sed -n 's/^VSIR_VLM_MODEL=//p' | head -1)
+  if [[ "$vlm" == "gemini" ]]; then
+    printf "  \033[1;33mLIVE — %s · every ingest bills S1, S2 per window, one embedding per page\033[0m\n" "${model:-?}"
+    printf "  VSIR_ALLOW_PAID=%s%s\n" "${paid:-?}" \
+      "$([[ "$paid" == "1" ]] && echo "" || echo "  (uploads are refused 403 spend_not_permitted)")"
+  elif [[ -n "$vlm" ]]; then
+    echo "  replay — VSIR_VLM=$vlm, frozen responses by cache key, spends nothing (D10)"
+  else
+    echo "  (the api container is not running)"
+  fi
 
   echo
   bold "Probes"

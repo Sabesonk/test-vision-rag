@@ -430,6 +430,9 @@ class GeminiEmbedder:
     transport: Callable[..., Any] | None = None
     sleep: Callable[[float], None] = time.sleep
     name: str = "gemini"
+    #: The SDK client, built on first use by :meth:`_client` and held for the embedder's life. Not
+    #: part of its identity, so it is excluded from `repr` and from comparison.
+    _sdk_client: Any = field(default=None, repr=False, compare=False)
 
     @classmethod
     def from_config(cls, cfg: Config) -> "GeminiEmbedder":
@@ -445,8 +448,21 @@ class GeminiEmbedder:
 
     # -- the one place the SDK is touched -------------------------------------------------------
 
+    def _client(self) -> Any:
+        """One SDK client per embedder, built on first use and kept.
+
+        **Not one per call**, for the reason `vlm/client.py::GeminiBackend._client` records: the
+        client owns an `httpx` transport and closes it when finalised, so as a temporary it can be
+        collected while its own request is still in flight — `RuntimeError: Cannot send a request,
+        as the client has been closed`. A document is one embedding call per batch of pages, so
+        this is also where the connection pool starts paying for itself.
+        """
+        if self._sdk_client is None:
+            self._sdk_client = genai.Client(api_key=self.credential)
+        return self._sdk_client
+
     def _sdk(self, **call: Any) -> Any:
-        return genai.Client(api_key=self.credential).models.embed_content(**call)
+        return self._client().models.embed_content(**call)
 
     def _call(self, contents: list[types.Content]) -> Any:
         """One request. ``output_dimensionality`` is the **only** config field.

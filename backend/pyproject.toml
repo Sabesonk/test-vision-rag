@@ -19,6 +19,14 @@ vsir = "vsir.cli:main"
 where = ["."]
 include = ["vsir*"]
 
+[tool.setuptools.package-data]
+# The S1 and S2 prompts are **release artefacts, not documentation**: their text is hashed into
+# `Prompt.digest` and therefore into the §6.3 cache keys, so the file that shipped is the file the
+# receipts refer to. Without this they were left out of the wheel and the container failed at
+# step 04 with `prompt_unavailable` — invisible to every test, because the stub backend replays a
+# frozen response and never loads a prompt, so only a live call could find it.
+"vsir.vlm" = ["prompts/*.md"]
+
 [tool.setuptools.dynamic]
 version = { attr = "vsir.__version__" }
 # One source of truth for the pinned set (Spec §4.2); requirements.lock holds the transitive

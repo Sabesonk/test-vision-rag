@@ -159,7 +159,7 @@ def check_fixture(fixture: str, *, vlm: str) -> str:
     fixture; one given is where ``--record`` would write, and `cli.py` owns that.
     """
     if not fixture:
-        if vlm == "stub":
+        if vlm == "stub":  # noqa: SIM102 — the two branches read better apart
             raise UploadRefused(
                 "fixture_required",
                 "VSIR_VLM=stub replays frozen responses by cache key and never makes a live call "
@@ -256,11 +256,19 @@ def child_env(cfg: Config, *, vlm: str, fixture: str,
         "VSIR_SAFETY_TOPICS": ",".join(cfg.safety_topics),
         "VSIR_VLM_KEY": cfg.vlm_key,
     })
-    # Already absolute, and already the resolution of `fixture or cfg.fixture_dir`, because
-    # `check_fixture` did both — falling back to `cfg.fixture_dir` a second time here would put the
-    # unresolved relative path back into the child's environment.
+    # Set, or **removed** — never merely skipped. `child` starts as a copy of this process's
+    # environment, so "do not pass a fixture" cannot be expressed by not writing the key: the
+    # inherited one survives. That is how a live run kept being handed the release's replay
+    # directory after `accept` had already decided it should not have one, and went on failing
+    # against another document's acceptance table.
+    #
+    # The value is already absolute and already the resolution of `fixture or cfg.fixture_dir`,
+    # because `check_fixture` did both; falling back to `cfg.fixture_dir` here would put the
+    # unresolved relative path back.
     if fixture:
         child["VSIR_FIXTURE"] = fixture
+    else:
+        child.pop("VSIR_FIXTURE", None)
     return child
 
 
@@ -287,6 +295,20 @@ def command(pdf: Path, *, run_id: str, until: str, declared: Mapping[str, str]) 
         if value:
             argv += [flag, value]
     return argv
+
+
+def _spawn(argv: list[str], *, env: Mapping[str, str]) -> subprocess.Popen:
+    """Start the ingest child. One seam, so a test can assert the argv and the environment.
+
+    The argv and the environment are the whole of what this route decides — everything after them
+    is `vsir ingest`'s — so being able to inspect them without starting a process is what makes
+    them testable at L0. ``start_new_session`` detaches the child from this request's process
+    group, so a client disconnect or a request timeout does not kill a run that is billing.
+    """
+    return subprocess.Popen(  # noqa: S603 — argv list, never a shell string
+        argv, env=dict(env),
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, errors="replace",
+        start_new_session=True)
 
 
 def accept(cfg: Config, *, filename: str, body: bytes, until: str = "publish",
@@ -317,7 +339,19 @@ def accept(cfg: Config, *, filename: str, body: bytes, until: str = "publish",
     # two, and a caller who may not spend does not need to hear about a replay directory.
     check_upload(filename, body[:8], len(body))
     check_spend_allowed(cfg if not vlm else _with_vlm(cfg, resolved_vlm))
-    fixture = check_fixture(fixture or cfg.fixture_dir, vlm=resolved_vlm)
+    # A live run inherits **no** fixture from the release, only one the request named.
+    #
+    # `VSIR_FIXTURE` does double duty in `cli.py`: it is where frozen responses are replayed from,
+    # *and* where the run's acceptance table (`expected.json`) is read from. For a replay that is
+    # one directory describing one corpus and both meanings agree. For a live ingest of an
+    # arbitrary uploaded PDF neither applies — and inheriting the release's replay directory meant
+    # every upload was checked against **another document's** expectations: a 4-page datasheet was
+    # failing the synthetic corpus's label offset and its crop trap on page 20, reported as
+    # `page_out_of_range: page 20 is outside 1..4`. The document was fine; the table was not about
+    # it. Conflating the two in one variable is worth separating in `cli.py`, and is not this
+    # function's to fix.
+    fixture = check_fixture(fixture if resolved_vlm == "gemini" else fixture or cfg.fixture_dir,
+                            vlm=resolved_vlm)
 
     run_id = ids.run_id()
     target = (spool or spool_dir()) / f"{run_id}.pdf"
@@ -325,10 +359,7 @@ def accept(cfg: Config, *, filename: str, body: bytes, until: str = "publish",
 
     argv = command(target, run_id=run_id, until=until, declared=declared or {})
     try:
-        child = subprocess.Popen(  # noqa: S603 — argv list, never a shell string
-            argv, env=child_env(cfg, vlm=resolved_vlm, fixture=fixture),
-            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, errors="replace",
-            start_new_session=True)
+        child = _spawn(argv, env=child_env(cfg, vlm=resolved_vlm, fixture=fixture))
     except OSError as unstartable:
         target.unlink(missing_ok=True)
         raise UploadRefused(

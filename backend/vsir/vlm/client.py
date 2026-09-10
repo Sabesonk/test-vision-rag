@@ -276,6 +276,9 @@ class GeminiBackend:
     #: leaves it None and the SDK client is built on first use, from the credential above.
     transport: Callable[..., Any] | None = None
     name: str = "gemini"
+    #: The SDK client, built on first use by :meth:`_client` and held for the backend's life. Not
+    #: part of the backend's identity, so it is excluded from `repr` and from comparison.
+    _sdk_client: Any = field(default=None, repr=False, compare=False)
 
     @classmethod
     def from_config(cls, cfg: Config) -> "GeminiBackend":
@@ -374,13 +377,83 @@ class GeminiBackend:
             config=types.GenerateContentConfig(
                 system_instruction=instructions.text,
                 response_mime_type="application/json",
-                response_schema=request.schema,
+                response_schema=response_schema(request.schema),
                 temperature=TEMPERATURE,
             ),
         )
 
+    def _client(self) -> Any:
+        """One SDK client per backend, built on first use and kept.
+
+        **Not one per call.** `genai.Client(...).models.generate_content(...)` reads as a harmless
+        one-liner and is not: the client owns an `httpx` transport and closes it when it is
+        finalised, and as a temporary it can be collected while the request it started is still in
+        flight. The observable form of that is `RuntimeError: Cannot send a request, as the client
+        has been closed` on the *first live S1 call* — invisible to every test, because the stub
+        backend never builds a client and the retry ladder is driven through `transport`.
+
+        Keeping it is also the correct thing on its own terms: the connection pool and TLS session
+        are reused across a document's windows instead of being rebuilt per call.
+        """
+        if self._sdk_client is None:
+            self._sdk_client = genai.Client(api_key=self.key)
+        return self._sdk_client
+
     def _sdk(self, **call: Any) -> Any:
-        return genai.Client(api_key=self.key).models.generate_content(**call)
+        return self._client().models.generate_content(**call)
+
+
+#: JSON Schema keywords `response_schema` has no field for. Passing one is a `400
+#: INVALID_ARGUMENT` naming it, so this list is what the API accepts rather than a preference.
+#: `additionalProperties` is the one that matters: every model here sets `extra="forbid"` — which
+#: is right for *parsing*, since an unexpected field in a paid response is something to refuse
+#: rather than drop — and Pydantic renders that as `additionalProperties: false`.
+UNSUPPORTED_SCHEMA_KEYS = frozenset({"additionalProperties", "title", "default", "$schema"})
+
+
+def response_schema(model: type[BaseModel]) -> dict[str, Any]:
+    """A Pydantic model as a schema `response_schema` accepts: refs inlined, extras dropped.
+
+    The model class used to be handed to the SDK directly, which reads as the obvious thing and
+    fails on the **first live call** with `400 INVALID_ARGUMENT: Unknown name
+    "additional_properties" at 'generation_config.response_schema'`. Nothing caught it earlier
+    because the stub backend never builds a request and the retry ladder is driven through
+    `transport`, so no test had ever produced this payload.
+
+    Two transformations, and no others — anything else would be this module quietly deciding what
+    the model may be asked for:
+
+    * **`$ref`/`$defs` are inlined.** A nested model (`DocumentFacts.toc` is a `list[TocEntry]`)
+      becomes a `$ref` into `$defs`, and the schema is sent as a tree with no document to resolve
+      a pointer against.
+    * **Keys with no field on `Schema` are dropped**, per :data:`UNSUPPORTED_SCHEMA_KEYS`.
+
+    The **strict class is still what parses the response** — this is only what describes the shape
+    on the way out, so `extra="forbid"` keeps refusing an unexpected field on the way back in.
+    """
+    raw = model.model_json_schema()
+    defs = raw.pop("$defs", {})
+
+    def resolve(node: Any) -> Any:
+        if isinstance(node, dict):
+            if "$ref" in node:
+                name = node["$ref"].rsplit("/", 1)[-1]
+                if name not in defs:
+                    raise PromptUnavailable(
+                        f"{model.__name__}'s schema references {name!r}, which is not in its own "
+                        f"$defs: the schema cannot be sent as a self-contained tree",
+                        stage=model.__name__)
+                # The sibling keys win: a `$ref` alongside `description` means this use of the
+                # definition, described here.
+                merged = {**defs[name], **{k: v for k, v in node.items() if k != "$ref"}}
+                return resolve(merged)
+            return {key: resolve(value) for key, value in node.items()
+                    if key not in UNSUPPORTED_SCHEMA_KEYS}
+        if isinstance(node, list):
+            return [resolve(item) for item in node]
+        return node
+
+    return resolve(raw)
 
 
 def _pinned(model: str) -> str:
