@@ -34,6 +34,9 @@ from vsir.ingest import export as export_module
 from vsir.ingest import gates, index as index_module
 from vsir.ingest import run as run_module
 from vsir.ingest.fingerprint import Fingerprint
+from vsir.core.status import Status
+from vsir.serve.envelope import Provenance as ResponseProvenance
+from vsir.serve.tools.lookup import lookup
 
 EMBED_DIM = 8
 COLLECTION = f"vsir_pages_publish_{EMBED_DIM}"
@@ -362,6 +365,40 @@ def test_fully_scanned_document_publishes(store):
     assert published.flags == [gates.FLAG_MOSTLY_SCANNED]
     assert all(page.text_trust == "no_text" for page in run_module.run_records(
         store, COLLECTION, doc_id="SCANNED", revision="1.0", run_id="R1"))
+
+
+def test_a_published_scanned_document_answers_not_searchable(store):
+    """AC (Spec §13 M2a) + F4: the fully text-free document that publishes is answerable **only**
+    as `not_searchable` — the other half of the same sentence.
+
+    The publish half alone would leave the acceptance item half-proved: a document that is in the
+    index and that `lookup` reports as *not found* is the injury F4 names, because *"that part
+    doesn't exist"* and *"nobody could read that page"* are different answers and only one of them
+    is true. `lookup` is M1's, unchanged; what is new here is that a real publish feeds it.
+    """
+    publish(store, build_records("SCANNED", "1.0", "R1", rate=None, labels=[""] * PAGES))
+
+    response = lookup(store, COLLECTION, "K104", scope={"doc_id": "SCANNED"},
+                      provenance=ResponseProvenance(release_id="test-0"))
+
+    assert queryable(store, "SCANNED", "1.0") == PAGES
+    assert response.status is Status.NOT_SEARCHABLE
+    assert response.hits == []
+    assert response.scope_stats.pages == PAGES
+    assert response.scope_stats.pages_no_text == PAGES
+
+
+def test_a_published_text_bearing_document_still_answers_ok(store):
+    """The control for the row above: `not_searchable` has to be a statement about the pages, not
+    about everything this suite publishes."""
+    publish(store, build_records("DOC-A", "1.0", "R1"))
+
+    response = lookup(store, COLLECTION, "K104", scope={"doc_id": "DOC-A"},
+                      provenance=ResponseProvenance(release_id="test-0"))
+
+    assert response.status is Status.OK
+    assert [hit.page_id for hit in response.hits] == ["DOC-A@1.0#p004"]
+    assert all(hit.verified for hit in response.hits)
 
 
 def test_a_label_conflict_flags_the_run_and_publishes_it_anyway(store):

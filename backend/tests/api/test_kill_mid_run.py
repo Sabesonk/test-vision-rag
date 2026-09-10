@@ -250,6 +250,29 @@ def test_the_same_pipeline_uninterrupted_publishes_every_page(store, ingest):
                        if '"event": "published"' in line][-1])["pages_indexed"] == 42
 
 
+def test_running_the_same_ingest_twice_yields_the_same_point_count(store, ingest):
+    """AC (Spec §13 M2a): re-running the ingest twice yields the same point count.
+
+    Asserted through **two real `vsir ingest` invocations** rather than two calls to `publish()`,
+    because the property is a claim about the command an operator runs. Two mechanisms make it
+    hold and both show up here: `point_id = uuid5(page_id)` overwrites (I1), and retirement's
+    first clause deletes what a shorter re-run left behind (F12). The second run also re-embeds
+    nothing — the vectors come off the points the first run wrote (register B5).
+    """
+    first, _ = ingest().communicate(timeout=600)
+    after_first = queryable(store)
+
+    second, _ = ingest().communicate(timeout=600)
+
+    assert after_first == 42 == queryable(store)
+    assert "42 embedded, 0 reused" in first
+    assert "0 embedded, 42 reused" in second
+    assert run_module.require(store, RUNS, run_id_of(second)).state == run_module.PUBLISHED
+    # Both runs are in the control plane; only the second one's points are in the index.
+    assert len(run_module.runs(store, RUNS, doc_id=DOC)) == 2
+    assert queryable(store) == 42
+
+
 # ── the operational commands of §4.4, as an operator runs them ───────────────────────────────────
 
 def cli(qdrant_url: str, *arguments: str) -> subprocess.CompletedProcess:

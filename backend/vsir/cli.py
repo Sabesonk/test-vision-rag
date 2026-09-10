@@ -574,6 +574,10 @@ STORE_BACKED_STEPS: tuple[str, ...] = ("embed", "index", "publish")
 
 _RULE_WIDTH = 78
 
+#: What a §6.4 refusal that names no check is reported as. It cannot happen through
+#: `derive.check_offset`, which always names one; printing an empty string would be worse.
+OFFSET_CHECK_UNKNOWN = "offset"
+
 #: How far a vector read back out of Qdrant may differ from the one that was written. Qdrant keeps
 #: a cosine vector as float32 and normalises it on the way in, so the round trip is lossy by about
 #: 1e-9 per component. Anything beyond this is a *different vector*, not a storage artefact.
@@ -896,10 +900,35 @@ def _ingest(args: argparse.Namespace, cfg: Any, handle: _RunHandle) -> bool:
 
     # ── 07 derivation ────────────────────────────────────────────────────────────────────────
     _step("07", "derivation — the claim beside the evidence, and both checks of the offset proof")
-    derivation = derive_module.derive(
-        extraction, probed=probed, doc=doc, run_id=vsir_logging.correlation().get("run_id", ""),
-        release_id=cfg.release_id, vlm_model=cfg.vlm_model, prompt_version=cfg.prompt_version,
-        dpi=DPI_ANSWER, doc_lang=facts.lang)
+
+    def reextract(half: Any) -> Any:
+        """§6.4's *"bisect and re-bill"*, wired to the real step 06 (I4, F13).
+
+        This argument is what makes the repair a **production** path rather than a capability.
+        Without it `derive` re-raises, which is the honest answer for an inspection run with
+        nothing to re-bill with — and would leave a document that could have been repaired
+        failing instead. The halves are billed through the same `extract_window` the plan's own
+        windows go through, so each gets its own `extract_key` over the pages it actually covers.
+        """
+        return extract_module.extract_window(
+            backend, half, source=source, content_hash=probed.content_hash,
+            page_count=probed.page_count, vlm_model=cfg.vlm_model,
+            prompt_version=cfg.prompt_version, dpi=DPI_ANSWER)
+
+    try:
+        derivation = derive_module.derive(
+            extraction, probed=probed, doc=doc, run_id=run_id,
+            release_id=cfg.release_id, vlm_model=cfg.vlm_model,
+            prompt_version=cfg.prompt_version, dpi=DPI_ANSWER, doc_lang=facts.lang,
+            reextract=reextract)
+    except derive_module.OffsetError as failure:
+        # The repair was tried and could not finish — a half that fails the same way down to one
+        # page, or a coverage hole. §11.1's `offset_check` is what judges that, so the run is
+        # **gated** with the failing window named rather than dying with a traceback: I4 is proved
+        # on every window or the document does not publish, and zero pages are queryable either
+        # way (I7).
+        return _offset_blocked(args, cfg, handle, doc=doc, probed=probed, plan=plan, keys=keys,
+                               extraction=extraction, failure=failure)
     _log.info("ingest_step", step="derive", pages=len(derivation.pages),
               moves=len(derivation.moves),
               grounded_median=derivation.health.grounded_median,
@@ -950,6 +979,48 @@ def _ingest(args: argparse.Namespace, cfg: Any, handle: _RunHandle) -> bool:
     return _embed_and_index(args, cfg, handle, source=source, doc=doc, probed=probed, plan=plan,
                             keys=keys, facts=facts, extraction=extraction,
                             derivation=derivation, stitched=stitched)
+
+
+def _offset_blocked(args: argparse.Namespace, cfg: Any, handle: _RunHandle, *, doc: Any,
+                    probed: Any, plan: Any, keys: Sequence[str], extraction: Any,
+                    failure: Exception) -> bool:
+    """An offset failure the ladder could not repair: record it, gate the run, publish nothing.
+
+    The failing window is written to its own control point with ``offset_ok=False``, so §11.1's
+    `offset_check` gate reads it the way it reads every other window — the gate's blocking path is
+    the pipeline's, not only a test's. With no derived records `window_coverage` blocks too, which
+    is honest: nothing was derived.
+    """
+    details = getattr(failure, "details", {})
+    span = tuple(details.get("window") or ())
+    print(f"\n   §6.4 REFUSED {details.get('check', OFFSET_CHECK_UNKNOWN)}: {failure}")
+    if handle.client is None or handle.record is None:
+        raise failure
+
+    for window, key in zip(plan.windows, keys):
+        ok = (window.start, window.end) != (span[0], span[1]) if len(span) == 2 else True
+        run_module.note_window(handle.client, cfg.runs_collection, run_module.WindowState(
+            run_id=handle.record.run_id, doc_id=doc.doc_id, start=window.start, end=window.end,
+            state=run_module.DONE if ok else run_module.FAILED, attempts=1, checkpoint="derive",
+            extract_key=key, pages_returned=0, offset_ok=ok,
+            check=str(details.get("check", "")) if not ok else "",
+            detail="" if ok else str(failure)[:500]))
+
+    report = gates_module.evaluate(
+        records=[], page_count=probed.page_count,
+        windows=[state.outcome() for state in
+                 run_module.windows(handle.client, cfg.runs_collection, handle.record.run_id)])
+    handle.record = run_module.save(handle.client, cfg.runs_collection, handle.record.model_copy(
+        update={"state": run_module.GATED, "step": "derive",
+                "gate_results": report.as_dict(), "lease": run_module.Lease()}))
+    _log.error("ingest_gated", run_id=handle.record.run_id, step="derive",
+               blocked_by=list(report.blocking()), reason=getattr(failure, "code", "offset"),
+               window=list(span), queryable=0)
+    print(f"   run {handle.record.run_id} is state {handle.record.state}: "
+          f"{list(report.blocking())} block it, and 0 page(s) of {doc.doc_id}@{doc.revision} are "
+          f"queryable (I7). §6.2's ladder bisects and re-bills; it does not pad and it does not "
+          f"guess the offset")
+    return False
 
 
 def _embed_and_index(args: argparse.Namespace, cfg: Any, handle: _RunHandle, *, source: Path,
@@ -1756,6 +1827,10 @@ def _record_failure(handle: _RunHandle, cfg: Any, *, reason: str, detail: str) -
     a different one.
     """
     if handle.client is None or handle.record is None:
+        return
+    if handle.record.state in (run_module.GATED, run_module.PUBLISHED):
+        # A gate already judged this run and named the gate that blocked it. Overwriting that with
+        # `failed` would replace the reason with a category (§6.9).
         return
     try:
         run_module.fail(handle.client, cfg.runs_collection, handle.record,

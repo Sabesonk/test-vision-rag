@@ -1556,7 +1556,7 @@ The second run of the same command: **`0 embedded, 42 reused` · 42 points · st
 `point_id` is idempotent, so re-ingest overwrites and the totals do not double (I1, F12).
 
 `bash scripts/test-unit.sh` → **947 passed**, Layer 0/1 PASSED (conformance included).
-`bash scripts/test-api.sh` → **216 passed** against `qdrant/qdrant:v1.19.0` and the container.
+`bash scripts/test-api.sh` → **226 passed** against `qdrant/qdrant:v1.19.0` and the container.
 
 **Invariants / failure rows closed**
 
@@ -1642,10 +1642,62 @@ The second run of the same command: **`0 embedded, 42 reused` · 42 points · st
 - **OQ-3 / OQ-7 unchanged and still open:** exports are served over HTTP per §6.8 and nothing is
   written to local disk. If Part A needs files, the answer is an attached object store, never the
   instance's filesystem. Due before M8.
+- **Post-audit fix (the milestone gate's one ✗): §6.4's repair is now wired into the CLI.**
+  `derive()` has always accepted a `reextract` callable and `test_derive_offset.py` proved the
+  bisection with a test-supplied one — but `cli.py` passed none, so on a real `vsir ingest` a
+  check-(2) failure **re-raised** instead of bisecting. I4 as Spec §9 words it ("a failure bisects
+  and re-bills") therefore did not hold end to end. The CLI now passes
+  `extract_module.extract_window` as `reextract`, so each half is billed through the same door as
+  a planned window and gets its own `extract_key` over the pages it covers (§6.3). New L2 suite
+  `tests/api/test_offset_repair.py` proves it on a **doctored replay corpus**: the checked-in
+  fixture copied to a tmp dir with window 2's labels rotated by one and both halves frozen under
+  their own keys — a real ingest bisects, re-bills, publishes all 42 pages, files no page under the
+  failed response's receipt, and records `bisected: true` on that window's control point.
+- **And the gate's blocking path is now reachable from the pipeline.** `cli._offset_blocked` writes
+  the failing window with `offset_ok=False`, evaluates §11.1 and leaves the run **`gated`** with
+  the window named and zero pages queryable, instead of dying with a traceback. `_record_failure`
+  will not downgrade a `gated` (or `published`) run to `failed`: a gate decision names the gate,
+  and `failed` names only a category. The reachable end-to-end failures *downstream* of the repair
+  are §6.2's own terminus (`window_unsplittable`) and a replay miss, both of which fail the run
+  before derivation reaches a verdict — so that handler is tested directly, and its docstring says
+  why.
+- **Two acceptance items were proved one layer below their wording, and now are not.** *"a fully
+  text-free document is answerable only as `not_searchable`"* — `test_a_published_scanned_document_answers_not_searchable`
+  runs M1's unchanged `lookup` against a document this unit actually published (with a text-bearing
+  control beside it). *"re-running the ingest twice yields the same point count"* —
+  `test_running_the_same_ingest_twice_yields_the_same_point_count` runs two real `vsir ingest`
+  invocations rather than two `publish()` calls, and asserts the second re-embeds nothing.
 - **Left for later units:** `--resume` re-runs the whole pipeline under the claimed run id; the
   window-level skip that makes a resume *cheap* is U025's, and the checkpoints it will read
   (`state`, `attempts`, `checkpoint`, `extract_key`) are already written per window. The R4
   threshold stays provisional at 0.8 until U013 sets it from the M2b distribution.
+
+---
+
+### M2a milestone gate — closed 2026-09-10, tagged `cr1-m2a`
+
+**Demo** (Spec §0 and §13): `vsir ingest data/source/synthetic_3window.pdf --vlm stub && vsir runs
+show <run_id>` — **exit 0**, five gates PASS, `state: published`, 42 of 42 pages queryable, run
+record read back out of `vsir_runs`. Output recorded under U011 above. A second run of the same
+command: `0 embedded, 42 reused`, still 42 points, still 42 queryable.
+
+`bash scripts/test-unit.sh` → **947 passed** · `bash scripts/test-api.sh` → **226 passed**.
+
+**Acceptance verified by subagent** against Spec §13 M2a, adversarially and with file:line evidence
+per row. Result: **✓ on every acceptance and deliverable row bar one**, with five items flagged as
+"evidence weaker than the claim". All six are addressed:
+
+| finding | disposition |
+|---|---|
+| **✗ I4's "bisects and re-bills" was not wired into the CLI** — `derive()` was called with no `reextract`, so a real run failed instead of repairing | **fixed** in the CLI, proved end to end by the new `tests/api/test_offset_repair.py` (7 rows) |
+| ~ the `offset_check` gate could not fail on a real run (`offset_ok=True` hardcoded) | **fixed** — `cli._offset_blocked` records the failing window and gates the run; tested |
+| ~ *"answerable only as `not_searchable`"* was unproved on a **published** scanned document | **closed** — `test_a_published_scanned_document_answers_not_searchable` (L2), plus a control |
+| ~ "re-run twice" was proved at the `publish()` layer, not through `vsir ingest` | **closed** — `test_running_the_same_ingest_twice_yields_the_same_point_count` (L2) |
+| ~ F8's "carry-in" is key-merge only; a page that did not report its section is disclosed as `noncontiguous_section` rather than having the section carried into it | **U009's documented decision, unchanged.** Recorded here as the reading of F8's stitching half that this milestone ships |
+| ~ `eval/synthetic.py` writes `is_current=True` points directly, so "the only writer" was imprecise | **wording fixed** in `run.py`. It is a fixture loader for M1's pre-published corpus into an ephemeral collection dropped on exit — no pipeline path reaches it, and `index.build_point` still refuses a *record* that claims to be current |
+
+**Invariants asserted from M2a (Spec §9):** I1, I4, I7. **Failure rows closed at M2a (Spec §10):**
+F4 (M2a half), F5, F6, F7, F8, F11 (key half), F12 (M2a half), F13, F15, F17.
 
 ---
 

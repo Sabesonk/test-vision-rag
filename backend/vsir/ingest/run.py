@@ -18,11 +18,18 @@ until the gates flip ``is_current`` (I7). A duplicated worker is therefore a **c
 corruption bug — it re-bills windows. The lease is what stops that from happening by accident;
 ``--steal`` is what lets an operator override it when a worker has died holding one.
 
-**The publish flip, and why it is the only writer of ``is_current=True``.** Step 10 writes every
-point ``False``. Here, and only here, a filtered ``set_payload`` flips the run's points — after the
-gates pass and never before (I7). It is idempotent (a filter, not a list of ids, and the same value
-every time) and it is retried, and ``published_at`` is recorded **only after it returns**: a
-recorded publish time in front of a half-applied flip is exactly the half-finished run F17 names.
+**The publish flip, and why it is the ingest pipeline's only writer of ``is_current=True``.**
+Step 10 writes every point ``False``, and :func:`vsir.ingest.index.build_point` refuses a record
+that arrives claiming otherwise. Here, and only here, a filtered ``set_payload`` flips the run's
+points — after the gates pass and never before (I7). It is idempotent (a filter, not a list of
+ids, and the same value every time) and it is retried, and ``published_at`` is recorded **only
+after it returns**: a recorded publish time in front of a half-applied flip is exactly the
+half-finished run F17 names.
+
+*(The one other place a current point is written is `vsir.eval.synthetic.seed`, which seeds M1's
+pre-published fixture corpus into an ephemeral `{collection}_synthetic_{dim}` that
+`vsir demo exact --synthetic` drops on the way out. It is a fixture loader, not a run: it never
+touches the serving collection and there is no pipeline path to it.)*
 
 **Retirement is scoped, and the scope is the whole point (F12 vs F9).** Three clauses, all filter-
 based, all idempotent:
