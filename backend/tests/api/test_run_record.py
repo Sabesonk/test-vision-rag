@@ -30,6 +30,7 @@ from vsir.ingest import gates, index as index_module
 from vsir.ingest import run as run_module
 from vsir.ingest.fingerprint import Fingerprint
 
+from conftest import CONTAINER_AUTH
 from test_publish_and_retire import build_records
 
 #: The **container's** collections, because this suite reads over HTTP: the server was configured
@@ -44,10 +45,16 @@ PAGES = 6
 FINGERPRINT = Fingerprint(embed_model="gemini-embedding-2", dim=EMBED_DIM)
 
 
-def get(url: str) -> tuple[int, Any, dict[str, str]]:
-    """One GET. A 4xx/5xx is a response to read, not an exception to raise (§7.1)."""
+def get(url: str, *, authenticated: bool = True) -> tuple[int, Any, dict[str, str]]:
+    """One GET. A 4xx/5xx is a response to read, not an exception to raise (§7.1).
+
+    Bearer by default from U014: `GET /runs/{run_id}` and the two exports are authenticated
+    (§7.4), and only the three probes are not. ``authenticated=False`` is how the suite asserts
+    that the run surface really is behind the token rather than merely happening to work.
+    """
+    request = urllib.request.Request(url, headers=CONTAINER_AUTH if authenticated else {})
     try:
-        with urllib.request.urlopen(url, timeout=30) as response:
+        with urllib.request.urlopen(request, timeout=30) as response:
             body = response.read().decode("utf-8")
             return response.status, body, dict(response.headers)
     except urllib.error.HTTPError as failure:
@@ -251,5 +258,17 @@ def test_the_gauges_are_recomputed_from_the_control_plane_on_every_scrape(base_u
 def test_health_and_ready_still_answer_beside_the_new_surface(base_url, published):
     """The run surface shares the process with the probes and must not slow or break them: they
     use a different client with a two-second timeout for exactly that reason."""
-    assert json.loads(get(f"{base_url}/health")[1])["status"] == "ok"
-    assert get(f"{base_url}/ready")[0] == 200
+    assert json.loads(get(f"{base_url}/health", authenticated=False)[1])["status"] == "ok"
+    assert get(f"{base_url}/ready", authenticated=False)[0] == 200
+
+
+def test_the_run_surface_is_behind_the_token_and_the_gauges_are_not(base_url, published):
+    """§7.4 — `/runs` and its exports are bearer; `/metrics` is not, because a scrape holds none.
+
+    Asserted against the container rather than in process: this is the deployed policy, and the
+    run record is exactly the sort of thing that reads as harmless metadata right up until it
+    names every document a customer has ingested.
+    """
+    assert get(f"{base_url}/runs/{RUN_ID}", authenticated=False)[0] == 401
+    assert get(f"{base_url}/runs/{RUN_ID}/export/labels.jsonl", authenticated=False)[0] == 401
+    assert get(f"{base_url}/metrics", authenticated=False)[0] == 200

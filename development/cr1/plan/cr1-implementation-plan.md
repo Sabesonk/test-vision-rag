@@ -1512,7 +1512,7 @@ files written under `data/fixtures/TC1E-SF/`.
 
 ## Unit: The serving app — auth, audit, budget, and degradation (ID: U014)
 
-**Status:** 🔵 Not Started
+**Status:** 🟢 Complete (2026-09-10)
 **Milestone:** M3
 **Priority:** P0-Critical
 **Type:** tool
@@ -2003,7 +2003,21 @@ requested: 6}` and `dpi=400` **without** a region returning `dpi_requires_region
   instance returns identical results, only slower. The cache is a **cache and never a source of
   truth**; it lives on the Dockerfile's writable `tmpfs`, never on a durable volume.
 - Spec §7.4: `GET /pages/{page_id}/image` is bearer-authenticated and enforces the same caps and the
-  same typed 400s as §7.3. Rasters are never returned without auth (Spec §16 Security).
+  same typed 400s as §7.3. Rasters are never returned without auth (Spec §16 Security). *(Auth is
+  already in force: U014 made it default-deny middleware, so this path is refused without a token
+  today, before the route exists. U018 adds the route, not the protection.)*
+- **Finding from U014 — `ImageRef.url` is not percent-encoded and is therefore undereferenceable.**
+  `serve/tools/lookup.py::image_ref` builds `/pages/{page_id}/image?dpi=150` by interpolation, and a
+  `page_id` contains `#` (§5.1: `{doc_id}@{revision}#p{page_no}`), which a client parses as a
+  fragment delimiter — so the path that actually reaches this route is `/pages/SYN-M1@1.0`. Spec
+  §7.2.5's own example shows the encoded form, `/pages/TC1E-SF@1.3%23p001/image?dpi=150`. U018 owns
+  the route and therefore owns the encoding: quote the `page_id` where the reference is built,
+  unquote it in the path parameter, and add a round-trip assertion. Three existing assertions
+  encode the current unencoded form and must move with it —
+  `tests/api/test_acceptance_synthetic.py::test_every_hit_carries_an_image_reference_and_no_hit_carries_bytes`
+  and `tests/unit/test_lookup_pure.py::test_a_hit_carries_an_image_reference_and_never_bytes`.
+  Deliberately **not** fixed in U014: the encoding is half of a contract whose other half is this
+  unit's route, and splitting it across two units would leave one release with neither.
 - Spec §11.3: an over-budget `fetch` is a typed 400 naming the bound — **never a dpi clamp or a
   truncated page list**.
 - Spec §15.1 Resource limits: raster rendering is the memory spike, and the ≤ 12 MP cap is what

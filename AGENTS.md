@@ -225,18 +225,41 @@ typed `fixture_miss` rather than a stale hit. Editing `backend/vsir/vlm/prompts/
 adding a new version to `PROMPT_DIGESTS` is refused by name (`prompt_unavailable`): a prompt is
 part of the release, not configuration.
 
-The HTTP surface, until `vsir serve` lands in U014 — the two probes, the run record, the two
-exports and the §11.4 gauges:
+The HTTP surface — `vsir serve` binds `$VSIR_PORT` and exports §7.4. The boot self-check runs
+**before** anything is bound, so a floating model id, a live schema that disagrees with `INDEXED`
+or a missing variable is a named non-zero exit and never a partially serving process (§4.3):
 
 ```bash
-backend/.venv/bin/uvicorn --factory vsir.serve.app:app_factory --port 8000   # from backend/
-curl -s localhost:8000/health            # liveness — green even with Qdrant down
+backend/.venv/bin/vsir serve                     # binds 0.0.0.0:$VSIR_PORT; --host for a laptop
+export TOKEN=$(cut -d, -f1 <<< "$VSIR_API_TOKENS")
+
+curl -s localhost:8000/health            # liveness — green even with Qdrant down, no token
 curl -s localhost:8000/ready             # readiness — 503 `qdrant_unavailable` with Qdrant down
-curl -s localhost:8000/runs/<run_id>     # the §6.9 run record; a typed 404 for an unknown run
-curl -s localhost:8000/runs/<run_id>/export/labels.jsonl           # one NDJSON line per page
-curl -s localhost:8000/runs/<run_id>/export/observed_tokens.jsonl  # one line per document
 curl -s localhost:8000/metrics           # ingest_grounded_rate_median, ingest_gate_failures_total
+
+curl -s -H "Authorization: Bearer $TOKEN" -X POST localhost:8000/tools/lookup \
+     -d '{"label":"SF 1.1A"}'            # the tools of §7.2, one envelope each
+curl -s -H "Authorization: Bearer $TOKEN" localhost:8000/runs/<run_id>
+curl -s -H "Authorization: Bearer $TOKEN" localhost:8000/runs/<run_id>/export/labels.jsonl
+curl -s -H "Authorization: Bearer $TOKEN" localhost:8000/runs/<run_id>/export/observed_tokens.jsonl
 ```
+
+`vsir serve` is the only subcommand that **prints nothing**: it runs as the `web` process type, so
+its stdout *is* the event stream and the contract there is one JSON object per line (§15 XI).
+
+**Those three probes are the entire unauthenticated surface.** Auth is middleware and default
+deny, so a path that does not exist yet — `GET /pages/{page_id}/image`, `POST /ask` — is already
+refused without a token; a route added later is protected before it is written. The identity in
+the audit line and the budget ledger is `caller-<sha256(token)[:12]>`, never the token itself, so
+a rotated credential is a new caller id and no log line ever held the secret (§15.1).
+
+`POST /tools/{tool_name}` dispatches through the release's tool table. A name that is not in it —
+`read` and `fetch` until U018/U020 — is a typed `404` listing what *is* served, never an empty
+result. One append-only audit line goes to stdout per `read` and per `fetch` and none for a free
+tool; **cost is in that line and never in a response body**, where the caller gets the single
+integer `reads_remaining` (§7.4). The per-caller quota is `VSIR_READ_QUOTA` reads per UTC day,
+held as a `kind: budget` point in `vsir_runs` so N replicas enforce one ceiling, and exhausting it
+is a `429 budget_exhausted` — never a truncated result.
 
 Both exports are **generated from the index and streamed** — nothing is written to the instance's
 filesystem and there is no file to read from it (§6.8, §15 Factor VI), so any replica serves any
@@ -284,8 +307,14 @@ docker compose -f docker-compose.test.yml down -v               # always -v
 | Service | Host port | Note |
 |---|---|---|
 | `test-qdrant` | `6335` → 6333 | **never 6334** — that is the dev instance's gRPC port |
-| `backend-test` | `8001` → 8000 | same image as production, env and ports differ |
+| `backend-test` | `8001` → 8000 | same image as production, `command: ["serve"]`, env and ports differ |
 | `frontend-test` | `5174` → 5173 | behind the `e2e` compose profile until M7 |
+
+The test stack's bearer token is `${VSIR_TEST_API_TOKENS:-test-only-not-a-secret}` — deliberately
+**not** `VSIR_API_TOKENS`. Compose interpolates from `.env`, which is where a developer's real
+token lives, so reading the production variable made the stack's credential whatever happened to
+be in an untracked file. `tests/api/conftest.py::CONTAINER_TOKEN` resolves the same name; override
+both or neither.
 
 Dev ports, for reference: backend `8000`, Qdrant `6333` REST and `6334` gRPC, frontend `5173`.
 

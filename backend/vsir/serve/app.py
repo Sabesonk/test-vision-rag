@@ -1,10 +1,24 @@
-"""The HTTP surface (Spec §7.4) — at this milestone, the two probes of §15.1.
+"""The HTTP surface (Spec §7.4) — the probes of §15.1, the run control plane, and the tools.
 
 Adapted from ``impl/app/main.py``. What survives is that module's central discipline: distinct
 failures stay distinct, because collapsing them manufactures silent wrong answers. What does not
 survive is the ``200``-empty abstention path (§2.5 A — four typed absences replace it), the
-combined ``GET /api/health``, the HTML UI at ``/``, and an unauthenticated surface. The eight
-tools, bearer auth, the audit log and the budget arrive with U014.
+combined ``GET /api/health``, the HTML UI at ``/``, and — the one that mattered most —
+**an unauthenticated surface**.
+
+`impl` exposed eleven endpoints with no credential on any of them, including the vision call that
+spends money and the delete that removes a document (register **E5**). Here every path but the
+three free probes is refused without a bearer token, and it is refused in *middleware* rather than
+by a decorator on each route: a route this file gains next milestone is protected before it is
+written (`serve/auth.py`).
+
+**The tool surface is one route and a table.** ``POST /tools/{tool_name}`` looks the name up in
+:func:`tool_table`, validates the body against that tool's own Pydantic model, charges the budget
+if the tool spends, runs it, stamps ``reads_remaining`` on the envelope and — for `read` and
+`fetch` only — writes the ten-field audit line of §7.4. Adding a tool is adding a row, so no tool
+can arrive with its own idea of auth, of the budget, or of which failures are which. The table in
+this release holds `lookup`; the rest of §7.2 joins it as its milestone lands, and a name that is
+not in the table is a typed `404` naming what is, never a 501-shaped silence.
 
 **Liveness and readiness answer different questions, and mixing them amplifies an outage.**
 
@@ -34,21 +48,34 @@ every deploy, which is a metric about the deployment rather than about the corpu
 from __future__ import annotations
 
 import os
+import uuid
 from contextlib import asynccontextmanager
-from typing import Any, AsyncIterator, Iterator, Literal, Mapping
+from dataclasses import dataclass
+from typing import (Any, AsyncIterator, Awaitable, Callable, Iterator, Literal, Mapping,
+                    MutableMapping, Sequence)
 
-from fastapi import FastAPI, Response
+from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse, PlainTextResponse, StreamingResponse
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from qdrant_client import QdrantClient
+from qdrant_client.http.exceptions import ResponseHandlingException, UnexpectedResponse
 from starlette.concurrency import run_in_threadpool
 
 from vsir import __version__
 from vsir import logging as vsir_logging
-from vsir.config import Config, load_config
+from vsir.config import LOOKUP_CAP, Config, load_config
 from vsir.doctor import QDRANT_UNAVAILABLE, BootRefused, assert_boot_ok, run_boot_checks
 from vsir.ingest import export as export_module
 from vsir.ingest import run as run_module
+from vsir.serve import audit as audit_module
+from vsir.serve import auth as auth_module
+from vsir.serve import budget as budget_module
+from vsir.serve.audit import Usage
+from vsir.serve.auth import BearerAuth, Identity
+from vsir.serve.caps import ToolError
+from vsir.serve.envelope import Provenance
+from vsir.serve.tools.lookup import lookup as lookup_tool
+from vsir.vlm.cache import VlmCallFailed, VlmError, VlmUnavailable
 
 #: A local boot check that has started failing after boot (a rotated variable, say).
 BOOT_CHECK_FAILED = "boot_check_failed"
@@ -58,8 +85,31 @@ PROBE_TIMEOUT_S = 2
 #: honest answers: a probe that waits 30 seconds is a probe that fails to fail, and an export of a
 #: 1,440-page manual that gives up after 2 is a truncated contract artefact.
 CONTROL_TIMEOUT_S = 30
+#: And the tool surface gets its own again: a tool call is on a caller's request path, so a store
+#: that has stopped answering has to become a `503` while the caller is still there to read it.
+SEARCH_TIMEOUT_S = 10
 #: uvicorn's own loggers, folded into the one JSON stream (§15 Factor XI).
 _UVICORN_LOGGERS = ("uvicorn", "uvicorn.error", "uvicorn.access")
+
+#: Correlation only — never identity (§7.4). A caller may name its own request, session and runner
+#: run so its logs and ours line up; who it *is* comes from the token and nothing else.
+REQUEST_ID_HEADER = "x-request-id"
+SESSION_ID_HEADER = "x-session-id"
+RUN_ID_HEADER = "x-run-id"
+#: A correlation id is an identifier, not a payload. Bounded so a caller cannot push a kilobyte
+#: onto every line of the event stream.
+MAX_CORRELATION_CHARS = 64
+
+#: Exceptions that mean *the store did not answer*. Each becomes `503 qdrant_unavailable` —
+#: retryable, and **never** an empty result, because a backend failure returned as "nothing found"
+#: turns our outage into the agent's fabricated abstention (§7.1, §11.3).
+STORE_FAILURES: tuple[type[BaseException], ...] = (
+    ResponseHandlingException, UnexpectedResponse, run_module.StoreUnavailable,
+    ConnectionError, TimeoutError, OSError,
+)
+#: Exceptions that mean *the model backend cannot run*. `503 vlm_unavailable` on the tool that
+#: needed it, while every free tool keeps working (§11.3 row 2).
+VLM_UNAVAILABLE: tuple[type[BaseException], ...] = (VlmUnavailable, VlmCallFailed)
 
 _log = vsir_logging.get_logger(__name__)
 
@@ -144,6 +194,239 @@ def _refusal(refusal: run_module.RunRefused, status: int) -> JSONResponse:
     })
 
 
+# ── correlation (§11.4) ──────────────────────────────────────────────────────────────────────────
+
+#: Where :class:`RequestContext` parks the ids so the tool dispatcher can put them on the audit
+#: line explicitly, rather than trusting a ``ContextVar`` to survive the hop into a worker thread.
+SCOPE_CORRELATION = "vsir.correlation"
+
+
+def _header(headers: Sequence[tuple[bytes, bytes]], name: str) -> str:
+    wanted = name.encode("latin-1")
+    for key, value in headers:
+        if key.lower() == wanted:
+            return value.decode("latin-1", "replace").strip()[:MAX_CORRELATION_CHARS]
+    return ""
+
+
+class RequestContext:
+    """Bind ``request_id``/``session_id``/``run_id`` for the life of one request (§11.4).
+
+    Pure ASGI, not ``BaseHTTPMiddleware``, and the reason is the whole point of the class: that
+    base class runs the downstream app in a **separate task**, so a ``ContextVar`` bound in its
+    ``dispatch`` never reaches the endpoint and every log line inside the request would be missing
+    the id that ties it to the request. A plain ASGI callable awaits the app in the same task.
+
+    It is the outermost middleware, so a `401` from :class:`~vsir.serve.auth.BearerAuth` is on the
+    stream with a ``request_id`` too — an unauthenticated call is exactly the kind an operator has
+    to be able to correlate.
+
+    Nothing here is identity. A caller supplies these three so *its* logs and ours line up; who it
+    is comes from the bearer token, in the next middleware down (§7.4).
+    """
+
+    def __init__(self, app: Any) -> None:
+        self.app = app
+
+    async def __call__(self, scope: MutableMapping[str, Any],
+                       receive: Callable[[], Awaitable[Any]],
+                       send: Callable[[Any], Awaitable[None]]) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+        headers = scope.get("headers") or ()
+        ids = {
+            "request_id": _header(headers, REQUEST_ID_HEADER) or uuid.uuid4().hex,
+            "session_id": _header(headers, SESSION_ID_HEADER),
+            "run_id": _header(headers, RUN_ID_HEADER),
+        }
+        scope[SCOPE_CORRELATION] = ids
+        with vsir_logging.correlate(**{k: v for k, v in ids.items() if v}):
+            await self.app(scope, receive, send)
+
+
+# ── the tool surface (§7.2, §7.4) ────────────────────────────────────────────────────────────────
+
+class ToolRequest(BaseModel):
+    """Base for every tool body. ``extra="forbid"``, so a misspelt parameter is a `400`.
+
+    Silently ignoring an unknown field is how a caller passes ``include_unverified=True`` as
+    ``includeUnverified`` and is told, with a straight face, that the corpus does not contain it.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class LookupRequest(ToolRequest):
+    """``lookup(label, scope?, include_unverified=False, cap=20)`` — §7.2.2.
+
+    The request shapes live here, beside the route, until the tool's own module takes ownership of
+    its wrapper: `verify` at U015, `skim_*`/`resolve` at U017, `fetch` at U018, `read` at U020.
+    What may never move is where they are *validated* — one route, one table, one place that
+    charges the budget and writes the audit line.
+    """
+
+    label: str
+    #: Not a typed model: `INDEXED` is the schema, and `core.exact` refuses a key outside it with
+    #: `filter_unknown_key` (I6, F10). A Pydantic mirror of `INDEXED` would be a second source of
+    #: truth for the one dict that has three jobs (§5.4).
+    scope: dict[str, Any] = Field(default_factory=dict)
+    include_unverified: bool = False
+    cap: int = LOOKUP_CAP
+
+
+@dataclass(frozen=True)
+class ToolContext:
+    """Everything a tool call needs that is not in its body. Built per request, held nowhere.
+
+    No session, no cursor, no last-scope: `scope` and `exclude` are parameters and
+    `effective_scope` is echoed back (C11, §15 Factor VI).
+    """
+
+    client: Any
+    cfg: Config
+    identity: Identity
+    reads_remaining: int
+    provenance: Provenance
+
+
+@dataclass(frozen=True)
+class ToolSpec:
+    """One row of the table: the name, its body shape, the call, and whether it spends."""
+
+    name: str
+    request: type[ToolRequest]
+    call: Callable[[ToolContext, Any], tuple[BaseModel, Usage]]
+    #: Charges the per-caller `read` quota before running (§7.3). `read`'s row sets it at U020.
+    spends: bool = False
+
+
+def _call_lookup(context: ToolContext, body: LookupRequest) -> tuple[BaseModel, Usage]:
+    """The transport adapter, and deliberately nothing more.
+
+    `serve/tools/lookup.py` is the tool; this hands it the store and the request context and adds
+    **not one line of behaviour**, which is what makes M1's proof still true at the HTTP boundary.
+    The response is free, so it reports :meth:`Usage.free` and no audit line is written (§7.4).
+    """
+    response = lookup_tool(
+        context.client, context.cfg.pages_collection, body.label,
+        scope=body.scope, include_unverified=body.include_unverified, cap=body.cap,
+        provenance=context.provenance, reads_remaining=context.reads_remaining,
+    )
+    return response, Usage.free()
+
+
+def tool_table() -> dict[str, ToolSpec]:
+    """The tools this release exposes at ``POST /tools/{tool_name}``.
+
+    A function, not a module constant, for the reason §15.2 bans a module-level mutable store: a
+    dict at import time is one object shared by every app in the process, and a test that pointed
+    one app at a different table would be changing every other app's. Each :func:`create_app`
+    gets its own, parked on ``app.state``.
+
+    Seven of §7.2's eight are absent here and that is a fact about the release, not a gap in the
+    dispatcher: `verify` lands at U015, `skim_*` and `resolve` at U017, `fetch` at U018 and `read`
+    at U020. Until then their names are a typed `404` that lists what *is* available, because a
+    caller that asked for `read` needs to know it is not here — not receive an empty result.
+    """
+    return {"lookup": ToolSpec(name="lookup", request=LookupRequest, call=_call_lookup)}
+
+
+def _tool_refusal(code: str, detail: str, *, status: int, **details: Any) -> JSONResponse:
+    """A typed refusal from the tool surface: a machine-readable ``error`` and its bound."""
+    return JSONResponse(status_code=status, content={"error": code, "detail": detail, **details})
+
+
+def _failure_response(failure: BaseException, *, tool: str) -> JSONResponse:
+    """Map an exception out of a tool onto §11.3's refusals. Never onto an empty result.
+
+    The order is the contract. A typed :class:`~vsir.serve.caps.ToolError` is the tool naming its
+    own bound and carries its own status (a `400`, or the `429` of an exhausted quota). A store
+    failure is `503 qdrant_unavailable`. A model backend that cannot run is `503 vlm_unavailable`,
+    and a model that answered unusably is a `502` under its own code — those are different
+    operational problems and an operator retries them differently. Anything left is a bug in this
+    service and is a `500` naming only the exception *type*: a message can carry a URL, and a URL
+    can carry a credential (§15.1).
+    """
+    if isinstance(failure, ToolError):
+        # Merged rather than passed as keywords: a bound's details legitimately carry `tool`
+        # (the budget's do), and a duplicate keyword would turn a refusal into a `TypeError`.
+        _log.warning("tool_refused", **{"tool": tool, "code": failure.code, **failure.details})
+        return _tool_refusal(failure.code, failure.message, status=failure.http_status,
+                             **{"tool": tool, **failure.details})
+    if isinstance(failure, STORE_FAILURES):
+        _log.error("tool_unavailable", tool=tool, code=QDRANT_UNAVAILABLE,
+                   detail=f"{type(failure).__name__}: {failure}")
+        return _tool_refusal(
+            QDRANT_UNAVAILABLE,
+            f"the index did not answer: {type(failure).__name__}. This is a refusal and not an "
+            f"empty result — an outage reported as 'nothing found' becomes a fabricated "
+            f"abstention (§7.1, §11.3)",
+            status=503, retryable=True, tool=tool)
+    if isinstance(failure, VLM_UNAVAILABLE):
+        _log.error("tool_unavailable", tool=tool, code="vlm_unavailable",
+                   cause=getattr(failure, "code", ""), detail=str(failure))
+        return _tool_refusal("vlm_unavailable", str(failure), status=503, retryable=True,
+                             tool=tool, cause=getattr(failure, "code", ""))
+    if isinstance(failure, VlmError):
+        _log.error("tool_backend_error", tool=tool, code=failure.code, detail=str(failure))
+        return _tool_refusal(failure.code, str(failure), status=502, tool=tool)
+    if isinstance(failure, run_module.RunRefused):
+        _log.error("tool_refused", tool=tool, code=failure.code, detail=failure.message)
+        return _tool_refusal(failure.code, failure.message, status=503, tool=tool)
+    _log.exception("tool_failed", tool=tool, detail=type(failure).__name__)
+    return _tool_refusal("internal_error", f"the call failed: {type(failure).__name__}",
+                         status=500, tool=tool)
+
+
+def _run_tool(app: FastAPI, spec: ToolSpec, body: ToolRequest, *, identity: Identity,
+              correlation: Mapping[str, str]) -> JSONResponse:
+    """Budget → call → ``reads_remaining`` → audit. Sync: the Qdrant client is sync.
+
+    Runs in a worker thread, so the correlation ids are re-bound here from the values the
+    middleware parked on the scope rather than relied on to travel with the thread — the audit
+    line of §7.4 is the last place to discover that a ``ContextVar`` did not make the hop.
+    """
+    cfg: Config = app.state.config
+    tool = spec.name
+    with vsir_logging.correlate(tool=tool, **{k: v for k, v in correlation.items() if v}):
+        timer = audit_module.Timer()
+        try:
+            # Before the call, never after: money is spent inside the tool, so a caller at the
+            # ceiling is refused rather than billed for a call whose result is then thrown away.
+            if spec.spends:
+                reads_remaining = budget_module.charge(
+                    app.state.search, cfg.runs_collection, user_id=identity.user_id,
+                    quota=cfg.read_quota, tool=tool)
+            else:
+                reads_remaining = budget_module.remaining(
+                    app.state.search, cfg.runs_collection, user_id=identity.user_id,
+                    quota=cfg.read_quota)
+
+            envelope, usage = spec.call(
+                ToolContext(client=app.state.search, cfg=cfg, identity=identity,
+                            reads_remaining=reads_remaining,
+                            provenance=Provenance(release_id=cfg.release_id)),
+                body)
+        except BaseException as failure:  # noqa: BLE001 — every path out is a typed refusal
+            if isinstance(failure, (KeyboardInterrupt, SystemExit)):
+                raise
+            return _failure_response(failure, tool=tool)
+
+        # Stamped by the dispatcher rather than trusted to each tool: §7.1 puts `reads_remaining`
+        # on **every** envelope, and a tool that forgot would return a plausible zero.
+        envelope = envelope.model_copy(update={"reads_remaining": reads_remaining})
+
+        if audit_module.audited(tool):
+            audit_module.emit(audit_module.line(
+                user_id=identity.user_id, tool=tool, usage=usage,
+                latency_ms=timer.elapsed_ms,
+                run_id=correlation.get("run_id", ""),
+                session_id=correlation.get("session_id", ""),
+            ))
+        return JSONResponse(status_code=200, content=envelope.model_dump(mode="json"))
+
+
 def create_app(env: Mapping[str, str] | None = None) -> FastAPI:
     """Build the app, refusing to start rather than serving a half-configured process (§4.3).
 
@@ -181,12 +464,16 @@ def create_app(env: Mapping[str, str] | None = None) -> FastAPI:
                                         check_compatibility=False)
         app.state.control = QdrantClient(url=cfg.qdrant_url, timeout=CONTROL_TIMEOUT_S,
                                          check_compatibility=False)
-        _log.info("startup", port=cfg.port, collection=cfg.pages_collection)
+        app.state.search = QdrantClient(url=cfg.qdrant_url, timeout=SEARCH_TIMEOUT_S,
+                                        check_compatibility=False)
+        _log.info("startup", port=cfg.port, collection=cfg.pages_collection,
+                  tools=sorted(app.state.tools))
         try:
             yield
         finally:
             # SIGTERM: uvicorn stops accepting, drains in flight, then unwinds this (§15 IX).
             _log.info("shutdown", draining="complete")
+            app.state.search.close()
             app.state.qdrant.close()
             app.state.control.close()
 
@@ -204,6 +491,14 @@ def create_app(env: Mapping[str, str] | None = None) -> FastAPI:
     )
     app.state.config = cfg
     app.state.env = dict(env)
+    # Per app, never per module: a table at import time would be one object shared by every app
+    # in the process, which is the module-level mutable store §15.2 bans.
+    app.state.tools = tool_table()
+
+    # Added innermost-first: `add_middleware` puts each new one *outside* the last, so the
+    # correlation ids are bound before authentication runs and a `401` is correlatable too.
+    app.add_middleware(BearerAuth, tokens=cfg.api_tokens)
+    app.add_middleware(RequestContext)
 
     @app.get("/health", response_model=HealthResponse, tags=["probes"])
     async def health() -> HealthResponse:
@@ -251,6 +546,67 @@ def create_app(env: Mapping[str, str] | None = None) -> FastAPI:
             reason=reason,
             checks=checks,
         )
+
+    # ── the tools (§7.2, §7.4) ───────────────────────────────────────────────────────────────────
+
+    @app.post("/tools/{tool_name}", tags=["tools"], responses={
+        400: {"description": "a typed bound of §7.3 — never a clamp and never a truncation"},
+        401: {"description": "no bearer token (§7.4); the probes are the only free paths"},
+        404: {"description": "no such tool in this release; the body lists the ones there are"},
+        429: {"description": "the per-caller read quota is exhausted (§7.3)"},
+        500: {"description": "a bug in this service, named by exception type and nothing more"},
+        502: {"description": "the model backend answered unusably"},
+        503: {"description": "a backing service did not answer — retryable, never empty (§11.3)"},
+    })
+    async def call_tool(tool_name: str, request: Request) -> Any:
+        """One route for the eight tools of §7.2, each an envelope of §7.1.
+
+        Auth has already happened, in middleware, for every path but the three probes — so there
+        is no decorator here to forget and no route that is protected only by having remembered.
+
+        The body is validated against the named tool's own model, so a misspelt parameter is a
+        `400` rather than a silently different query. The tool then runs in a worker thread,
+        because the Qdrant client is sync and a blocking call on the event loop is an outage for
+        every other request in flight.
+        """
+        spec: ToolSpec | None = app.state.tools.get(tool_name)
+        if spec is None:
+            available = sorted(app.state.tools)
+            _log.warning("tool_not_found", tool=tool_name, available=available)
+            return _tool_refusal(
+                "tool_not_found",
+                f"no tool {tool_name!r} in release {cfg.release_id!r}; this release serves "
+                f"{available}. A tool that is not here is absent, not empty — §7.2's remaining "
+                f"names arrive with the milestones that build them",
+                status=404, tool=tool_name, available=available)
+
+        identity = auth_module.identity_of(request.scope)
+        if identity is None:
+            # Unreachable behind `BearerAuth`, and here anyway: if this route is ever mounted
+            # somewhere the middleware does not cover, the failure must be a refusal rather than
+            # an anonymous tool call. Failing closed costs one branch.
+            refusal = auth_module.Unauthorized()
+            return JSONResponse(status_code=refusal.http_status, content=refusal.to_payload(),
+                                headers=refusal.headers)
+
+        try:
+            payload = await request.json() if await request.body() else {}
+        except ValueError as malformed:
+            return _tool_refusal("invalid_json", f"the request body is not JSON: {malformed}",
+                                 status=400, tool=tool_name)
+        try:
+            body = spec.request.model_validate(payload)
+        except ValidationError as invalid:
+            return _tool_refusal(
+                "invalid_request",
+                f"the body does not match {tool_name}'s parameters (§7.2)",
+                status=400, tool=tool_name,
+                problems=[{"field": ".".join(str(part) for part in problem["loc"]),
+                           "error": problem["msg"]} for problem in invalid.errors()])
+
+        return await run_in_threadpool(
+            _run_tool, app, spec, body, identity=identity,
+            correlation=dict(request.scope.get(SCOPE_CORRELATION) or {}))
 
     # ── the run control plane and the two exports (§6.8, §6.9, §11.4) ────────────────────────────
 

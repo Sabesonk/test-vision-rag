@@ -44,7 +44,7 @@ from vsir.core.present_instead import PRESENT_INSTEAD_CAP, PRESENT_INSTEAD_LABEL
 from vsir.core.verify import page_checks, verify_claims
 from vsir.core.tok import tok, token_set
 from vsir.core.variants import preserves_characters, variants
-from vsir.doctor import doctor
+from vsir.doctor import BootRefused, doctor
 from vsir.eval import synthetic
 from vsir.ingest import derive as derive_module
 from vsir.ingest import embed as embed_module
@@ -70,6 +70,8 @@ from vsir.serve.caps import (
     validate_region,
     validate_scope,
 )
+from vsir.serve import auth as auth_module
+from vsir.serve.app import config_of, create_app
 from vsir.serve.envelope import Provenance, ToolEnvelope, VerifyResult
 from vsir.vlm import VlmError, backend as vlm_backend
 from vsir.vlm import cache as vlm_cache
@@ -1960,6 +1962,58 @@ def _cmd_gates_rerun(args: argparse.Namespace, cfg: Any, client: Any) -> int:
     return EXIT_OK
 
 
+# ── `vsir serve` (§4.4, §7.4) ────────────────────────────────────────────────────────────────────
+
+#: What the server binds. `0.0.0.0` because the process type this command runs is `web` in a
+#: container, where anything else is unreachable (§15 Factor VII); `--host` is there for a laptop.
+#: The **port** is not a flag: it is `VSIR_PORT`, because it is configuration (§15 Factor III).
+SERVE_HOST = "0.0.0.0"
+
+
+def _cmd_serve(args: argparse.Namespace) -> int:
+    """Bind ``$VSIR_PORT`` and serve §7.4 — after the boot self-check, never before it.
+
+    The app is built **here**, before uvicorn exists, so a §4.3 refusal — a floating model id, a
+    live schema that disagrees with `INDEXED`, a missing variable — is a named non-zero exit with
+    no socket ever bound. That ordering is the requirement, not an implementation detail: a
+    process that binds the port and *then* discovers it cannot serve correctly has already joined
+    the load balancer, and §4.3's rule is that it must never degrade to a partial service.
+
+    ``SIGTERM`` is uvicorn's from here on: it stops accepting, drains what is in flight and
+    unwinds the lifespan (§15 Factor IX). The CLI's own handler, which exits immediately, is
+    replaced for the duration — a server has in-flight work and the ingest pipeline's checkpoint
+    is not its concern.
+
+    **This is the one command that prints nothing.** Every other subcommand here is a one-off
+    admin process whose stdout a person reads; `serve` runs as the `web` process type, and its
+    stdout *is* the event stream a platform collects — where the contract is one JSON object per
+    line (§15 Factor XI). A friendly banner would be three lines a log collector cannot parse,
+    which is the defect `tests/api/test_log_stream.py` exists to catch.
+    """
+    import uvicorn  # local: a CLI that only runs `doctor` should not import a web server
+
+    try:
+        app = create_app()
+    except BootRefused as refusal:
+        _log.error("boot_refused", failed_checks=refusal.failed_checks, detail=str(refusal),
+                   bound=False)
+        return EXIT_REFUSED
+    except ConfigError as refusal:
+        _log.error("boot_refused", failed_checks=["config_valid"], detail=str(refusal),
+                   bound=False)
+        return EXIT_REFUSED
+
+    cfg = config_of(app)
+    _log.info("serve", host=args.host, port=cfg.port, tools=sorted(app.state.tools),
+              free_paths=sorted(auth_module.PUBLIC_PATHS))
+    # `log_config=None`: uvicorn's default installs its own dictConfig and its own plain-text
+    # formatter, which would make stdout a mixed stream and stop "one JSON object per line" from
+    # being true of what the platform collects (§15 Factor XI). `create_app` has already folded
+    # uvicorn's loggers into ours.
+    uvicorn.run(app, host=args.host, port=cfg.port, log_config=None, access_log=True)
+    return EXIT_OK
+
+
 def _cmd_publish(args: argparse.Namespace, cfg: Any, client: Any) -> int:
     record = run_module.require(client, cfg.runs_collection, args.run_id)
     for gate in args.override or ():
@@ -2107,6 +2161,19 @@ def build_parser() -> argparse.ArgumentParser:
     publish_parser.add_argument("--reason", default="",
                                 help="why the override is justified — required with --override")
     publish_parser.set_defaults(handler=_with_store(_cmd_publish))
+
+    serve_parser = commands.add_parser(
+        "serve",
+        help="bind VSIR_PORT and serve the HTTP surface of §7.4 — the eight tools behind bearer "
+             "auth, the run control plane, the two exports and the three free probes. The boot "
+             "self-check runs first: a refusal exits non-zero with no socket bound (§4.3)",
+    )
+    serve_parser.add_argument(
+        "--host", default=SERVE_HOST,
+        help=f"the interface to bind (default: {SERVE_HOST}). The PORT is not a flag — it is "
+             f"VSIR_PORT, because it is configuration and not a per-invocation choice (§15 III)",
+    )
+    serve_parser.set_defaults(handler=_cmd_serve)
 
     demo_parser = commands.add_parser("demo", help="the reviewable demos of §4.4")
     demos = demo_parser.add_subparsers(dest="demo", metavar="<demo>", required=True)

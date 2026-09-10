@@ -18,6 +18,7 @@ page of the fixture, which U009 owns.
 """
 from __future__ import annotations
 
+import ast
 import re
 from pathlib import Path
 
@@ -281,6 +282,115 @@ def test_no_module_level_mutable_session_store():
     assert not scan(package_files(), r"\bRetrievalState\b")
     module_level_container = r"^[A-Za-z_][A-Za-z0-9_]*(\s*:[^=]+)?\s*=\s*(\{\}|\[\]|set\(\)|dict\(\)|list\(\))\s*(#.*)?$"
     assert not scan(package_files(), module_level_container)
+
+
+# ── the same rule, as an AST scan rather than a regex (U014 AC, §15 Factor VI) ───────────────────
+
+#: Constructors whose result is a mutable container. A module-level binding to one of these is a
+#: *candidate* store; what condemns it is being written to (see :func:`_module_state_offenders`).
+_CONTAINER_CALLS = frozenset({
+    "dict", "list", "set", "defaultdict", "OrderedDict", "Counter", "deque", "ChainMap",
+    "LRUCache", "TTLCache", "WeakValueDictionary", "WeakKeyDictionary",
+})
+#: Calls that mutate the object they are called on.
+_MUTATORS = frozenset({
+    "append", "extend", "insert", "add", "update", "setdefault", "pop", "popitem", "clear",
+    "remove", "discard", "sort", "__setitem__",
+})
+
+
+def _module_level_containers(tree: "ast.Module") -> set[str]:
+    """Every module-level name bound to a mutable container, literal or constructed."""
+    names: set[str] = set()
+    for node in tree.body:
+        targets: list[ast.expr] = []
+        if isinstance(node, ast.Assign):
+            targets = list(node.targets)
+        elif isinstance(node, ast.AnnAssign) and node.value is not None:
+            targets = [node.target]
+        else:
+            continue
+        value = node.value
+        mutable = isinstance(value, (ast.Dict, ast.List, ast.Set, ast.DictComp, ast.ListComp,
+                                     ast.SetComp))
+        if isinstance(value, ast.Call) and isinstance(value.func, ast.Name):
+            mutable = mutable or value.func.id in _CONTAINER_CALLS
+        if mutable:
+            names.update(target.id for target in targets if isinstance(target, ast.Name))
+    return names
+
+
+def _shown(path: Path) -> str:
+    """A repo-relative path when it is in the repo, the full one otherwise (the planted case)."""
+    try:
+        return str(path.relative_to(REPO))
+    except ValueError:
+        return str(path)
+
+
+def _module_state_offenders(path: Path) -> list[str]:
+    """Module-level containers this file **writes to** — the shape of a server-held store.
+
+    A module-level ``dict`` that is only ever read is a lookup table (`_GAUGE_HELP`, `INDEXED`),
+    and banning those would ban every constant in the package. What makes one a *store* is a
+    write: ``CACHE[key] = value``, ``SESSIONS.setdefault(...)``, ``SEEN.add(...)``. One of those
+    at module scope means two replicas disagree and a restart forgets — which is how an agent
+    comes to believe it searched a chapter the server quietly searched a subset of (F8, C11).
+    """
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    names = _module_level_containers(tree)
+    if not names:
+        return []
+    offenders: list[str] = []
+    for node in ast.walk(tree):
+        written: str | None = None
+        if isinstance(node, (ast.Assign, ast.AugAssign)):
+            written_targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+            for target in written_targets:
+                if isinstance(target, ast.Subscript) and isinstance(target.value, ast.Name) \
+                        and target.value.id in names:
+                    written = target.value.id
+        elif isinstance(node, ast.Delete):
+            for target in node.targets:
+                if isinstance(target, ast.Subscript) and isinstance(target.value, ast.Name) \
+                        and target.value.id in names:
+                    written = target.value.id
+        elif isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) \
+                and node.func.attr in _MUTATORS and isinstance(node.func.value, ast.Name) \
+                and node.func.value.id in names:
+            written = node.func.value.id
+        if written:
+            offenders.append(f"{_shown(path)}:{node.lineno}: writes to {written}")
+    return offenders
+
+
+def test_no_module_level_state_is_mutated_anywhere_in_serve():
+    """§15 Factor VI, C11 — an AST scan, because the regex only sees an *empty* literal.
+
+    `web` scales horizontally by construction, so anything correctness-bearing in process memory
+    is N different values, one per replica, each of which forgets on deploy. The serve package is
+    scanned first and hardest because it is the one that handles a caller's request; the whole
+    package follows, because an ingest module that cached a run in a dict would be the same bug
+    one process type over.
+    """
+    serve_offenders = [problem for path in _walk(PACKAGE / "serve", (".py",))
+                       for problem in _module_state_offenders(path)]
+    assert not serve_offenders
+
+    package_offenders = [problem for path in package_files()
+                         for problem in _module_state_offenders(path)]
+    assert not package_offenders
+
+
+def test_the_ast_scan_catches_a_planted_session_store(tmp_path: Path):
+    """The scanner is asserted to fire, so a green run is evidence and not a silent no-op."""
+    planted = tmp_path / "planted.py"
+    planted.write_text("SESSIONS = {}\n\n\ndef remember(key, value):\n    SESSIONS[key] = value\n")
+
+    assert _module_state_offenders(planted), "the AST scan must catch a module-level store"
+
+    planted.write_text("SESSIONS = ()\n\n\ndef remember(key, value):\n    return {key: value}\n")
+    assert not _module_state_offenders(planted)
 
 
 def test_no_async_handler_does_sync_io():

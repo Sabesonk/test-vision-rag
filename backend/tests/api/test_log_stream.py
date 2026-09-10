@@ -17,6 +17,8 @@ import subprocess
 import httpx
 import pytest
 
+from conftest import CONTAINER_AUTH, CONTAINER_TOKEN
+
 COMPOSE_FILE = "docker-compose.test.yml"
 SERVICE = "backend-test"
 
@@ -35,7 +37,8 @@ def exercised_stream(repo_root, base_url) -> list[str]:
     with httpx.Client(base_url=base_url, timeout=10) as client:
         client.get("/health")
         client.get("/ready")
-        client.get("/does-not-exist")          # a 404 — an access-log line
+        client.get("/does-not-exist", headers=CONTAINER_AUTH)   # a 404 — an access-log line
+        client.get("/does-not-exist")          # a 401 — the same, unauthenticated
         client.post("/health")                 # a 405 — another
     return _container_stdout(repo_root)
 
@@ -77,6 +80,11 @@ def test_the_startup_line_is_an_event_too(exercised_stream):
 
 
 def test_no_credential_appears_on_the_stream(exercised_stream):
-    """§15.1 — the API tokens never appear in a log line, and the test stack has one configured."""
+    """§15.1 — the API tokens never appear in a log line, and the test stack has one configured.
+
+    Against the token the container was **actually** given (`conftest.CONTAINER_TOKEN`), not a
+    literal: the compose file used to interpolate `VSIR_API_TOKENS`, which Compose reads out of
+    `.env`, so this assertion was about a string the container had never held.
+    """
     for line in exercised_stream:
-        assert "test-only-not-a-secret" not in line
+        assert CONTAINER_TOKEN not in line

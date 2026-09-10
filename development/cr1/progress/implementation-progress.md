@@ -7,9 +7,9 @@
 
 | | |
 |---|---|
-| **Complete** | 12 / 26 units (46%) |
-| **Current milestone** | M2b — ingest the pilot PDF, freeze the fixture (1 / 2 units); M0, M1 and M2a closed and tagged |
-| **Next unit** | U014 — The serving app: auth, audit, budget, and degradation (**Spend: none**). The plan's own implementation order puts U014 before U013 for exactly this reason (§"Implementation Order": `… U012, U014, U013, U015 …`) |
+| **Complete** | 13 / 26 units (50%) |
+| **Current milestone** | M3 — `lookup` + `verify` over HTTP and MCP (1 / 3 units); M0, M1 and M2a closed and tagged, M2b's non-paid half shipped |
+| **Next unit** | U015 — `lookup` and `verify` over HTTP and MCP (**Spend: none**). U014 built the app, the auth boundary, the audit line, the budget and the degradation mapping; U015 adds `verify`, the MCP transport and the CLI one-shots over the same implementations |
 | **Blocked** | **U013** — the paid re-bill only, on **OQ-1** (no `data/source/TC1E-SF.pdf`) and **OQ-2** (`VSIR_VLM_KEY` empty). Everything in the unit that does not need the PDF or the key shipped on 2026-09-10 and is green; see the unit's entry for what remains and how it unblocks. Nothing downstream is blocked (§17) |
 
 ---
@@ -45,7 +45,7 @@
 - [!] U013 The one paid `TC1E-SF` ingest and the `grounded_rate` baseline — spend: paid — **blocked on OQ-1/OQ-2 for the re-bill only**; the recorder, the report, the acceptance table and all three test files shipped 2026-09-10
 
 ### M3 — `lookup` + `verify` over HTTP and MCP (spend: none)
-- [ ] U014 The serving app — auth, audit, budget, and degradation
+- [x] U014 The serving app — auth, audit, budget, and degradation
 - [ ] U015 `lookup` and `verify` over HTTP and MCP
 - [ ] U016 `vsir eval acceptance` and `vsir eval abstention`
 
@@ -2201,3 +2201,178 @@ cannot until OQ-1/OQ-2 close. It is written against shipped entry points (`vsir.
 `run_module.require/run_records`, `cache.FixtureStore`) to keep that unexercised surface as small
 as possible, but it should be read as unproven code until the first real run. The same is true of
 the 13 skipped corpus rows in `test_acceptance_real.py`.
+
+---
+
+### U014 — The serving app: auth, audit, budget, and degradation
+
+**Milestone:** M3 · **Spend:** none · **Status:** `[x]` Complete · **Completed:** 2026-09-10
+
+**Demo output** — the plan's demo command, run against the test stack's Qdrant on 6335 with the
+§13 M1 corpus seeded. `VSIR_PORT=8010`, not 8000, because an unrelated process on this machine
+already holds `127.0.0.1:8000` — the rest is the command as written:
+
+```
+seeded 31 pages into vsir_pages_demo_1536
+no-token=401
+with-token=200
+--- the body of the authorised call ---
+{"status": "ok",
+ "hits": [{"page_id": "SYN-M1@1.0#p001", "page_no": 1, "printed_page_no": "Page 1 of 30",
+           "page_kind": "table", "verified": true, "text_trust": "ok",
+           "image": {"url": "/pages/SYN-M1@1.0#p001/image?dpi=150",
+                     "thumb_url": "/pages/SYN-M1@1.0#p001/image?dpi=72", "dpi": 150,
+                     "width": 0, "height": 0}, "next": null}],
+ "unverified_hits": [], "total": 1, "capped": false, "weak": false, "needs_scope": false, …}
+--- test-qdrant stopped ---
+outage-status=503
+error = qdrant_unavailable
+health=200  ready=503
+```
+
+and the event stream for the same run — the 401, the outage and the drain, one JSON object a line:
+
+```json
+{"event": "unauthorized", "level": "warning", "logger": "vsir.serve.auth", "method": "POST",
+ "path": "/tools/lookup", "reason": "no_authorization_header", "release_id": "demo-u014",
+ "request_id": "74095dbf92df4f4081c39cc0aa2d5420"}
+{"event": "tool_unavailable", "code": "qdrant_unavailable", "level": "error", "tool": "lookup",
+ "detail": "ResponseHandlingException: [Errno 61] Connection refused",
+ "logger": "vsir.serve.app", "request_id": "d572cb69b5f9450ba7a8a2b112c8dfbe"}
+{"event": "not_ready", "reason": "qdrant_unavailable", "level": "warning",
+ "checks": {"collection_schema": "unavailable", "config_valid": "ok", "dependencies": "ok",
+            "model_ids_pinned": "ok", "python_runtime": "ok", "required_env": "ok"}}
+{"event": "shutdown", "draining": "complete", "level": "info", "logger": "vsir.serve.app"}
+```
+
+**The audit line the demo command cannot show, and why.** §7.4 audits `read` and `fetch`; neither
+is in this release's tool table (U020 and U018 build them), so a `lookup` demo emits none *by
+design* — that is the rule, not a gap. The line below is real stdout from the shipped dispatcher,
+driven through `POST /tools/read` with an audited tool in `app.state.tools`, exactly as
+`tests/api/test_audit.py` does. The request carried `X-User-Id: root`:
+
+```json
+{"audit": {"cache_hit": false, "dpi": 220, "input_tokens": 4210, "latency_ms": 182,
+           "output_tokens": 138, "page_ids": ["SYN-M1@1.0#p001", "SYN-M1@1.0#p002"],
+           "run_id": "", "session_id": "sess-77", "tool": "read",
+           "user_id": "caller-b4a67cd29c9a"},
+ "event": "audit", "level": "info", "logger": "vsir.serve.audit", "release_id": "test",
+ "request_id": "777f4753c0254e7a88644f22ccca7e0e", "session_id": "sess-77", "tool": "read"}
+{"event": "client_identity_ignored", "headers": ["x-user-id"], "level": "warning",
+ "user_id": "caller-b4a67cd29c9a", "path": "/tools/read", "logger": "vsir.serve.auth"}
+```
+
+Ten fields, `user_id` the token's digest and not `root`, and no cost anywhere in the response.
+
+**Tests.** `bash scripts/test-unit.sh` → **1067 passed**, Layer 0/1 PASSED.
+`bash scripts/test-api.sh` → **918 passed, 13 skipped** (the 13 are U013's real-corpus rows, still
+on OQ-1). The unit's own slice, `bash scripts/test-api.sh -k "auth or audit or degradation or
+boot_refusal"` → **70 passed**.
+
+**Invariants / failure rows closed:** none newly, as the plan says. I6's boot assertion (built in
+U003) is now wired into server start, and §11.3's *"Qdrant unreachable"*, *"index schema ≠
+`INDEXED`"* and *"per-caller `read` quota exhausted"* rows are closed on the halves U014 owns —
+`test_qdrant_down_503_ready_red_health_green`, `test_boot_refuses_on_schema_drift`,
+`test_read_quota_exhausted_429`. The `grounded_rate`-collapse row's *surface* half is closed by
+`test_collapsed_grounded_rate_sets_untrusted`. Register item **E5** (no auth on any endpoint,
+including the two that spend) is closed. F2 and F4's M3 halves remain U015's.
+
+**Design decisions worth stating**
+
+- **Auth is default-deny ASGI middleware, not a per-route dependency.** A `Depends` is opt-in, and
+  a route added next milestone would be unauthenticated until somebody remembered. `PUBLIC_PATHS`
+  is the whole allowlist — `/health`, `/ready`, `/metrics` — so `GET /pages/{page_id}/image` and
+  `POST /ask` are already refused without a token today, before either route exists. Pure ASGI
+  rather than `BaseHTTPMiddleware` because that base class runs the app in a separate task, and a
+  `ContextVar` set in its `dispatch` never reaches the handler — the correlation ids would not
+  survive to the audit line.
+- **Identity is `caller-<sha256("vsir:caller:" + token)[:12]>`.** No user list, no name embedded in
+  the credential. A `name:secret` grammar was considered and rejected: a token that legitimately
+  contains a colon would be silently split, and the half that then matched would be a *weaker*
+  secret than the operator configured — a failure that authenticates. The digest cannot be
+  mis-parsed and cannot carry the credential into a log line (§15.1). The cost is that an operator
+  reads a digest, and the map back to a human lives with whoever issued the token.
+- **The audit line is nested under one `audit` key.** `logging.redact` blanks a field whose *name*
+  looks credential-shaped and `token` is one of its hints, so a top-level `input_tokens` would
+  reach the stream as `***` — the redactor working correctly on a name that has nothing to do with
+  a secret. Nesting also makes "exactly ten fields" assertable on one object. `AuditLine` is
+  `extra="forbid"` and its field tuple is checked against §7.4's list at import, by a `raise` and
+  not an `assert` (`python -O` strips asserts, and §15.1's *never widen the audit schema with
+  document content* is not a debug-only guard).
+- **The budget ledger is a `kind: budget` point in `vsir_runs`, keyed by `(caller, UTC day)`.** A
+  counter in process memory is N counters under N replicas, each of which forgets on deploy: three
+  replicas would turn `VSIR_READ_QUOTA=50` into 150 and a rolling restart into no quota at all.
+  It is **advisory** for the same reason D9's lease is — Qdrant has no compare-and-swap, so two
+  concurrent reads from one caller can both see the same `spent` — and the over-spend is bounded
+  by one caller's own concurrency, is a cost bug and never a correctness bug, and the alternative
+  is a fourth backing service to make a fifty-call quota exact. `test_the_ledger_survives_the_
+  process_that_wrote_it` is the property a second replica needs.
+- **`reads_remaining` is stamped by the dispatcher, not by each tool.** §7.1 puts it on *every*
+  envelope, and a tool that forgot would return a plausible zero.
+- **`vsir serve` is the one subcommand that prints nothing.** Every other command is a one-off
+  admin process whose stdout a person reads; `serve` runs as the `web` process type, where stdout
+  *is* the event stream and the contract is one JSON object per line. The first version printed a
+  three-line banner and `tests/api/test_log_stream.py` caught it — which is exactly what that
+  suite is for.
+- **The boot refusal happens before uvicorn exists.** `_cmd_serve` calls `create_app()` itself and
+  hands uvicorn the instance, so there is no path on which a refusing process has already bound
+  the port. `test_vsir_serve_refuses_before_binding_the_port` spawns a real `vsir serve` against a
+  drifted schema and asserts exit 1 *and* a closed socket.
+
+**Deviations from the plan, stated**
+
+- **The request models live in `serve/app.py`, not in each tool's module.** U014's Deliverables do
+  not list `serve/tools/lookup.py` and U015's do, so `LookupRequest` sits beside the route with a
+  comment saying which unit takes ownership of which shape. Not one line of `tools/lookup.py`
+  changed: the HTTP wrapper adds transport, auth and the budget and no behaviour, which is what
+  keeps M1's proof true at the tool boundary.
+- **`read` and `fetch` are exercised as tools registered into `app.state.tools` by the suites.**
+  The plan's AC list names `read` (`503 vlm_unavailable`, `429`, the audit line) and `fetch` (the
+  audit line), and both are later units' deliverables. What U014 owns and what is asserted is the
+  *dispatcher's policy* — which tools are audited, which charge the quota, and how each failure
+  class maps to a status. The table is per-app (a function, not a module constant) precisely so a
+  suite can hold its own; nothing under `backend/vsir/` knows the suites exist, so this is not a
+  test-only branch in the production path (§15.2). U018 and U020 assert the same lines for the
+  real tools.
+- **`verify`'s `unverifiable` verdict is asserted at `core.verify`, not over HTTP.** §11.3's
+  collapsed-`grounded_rate` row names `verify`, and `serve/tools/verify.py` is U015's file. The
+  verdict U015 will wrap is the one asserted here, unchanged.
+- **The demo ran on port 8010.** An unrelated process on this machine holds `127.0.0.1:8000`, and
+  because the server binds `0.0.0.0` both can listen at once — the first run of the demo silently
+  curled the *other* process and reported `404` for everything. Worth knowing: it is a plausible
+  way to get a confusing demo, and the port is configuration (`VSIR_PORT`), not a flag.
+
+**Findings recorded rather than fixed**
+
+- **`ImageRef.url` is not percent-encoded, so it cannot be dereferenced.**
+  `serve/tools/lookup.py::image_ref` interpolates the `page_id` into `/pages/{page_id}/image`, and
+  a `page_id` contains `#` (§5.1), which a client reads as a fragment delimiter — the path that
+  arrives is `/pages/SYN-M1@1.0`. Spec §7.2.5's example shows the encoded form
+  (`…@1.3%23p001…`). Surfaced by this unit's demo, which prints the URL. **Not fixed here**: the
+  encoding is half of a contract whose other half is U018's `GET /pages/{page_id}/image` route,
+  and splitting it across two units would ship one release with neither half. Recorded as a
+  requirement on U018 in the plan, naming the two existing assertions that must move with it.
+
+**Pre-existing defects fixed while running the layers**
+
+- **The test stack's bearer token was coming from `.env`.** `docker-compose.test.yml` interpolated
+  `${VSIR_API_TOKENS:-test-only-not-a-secret}`, and Compose loads `.env` for interpolation — so on
+  any machine with a `.env` the container's credential was the developer's, and
+  `test_log_stream.py::test_no_credential_appears_on_the_stream` was asserting the absence of a
+  string the container had never been given. The substitution now reads `VSIR_TEST_API_TOKENS`,
+  `tests/api/conftest.py::CONTAINER_TOKEN` resolves the same name, and that suite asserts against
+  the resolved value.
+- **`tests/api/test_run_record.py` drove `/runs` unauthenticated.** A consequence of this unit's
+  contract change, not a bug in that suite; its `get()` helper now sends the container token and
+  it gained `test_the_run_surface_is_behind_the_token_and_the_gauges_are_not`.
+
+**Notes**
+
+- The conformance suite gained an **AST** scan for module-level state (U014 AC): the existing regex
+  only sees an *empty* literal, so it would miss `CACHE = {"seed": 1}`. The AST version flags a
+  module-level container only when something **writes** to it — `X[k] = v`, `X.setdefault(…)`,
+  `X.add(…)` — because a dict that is only read is a lookup table and banning those would ban every
+  constant in the package. It scans `serve/` first and then the whole package, and a companion test
+  plants a store to prove the scanner fires.
+- `docker-compose.test.yml` now runs `command: ["serve"]` instead of invoking `uvicorn` directly, so
+  the L2 stack exercises the shipped `web` entry point and its boot self-check.
