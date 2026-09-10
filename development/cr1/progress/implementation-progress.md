@@ -7,10 +7,44 @@
 
 | | |
 |---|---|
-| **Complete** | 15 / 26 units (58%) |
+| **Complete** | 18 / 30 units (60%) — 15 of the planned 26, plus U027, U028 and U030 added after the plan was written (plan §4b) |
 | **Current milestone** | **M3 closed and tagged `cr1-m3`** (3 / 3 units); M0, M1 and M2a closed and tagged before it, M2b's non-paid half shipped. Next milestone: **M4** — `skim_pages`, `fetch`, `resolve` |
-| **Next unit** | U017 — `skim_pages`, deterministic fusion, image queries, and `resolve` (**Spend: none**, M4, P0-Critical). The page rung of the narrowing ladder with §7.2.1's score-free ordering, `exclude`, the `next` affordances and D12's image queries, plus `resolve` with `interpolated`. It is the first unit that reads a *vector*, so the three fused surfaces U010 wrote become load-bearing |
-| **Blocked** | **U013** — the paid re-bill only, on **OQ-1** (no `data/source/TC1E-SF.pdf`) and **OQ-2** (`VSIR_VLM_KEY` empty). Everything in the unit that does not need the PDF or the key shipped on 2026-09-10 and is green; see the unit's entry for what remains and how it unblocks. Nothing downstream is blocked (§17) |
+| **Next unit** | U017 — `skim_pages`, deterministic fusion, image queries, and `resolve` (**Spend: none**, M4, P0-Critical). The page rung of the narrowing ladder with §7.2.1's score-free ordering, `exclude`, the `next` affordances and D12's image queries, plus `resolve` with `interpolated`. It is the first unit that reads a *vector*, so the three fused surfaces U010 wrote become load-bearing — today they are written and never queried. **Unblocked, and needs no new storage** |
+| **Then** | **U029 — the document store**, which is new and **must land before U018** (plan §4b). Rasters are re-rendered on demand by design, and nothing keeps the source PDF to render them from: U018's own dependency list asserted *"the source PDF must be reachable by the serving process"* with no mechanism behind it. `page_id → bytes` is its one job. Until it exists, `fetch`, `read`, `GET /pages/{id}/image` and correction **Loop 5** all have nowhere to go |
+| **Read first** | **Plan §4c — six open defects found by running the system.** None breaks a build; all of them mislead somebody who trusts the output. P1 (a live run records no cost) and P2 (no VLM cache store, so a re-ingest re-bills) both land on U013 |
+| **Blocked** | **U013** — the paid re-bill only, and now on **OQ-1 alone**: `data/source/TC1E-SF.pdf` is still not present. **OQ-2 is closed** — a key is configured and was exercised live on 2026-09-10, ingesting a real 4-page datasheet to `published` through `POST /documents`. The ladder is no longer a blocker either: the shipped `plan()` refused the 55-page pilot at **step 05**, one step before the spend everyone thought it was waiting on a credential for, and `fixes/001` now folds it to `[[1, 30], [31, 55]]` — byte-for-byte what its own acceptance table declared. Nothing downstream is blocked (§17) |
+
+---
+
+## Running what exists
+
+The system is runnable end to end today, and this is how to see it rather than infer it:
+
+```bash
+bash scripts/stack.sh up          # Qdrant, the collection, the API, a seeded document
+bash scripts/stack.sh status      # mode, probes, tools served, documents, the working token
+bash scripts/stack.sh up --live   # the same, against real Gemini — this bills money
+```
+
+| | |
+|---|---|
+| Console | <http://localhost:8055/console> — upload, watch a run, search, verify |
+| Swagger UI | <http://localhost:8055/docs> — *Authorize* with the token, then `Try it out` |
+| Qdrant | <http://localhost:6353/dashboard> — the payloads and vectors as written |
+| token | `VSIR_API_TOKENS` from `.env`; `stack.sh status` prints the one the container has |
+
+**Replay is the default and spends nothing** (`VSIR_VLM=stub` + a fixture, D10). `--live` sets
+`VSIR_VLM=gemini` and `VSIR_ALLOW_PAID=1`, refuses without a credential, and seeds nothing.
+
+Two things a later unit should not have to rediscover:
+
+- **A green suite says nothing about the live path.** U028 is five defects that 1149 passing tests
+  could not see, because the stub never builds a request, loads a prompt or opens an SDK client. A
+  model id, a packaged file, an object's lifetime and a provider's schema dialect are all unverified
+  until a real call is made.
+- **`scripts/sweep-corpus.py <root>`** puts every PDF of a corpus through the shipped `plan()` with
+  no key, no Qdrant and no spend, and reports refusals and coverage violations. It is how `fixes/001`
+  was measured rather than argued.
 
 ---
 
@@ -48,10 +82,25 @@
 - [x] U014 The serving app — auth, audit, budget, and degradation
 - [x] U015 `lookup` and `verify` over HTTP and MCP
 - [x] U016 `vsir eval acceptance` and `vsir eval abstention`
+- [x] **U027 `POST /documents` — ingestion over HTTP** — added after the plan; a transport for
+      `vsir ingest`, never a second pipeline (§15 Factor XII, register E1)
+- [x] **U030 `/console`, the OpenAPI security scheme, and the local stack** — added after the plan;
+      **not** M7's console, which replaces it
+
+### Corrections to shipped units (spend: paid — the run that found them)
+- [x] **U028 The five defects between `VSIR_VLM=gemini` and a published document** — a model id that
+      does not exist, prompts missing from the wheel, an SDK client closed mid-request, a response
+      schema the API rejects, and a live run inheriting the replay fixture's acceptance table.
+      **Every one was invisible to 1149 green tests**, because the stub never builds a request,
+      loads a prompt or opens a client
+- [x] **fixes/001, 002, 003** — the window ladder refused 48% of the real corpus including the
+      pilot; §6.4 check (2) raised on one witness with 22 measured false positives; `label_verified`
+      contradicted the page's own text. See `fixes/README.md` for the two measured deviations
 
 ### M4 — `skim_pages`, `fetch`, `resolve` (spend: none)
 - [ ] U017 `skim_pages`, deterministic fusion, image queries, and `resolve`
-- [ ] U018 The page-image endpoint, the raster cache, and `fetch`
+- [ ] **U029 The document store — `page_id` → bytes** — new (plan §4b); **U018 cannot be built without it**
+- [ ] U018 The page-image endpoint, the raster cache, and `fetch` — **depends on U029**
 
 ### M5 — the ladder rungs and `read` (spend: read)
 - [ ] U019 `skim_documents`, `skim_sections`, and `searchable_ratio` — spend: none

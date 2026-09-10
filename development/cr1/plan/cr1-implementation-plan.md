@@ -1472,6 +1472,19 @@ files written under `data/fixtures/TC1E-SF/`.
 - **Depends On:** [U012]
 - **Enables:** [U016, U020, U026]
 - **External:** **OQ-1** the pilot PDF; **OQ-2** a Gemini project/key and quota; `VSIR_ALLOW_PAID=1`.
+- **OQ-2 is closed and OQ-1 is the only external blocker left.** A key is present and was exercised
+  live on 2026-09-10: `gemini-3.8-flash` and `gemini-embedding-2` both answer, a real 4-page
+  datasheet ingested to `published` through `POST /documents`, and the five defects that stood
+  between the switch and a real document are U028.
+- **The ladder is no longer a blocker either.** `TC1E-SF` is 55 pages with a single 55-page chapter,
+  and the shipped `plan()` refused it at **step 05** — one step before the spend this unit was
+  thought to be waiting on a credential for. `fixes/001` makes Level 2 a fold, and the pilot now
+  plans to `[[1, 30], [31, 55]]`, byte-for-byte what `data/fixtures/TC1E-SF/expected.json` had
+  declared all along. **This unit's own first step is still to re-check for the PDF** — but when it
+  arrives, nothing else is in the way.
+- ⚠ **This unit meets P1, P2, P5 and P6 of §4c first.** It is the next paid run, so it is where a
+  live run's missing cost accounting, the absent cache store, the `VSIR_FIXTURE` conflation and the
+  single-page `page_index` anomaly all become its problem. Read §4c before starting.
 
 ### Acceptance Criteria
 - [ ] The run publishes **55** points; `count(TC1E-SF, 1.3, is_current=True) == 55`.
@@ -2057,9 +2070,17 @@ requested: 6}` and `dpi=400` **without** a region returning `dpi_requires_region
 - **F18 (fetch half)** (unbounded spend) — the §7.3 `fetch` caps, each a typed 400 naming its bound — `test_fetch_budget_exceeded_names_bound` and `test_dpi_requires_region` (L2).
 
 ### Dependencies
-- **Depends On:** [U017, U007]
+- **Depends On:** [U017, U007, **U029**]
 - **Enables:** [U020, U021]
-- **External:** PyMuPDF for on-demand clip rendering; the source PDF must be reachable by the serving process.
+- **External:** PyMuPDF for on-demand clip rendering.
+- ⚠ **This unit cannot be built until U029 exists.** The sentence that used to sit here — *"the
+  source PDF must be reachable by the serving process"* — was an assumption stated as an external
+  dependency, and **nothing in the system satisfied it**: a CLI ingest happens to work because the
+  operator's copy is still on their filesystem, an upload's spool is deleted when the run exits, and
+  neither the page payload nor the run record carries anything that names a file (register **A5**
+  removed `image_path` deliberately). `page_id → bytes` is U029's one job; everything else in this
+  unit — the URL shape, the `page_id` grammar and its parser, the dpi tiers, the `region` rule, the
+  caps in `serve/caps.py`, the LRU renderer in `ingest/render.py` — is already decided or written.
 
 ### Acceptance Criteria
 - [ ] `GET /pages/{page_id}/image?dpi=150` with a bearer token returns 200 and an image payload; without a token it returns 401.
@@ -2261,7 +2282,8 @@ call is a cache hit; changing the question is a **miss**; a fourth page is a typ
 - **F19** (a second question about the same pages returns the first answer) — `read_key` includes the question — `test_new_question_is_a_cache_miss` (L2).
 
 ### Dependencies
-- **Depends On:** [U018, U008, U006]
+- **Depends On:** [U018, U008, U006, **U029**]  *(read reasons over a raster, so it inherits U018's
+  source-document dependency)*
 - **Enables:** [U022]
 - **External:** **OQ-2** a Gemini key for the L4 test only; Qdrant; the raster path from U018.
 
@@ -2921,6 +2943,273 @@ N/A — a read-only evaluation command; no index state and no tool contract is c
 
 ---
 
+---
+
+## 4b. Units added after the plan was written
+
+Four units the original 26 did not contain. Three of them (U027, U028, U030) **shipped on
+2026-09-10** and are recorded here so the plan describes the system that exists; U029 is **not
+built and blocks U018**, which is the finding that matters most in this section.
+
+They are numbered from U027 rather than inserted, so no existing unit id moves.
+
+---
+
+## Unit: `POST /documents` — ingestion over HTTP (ID: U027)
+
+**Status:** ✅ Complete (2026-09-10)
+**Milestone:** M3 (after U015)
+**Priority:** P1-High
+**Type:** tool
+**Size Estimate:** Medium
+**Spend:** none to build; the route can *start* a paid run
+
+### Goal
+Let a caller hand the pipeline a PDF over HTTP, because §7.4's route table had no ingest path at
+all: an operator with only the API could query documents but never add one.
+
+### Working Deliverable
+`POST /documents` — multipart in, `202` and a `run_id` out; progress on the existing
+`GET /runs/{run_id}`.
+
+### Deliverables (files)
+- `backend/vsir/serve/ingest.py` — **written**, net new: the spool, the refusals, the child.
+- `backend/vsir/serve/app.py` — **extended**: the route.
+- `backend/vsir/cli.py` — **extended**: `--run-id`.
+- `backend/tests/unit/test_upload.py`, `backend/tests/api/test_upload_route.py` — **written**.
+
+### Requirements
+- **It does not implement ingestion. It starts `vsir ingest`.** §15 Factor XII —
+  *"a corrective action that cannot be expressed as a `vsir` subcommand is not a supported
+  operation"* — and register **E1**, where `impl` had an upload page *and* a CLI, the exports were
+  written from the CLI path only, and *"a UI ingest produced nothing for the graph team"*. Two code
+  paths for one operation meant one of them silently did less than the whole job.
+- `--run-id` is new on `vsir ingest` and is **not** `--resume`: resume continues a run that exists
+  and refuses `run_not_found` otherwise, so it cannot start one. The id is minted at the boundary so
+  the caller can poll before the child has done anything.
+- Everything refusable is refused **before the child starts**: §6.9's control plane is written from
+  step 09 onward, so a child that dies at step 02 leaves *no run record* and a caller handed a `202`
+  polls `404` for ever. `415 not_a_pdf` (the file's own leading bytes, not its Content-Type),
+  `413 upload_too_large`, `400 unknown_step` / `unknown_vlm` / `empty_upload` / `fixture_not_found`,
+  `403 spend_not_permitted`, `500 ingest_unstartable`.
+- **`VSIR_ALLOW_PAID` becomes load-bearing here.** It was parsed into `Config` and read by nothing —
+  three lines in `config.py` were its only appearances in the backend, so the only real brake on
+  spending was a shell check in `scripts/test-paid.sh`. The check reads the *effective* backend, or
+  `vlm=gemini` on the form would bypass a replay-mode release.
+- The child gets **this instance's** configuration, not the process's: `create_app` takes its
+  environment as an argument, so a child reading `os.environ` would ingest into the collection the
+  process was launched against while its parent answered about another one.
+
+### Invariants Enforced
+- None newly. I7 is what makes `until=publish` safe to default to: step 10 writes `is_current=False`
+  and step 11 is the only thing that flips it, behind §11.1's gates.
+
+### Dependencies
+- **Depends On:** [U014, U011]
+- **Enables:** [U030]
+
+### Disclosed limitations
+- **A run started by upload is not resumable across an instance restart.** PyMuPDF needs a file, so
+  the upload is spooled for the life of one run and the spool goes with the instance. A CLI ingest
+  is resumable because the operator's copy is still on their filesystem. **U029 removes this.**
+- **The spend switch is per-release, not per-caller.** `serve/auth.py` has no token scopes, so a
+  caller who can spend can spend everything the release allows.
+
+---
+
+## Unit: Live-path corrections found by the first real Gemini run (ID: U028)
+
+**Status:** ✅ Complete (2026-09-10)
+**Milestone:** M2a/M2b (corrections to shipped units)
+**Priority:** P0-Critical
+**Type:** ingest
+**Size Estimate:** Small
+**Spend:** paid — the run that found them
+
+### Goal
+Make `VSIR_VLM=gemini` reach a published document. Five defects sat between the switch and a real
+ingest, and **every one was invisible to 1149 green tests**, because the stub backend never builds a
+request, never loads a prompt and never opens a client. Only a real call could find them.
+
+### What was wrong
+1. **The pinned VLM id does not exist.** `gemini-3.8-flash-001` is a `404` from the API; the model is
+   `gemini-3.8-flash`. It was in `.env`, `.env.example` and **both** compose files, so the first paid
+   run of this system was always going to fail at step 04 regardless of the document.
+   `gemini-embedding-2` is correct and `output_dimensionality=1536` is accepted, so the collection's
+   dim was never at risk.
+2. **The prompts were not in the wheel.** `[tool.setuptools.packages.find]` ships modules; `s1.md`
+   and `s2.md` beside them are data. The container failed
+   `prompt_unavailable: vsir/vlm/prompts/s1.md is missing from the release`.
+3. **`genai.Client(...)` was constructed per call.** It owns an `httpx` transport and closes it when
+   finalised, so as a temporary it could be collected while its own request was in flight:
+   `RuntimeError: Cannot send a request, as the client has been closed`. Same bug in `GeminiEmbedder`.
+4. **The response schema was the Pydantic class.** Every model sets `extra="forbid"`, which renders
+   as `additionalProperties: false`, and `response_schema` has no such field:
+   `400 INVALID_ARGUMENT: Unknown name "additional_properties"`.
+5. **`VSIR_FIXTURE` does double duty in `cli.py`** — the replay directory *and* where the run's
+   acceptance table is read from. For a replay both meanings describe one corpus and agree; for a
+   live ingest of an arbitrary upload neither applies, and inheriting the release's value meant every
+   uploaded document was checked against **another document's** expectations. A 4-page SICK datasheet
+   failed the synthetic corpus's label offset and its crop trap on page 20, surfacing as
+   `page_out_of_range: page 20 is outside 1..4`.
+
+### Deliverables (files)
+- `backend/vsir/vlm/client.py` — `_client()`, and `response_schema()` which inlines `$ref`/`$defs`
+  and drops the keywords the API has no field for. The **strict class still parses the response**, so
+  a surprise key in a paid response is still refused rather than dropped.
+- `backend/vsir/ingest/embed.py` — the same client fix.
+- `backend/vsir/serve/ingest.py` — a live run inherits no fixture from the release.
+- `backend/pyproject.toml` — `[tool.setuptools.package-data]`.
+- `backend/tests/unit/test_release_artefacts.py` — **written**: scans `vsir/` for **any** non-Python
+  file not covered by `package-data`. The general form, so a data file added later is caught the day
+  it is added rather than on the next paid run.
+
+### The lesson for every later unit
+A test that drives the stub proves the pipeline's logic and **nothing about the release**. Anything
+that only exists on the live path — a model id, a packaged file, an SDK object's lifetime, a
+provider's schema dialect — is unverified until a real call is made. U013's paid re-bill and U020's
+`read` are the two remaining units that will meet this class of defect for the first time.
+
+### Dependencies
+- **Depends On:** [U007, U008, U010]
+- **Enables:** [U013]
+
+---
+
+## Unit: The document store — the source PDF at query time (ID: U029)
+
+**Status:** 🔴 **Not started — and it blocks U018 and U020**
+**Milestone:** M4 (must land before U018)
+**Priority:** P0-Critical
+**Type:** ingest
+**Size Estimate:** Small
+**Spend:** none
+
+### Goal
+Keep the source PDF, so a page can be rendered at query time. **Rasters are re-rendered on demand
+(§4.2, §15 Factor VI) — and nothing in the system keeps the file to render them from.**
+
+### The gap, precisely
+U018's own dependency list says *"the source PDF must be reachable by the serving process"*. That is
+an assumption stated as an external dependency, **with no mechanism behind it**:
+
+- a **CLI** ingest happens to work because the operator's copy is still in their filesystem — luck,
+  not architecture;
+- an **upload** spools to `/tmp/<run_id>.pdf` and the reaper deletes it when the run exits;
+- and nothing can even name the file: neither the page payload nor the run record carries
+  `content_hash`, and there is deliberately no `image_path` (register **A5**, §5.3). Given
+  `SICK-UE410-SD400@1.0#p002` there is no path from page → document → bytes.
+
+§315's *"no blob store, no local source of truth"* was written about **rasters**, not about the source
+document, so this is not a reversal of that decision.
+
+### What it breaks while it is missing
+The whole vision half of retrieval: `GET /pages/{page_id}/image` and `fetch` (U018) have nothing to
+render, `read` (U020) has no raster to reason over, and **correction Loop 5** —
+*"nothing found and `searchable_ratio < 1` → `fetch`/`read` the image-only pages"* — dead-ends. That
+last one is load-bearing for §8.5's honest abstention: `not_searchable` tells the agent to escalate
+to vision, and today the escalation has nowhere to go.
+
+### Deliverables (files)
+- `backend/vsir/ingest/store.py` — **written**, net new: a content-addressed document store, one
+  mounted volume, `<doc_id>@<revision>.pdf`. Derivable from any `page_id` via
+  `ids.parse_page_id`, so **no path goes in a payload** and A5's fix stands: the payload names the
+  *document*, the store resolves the *file*.
+- `backend/vsir/serve/ingest.py` — **extended**: the upload writes to the store instead of deleting
+  its spool.
+- `backend/vsir/ingest/run.py` — **extended**: persist `content_hash`. It is already computed by
+  probe and logged, and never stored — so nothing can detect that the file behind
+  `doc_id@revision` was swapped for different bytes.
+- `docker-compose.yml` — **extended**: the volume.
+- `backend/tests/unit/test_store.py`, `backend/tests/api/test_store_round_trip.py` — **written**.
+
+### Requirements
+- `page_id → doc_id@revision → bytes` and nothing else. No new payload field, no `image_path`.
+- Rasters stay unpersisted: this stores the **source**, and re-render on demand remains true.
+- A store miss is a typed refusal naming the document, never a placeholder image and never a 500.
+- Side effect worth having: an uploaded run becomes **resumable across a restart**, which closes
+  U027's first disclosed limitation.
+
+### Acceptance Criteria
+- [ ] After an upload, `page_id → bytes` resolves for every page of the document.
+- [ ] The page payload gains **no** field; `INDEXED` is unchanged and the boot assertion still passes.
+- [ ] A document whose file is absent from the store gives a typed refusal naming
+      `doc_id@revision`, not a 500 and not a blank image.
+- [ ] `content_hash` is on the run record, and a store entry whose bytes disagree with it is refused
+      rather than served.
+- [ ] `vsir ingest --resume` completes an upload-started run after the container is restarted.
+
+### Dependencies
+- **Depends On:** [U027, U011]
+- **Enables:** [U018, U020, U022]
+
+---
+
+## Unit: `/console`, the docs surface, and the local stack (ID: U030)
+
+**Status:** ✅ Complete (2026-09-10)
+**Milestone:** M3
+**Priority:** P2-Medium
+**Type:** frontend
+**Size Estimate:** Small
+**Spend:** none
+
+### Goal
+Make what the release serves usable and visible without a client: one page to upload, watch a run
+and search, a self-describing OpenAPI document, and one command to bring the stack up.
+
+### Working Deliverable
+`bash scripts/stack.sh up` → Qdrant, the collection, the API, a seeded document, and
+`http://localhost:8055/console`.
+
+### Deliverables (files)
+- `backend/vsir/serve/console/index.html` — **written**: one static page, no build step, same origin.
+- `backend/vsir/serve/app.py` — **extended**: `GET /console`, and `_described()` — the OpenAPI
+  document with the bearer requirement the middleware actually enforces.
+- `backend/vsir/serve/auth.py` — **extended**: `PROBE_PATHS`, `DOC_PATHS`, `CONSOLE_PATHS`.
+- `docker-compose.yml`, `scripts/stack.sh`, `scripts/sweep-corpus.py` — **written**.
+- `backend/tests/api/test_openapi.py` — **written**.
+
+### Requirements
+- **This is not U023.** M7's console is a React + Vite app with a page viewer, region zoom and the
+  agent's move-by-move trace, and it needs `fetch`, `read` and the runner. U023 **replaces** this
+  page rather than growing out of it.
+- Auth is **default deny by path in middleware**, which FastAPI cannot infer from the routes — so
+  the generated document described an API with no security at all. Wrong in the direction that
+  matters: a reader concludes no token is needed and Swagger shows no *Authorize* button. The
+  requirement is now derived from the same list the middleware reads, so a route added later is
+  covered without anyone remembering.
+- `/openapi.json`, `/docs`, `/redoc` and `/console` are free to **read** — markup and interface
+  shape, no corpus data, no run, no page, no token — because a browser cannot attach an
+  `Authorization` header to a plain navigation. **Reading them authorises nothing.** The first
+  attempt at this was a local proxy that injected the token, and it was the wrong answer: it put
+  the credential in a second place, made the working surface something other than the shipped one,
+  and left `/docs` broken for anyone not running the proxy.
+- The console shows a **typed absence as an answer**, with coverage numbers, never as "0 results";
+  and keeps `hits` and `unverified_hits` in **separate blocks**, because a code read off a raster is
+  not a code found in the page's text (D3, I2).
+
+### Dependencies
+- **Depends On:** [U015, U027]
+- **Enables:** [] — U023 supersedes it.
+
+---
+
+## 4c. Open defects found while running the system
+
+Recorded here rather than in `fixes/` because each belongs to a unit that has not been built yet, or
+is a follow-up the discovering unit deliberately did not take on. **None blocks a green build; all
+of them mislead somebody who trusts the system.**
+
+| # | Defect | Owner | Why it matters |
+|---|---|---|---|
+| **P1** | **A live run records no cost.** `input_tokens` / `output_tokens` come back `0` while `vlm_calls` is `1`: the token counts are not read off the live response. | U013 | With no cache store either (P2), a paid run leaves **no record of what it cost or what it received** — only what it concluded. For a system whose premise is provenance this is the weakest point in it. |
+| **P2** | **There is no VLM cache store on the live path.** `vlm/cache.py` says *"in production the entries live beside the run in the `vsir_runs` control plane"*; only `FixtureStore` is implemented. `cache_hits` is structurally always 0 and re-ingesting an unchanged document **re-bills every window**. | U013 | It is the difference between paying once and paying every time, and it makes §6.3's four cache keys decorative outside replay. |
+| **P3** | **`--record` is not exposed on `POST /documents`.** The recorder exists (`vlm/record.py`) and freezes receipts byte-for-byte under their §6.3 keys, but only `vsir ingest` can reach it — so an upload can never freeze its own receipts, and the upload is the path an operator uses. | U027 | §12.1's *"one paid ingest buys a permanent test corpus"* has no mechanism from the API. |
+| **P4** | **An upload with no declared `doc_id` is named after its own run.** The route spools to `<run_id>.pdf` and §6.1 step 01 derives `doc_id` from the filename, so a Festo datasheet published as `01M25E2HPS3KSEHSX6ZNEYBG9W`. Unfindable, un-scopable, and a re-upload becomes a *different* document every time, so retirement never supersedes anything. | U027 | Observed on 2026-09-10. Fix: spool under the uploader's sanitised filename. |
+| **P5** | **`VSIR_FIXTURE` means two things in `cli.py`** — the replay directory and the location of the run's acceptance table. U028 stopped a live run inheriting it, which is a guard, not the fix. | U013 | Separating them is what makes an acceptance table something a run can be checked against *deliberately*. |
+| **P6** | **A single-page PDF returned `page_index: 20`.** The §6.4 structural check refused it rather than indexing garbage — correct behaviour — but the model ignoring a 1-page window looks like a real weak spot, not a one-off. | U013 | 100 documents of the real corpus are ≤ 4 pages; whatever this is, it is not rare. |
+
 ## 5. Dependency Graph
 
 ```text
@@ -3396,16 +3685,20 @@ free proof ahead of every paid one.
 | 14 | U013 | M2b | **the first spend anywhere in the plan**, gated by a green parity suite and by OQ-1/OQ-2 |
 | 15 | U015 | M3 | the core→tool seam: `lookup` and `verify` over HTTP and MCP |
 | 16 | U016 | M3 | the acceptance and abstention commands; needs U015 and U012's parity fixtures |
-| 17 | U017 | M4 | `skim_pages`, fusion, image queries, `resolve` |
-| 18 | U018 | M4 | the page-image endpoint, the raster cache and `fetch` — closes M4 |
-| 19 | U019 | M5 | **free** — the aggregate rungs and `searchable_ratio`; parallel with U020 |
-| 20 | U020 | M5 | `read` — the paid tool; parallel with U019 |
-| 21 | U021 | M6 | **free** — triage and routing, provable with no paid call |
-| 22 | U022 | M6 | the loop and the answer gate — closes the product's answer path |
-| 23 | U023 | M7 | the console; parallel with U025 |
-| 24 | U025 | M8 | revisions, resume, graceful shutdown; parallel with U023 |
-| 25 | U024 | M7 | the Playwright replay suite — the M7 demo |
-| 26 | U026 | M8 | the corpus evaluation report — the last unit |
+| — | **U027** | M3 | ✅ *shipped 2026-09-10* — `POST /documents`, so the API can be given a document |
+| — | **U028** | M2a/b | ✅ *shipped 2026-09-10* — the five corrections the first live Gemini run found |
+| — | **U030** | M3 | ✅ *shipped 2026-09-10* — `/console`, the OpenAPI security scheme, the local stack |
+| 17 | U017 | M4 | `skim_pages`, fusion, image queries, `resolve`. **The best next unit:** unblocked, needs no new storage, and it is the first thing to *read* the fused image+text vectors U010 has been writing all along — today they are written and never queried |
+| 18 | **U029** | M4 | **the document store — must land before U018.** `page_id → bytes`. Small, and without it the whole vision half of retrieval has nothing to render from |
+| 19 | U018 | M4 | the page-image endpoint, the raster cache and `fetch` — closes M4. **Needs U029** |
+| 20 | U019 | M5 | **free** — the aggregate rungs and `searchable_ratio`; parallel with U020 |
+| 21 | U020 | M5 | `read` — the paid tool; parallel with U019 |
+| 22 | U021 | M6 | **free** — triage and routing, provable with no paid call |
+| 23 | U022 | M6 | the loop and the answer gate — closes the product's answer path |
+| 24 | U023 | M7 | the console — **replaces** U030's stopgap page rather than extending it; parallel with U025 |
+| 25 | U025 | M8 | revisions, resume, graceful shutdown; parallel with U023 |
+| 26 | U024 | M7 | the Playwright replay suite — the M7 demo |
+| 27 | U026 | M8 | the corpus evaluation report — the last unit |
 
 ---
 
