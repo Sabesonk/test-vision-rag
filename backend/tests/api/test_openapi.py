@@ -124,6 +124,11 @@ def test_the_free_surface_is_exactly_the_probes_the_documents_and_the_console():
     """
     assert auth_module.PROBE_PATHS == {"/health", "/ready", "/metrics"}
     assert auth_module.CONSOLE_PATHS == {"/console"}
+    # The documents are the interface describing itself, and `/` is the index of it: paths, tool
+    # names and where a credential goes. It grew by one for that reason and may only grow again
+    # for the same one.
+    assert auth_module.DOC_PATHS == {"/", "/openapi.json", "/docs", "/docs/oauth2-redirect",
+                                     "/redoc"}
     assert auth_module.PUBLIC_PATHS == (auth_module.PROBE_PATHS | auth_module.DOC_PATHS
                                         | auth_module.CONSOLE_PATHS)
     assert not any(path.startswith(("/tools", "/documents", "/runs", "/ask", "/pages"))

@@ -66,8 +66,9 @@ from dataclasses import dataclass
 from typing import (Any, AsyncIterator, Awaitable, Callable, Iterator, Literal, Mapping,
                     MutableMapping, Sequence)
 
-from fastapi import FastAPI, File, Form, Request, Response, UploadFile
+from fastapi import FastAPI, File, Form, Query, Request, Response, UploadFile
 from fastapi.openapi.utils import get_openapi
+from pydantic.json_schema import models_json_schema
 from fastapi.responses import (HTMLResponse, JSONResponse, PlainTextResponse,
                                StreamingResponse)
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
@@ -90,7 +91,15 @@ from vsir.serve import raster_cache
 from vsir.serve.audit import Usage
 from vsir.serve.auth import BearerAuth, Identity
 from vsir.serve.caps import ALLOWED_DPI, ToolError, validate_fetch_megapixels
-from vsir.serve.envelope import Provenance, wire
+from vsir.serve import errors
+from vsir.serve import manage
+from vsir.serve.envelope import (DocHit, FetchResult, LookupHit, PageHit, Provenance,
+                                 ReadResult, ResolveHit, SearchResponse, SectionHit,
+                                 ToolEnvelope, VerifyResult, wire)
+from vsir.serve.inputs import (FetchRequest, LookupRequest, ReadRequest, ResolveRequest,
+                               SkimAggregateRequest, SkimDocumentsRequest,
+                               SkimPagesRequest, SkimSectionsRequest, ToolRequest,
+                               VerifyRequest)
 from vsir.serve.tools.fetch import INCLUDE_ALL, PART
 from vsir.serve.tools.fetch import fetch as fetch_tool
 from vsir.serve.tools.lookup import lookup as lookup_tool
@@ -169,19 +178,72 @@ class ReadyResponse(BaseModel):
     checks: dict[str, str] = Field(default_factory=dict)
 
 
-class ControlError(BaseModel):
-    """A typed refusal from the control-plane surface (§11.3).
+class ToolCard(BaseModel):
+    """One tool, as the index describes it — the move, the path, and whether it spends."""
 
-    Named and distinct, always. An unknown run is `run_not_found` and a store that did not answer
-    is `qdrant_unavailable`: the first is a fact about the request, the second is somebody else's
-    outage, and collapsing them into one empty body is how a caller retries the wrong thing.
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    move: str = Field(description="The §7.2 move this tool is — NARROW, JUMP, FOLLOW, CHECK, "
+                                  "LOOK, COMPREHEND. What an agent is really choosing between.")
+    path: str = Field(description="Its own route. `POST` a JSON object of its parameters.")
+    spends: bool = Field(description="Whether calling it costs money. Exactly one tool does.")
+    description: str = Field(description="The same text published as the MCP tool description "
+                                         "and the route's OpenAPI summary — one string, so a "
+                                         "tool cannot be described two ways.")
+
+
+class ServiceIndex(BaseModel):
+    """`GET /` — what this service is, what it serves, and where the credential goes.
+
+    The last gap in a self-documenting API. `/openapi.json` has described every path since U014,
+    and an integrator has to *know to ask for it*: the base URL answered `404`, which is the one
+    response that teaches nothing. A service that can be discovered from its own root needs no
+    onboarding document to get as far as the second request.
+
+    It carries **no corpus data** — no document, no page, no run, no token — which is what makes
+    it free to read, on exactly the argument §7.4 makes for `/openapi.json`: what it contains is
+    the shape of the interface, and reading the shape authorises nothing.
     """
 
     model_config = ConfigDict(extra="forbid")
 
-    error: str
-    detail: str
-    run_id: str = ""
+    service: str
+    release_id: str
+    version: str
+    description: str = Field(description="What this service refuses to do, in one line. The "
+                                         "premise the rest of the surface enforces.")
+    documentation: dict[str, str] = Field(
+        description="Where the interface describes itself: the OpenAPI document and the two pages "
+                    "that render it, plus the operator console. All free to read.")
+    authentication: dict[str, str] = Field(
+        description="How to authenticate, and what identity is derived from. There is no "
+                    "`X-User-Id` — a client-supplied one is ignored and logged (§7.4).")
+    tools: list[ToolCard] = Field(
+        description="The eight moves of §7.2 **in ladder order**, not alphabetical: an agent "
+                    "reading this list for the first time is choosing a move, and the order is "
+                    "the order the moves narrow in.")
+    paths: dict[str, str] = Field(
+        description="Every route this release serves, with what it is for. Derived from the app's "
+                    "own router, so a route added later appears here without anyone remembering.")
+
+
+class ControlError(errors.ErrorResponse):
+    """A typed refusal from the control-plane surface (§11.3) — `ErrorResponse` plus `run_id`.
+
+    Named and distinct, always. An unknown run is `run_not_found` and a store that did not answer
+    is `qdrant_unavailable`: the first is a fact about the request, the second is somebody else's
+    outage, and collapsing them into one empty body is how a caller retries the wrong thing.
+
+    A **subclass** rather than its own model, since `serve/errors.py` exists: this surface refuses
+    in the same shape as every other one, and two independent declarations of `{error, detail}` is
+    how a client ends up with two error types for one contract. All this row adds is the field
+    that is genuinely its own.
+    """
+
+    run_id: str = Field(
+        default="",
+        description="The run the refusal is about, where the request named one.")
 
 
 #: The Prometheus text exposition format's own content type. Pinned here rather than defaulted,
@@ -284,161 +346,10 @@ class RequestContext:
 
 
 # ── the tool surface (§7.2, §7.4) ────────────────────────────────────────────────────────────────
-
-class ToolRequest(BaseModel):
-    """Base for every tool body. ``extra="forbid"``, so a misspelt parameter is a `400`.
-
-    Silently ignoring an unknown field is how a caller passes ``include_unverified=True`` as
-    ``includeUnverified`` and is told, with a straight face, that the corpus does not contain it.
-    """
-
-    model_config = ConfigDict(extra="forbid")
-
-
-class LookupRequest(ToolRequest):
-    """``lookup(label, scope?, include_unverified=False, cap=20)`` — §7.2.2.
-
-    The request shapes live here, beside the table, until the tool's own module takes ownership of
-    its wrapper: `skim_*`/`resolve` at U017, `fetch` at U018, `read` at U020. What may never move
-    is where they are *validated* — one table, one dispatcher, one place that charges the budget
-    and writes the audit line, and both transports go through it.
-
-    These models are also the **MCP input schemas** (§7.5): `mcp/server.py` publishes
-    ``model_json_schema()`` for each row of the table rather than hand-writing a JSON Schema per
-    tool, so an MCP client and an HTTP client are validated against the same declaration and a
-    new parameter cannot reach one surface without reaching the other.
-    """
-
-    label: str
-    #: Not a typed model: `INDEXED` is the schema, and `core.exact` refuses a key outside it with
-    #: `filter_unknown_key` (I6, F10). A Pydantic mirror of `INDEXED` would be a second source of
-    #: truth for the one dict that has three jobs (§5.4).
-    scope: dict[str, Any] = Field(default_factory=dict)
-    include_unverified: bool = False
-    cap: int = LOOKUP_CAP
-
-
-class VerifyRequest(ToolRequest):
-    """``verify(claims, page_ids)`` — §7.2.4.
-
-    No ``scope``: the pages are named outright, so there is nothing to filter. No ``image``
-    either, and that is I2/I3 rather than an omission — a photograph may *find* a candidate page,
-    it can never *confirm* a code.
-    """
-
-    claims: list[str]
-    page_ids: list[str]
-
-
-class SkimPagesRequest(ToolRequest):
-    """``skim_pages(query, image=None, scope, exclude?, limit=10)`` — §7.2.1.
-
-    ``query`` is optional **when ``image`` is given**, and vice versa; neither is a typed
-    ``query_required`` from the tool rather than a validation error here, because *"a search with
-    nothing to search for"* is a bound on the move and belongs with the other bounds (§7.3).
-
-    ``image`` is base64 because a JSON body is where both transports meet: an MCP client hands
-    `tools/call` a JSON object and cannot post multipart. It is the **query** side of a search and
-    it can never reach the exact surface — `lookup` and `verify` have no such field, and
-    ``extra="forbid"`` makes adding one to their bodies a `400` rather than a photograph deciding
-    whether a code is printed (I2, I3, D12).
-    """
-
-    query: str = ""
-    #: base64, decoded by the adapter. A malformed value is a typed 400 naming the field.
-    image: str = ""
-    scope: dict[str, Any] = Field(default_factory=dict)
-    #: Page ids the agent has already looked at and rejected. State lives in the caller (C11).
-    exclude: list[str] = Field(default_factory=list)
-    limit: int = SKIM_LIMIT
-
-
-class SkimAggregateRequest(ToolRequest):
-    """``skim_documents`` / ``skim_sections`` — §7.2.1, and `skim_pages`' body minus ``limit``.
-
-    **No ``limit``**, and that is the signature §7.2.1 declares rather than an omission: the two
-    aggregate rungs return at most ten *groups*, full stop. A caller who wants more rows wants a
-    different rung — `skim_pages` with a `limit` — and a `limit` here would let one call ask for
-    every document in the corpus, which is the triage this rung exists to do, undone.
-
-    Two bodies rather than one shared model with a `granularity` field: the tool name is what an
-    agent chooses between (§7.2.1), and the MCP schema published for each name has to be the
-    schema of *that* tool.
-    """
-
-    query: str = ""
-    #: base64, decoded by the adapter — as on `skim_pages`, and never reaching the exact surface.
-    image: str = ""
-    scope: dict[str, Any] = Field(default_factory=dict)
-    exclude: list[str] = Field(default_factory=list)
-
-
-class SkimDocumentsRequest(SkimAggregateRequest):
-    """``skim_documents(query, image=None, scope?, exclude?)`` — §7.2.1."""
-
-
-class SkimSectionsRequest(SkimAggregateRequest):
-    """``skim_sections(query, image=None, scope, exclude?)`` — §7.2.1.
-
-    §7.2.1 writes this rung's ``scope`` without the `?` `skim_documents` has, and it still
-    defaults to empty here — exactly as `skim_pages`' does, whose signature is written the same
-    way. An unscoped call is answered and told so: `needs_scope` is the server's judgement on
-    whether the scope was wide enough (§7.1), computed from the pages searched and not from
-    whether the caller passed a dict, and refusing here would be a second, weaker version of it.
-    """
-
-
-class ResolveRequest(ToolRequest):
-    """``resolve(printed_label, doc_id?)`` — §7.2.3. A citation, not a query: no scope, no image."""
-
-    printed_label: str
-    doc_id: str = ""
-
-
-class FetchRequest(ToolRequest):
-    """``fetch(page_ids, include, dpi=150, region=None, inline=True)`` — §7.2.5.
-
-    No ``scope``: the pages are named outright, so there is nothing to filter — the same reason
-    `verify` has none. No ``image`` either: this tool *returns* rasters, it does not search with
-    one.
-
-    ``include`` is a list of `Literal`s rather than a free list of strings, so a fourth part name
-    is an `invalid_request` naming the field instead of a word this service silently ignores — a
-    caller that asked for ``"summaries"`` and received a page with no summary would conclude the
-    page has none.
-
-    ``dpi`` and ``region`` are plain values here and are bounded in `serve/caps.py`, not by
-    Pydantic: §7.3's bounds have to produce **their own** codes (`dpi_not_allowed`,
-    `dpi_requires_region`, `region_invalid`) because an agent switches on them, and a Pydantic
-    ``Literal[36, 72, …]`` would produce a generic validation error instead.
-    """
-
-    page_ids: list[str]
-    include: list[PART] = Field(default_factory=lambda: list(INCLUDE_ALL))
-    dpi: int = DPI_INDEX
-    #: Normalised ``[x0, y0, x1, y1]`` (D6) — the crop, rendered on demand, stored nowhere.
-    region: list[float] | None = None
-    #: **Default true**, because an agent needs the pixels in its context and an MCP client cannot
-    #: follow a URL. ``false`` returns the reference only, which is what the console uses (§7.2.5).
-    inline: bool = True
-
-
-class ReadRequest(ToolRequest):
-    """``read(page_ids, question)`` — §7.2.6. Two parameters, and that is the contract.
-
-    **There is no `dpi`.** The pinned answer dpi of 220 is an input to ``read_key`` (§6.3), so a
-    caller that could raise it could ask one question three times and miss the cache three times.
-    ``extra="forbid"`` makes a hopeful ``"dpi": 400`` an `invalid_request` naming the field rather
-    than a parameter this service silently ignores — which is the honest half of *"a caller cannot
-    change it"*: refused, not quietly dropped.
-
-    No `region` either, for the same reason and one more: a crop is a claim about where the answer
-    is on the page, and it is the caller's claim. `fetch` is where a caller crops, and `fetch` is
-    free (§7.2.5).
-    """
-
-    page_ids: list[str]
-    question: str
+# The eight input schemas moved to `serve/inputs.py` — see that module's note for why. They are
+# re-exported here because this is the name every caller already imports them under (the suite,
+# `mcp/server.py` via the table, and the one-shot CLI), and because `ToolSpec.request` is typed
+# against `ToolRequest`: an import in one place is the seam, a rename across the suite is churn.
 
 
 @dataclass(frozen=True)
@@ -467,11 +378,21 @@ class ToolContext:
 
 @dataclass(frozen=True)
 class ToolSpec:
-    """One row of the table: the name, its body shape, the call, and whether it spends."""
+    """One row of the table: the name, its shapes on the wire, the call, and whether it spends."""
 
     name: str
     request: type[ToolRequest]
     call: Callable[[ToolContext, Any], tuple[BaseModel, Usage]]
+    #: The envelope this tool returns, declared so the per-tool route of §7.4 can **publish** it.
+    #: A column on the table rather than a lookup beside it, for the reason `request` is one: the
+    #: table is the release's single declaration of its surface, and a second mapping from name to
+    #: response type is a second thing to forget when a tool is added.
+    #:
+    #: It is published and never *applied* — the route declares it under ``responses={200: ...}``
+    #: and returns raw bytes from :func:`~vsir.serve.envelope.wire`. Handing it to FastAPI as
+    #: ``response_model`` would put a second serialiser on the response path, and the byte-identity
+    #: criterion between HTTP and MCP (§7.5) is only meaningful while there is exactly one.
+    response: type[BaseModel] | None = None
     #: Charges the per-caller `read` quota before running (§7.3). Only `read` sets it (§7.2.6).
     spends: bool = False
     #: Bounds that can be settled from the request alone, run **before** the quota is charged.
@@ -758,6 +679,74 @@ VERIFY_DESCRIPTION = (
 )
 
 
+#: The **move** each tool is, from §7.2's own headings — the word an agent is really choosing
+#: between. Used as the named route's OpenAPI summary, so `/docs` reads as the ladder it is
+#: (NARROW → JUMP → FOLLOW → CHECK → LOOK → COMPREHEND) rather than eight alphabetised verbs.
+_LADDER_MOVE = {
+    "skim_documents": "NARROW", "skim_sections": "NARROW", "skim_pages": "NARROW",
+    "lookup": "JUMP", "resolve": "FOLLOW", "verify": "CHECK", "fetch": "LOOK",
+    "read": "COMPREHEND (the paid step)",
+}
+
+
+#: What each OpenAPI tag group **is**, published as `openapi_tags` so `/docs` explains its own
+#: sections. Swagger renders seven headings, and until this existed they were seven bare words —
+#: a reader could see that `corpus` and `runs` were different groups and not what either was for,
+#: which is the same failure the untyped tool body was: the information existed and the document
+#: did not carry it.
+#:
+#: The order is the order Swagger renders them in, and it is the order somebody meets the service:
+#: what is it → is it up → put a document in → see what went in → find something → look at a page.
+OPENAPI_TAGS: list[dict[str, Any]] = [
+    {"name": "service", "description":
+        "**Start here.** `GET /` is the service index: the release, every path, the eight tools "
+        "in ladder order, and where the credential goes. Free to read, like the description "
+        "itself — it names the surface and returns no corpus data."},
+    {"name": "probes", "description":
+        "Liveness, readiness and metrics (§15.1, §11.4). **Free, and the only free paths that "
+        "are not documentation**: an orchestrator has to reach them before anything is "
+        "configured. `/health` is green whenever the process can answer — it MUST NOT fail on a "
+        "backing-service outage, because a restart does not fix somebody else's Qdrant. `/ready` "
+        "is the one that goes red for that."},
+    {"name": "ingest", "description":
+        "Putting a document in (§6.1). `POST /documents` is a **transport and nothing else**: it "
+        "spools the bytes and runs `vsir ingest`, the same subcommand from the same image, so "
+        "there is no second pipeline (§15 Factor XII, register E1). It answers `202` and a "
+        "`run_id`, never a result — progress is `GET /runs/{run_id}`, which reads the control "
+        "plane rather than this process, so a poll works from any replica."},
+    {"name": "corpus", "description":
+        "Reading what the index **contains** — documents, their revisions, and their pages "
+        "(§5.1–5.3, §5.7). Queries over the collections ingestion already writes, so they cannot "
+        "drift from what a search sees. All read-only: retirement is §6.7's and runs inside a "
+        "publish, where the run record is its evidence.\n\nThe addressable unit is the **page**, "
+        "under the `page_id` of §5.2 — there is no chunk in this system, by design: a window is a "
+        "page range that stitching deletes again and never becomes a retrieval boundary."},
+    {"name": "runs", "description":
+        "The run control plane (§6.9) and the two streamed exports (§6.8). `GET /runs` is the "
+        "history; `GET /runs/{run_id}` is one whole record — state, step, gates, overrides, lease, "
+        "cost, retirement. **`gated` is not `failed`**: the run finished and §11.1's gates "
+        "declined to publish what it produced, which is the outcome they exist to produce."},
+    {"name": "tools", "description":
+        "The eight moves of §7.2, each on its own path, in ladder order: **NARROW** "
+        "(`skim_documents` → `skim_sections` → `skim_pages`), **JUMP** (`lookup`), **FOLLOW** "
+        "(`resolve`), **CHECK** (`verify`), **LOOK** (`fetch`), and **COMPREHEND** (`read`) — the "
+        "one tool that spends.\n\nTwo properties to rely on. **Nothing matched is a typed "
+        "absence, never an empty `200`** — `not_found`, `not_searchable`, `out_of_scope` and "
+        "`found_only_in_superseded` are different facts and an agent acts differently on each "
+        "(§7.1). And **every bound is a refusal with its own code**, never a clamp and never a "
+        "truncation, so a caller is told what it broke rather than silently given less (§7.3)."},
+    {"name": "pages", "description":
+        "The page raster, rendered on demand and **never persisted** (§4.2) — the "
+        "browser-renderable half of `fetch`. Same dpi tiers and same typed refusals as §7.3: "
+        "above 220 dpi a `region` is required, because a full page at 400 exceeds the megapixel "
+        "bound."},
+    {"name": "console", "description":
+        "The operator console — one static page, served same-origin so there is no CORS boundary "
+        "and no second container. Free because a browser cannot attach a credential to a plain "
+        "navigation; the page then asks for one and every call it makes carries it."},
+]
+
+
 def tool_table() -> dict[str, ToolSpec]:
     """The tools this release exposes — over HTTP at ``POST /tools/{tool_name}`` and over MCP.
 
@@ -778,26 +767,34 @@ def tool_table() -> dict[str, ToolSpec]:
     return {
         "skim_documents": ToolSpec(name="skim_documents", request=SkimDocumentsRequest,
                                    call=_call_skim_documents,
+                                   response=SearchResponse[DocHit],
                                    description=SKIM_DOCUMENTS_DESCRIPTION),
         "skim_sections": ToolSpec(name="skim_sections", request=SkimSectionsRequest,
                                   call=_call_skim_sections,
+                                  response=SearchResponse[SectionHit],
                                   description=SKIM_SECTIONS_DESCRIPTION),
         "skim_pages": ToolSpec(name="skim_pages", request=SkimPagesRequest, call=_call_skim_pages,
+                               response=SearchResponse[PageHit],
                                description=SKIM_PAGES_DESCRIPTION),
         "lookup": ToolSpec(name="lookup", request=LookupRequest, call=_call_lookup,
+                           response=SearchResponse[LookupHit],
                            description=LOOKUP_DESCRIPTION),
         "resolve": ToolSpec(name="resolve", request=ResolveRequest, call=_call_resolve,
+                            response=SearchResponse[ResolveHit],
                             description=RESOLVE_DESCRIPTION),
         "verify": ToolSpec(name="verify", request=VerifyRequest, call=_call_verify,
+                           response=ToolEnvelope[VerifyResult],
                            description=VERIFY_DESCRIPTION),
         # Free (§8.1a, SA-9) and audited anyway: the §7.4 line beside `read`'s tracks image-byte
         # movement, which is the resource this tool actually consumes.
         "fetch": ToolSpec(name="fetch", request=FetchRequest, call=_call_fetch,
+                          response=ToolEnvelope[FetchResult],
                           description=FETCH_DESCRIPTION),
         # The one row with `spends=True`, and therefore the one row with a `precheck`: the budget
         # is charged before the call, so every bound that can be checked without the store is
         # checked before the charge (§7.3, F18).
         "read": ToolSpec(name="read", request=ReadRequest, call=_call_read, spends=True,
+                         response=ToolEnvelope[ReadResult],
                          precheck=lambda body: read_precheck(body.page_ids, body.question),
                          description=READ_DESCRIPTION),
     }
@@ -1081,6 +1078,7 @@ def create_app(env: Mapping[str, str] | None = None) -> FastAPI:
         title="Vision segmentation, index & retrieval",
         version=__version__,
         lifespan=lifespan,
+        openapi_tags=OPENAPI_TAGS,
         description=(
             "The document service behind an engineering question.\n\n"
             "**A code this service returns is a code printed on the page.** Nothing matched is one "
@@ -1138,6 +1136,83 @@ def create_app(env: Mapping[str, str] | None = None) -> FastAPI:
             })
         return HTMLResponse(CONSOLE_PAGE.read_text(encoding="utf-8"))
 
+    @app.get("/", response_model=ServiceIndex, tags=["service"],
+             summary="the service index — what this is, what it serves, where the token goes")
+    async def index() -> ServiceIndex:
+        """The root, which used to be a `404` — the one response that teaches nothing.
+
+        **Derived, never hand-listed.** The tool cards come from `app.state.tools` and the path
+        table from `app.routes`, so a tool or a route added next milestone appears here without
+        anybody remembering to add it — the same property the auth middleware has, and for the
+        same reason: a list maintained by hand is a list that is wrong by the second release.
+
+        Free to read, and that is a deliberate extension of :data:`~vsir.serve.auth.DOC_PATHS`
+        rather than a hole in it: this body is the *shape* of the interface — paths, tool names,
+        where a credential goes — and contains no document, no page, no run and no token. §7.4
+        already makes that argument for `/openapi.json`; a reader who can see the path list is
+        exactly as far from the corpus as one who can see the OpenAPI document, which is to say
+        one `401` away.
+        """
+        described = {
+            "GET /": "this index",
+            "GET /health": "liveness — green whenever the process can answer (§15.1)",
+            "GET /ready": "readiness — boot checks passed, Qdrant reachable, schema present",
+            "GET /metrics": "Prometheus, recomputed from the control plane on every scrape",
+            "GET /openapi.json": "the interface, described in full",
+            "GET /docs": "Swagger UI — Authorize with your token, then Try it out",
+            "GET /redoc": "the same document, rendered for reading",
+            "GET /console": "the operator console",
+            "POST /documents": "ingest a PDF — 202 and a run_id, never a result (§6.1)",
+            "GET /documents": "the corpus — every document, its revisions, its searchable ratio",
+            "GET /documents/{doc_id}": "one document and every revision of it",
+            "GET /documents/{doc_id}/pages": "one revision's page inventory, with page_ids",
+            "GET /runs": "the ingest history — state, step, and which gate refused",
+            "GET /runs/{run_id}": "one whole run record (§6.9)",
+            "GET /runs/{run_id}/export/labels.jsonl": "the label export, streamed (§6.8)",
+            "GET /runs/{run_id}/export/observed_tokens.jsonl": "the observed-token inventory",
+            "GET /pages/{page_id}/image": "the page raster, rendered on demand, never persisted",
+        }
+        # Derived from the router, so the table cannot silently fall behind the surface. The
+        # descriptions above are prose and the paths below are the truth; a route with no prose
+        # still appears, with its summary or its own name.
+        for route_object in app.routes:
+            path = getattr(route_object, "path", "")
+            for method in sorted(getattr(route_object, "methods", set()) or set()):
+                if method in ("HEAD", "OPTIONS") or not path:
+                    continue
+                key = f"{method} {path}"
+                if key not in described:
+                    described[key] = (getattr(route_object, "summary", "")
+                                      or getattr(route_object, "name", "") or "")
+
+        return ServiceIndex(
+            service="vision-segmentation-retriever",
+            release_id=cfg.release_id,
+            version=__version__,
+            description=(
+                "A code this service returns is a code printed on the page. Nothing matched is "
+                "one of four typed absences, never an empty 200 — an empty success is "
+                "indistinguishable from a fabricated abstention."),
+            documentation={
+                "openapi": "/openapi.json", "swagger": "/docs", "redoc": "/redoc",
+                "console": "/console",
+            },
+            authentication={
+                "scheme": "Bearer",
+                "header": "Authorization: Bearer <token>",
+                "tokens": "one of VSIR_API_TOKENS (§7.4)",
+                "identity": "derived from the token — caller-<sha256(token)[:12]>, never the "
+                            "token itself and never a client-supplied header",
+                "free_paths": ", ".join(sorted(auth_module.PUBLIC_PATHS)),
+            },
+            tools=[
+                ToolCard(name=name, move=_LADDER_MOVE.get(name, ""), path=f"/tools/{name}",
+                         spends=spec.spends, description=spec.description)
+                for name, spec in app.state.tools.items()
+            ],
+            paths=described,
+        )
+
     @app.get("/health", response_model=HealthResponse, tags=["probes"])
     async def health() -> HealthResponse:
         """Liveness (§15.1). Green whenever the process can answer, Qdrant up or down."""
@@ -1186,27 +1261,48 @@ def create_app(env: Mapping[str, str] | None = None) -> FastAPI:
         )
 
     # ── the tools (§7.2, §7.4) ───────────────────────────────────────────────────────────────────
+    # **Nine routes, one transport, one dispatcher.** Each of the eight tools gets its own path —
+    # `POST /tools/lookup`, `POST /tools/read` — and `POST /tools/{tool_name}` stays behind them.
+    #
+    # Why the named routes exist. The generic route is the right *implementation* and it was the
+    # wrong *description*: one OpenAPI operation with an untyped body, so `/docs` showed a single
+    # "tool_name + JSON" form for eight tools whose parameters have nothing in common, and a client
+    # generated from `/openapi.json` got one `call_tool(name, dict)` with no types on either side.
+    # An integrator had to read our source to learn that `read` takes `question` and `fetch` takes
+    # `dpi`. Named routes publish each tool's own schema, and Swagger renders eight real forms.
+    #
+    # Why "one route and a table" is not violated by this. That rule was always about the
+    # *implementation* — register **E1**, §15 Factor XII, and §7.5's requirement that MCP and HTTP
+    # cannot drift. Every one of these routes is a two-line closure over :func:`_serve_tool`, and
+    # every one of them reaches the tools through :func:`dispatch` with the same runtime, so the
+    # name lookup, the validation, the budget, the audit line and the typed refusals remain one
+    # implementation. They are generated **from the table** in a loop rather than hand-written
+    # eight times, so a tool cannot get a route without being in the table, and a tool cannot be in
+    # the table without getting a route.
+    #
+    # Why the generic route survives underneath. Registration order decides matching, so the
+    # literal paths win for the eight names and `{tool_name}` catches everything else — which is
+    # exactly the behaviour it should keep: an unknown name is a typed `404` listing what *is*
+    # served (a tool absent from this release is absent, not empty). It also keeps every existing
+    # client, the one-shot CLI and the MCP parity suite working unchanged.
 
-    @app.post("/tools/{tool_name}", tags=["tools"], responses={
-        400: {"description": "a typed bound of §7.3 — never a clamp and never a truncation"},
-        401: {"description": "no bearer token (§7.4); the probes are the only free paths"},
-        404: {"description": "no such tool in this release; the body lists the ones there are"},
-        429: {"description": "the per-caller read quota is exhausted (§7.3)"},
-        500: {"description": "a bug in this service, named by exception type and nothing more"},
-        502: {"description": "the model backend answered unusably"},
-        503: {"description": "a backing service did not answer — retryable, never empty (§11.3)"},
-    })
-    async def call_tool(tool_name: str, request: Request) -> Any:
-        """One route for the eight tools of §7.2, each an envelope of §7.1.
+    async def _serve_tool(tool_name: str, request: Request) -> Response:
+        """The transport for every tool, named or generic. Everything else is :func:`dispatch`.
 
         Auth has already happened, in middleware, for every path but the three probes — so there
         is no decorator here to forget and no route that is protected only by having remembered.
 
-        Everything after the JSON parse is :func:`dispatch`, which the MCP surface calls with the
-        same runtime: the name lookup, the validation, the budget, the audit line and the typed
-        refusals are one implementation and this route adds only the transport (§7.5). The
-        dispatch runs in a worker thread, because the Qdrant client is sync and a blocking call
-        on the event loop is an outage for every other request in flight.
+        **This function does not validate the body, and that is deliberate.** The named routes
+        publish their request schema through ``openapi_extra`` rather than declaring a typed
+        parameter, because a typed parameter would hand validation to FastAPI and FastAPI's
+        failure is a `422` with a JSON pointer. §7.3's contract is that a bad request comes back
+        as a **typed code an agent can switch on** — `invalid_request` naming the field — and
+        `dispatch` is where that happens, for both transports. So the schema is published and the
+        validation stays in one place; the two would otherwise disagree the moment a route was
+        reached through the path the other client uses.
+
+        The dispatch runs in a worker thread, because the Qdrant client is sync and a blocking
+        call on the event loop is an outage for every other request in flight.
 
         The body is written with :func:`~vsir.serve.envelope.wire` rather than handed to
         ``JSONResponse``, so *these* are the bytes the byte-identity criterion compares against —
@@ -1241,6 +1337,56 @@ def create_app(env: Mapping[str, str] | None = None) -> FastAPI:
         return Response(content=outcome.body(), status_code=outcome.status,
                         media_type="application/json")
 
+    def _register_tool_route(spec: ToolSpec) -> None:
+        """One named route for one row of the table. Called in a loop, never written out by hand.
+
+        ``openapi_extra`` carries the request body by ``$ref`` and :func:`_described` puts the
+        referenced schema in ``components`` — see :func:`_serve_tool` for why the body is not a
+        typed parameter, and :attr:`ToolSpec.response` for why the envelope is published under
+        ``responses`` rather than applied as ``response_model``.
+        """
+        statuses = (*errors.TOOL_STATUSES, 429) if spec.spends else errors.TOOL_STATUSES
+        documented: dict[int | str, dict[str, Any]] = dict(errors.responses(*statuses))
+        if spec.response is not None:
+            documented[200] = {
+                "model": spec.response,
+                "description": "the envelope of §7.1 — `status` says whether the **call** ran, "
+                               "never what it found",
+            }
+
+        @app.post(f"/tools/{spec.name}", tags=["tools"], name=f"tool_{spec.name}",
+                  # Set explicitly, because FastAPI derives one from the handler function and
+                  # every one of these is the same closure — so the generated ids would have been
+                  # `named_tool_tools_lookup_post` and friends, which is what a generated client
+                  # calls its methods. The tool's own name is the only sensible one.
+                  operation_id=spec.name,
+                  summary=f"{_LADDER_MOVE.get(spec.name, '')} — {spec.name}".lstrip(" —"),
+                  description=spec.description, response_model=None, responses=documented,
+                  openapi_extra={"requestBody": {
+                      "required": True,
+                      "content": {"application/json": {
+                          "schema": {"$ref": f"#/components/schemas/{spec.request.__name__}"}}},
+                  }})
+        async def named_tool(request: Request, _tool: str = spec.name) -> Response:
+            return await _serve_tool(_tool, request)
+
+    for _spec in app.state.tools.values():
+        _register_tool_route(_spec)
+
+    @app.post("/tools/{tool_name}", tags=["tools"], include_in_schema=False, responses=dict(
+        errors.responses(*errors.TOOL_STATUSES, 404, 429,
+                         **{"404": "no such tool in this release; the body lists the ones there "
+                                   "are"})))
+    async def call_tool(tool_name: str, request: Request) -> Any:
+        """The catch-all beneath the eight named routes — an unknown name's typed `404`.
+
+        ``include_in_schema=False`` because the eight named routes above now *are* the published
+        surface, and leaving this in the document would describe every tool twice: once properly
+        and once as an untyped body, which is the confusion the named routes were added to end.
+        It stays **mounted**, and it stays the route that answers a name this release does not
+        serve (§7.1 applied to the surface itself) as well as every client written against it.
+        """
+        return await _serve_tool(tool_name, request)
     # ── the page raster: `fetch`'s browser-renderable half (§7.2.5, §7.4) ────────────────────────
 
     def _rendered(page_id: str, dpi: int, region: Sequence[float] | None) -> Any:
@@ -1264,11 +1410,14 @@ def create_app(env: Mapping[str, str] | None = None) -> FastAPI:
         200: {"content": {raster_cache.PNG_MEDIA_TYPE: {}},
               "description": "the page raster, rendered on demand and never persisted (§4.2)"},
         304: {"description": "the caller's `If-None-Match` matches this raster's digest"},
-        400: {"description": "a typed bound of §7.3 — `dpi_not_allowed`, `dpi_requires_region`, "
+        400: {"model": errors.ErrorResponse,
+              "description": "a typed bound of §7.3 — `dpi_not_allowed`, `dpi_requires_region`, "
                              "`region_invalid`, `page_id_invalid`"},
         401: {"description": "no bearer token (§7.4) — a raster is never served without one"},
-        404: {"description": "`page_not_found`, or `page_not_current` for a superseded page"},
-        503: {"description": "`document_not_stored` / `document_hash_mismatch` — the page is "
+        404: {"model": errors.ErrorResponse,
+              "description": "`page_not_found`, or `page_not_current` for a superseded page"},
+        503: {"model": errors.ErrorResponse,
+              "description": "`document_not_stored` / `document_hash_mismatch` — the page is "
                              "indexed and its bytes are not here (§11.3)"},
     })
     async def page_image(page_id: str, request: Request, dpi: str = str(DPI_INDEX),
@@ -1347,15 +1496,11 @@ def create_app(env: Mapping[str, str] | None = None) -> FastAPI:
 
     # ── ingestion over HTTP: the transport for `vsir ingest` (§6.1, §15 Factor XII) ───────────────
 
-    @app.post("/documents", status_code=202, tags=["ingest"], responses={
-        400: {"description": "an empty body, an unknown step, or an unknown VLM backend"},
-        401: {"description": "no bearer token (§7.4)"},
-        403: {"description": "the release bills a live model and VSIR_ALLOW_PAID is not set"},
-        413: {"description": "larger than the spool bound"},
-        415: {"description": "the bytes do not begin with %PDF-"},
-        500: {"description": "the ingest process could not be started"},
-        503: {"description": "the document store is missing or not writable (§4.2, U029)"},
-    })
+    @app.post("/documents", status_code=202, tags=["ingest"], responses=errors.responses(
+        400, 401, 403, 413, 415, 500, 503,
+        **{"400": "an empty body, an unknown step, or an unknown VLM backend",
+           "500": "the ingest process could not be started",
+           "503": "the document store is missing or not writable (§4.2, U029)"}))
     async def post_document(
         file: UploadFile = File(..., description="the source PDF"),
         until: str = Form("publish", description="stop after this §6.1 step"),
@@ -1396,6 +1541,114 @@ def create_app(env: Mapping[str, str] | None = None) -> FastAPI:
                          **refusal.details)
             return JSONResponse(status_code=refusal.http_status, content=refusal.to_payload())
         return JSONResponse(status_code=202, content=accepted.to_payload())
+
+
+    # ── the corpus: what is in the index (§5.1–5.3, §5.7) ────────────────────────────────────────
+    # `POST /documents` above put documents in; these three are how anything finds out what went
+    # in. See `serve/manage.py` for why they are queries over the collections ingestion already
+    # writes and never a second source of truth — and for why the units are documents, revisions
+    # and **pages** rather than chunks, which this system deliberately does not have.
+    #
+    # All three are read-only. Retirement is §6.7's, and it runs *inside* a publish where the run
+    # record is its evidence; a bare "retire this revision" endpoint would be the one call on this
+    # surface that silently changes what every future search returns, so it is not here.
+
+    def _manage_failure(failure: BaseException, *, route: str) -> JSONResponse:
+        """A management refusal, in the same typed shape as a tool's (§11.3).
+
+        Reusing :func:`_failure_response` rather than writing a second mapping: `document_not_found`
+        and `qdrant_unavailable` mean exactly what they mean on the tool surface, and a caller must
+        not have to learn this service's refusals twice.
+        """
+        outcome = _failure_response(failure, tool=route)
+        return JSONResponse(status_code=outcome.status, content=outcome.payload)
+
+    @app.get("/documents", response_model=manage.DocumentList, tags=["corpus"],
+             summary="the corpus — every document in the index",
+             responses=errors.responses(400, 401, 500, 503))
+    async def list_documents(
+        limit: int = Query(manage.DEFAULT_PAGE_SIZE, description=(
+            f"Documents to describe, 1…{manage.MAX_DOCUMENTS}. Each row costs two exact facets "
+            f"and a scroll, so this is a real bound and not a page size.")),
+    ) -> Any:
+        """Every document held, with its revisions and its §5.7 searchable ratio.
+
+        The ratio is on this row deliberately: it is the number that decides whether `lookup` can
+        answer for this document at all, and an operator reviewing an ingest is exactly the person
+        who needs to see a 0.00 before an agent reports 'not found' from it (§7.1).
+        """
+        try:
+            return await run_in_threadpool(
+                manage.documents, app.state.search, cfg.pages_collection, limit=limit)
+        except Exception as failure:  # noqa: BLE001 — mapped to §11.3's typed refusals
+            return _manage_failure(failure, route="list_documents")
+
+    @app.get("/documents/{doc_id}", response_model=manage.DocumentRow, tags=["corpus"],
+             summary="one document, and every revision of it",
+             responses=errors.responses(401, 404, 500, 503))
+    async def get_document(doc_id: str) -> Any:
+        """One document. A `404 document_not_found` when the id is not in the index.
+
+        The superseded revisions are listed and not hidden: §6.7 **keeps** them (F9), their pages
+        are still reachable by `page_id`, and a surface that showed only the current one would
+        make the history of a document look like it never had one.
+        """
+        try:
+            return await run_in_threadpool(
+                manage.document, app.state.search, cfg.pages_collection, doc_id)
+        except Exception as failure:  # noqa: BLE001
+            return _manage_failure(failure, route="get_document")
+
+    @app.get("/documents/{doc_id}/pages", response_model=manage.PageList, tags=["corpus"],
+             summary="one revision's page inventory",
+             responses=errors.responses(400, 401, 404, 500, 503))
+    async def list_document_pages(
+        doc_id: str,
+        revision: str | None = Query(None, description=(
+            "Which revision to list. Omitted resolves to the published one and echoes back which "
+            "that was — the fact that changes under a caller when somebody publishes a new one.")),
+        limit: int = Query(manage.DEFAULT_PAGE_SIZE,
+                           description=f"Rows, 1…{manage.MAX_PAGE_SIZE}."),
+        offset: int = Query(0, description=(
+            "Start at this `page_no`. A page number rather than an opaque cursor, so the order is "
+            "total and paging cannot re-shuffle or skip a row (§6.8's argument).")),
+    ) -> Any:
+        """The pages of one revision, in `page_no` order, each with its `page_id` and raster URL.
+
+        This is the list a document browser renders and the list an operator checks an ingest
+        against: `has_text=false` on a run of pages is what a `searchable_ratio` below 1.00 is
+        *made of*, and seeing which pages they are is the difference between "this scan is poor"
+        and "pages 40–52 failed to render".
+        """
+        try:
+            return await run_in_threadpool(
+                manage.pages, app.state.search, cfg.pages_collection, doc_id,
+                revision=revision, limit=limit, offset=offset)
+        except Exception as failure:  # noqa: BLE001
+            return _manage_failure(failure, route="list_document_pages")
+    @app.get("/runs", response_model=manage.RunList, tags=["runs"],
+             summary="the run history — what has been ingested, and how it ended",
+             responses=errors.responses(400, 401, 500, 503))
+    async def list_runs(
+        limit: int = Query(manage.DEFAULT_PAGE_SIZE,
+                           description=f"Rows, 1…{manage.MAX_PAGE_SIZE}. Newest first."),
+        doc_id: str = Query("", description="Only this document's runs."),
+        state: str = Query("", description=(
+            "Only runs in this state: `queued`, `running`, `stopped`, `gated`, `published`, "
+            "`failed`. `gated` is the interesting one — a run that finished and whose gates "
+            "refused to publish it.")),
+    ) -> Any:
+        """The history `GET /runs/{run_id}` could not give you, because it needs an id you have.
+
+        A summary per run rather than the §6.9 record: which gate refused is the whole content of
+        a `gated` run, so `failed_gates` is named here and everything else is one `GET` away.
+        """
+        try:
+            return await run_in_threadpool(
+                manage.runs, app.state.control, cfg.runs_collection,
+                limit=limit, doc_id=doc_id, state=state)
+        except Exception as failure:  # noqa: BLE001 — mapped to §11.3's typed refusals
+            return _manage_failure(failure, route="list_runs")
 
     # ── the run control plane and the two exports (§6.8, §6.9, §11.4) ────────────────────────────
 
@@ -1509,6 +1762,21 @@ def _described(app: FastAPI) -> Callable[[], dict[str, Any]]:
             return described
         schema = get_openapi(title=app.title, version=app.version,
                              description=app.description, routes=app.routes)
+
+        # The eight named tool routes publish their body by `$ref` rather than as a typed
+        # parameter (see `_serve_tool` for why), and a `$ref` FastAPI never saw is a dangling
+        # pointer: Swagger renders an empty form and a code generator fails outright. So the
+        # request models are put in `components.schemas` from the **table**, under the same
+        # `ref_template` the routes point at. Generated together in one call rather than one model
+        # at a time, so a type shared by two bodies — `PART`, the annotated field aliases — lands
+        # once and both bodies reference the same definition.
+        requested = [(spec.request, "validation") for spec in app.state.tools.values()]
+        if requested:
+            _, generated = models_json_schema(
+                requested, ref_template="#/components/schemas/{model}")
+            schema.setdefault("components", {}).setdefault("schemas", {}).update(
+                generated.get("$defs", {}))
+
         schema.setdefault("components", {}).setdefault("securitySchemes", {})["bearerAuth"] = {
             "type": "http",
             "scheme": "bearer",

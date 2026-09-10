@@ -54,9 +54,14 @@ from starlette.responses import Response
 from starlette.routing import Mount, Route
 from typing import Any, Mapping
 
+from pydantic import BaseModel
+
 from vsir import __version__
 from vsir import logging as vsir_logging
 from vsir.serve import auth as auth_module
+from vsir.serve import manage
+from vsir.serve.caps import ToolError
+from vsir.serve.envelope import wire
 from vsir.serve.app import (SCOPE_CORRELATION, ToolRuntime, ToolSpec, dispatch, runtime_from_env)
 from vsir.serve.auth import Identity
 
@@ -105,6 +110,105 @@ def tool_definitions(tools: Mapping[str, ToolSpec]) -> list[types.Tool]:
                    input_schema=spec.request.model_json_schema())
         for spec in sorted(tools.values(), key=lambda spec: spec.name)
     ]
+
+
+# ── resources: the corpus, browsable (§5.1–5.3, §7.5) ───────────────────────────────────────────
+# **Why these are resources and not a ninth tool.** §7.5 fixes the tool surface at *the same eight
+# tools* as HTTP, and that is not an accident of wording — the eight are the agent's **moves**, and
+# an agent choosing among nine where one of them is "list the corpus" is choosing between a search
+# and a filing cabinet. MCP already has the right concept: a resource is context a client can read
+# and attach, not an action the model decides to take. So `GET /documents` becomes `vsir://corpus`,
+# the tool table stays at eight, and `tool_definitions` is untouched.
+#
+# The same read-only rule as the HTTP surface, for the same reason, and one more here: a resource
+# is fetched by a client without the model choosing to, so a mutating resource would be a change
+# to the corpus that nothing in the conversation asked for.
+
+#: The corpus listing, as a resource URI. One scheme for this server, so a client that has read
+#: `vsir://corpus` can construct the rest of these from the ids it found.
+CORPUS_URI = "vsir://corpus"
+
+#: How many documents `vsir://corpus` describes. A resource is read whole — there is no `limit`
+#: parameter on a URI — so the bound lives here, and a corpus larger than this is browsed over
+#: HTTP where the caller can page.
+CORPUS_DOCUMENTS = 50
+
+
+def _resource_definitions() -> list[types.Resource]:
+    """The one concrete resource. Constant, and O(1) to list.
+
+    `vsir://corpus` and nothing per-document, deliberately: enumerating a resource per document
+    would make `resources/list` cost a facet and a scroll per row on every call, and it would
+    flood a client's picker with a thousand entries for a corpus of a thousand binders. The
+    per-document URIs are declared as **templates** instead — the ids come from reading the
+    corpus, which is what the corpus resource is for.
+    """
+    return [types.Resource(
+        uri=CORPUS_URI,
+        name="corpus",
+        title="The corpus — every document in the index",
+        mime_type="application/json",
+        description=(
+            "Every document held, with its revisions, page counts and §5.7 searchable ratio. "
+            "Read this first: the `doc_id` values in it are what `scope` takes on every skim and "
+            "lookup, and `searchable_ratio` is what decides whether `lookup` can answer for a "
+            "document at all — at 0.00 every code on every page is unverifiable rather than "
+            "absent, so 'not found' from it would be wrong."),
+    )]
+
+
+def _resource_templates() -> list[types.ResourceTemplate]:
+    """The two per-document URIs, as templates a client fills from the corpus listing."""
+    return [
+        types.ResourceTemplate(
+            uri_template="vsir://documents/{doc_id}",
+            name="document",
+            title="One document and every revision of it",
+            mime_type="application/json",
+            description=(
+                "One document's revisions, page counts and searchable ratio. Superseded "
+                "revisions are listed and not hidden — §6.7 keeps them, and their pages are "
+                "still reachable by `page_id` even though no search returns them."),
+        ),
+        types.ResourceTemplate(
+            uri_template="vsir://documents/{doc_id}/pages",
+            name="document_pages",
+            title="One revision's page inventory",
+            mime_type="application/json",
+            description=(
+                "The published revision's pages in order, each with the `page_id` that `fetch`, "
+                "`read` and `verify` take, and `has_text` — which is what a searchable ratio "
+                "below 1.00 is actually made of."),
+        ),
+    ]
+
+
+def _read_corpus(runtime: ToolRuntime, uri: str) -> BaseModel:
+    """Resolve a `vsir://` URI against `serve/manage.py`. No query logic of its own.
+
+    The same rule this module follows for tools, applied to resources: nothing here reaches the
+    store directly, so the numbers a resource reports and the numbers `GET /documents` reports
+    cannot differ — they are one function called twice.
+    """
+    trimmed = uri.rstrip("/")
+    if trimmed == CORPUS_URI:
+        return manage.documents(runtime.search, runtime.config.pages_collection,
+                                limit=CORPUS_DOCUMENTS)
+
+    prefix = "vsir://documents/"
+    if trimmed.startswith(prefix):
+        rest = trimmed[len(prefix):]
+        if rest.endswith("/pages"):
+            return manage.pages(runtime.search, runtime.config.pages_collection,
+                                rest[: -len("/pages")])
+        if rest and "/" not in rest:
+            return manage.document(runtime.search, runtime.config.pages_collection, rest)
+
+    raise ToolError(
+        "resource_not_found",
+        f"no resource {uri!r} on this server. It serves {CORPUS_URI}, "
+        f"vsir://documents/{{doc_id}} and vsir://documents/{{doc_id}}/pages",
+        http_status=404, uri=uri)
 
 
 async def _call_tool(runtime: ToolRuntime, identity: Identity, correlation: Mapping[str, str],
@@ -159,12 +263,46 @@ def build_server(runtime: ToolRuntime, identity: Identity,
                            params: types.CallToolRequestParams) -> types.CallToolResult:
         return await _call_tool(runtime, identity, bound, params)
 
+    async def on_list_resources(_context: Any,
+                                _params: Any = None) -> types.ListResourcesResult:
+        return types.ListResourcesResult(resources=_resource_definitions())
+
+    async def on_list_resource_templates(
+            _context: Any, _params: Any = None) -> types.ListResourceTemplatesResult:
+        return types.ListResourceTemplatesResult(resource_templates=_resource_templates())
+
+    async def on_read_resource(_context: Any,
+                               params: types.ReadResourceRequestParams
+                               ) -> types.ReadResourceResult:
+        """One ``resources/read`` → `serve/manage.py` → the same JSON the HTTP route returns.
+
+        In a worker thread for the reason `tools/call` is: the Qdrant client is sync, and blocking
+        this loop stalls every other message on the connection.
+
+        A refusal is raised rather than returned as an empty resource — `document_not_found` is a
+        fact about the request and an empty page list would report a document that was never
+        ingested identically to one whose pages all failed to render (§7.1).
+        """
+        uri = str(params.uri)
+        model = await anyio.to_thread.run_sync(lambda: _read_corpus(runtime, uri))
+        _log.debug("mcp_read_resource", uri=uri, user_id=identity.user_id)
+        return types.ReadResourceResult(contents=[types.TextResourceContents(
+            uri=params.uri, mime_type="application/json",
+            # `wire` and not `model_dump_json`, so a resource and the HTTP body for the same
+            # question are the same bytes — the property §7.5 asserts for tools, kept here too.
+            # `wire` takes the dumped dict because that is what it takes on the tool path: it is
+            # Starlette's `JSONResponse.render` settings, and the model is dumped before it.
+            text=wire(model.model_dump(mode="json")).decode("utf-8"))])
+
     return Server(
         SERVER_NAME,
         version=__version__,
         instructions=INSTRUCTIONS,
         on_list_tools=on_list_tools,
         on_call_tool=on_call_tool,
+        on_list_resources=on_list_resources,
+        on_list_resource_templates=on_list_resource_templates,
+        on_read_resource=on_read_resource,
     )
 
 

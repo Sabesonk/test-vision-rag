@@ -67,7 +67,12 @@ PROBE_PATHS = frozenset({"/health", "/ready", "/metrics"})
 #: **This does not open the API.** The document declares a `bearerAuth` requirement on every
 #: operation, so Swagger's *Authorize* is where the caller's own token goes and every `Try it out`
 #: is an ordinary authenticated request. Reading the description authorises nothing.
-DOC_PATHS = frozenset({"/openapi.json", "/docs", "/docs/oauth2-redirect", "/redoc"})
+DOC_PATHS = frozenset({"/", "/openapi.json", "/docs", "/docs/oauth2-redirect", "/redoc"})
+#: ``"/"`` is here on the same argument as the rest of this set and not as a convenience:
+#: `GET /` returns the *shape* of the interface — the path list, the tool names, where a
+#: credential goes — and no document, page, run or token. A reader who can see it is
+#: exactly as far from the corpus as one who can read `/openapi.json`: one `401` away.
+#: The root answering `404` was the one response that taught an integrator nothing.
 
 #: The operator console — **one static page and nothing else**. Free for the same reason the
 #: documents are: it is markup, it contains no corpus data, no run, no page and no token, and a
