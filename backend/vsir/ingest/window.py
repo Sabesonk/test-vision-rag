@@ -7,13 +7,35 @@ stay separate throughout: window (attention), section (semantics), page (index).
 This step costs nothing and decides what the next one costs. Two decisions:
 
 **How to cut.** Target 30 pages, subject to a ladder (§6.2). Level 0 sends the whole document;
-Level 1 cuts on the chapter starts S1 read out of the front matter, so the windows are independent
-and can run in parallel. `impl` has a third rung — a blind 30-page fold with a carry chain, where
-*"batch 2 needs to know what batch 1 ended with"* — and **v1 does not implement it** (§2.5 B). A
-document that needs it fails typed :class:`LadderLevel2Required`, naming the document, rather than
-straddling a safety function across a fold nobody chose (which is F8, one level up). The concrete
-consequence is stated in §6.2: `impl/corpus.yaml` records that the 1,440-page manual and the
-592-page E-diagram are the only two documents that need Level 2, and it already excludes them.
+Level 1 cuts on the chapter starts the document declares; Level 2 folds at the cap where there is
+no structure to cut on. Every rung produces windows of at most ``cap`` pages covering the document
+exactly once, and **every rung is parallel**.
+
+**Level 2 is not `impl`'s rung (fixes/001).** §2.5 B excluded it because `impl`'s fold *"had to run
+sequentially with a carry chain"* — *"batch 2 needs to know what batch 1 ended with"*. That was a
+correct description of `impl`, whose model reported section **extent**, so a window beginning
+mid-section had to be told where it was. §5.2 deleted extent: ``sections[]`` is presence per page
+and §6.1 step 08 computes extent as ``(min, max)`` over sightings keyed by ``derive.section_key``,
+so two windows that never saw each other reassemble one section — which is what F8 is and what
+:mod:`vsir.ingest.stitch` already does. **The carry chain's reason was removed with ``units[]``;
+the exclusion stayed behind.** A window is a page range, never a retrieval boundary, so nothing
+else about a fold is unsafe here and :attr:`Plan.parallel` stays true at every rung.
+
+Refusing it cost the corpus, not just the two documents §6.2 named. Put every PDF under
+``dilmah_enginnering_usecase/dataset`` — 202 files, 5,578 pages — through the shipped ladder, giving
+Level 1 the best possible break by feeding it each file's own outline: **14 documents and 2,719
+pages, 49% of the corpus, refused**. Eleven of the fourteen declare no outline at all. One of them
+is the pilot `TC1E-SF`, so M2b could not complete — it failed at step 05, one step before the spend
+it was waiting on a credential for, and ``data/fixtures/TC1E-SF/expected.json`` already declared
+the ``[[1, 30], [31, 55]]`` this rung produces.
+
+**A window is now bounded below as well as above.** ``chapter_ranges`` bounded chapters above and
+packed nothing together, so a densely outlined file billed one call per sheet: ``ETC1AV81`` declares
+8,187 bookmarks over 592 pages and cut into 592 one-page windows where about 20 do the same work,
+and `impl`'s own 34-page ``LTC1AV81`` ran 12. :func:`pack` folds a chapter below
+:data:`MIN_WINDOW_PAGES` into its neighbour and leaves every chapter above it alone — a floor on
+the merge rather than a fill to the cap, because a Level 1 that packs to the cap has taken its
+boundaries from the cap and is Level 2 wearing Level 1's number.
 
 **What to write on the batch.** ``extract_key`` is the receipt that stops the pipeline paying
 twice, and it lives with the other three keys of §6.3 in :mod:`vsir.vlm.cache` — one module owns
@@ -39,8 +61,16 @@ from vsir.config import CAP_PAGES_PER_WINDOW
 #: large to hand over in one piece even when its page count would fit.
 MAX_INLINE_BYTES = 18 * 1024 * 1024
 
-#: v1 climbs to Level 1 and stops. Level 2 is the blind cut and its carry chain (§2.5 B, §6.2).
-MAX_LADDER_LEVEL = 1
+#: Level 2 is a fold at the cap. It is **not** `impl`'s rung: §5.2 deleted section extent from the
+#: model, so the carry chain that forced `impl`'s Level 2 to run sequentially has nothing left to
+#: carry (§6.2, and fixes/001).
+MAX_LADDER_LEVEL = 2
+
+#: Below this, a chapter is too small to be worth a model call of its own and :func:`pack` folds it
+#: into its neighbour (fixes/001). A third of the cap: large enough that a document of one-page
+#: bookmarks stops billing per sheet, small enough that a chapter anyone would call a chapter keeps
+#: its own window and Level 1 keeps meaning what it says.
+MIN_WINDOW_PAGES = CAP_PAGES_PER_WINDOW // 3
 
 #: Why a window was split. Each is a §6.2 trigger, and each re-bills — none of them pads or guesses.
 BisectReason = Literal["max_tokens", "truncated", "schema_invalid", "offset"]
@@ -67,7 +97,15 @@ class WindowError(RuntimeError):
 
 
 class LadderLevel2Required(WindowError):
-    """The document needs a blind cut, which v1 does not do (§6.2). Named, never silent."""
+    """Retained for the error taxonomy; **no longer raised** (fixes/001).
+
+    `plan()` reached this when a document had no usable chapter start, or a chapter over the cap.
+    Level 2 is now a fold at the cap rather than a refusal, so nothing produces it — but the class
+    stays: :class:`WindowUnsplittable` inherits from the same :class:`WindowError` family that
+    ``cli.py`` catches, and an operator may already be switching on ``ladder_level_2_required``.
+    Deleting a code is a breaking change for a caller that handles it; leaving it unreachable is
+    not.
+    """
 
     code = "ladder_level_2_required"
 
@@ -163,13 +201,15 @@ class Plan:
 
     @property
     def parallel(self) -> bool:
-        """Always true in v1, and it is a property rather than a constant for a reason.
+        """Always true, at every rung — and a property rather than a constant for a reason.
 
-        Level 0 and Level 1 windows are independent, so they can run at once. Level 2's carry chain
-        is what forced `impl` to run them in order, and it is out of scope — so if this ever
-        returns False, something has re-introduced the rung §6.2 excludes.
+        Level 0 and Level 1 windows are independent because they cut on the document's own
+        structure; Level 2's are independent because this fold has no carry chain (fixes/001). A
+        rung that could not run in parallel would be one that had re-introduced section **extent**
+        into the model's schema, which is the thing §5.2 deleted — so this staying true is an
+        assertion about the schema, not just about the scheduler.
         """
-        return self.level <= MAX_LADDER_LEVEL
+        return True
 
     @property
     def page_numbers(self) -> tuple[int, ...]:
@@ -234,29 +274,101 @@ def chapter_ranges(toc: Iterable[TocEntry | Mapping[str, Any]],
     )
 
 
+def split_oversized(ranges: Iterable[tuple[int, int]], cap: int) -> tuple[tuple[int, int], ...]:
+    """Fold a range longer than ``cap`` into ``cap``-page windows, filling before spilling.
+
+    This is the fold `impl` called Level 2, without the part that made it unsafe there. Its carry
+    chain existed because `impl`'s model reported section **extent** — *"batch 2 needs to know what
+    batch 1 ended with"*. §5.2 deleted extent: ``sections[]`` is presence per page and step 08
+    computes ``(min, max)`` over sightings, so two windows that never saw each other reassemble one
+    section (F8). The reason for the chain was removed with the schema; the fold is safe without it
+    and stays parallelisable.
+
+    Fill-before-spill rather than even parts: it is one comparison instead of two divisions, and it
+    is what `impl` did, so ``data/fixtures/TC1E-SF/expected.json``'s ``[[1, 30], [31, 55]]`` —
+    written from the spec before the ingest, and normative — is reproduced exactly rather than
+    approached.
+    """
+    out: list[tuple[int, int]] = []
+    for start, end in ranges:
+        at = start
+        while at <= end:
+            out.append((at, min(at + cap - 1, end)))
+            at += cap
+    return tuple(out)
+
+
+def pack(ranges: Iterable[tuple[int, int]], cap: int,
+         floor: int = MIN_WINDOW_PAGES) -> tuple[tuple[int, int], ...]:
+    """Merge **uneconomically small** consecutive ranges into windows of at most ``cap`` pages.
+
+    The cap bounded a window above and nothing bounded it below, so a densely outlined document
+    billed one call per sheet: ``ETC1AV81`` declares 8,187 bookmarks over 592 pages and cut into 592
+    one-page windows where about 20 do the same work, and `impl`'s 34-page ``LTC1AV81`` ran 12.
+
+    Only a range below ``floor`` is folded into its predecessor, and never past the cap. Filling
+    greedily to the cap instead would also merge chapters that are already the right size — the
+    synthetic corpus's three 14-page chapters become two 28-page windows — and that is not a
+    saving worth having, because it makes **Level 1's boundaries come from the cap rather than from
+    the chapters**, which is the whole difference between the rungs. A rung that packs to the cap is
+    Level 2 wearing Level 1's number, and the fold it invents is exactly the one §6.2 did not want
+    nobody to have chosen.
+
+    Order-preserving, so the page set is unchanged and every boundary it keeps is still a chapter
+    boundary. On the three documents fixes/001 measured this reaches the same counts as filling to
+    the cap would — ``ETC1AV81`` 592 -> 20, ``LTC1AV81`` 12 -> 2, ``TC1E-SF`` unchanged at
+    ``(1, 30), (31, 55)`` — because in every one of them the offending chapters are the small ones.
+    """
+    packed: list[tuple[int, int]] = []
+    for start, end in ranges:
+        small = end - start + 1 < floor
+        if packed and small and end - packed[-1][0] + 1 <= cap:
+            packed[-1] = (packed[-1][0], end)
+        else:
+            packed.append((start, end))
+    return tuple(packed)
+
+
+def inline_cap(page_count: int, size_bytes: int, cap: int) -> int:
+    """``cap``, reduced where the file is too large to hand over ``cap`` pages at a time.
+
+    Ported from `impl` as a ceiling on Level 0 and kept here as a bound on **every** rung. As a
+    refusal it only pushed the document to a rung that refused too; as a bound it does the thing it
+    was for.
+
+    It measures the **source PDF** while ``extract_window`` sends **rendered PNGs**, so it is
+    conservative rather than exact. A raster-bytes budget is the honest replacement and is a
+    follow-up, not this fix.
+    """
+    if size_bytes <= MAX_INLINE_BYTES or page_count < 1:
+        return cap
+    return max(1, min(cap, int(MAX_INLINE_BYTES // (size_bytes / page_count))))
+
+
 def plan(page_count: int, *, toc: Iterable[TocEntry | Mapping[str, Any]] = (),
          size_bytes: int = 0, cap: int = CAP_PAGES_PER_WINDOW, document: str = "") -> Plan:
-    """The ladder: Level 0, then Level 1, then a named refusal. Never a blind cut (§6.2)."""
+    """The ladder: Level 0 whole, Level 1 on the document's own structure, Level 2 a fold.
+
+    Every rung produces windows of at most ``cap`` pages covering 1..``page_count`` exactly once,
+    and every rung is parallel. The difference between them is only **where the boundaries come
+    from** — the document itself, its chapters, or the cap — which is what the rung number is for
+    and what the run record reports.
+    """
     if page_count < 1:
         raise WindowError(f"a document has at least one page, got {page_count}",
                           document=document, page_count=page_count)
 
-    if page_count <= cap and size_bytes <= MAX_INLINE_BYTES:
+    cap = inline_cap(page_count, size_bytes, cap)
+
+    if page_count <= cap:
         return Plan(0, (Window(1, page_count, 0),))
 
     chapters = chapter_ranges(toc, page_count)
-    if chapters and all(end - start + 1 <= cap for start, end in chapters):
-        return Plan(1, tuple(Window(start, end, 1) for start, end in chapters))
+    if chapters:
+        return Plan(1, tuple(Window(start, end, 1)
+                             for start, end in pack(split_oversized(chapters, cap), cap)))
 
-    # `impl` fell through to a blind 30-page fold here. v1 refuses, by name, and says what would
-    # have to change: usable chapter starts from S1, every chapter within the cap.
-    oversized = [f"{start}-{end}" for start, end in chapters if end - start + 1 > cap]
-    raise LadderLevel2Required(
-        f"{document or 'document'}: {page_count} pages needs a window ladder v1 does not "
-        f"implement (§6.2). Level 0 needs <= {cap} pages; Level 1 needs chapter starts from S1 "
-        f"with every chapter <= {cap} pages"
-        + (f", and these exceed it: {oversized}" if oversized
-           else ", and S1 reported no usable chapter start"),
-        document=document, page_count=page_count, cap=cap,
-        chapters=len(chapters), oversized_chapters=oversized,
-    )
+    # No structure to cut on, so the cap is the only boundary there is. Not `impl`'s rung: no carry
+    # chain, no sequential dependency — see `split_oversized`.
+    return Plan(2, tuple(Window(start, end, 2)
+                         for start, end in split_oversized(((1, page_count),), cap)))

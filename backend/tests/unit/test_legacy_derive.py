@@ -18,9 +18,13 @@ what the offset proof runs on; ``codes_from="export"`` is the parity corpus the 
 from __future__ import annotations
 
 import dataclasses
+import io
+import json
+import sys
 
 import pytest
 
+from vsir import logging as vsir_logging
 from vsir.core.exact import printed_in
 from vsir.core.tok import tok
 from vsir.eval import legacy
@@ -32,6 +36,19 @@ from vsir.ingest.window import Window
 @pytest.fixture(scope="module")
 def baseline() -> legacy.Baseline:
     return legacy.load()
+
+
+@pytest.fixture
+def events():
+    """The event stream as parsed JSON — the same capture idiom as `test_logging.py`.
+
+    A tolerated §6.4 observation is *only* visible as a log line, so asserting on it needs the
+    envelope the rest of the system reads, not a formatted string.
+    """
+    captured = io.StringIO()
+    vsir_logging.configure(release_id="rel-test", level="DEBUG", stream=captured)
+    yield lambda: [json.loads(line) for line in captured.getvalue().splitlines() if line.strip()]
+    vsir_logging.configure(release_id="unknown", level="INFO", stream=sys.stdout)
 
 
 # ── the windows are where the export says they are ──────────────────────────────────────────────
@@ -132,24 +149,64 @@ def test_a_one_page_shift_of_a_real_window_is_caught_and_named(baseline):
     assert refusal.value.details["printed_on"] == [1]
 
 
-def test_the_eaton_projection_spells_a_label_the_offset_check_must_refuse(baseline):
-    """A **fixture limit**, asserted so it stays a known one and never becomes a silent pass.
+def test_the_eaton_projection_spells_a_label_on_a_neighbour_and_is_tolerated(baseline, events):
+    """The lone-witness false positive fixes/002 exists for, on real ported data.
 
     `DS-5549-EATON` is three pages of IEC clause numbers — ``10.2.3.2``, ``10.2.3.3`` — and the
     observable projection joins them into one string. Qdrant's WORD tokenizer treats every
     separator alike, so those two identifiers put the tokens ``3 3`` side by side on page 2, and
-    the phrase for page 3's printed label ``3 / 3`` is exactly ``[3, 3]``. Check (2) sees a label
-    printed on a neighbour and refuses, which is the correct behaviour on the text it was given.
+    the phrase for page 3's printed label ``3 / 3`` is exactly ``[3, 3]``. Check (2) therefore sees
+    page 3's label printed on page 2.
 
-    It is the projection that is wrong here, not the check — which is why the parity corpus reads
-    these windows through the export, where no page label was ever recorded, and why U013's real
-    ingest of a real text layer is what closes this properly.
+    It used to refuse the document for it. It no longer does, and the reason is not tolerance for
+    its own sake: **page 1 confirms its own label**, which is direct evidence the window is
+    aligned, and one stray numeral on a three-page datasheet cannot outvote it (§6.4, fixes/002).
+    The observation is not swallowed either — it is logged as ``offset_singleton`` with the page
+    and the neighbour, so a corpus sweep can still count these without re-running the check.
+
+    The projection is still what is wrong here, not the check; U013's ingest of a real text layer
+    is what removes the artefact rather than tolerating it.
     """
+    derived = baseline.derived("DS-5549-EATON", codes_from="window")
+
+    assert [page.page_no for page in derived.pages] == [1, 2, 3]
+
+    singletons = [event for event in events() if event["event"] == "offset_singleton"]
+    assert len(singletons) == 1, "the tolerated witness must leave exactly one trace"
+    lone = singletons[0]
+    assert lone["label"] == "3 / 3"
+    assert lone["page_no"] == 3 and lone["printed_on"] == [2]
+    assert lone["witnesses"] == 1 and lone["confirms_self"] >= 1
+
+
+def test_a_real_shift_still_refuses_where_only_one_page_carries_a_legible_label(baseline):
+    """The half of fixes/002 that must **not** be lost: sensitivity at one witness.
+
+    `TC1E-SF`'s first window has all 30 labels, but 29 of them are printed nowhere in the ported
+    projection — so a genuine one-page shift produces exactly **one** witness. A flat
+    ``witnesses >= 2`` rule would accept it, and worse, would accept every half on the way down a
+    bisection, so §6.2's terminus would be reached by agreeing with a shifted window rather than
+    by naming a page.
+
+    What separates this from the Eaton case is not the count. It is that **nothing confirms
+    itself**: under a real shift no page can print the label the model read on it, which is §6.4's
+    own argument for why one observation is as good as the twentieth.
+    """
+    extraction = baseline.extraction("TC1E-SF", codes_from="window")
+    first, *rest = extraction.windows
+    shifted = dataclasses.replace(
+        extraction,
+        windows=(WindowExtraction(window=Window(first.window.start + 1, first.window.end + 1,
+                                                first.window.level),
+                                  key=first.key, out=first.out, entry=first.entry), *rest),
+    )
+
     with pytest.raises(OffsetError) as refusal:
-        baseline.derived("DS-5549-EATON", codes_from="window")
+        baseline.derived("TC1E-SF", extraction=shifted)
 
     assert refusal.value.details["check"] == "independent_observation"
-    assert refusal.value.details["label"] == "3 / 3"
+    assert refusal.value.details["witnesses"] == 1
+    assert refusal.value.details["confirms_self"] == 0
 
 
 # ── §6.1 step 08 — stitching across a real fold ─────────────────────────────────────────────────
