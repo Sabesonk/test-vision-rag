@@ -56,12 +56,41 @@ class ToolError(Exception):
 
 
 def validate_read_pages(page_ids: Sequence[str]) -> None:
-    """`read` takes at most three pages (§7.3) — tightened from `impl`'s four, deliberately."""
+    """`read` names between one and :data:`~vsir.config.MAX_READ_PAGES` pages (§7.3).
+
+    The cap is tightened from `impl`'s four, deliberately (§2.4). The empty call is refused for
+    the reason `validate_fetch_pages` refuses its own: `read` spends, and a call with no pages
+    would charge the caller's quota to send a question and no pixels — from which any answer at
+    all is the model's prior knowledge, which is the one thing this system exists to keep out of
+    an answer (§1.1).
+    """
+    if not page_ids:
+        raise ToolError(
+            "read_empty",
+            "read reasons over the pages you name and this named none: a question with no pixels "
+            "behind it can only be answered from what the model already believes (§7.2.6, §1.1)",
+            requested=0, limit=MAX_READ_PAGES,
+        )
     if len(page_ids) > MAX_READ_PAGES:
         raise ToolError(
             "read_page_cap_exceeded",
             f"read takes at most {MAX_READ_PAGES} pages, got {len(page_ids)}",
             limit=MAX_READ_PAGES, requested=len(page_ids),
+        )
+
+
+def validate_read_question(question: str) -> None:
+    """`read` is a **directed** call: no question, no read (§7.2.6, §6.3).
+
+    Not a cosmetic requirement. The question is an input to ``read_key`` (F19), so an empty one
+    would key every question about a page set to the same entry; and a `read` with nothing to
+    answer is a `fetch` that costs money — §7.2.5 is the free tool for *"give me the material"*.
+    """
+    if not question.strip():
+        raise ToolError(
+            "read_question_missing",
+            "read answers one question about the pages you name; `fetch` is the free tool for "
+            "the material with no question attached (§7.2.5, §7.2.6)",
         )
 
 

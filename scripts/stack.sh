@@ -164,8 +164,8 @@ cmd_status() {
   tools=$(curl -s -H "Authorization: Bearer $TOKEN" -X POST "$API/tools/__list__" \
           | pyjson 'import sys,json;print(", ".join(json.load(sys.stdin).get("available",[])))')
   echo "  ${tools:-(the API did not answer)}"
-  dim  "  skim_documents, skim_sections and read arrive with M5; asking for one now"
-  dim  "  is a typed 404 that lists what is here, never an empty result."
+  dim  "  all eight of §7.2 from U020. `read` is the only one that spends — and in replay"
+  dim  "  mode it does not either: it is served from a frozen response by read_key (D10)."
 
   echo
   bold "Documents in the index"

@@ -33,6 +33,7 @@ from vsir.config import (
     DPI_ANSWER,
     DPI_INDEX,
     LOOKUP_CAP,
+    MAX_READ_PAGES,
     VLM_BACKENDS,
     ConfigError,
     load_config,
@@ -2276,6 +2277,52 @@ def _print_skim(payload: Mapping[str, Any]) -> None:
           f"{payload['provenance']['schema_version']}")
 
 
+def _print_aggregate(payload: Mapping[str, Any]) -> None:
+    """A `skim_documents` / `skim_sections` envelope, printed as the group list it is.
+
+    `searchable_ratio` gets a column of its own and a marker, because a `0.00` row is the whole
+    reason the document rung exists: it is a binder the text surface cannot reach, returned so
+    the agent can see it rather than conclude from silence that the part is not there (§5.7, F4).
+    """
+    stats = payload.get("scope_stats") or {}
+    print(f"status       {payload['status']} · total {payload['total']} page(s) · "
+          f"capped {str(payload['capped']).lower()} · weak {str(payload['weak']).lower()} · "
+          f"needs_scope {str(payload['needs_scope']).lower()}")
+    print(f"scope        {payload['effective_scope']} · searched {stats.get('pages', 0)} page(s), "
+          f"{stats.get('pages_no_text', 0)} with no text layer")
+    hits = payload.get("hits") or ()
+    documents = bool(hits) and "doc_id" in hits[0]
+    if hits:
+        print(f"\n{'rank':<6}{'doc_id' if documents else 'section_id':<32}"
+              f"{'matched':<9}{'searchable' if documents else 'pages':<12}preview")
+    for hit in hits:
+        preview = (hit.get("preview") or {}).get("thumb_url") or "—"
+        if documents:
+            ratio = hit["searchable_ratio"]
+            blind = "  ← no text layer at all: nothing in it can be searched" if ratio == 0 else ""
+            print(f"{hit['best_rank'] or '—':<6}{hit['doc_id']:<32}{hit['pages_matched']:<9}"
+                  f"{ratio:<12.2f}{preview}{blind}")
+            if hit["summary"]:
+                print(f"{'':<6}{hit['summary'][:100]}")
+        else:
+            span = hit["page_range"]
+            print(f"{hit['best_rank']:<6}{hit['section_id']:<32}{hit['pages_matched']:<9}"
+                  f"{(f'{span[0]}–{span[1]}' if span else '—'):<12}{preview}")
+            if hit["title"]:
+                print(f"{'':<6}{hit['title'][:100]}")
+        print(f"{'':<6}next: expand {(hit.get('next') or {}).get('expand') or {}}")
+    carried = sorted({field for hit in hits
+                      for field in ("page_id", "text", "bytes_b64") if field in hit})
+    print(f"\nP2           no aggregate row carries a page_id, page text or image bytes: "
+          f"{'confirmed' if not carried else 'VIOLATED by ' + str(carried)}")
+    moves = payload.get("next") or {}
+    if moves.get("suggest"):
+        print(f"next         suggest {moves['suggest']}")
+    print(f"reads_left   {payload['reads_remaining']} · release "
+          f"{payload['provenance']['release_id']} · schema "
+          f"{payload['provenance']['schema_version']}")
+
+
 def _print_resolve(payload: Mapping[str, Any]) -> None:
     """A `resolve` envelope, printed. Every candidate, because a pick is what F5 forbids."""
     print(f"status       {payload['status']} · candidates {len(payload.get('hits') or ())} · "
@@ -2316,6 +2363,29 @@ def _cmd_skim(args: argparse.Namespace) -> int:
                                     "exclude": _csv_arg(args.exclude) if args.exclude else [],
                                     "limit": args.limit},
                      as_json=args.json, render=_print_skim)
+
+
+def _cmd_skim_aggregate(args: argparse.Namespace) -> int:
+    """`vsir skim documents` / `vsir skim sections` — the two aggregate rungs (§7.2.1).
+
+    One handler for both, because the two rungs take the same body: the sub-parser carries the
+    tool name, which is the only thing that differs.
+    """
+    try:
+        scope = _scope_from(args.scope)
+    except ToolError as refusal:
+        print(f"   REFUSED  {refusal.code}: {refusal.message}")
+        return EXIT_REFUSED
+    image = ""
+    if args.image:
+        path = Path(args.image)
+        if not path.is_file():
+            print(f"   REFUSED  image_unreadable: {path} is not a file")
+            return EXIT_REFUSED
+        image = base64.b64encode(path.read_bytes()).decode("ascii")
+    return _one_shot(args.tool, {"query": args.query or "", "image": image, "scope": scope,
+                                 "exclude": _csv_arg(args.exclude) if args.exclude else []},
+                     as_json=args.json, render=_print_aggregate)
 
 
 def _cmd_resolve(args: argparse.Namespace) -> int:
@@ -2387,6 +2457,57 @@ def _cmd_fetch(args: argparse.Namespace) -> int:
     return _one_shot("fetch", {"page_ids": _csv_arg(args.pages), "include": include,
                                "dpi": args.dpi, "region": region, "inline": not args.no_inline},
                      as_json=args.json, render=_print_fetch)
+
+
+#: How each stamp reads in the one-shot's table. The three states of §7.2.4 and no fourth: a
+#: rendering that abbreviated `unverifiable` to a blank would be the boolean this vocabulary
+#: exists to replace.
+_STAMP_MARK = {"present": "PRESENT     ", "absent": "ABSENT      ",
+               "unverifiable": "UNVERIFIABLE"}
+
+
+def _print_read(payload: Mapping[str, Any]) -> None:
+    """A `read` envelope, printed. Family B, so `status` says the call ran (§7.1).
+
+    `sufficient` is printed **first and in full words**, because it is the field an agent must
+    read before the extract: an extract from pages that do not answer the question is the failure
+    §7.2.6 puts the field there to prevent, and a reviewer scanning this output has the same
+    problem the agent does.
+    """
+    result = payload.get("result") or {}
+    codes = result.get("codes") or []
+    print(f"status       {payload['status']} — the CALL ran; the answer is below")
+    print(f"sufficient   {str(result.get('sufficient')).lower()} — "
+          + ("these pages answer the question on their own"
+             if result.get("sufficient")
+             else "these pages do NOT answer it: look elsewhere, do not compose from this"))
+    extract = result.get("extract") or ""
+    print(f"\nextract      {extract!r}" if extract
+          else "\nextract      '' (empty — an honest empty extract, never a padded one)")
+    print(f"\ncodes        {len(codes)} stamped against the page's own text (§7.2.6, Loop 1)")
+    for code in codes:
+        instead = code.get("present_instead") or []
+        reason = code.get("reason") or ""
+        print(f"  {_STAMP_MARK[code['status']]}  {code['raw']}"
+              + (f"  ·  on {', '.join(code['page_ids'])}" if code.get("page_ids") else "")
+              + (f"  ·  different part: {', '.join(instead)}" if instead else "")
+              + (f"  ·  {reason}" if reason else ""))
+    print(f"\nflags        {result.get('flags') or '—'}")
+    for page in result.get("page_provenance") or []:
+        print(f"  page       {page['page_id']} · text_trust {page['text_trust']}")
+    print(f"\nreads_left   {payload['reads_remaining']} · release "
+          f"{payload['provenance']['release_id']} · schema "
+          f"{payload['provenance']['schema_version']}")
+
+
+def _cmd_read(args: argparse.Namespace) -> int:
+    """`vsir read` — COMPREHEND (§7.2.6), the one one-shot that can spend money.
+
+    No `--dpi`: the answer dpi is pinned at 220 server-side because it is an input to ``read_key``
+    (§6.3), and a flag that a caller could set would be a flag that bills the same question twice.
+    """
+    return _one_shot("read", {"page_ids": _csv_arg(args.pages), "question": args.question},
+                     as_json=args.json, render=_print_read)
 
 
 # ── `vsir demo narrow` — the M4 demo of §0: narrow, look, crop, and the bounds ───────────────────
@@ -3029,8 +3150,8 @@ def build_parser() -> argparse.ArgumentParser:
     skim_commands = skim_parser.add_subparsers(dest="rung", metavar="<rung>", required=True)
     skim_pages_parser = skim_commands.add_parser(
         "pages",
-        help="the page rung. `skim documents` and `skim sections` aggregate the same fused "
-             "candidates and arrive with U019",
+        help="the page rung: one row per page. `skim documents` and `skim sections` aggregate "
+             "the very same fused candidates",
     )
     skim_pages_parser.add_argument(
         "query", nargs="?", default="",
@@ -3057,6 +3178,39 @@ def build_parser() -> argparse.ArgumentParser:
     skim_pages_parser.add_argument("--json", action="store_true",
                                    help="print the envelope verbatim (see `lookup --json`)")
     skim_pages_parser.set_defaults(handler=_cmd_skim)
+
+    for rung, tool, blurb in (
+        ("documents", "skim_documents",
+         "the document rung: which binder? One row per document, with searchable_ratio — and a "
+         "0.00 binder is returned even when nothing in it matched (§5.7, F4)"),
+        ("sections", "skim_sections",
+         "the section rung: which chapter? One row per section, with its page_range"),
+    ):
+        aggregate = skim_commands.add_parser(rung, help=blurb)
+        aggregate.add_argument(
+            "query", nargs="?", default="",
+            help="the question, in words. Optional when --image is given. A printed code in it "
+                 "is split out and matched as an exact phrase rather than embedded (§7.2.1)",
+        )
+        aggregate.add_argument(
+            "--image", metavar="PATH",
+            help="a photograph as the query side of the search (D12). With no query text this "
+                 "runs the dense branch alone",
+        )
+        aggregate.add_argument(
+            "--scope", action="append", default=[], metavar="KEY=VALUE",
+            help="narrow the search, repeatable, e.g. --scope doc_id=TC1E-SF. A key outside "
+                 "INDEXED is a typed 400 (filter_unknown_key)",
+        )
+        aggregate.add_argument(
+            "--exclude", metavar="ID,ID",
+            help="page ids already looked at and rejected (C11)",
+        )
+        aggregate.add_argument("--json", action="store_true",
+                               help="print the envelope verbatim (see `lookup --json`)")
+        # No `--limit`: §7.2.1 gives the aggregate rungs no such parameter — ten groups, and a
+        # caller who wants rows wants `skim pages`.
+        aggregate.set_defaults(handler=_cmd_skim_aggregate, tool=tool)
 
     resolve_parser = commands.add_parser(
         "resolve",
@@ -3104,6 +3258,23 @@ def build_parser() -> argparse.ArgumentParser:
     fetch_parser.add_argument("--json", action="store_true",
                               help="print the envelope verbatim (see `lookup --json`)")
     fetch_parser.set_defaults(handler=_cmd_fetch)
+
+    read_parser = commands.add_parser(
+        "read",
+        help=f"COMPREHEND (§7.2.6): the paid step — a directed vision read of at most "
+             f"{MAX_READ_PAGES} pages at the pinned dpi {DPI_ANSWER}, answering one question. "
+             f"Every code it emits is stamped present/absent/unverifiable against the page's own "
+             f"text, and `sufficient` says whether these pages answer the question at all",
+    )
+    read_parser.add_argument("--pages", required=True, metavar="ID,ID",
+                             help=f"comma-separated page ids, at most {MAX_READ_PAGES}; a fourth "
+                                  f"is a typed 400 naming the bound, never a truncated list")
+    read_parser.add_argument("--question", required=True, metavar="TEXT",
+                             help="the one question these pages are read to answer. It is part "
+                                  "of `read_key`, so a new question is a cache miss (F19)")
+    read_parser.add_argument("--json", action="store_true",
+                             help="print the envelope verbatim (see `lookup --json`)")
+    read_parser.set_defaults(handler=_cmd_read)
 
     demo_parser = commands.add_parser("demo", help="the reviewable demos of §4.4")
     demos = demo_parser.add_subparsers(dest="demo", metavar="<demo>", required=True)

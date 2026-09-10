@@ -26,6 +26,7 @@ from qdrant_client import QdrantClient
 
 from vsir import logging as vsir_logging
 from vsir.config import load_config
+from vsir.core import ids
 from vsir.core.indexed import create_collection
 from vsir.eval import synthetic
 from vsir.ingest import embed as embed_module
@@ -47,6 +48,11 @@ WRONG_TOKEN = "u014-not-in-the-configured-list"
 #: what every other suite's `lookup` would rank and none of them asked for that (U017).
 SKIM_COLLECTION = "vsir_pages_u017"
 SKIM_RUNS = "vsir_runs_u017"
+#: The collection the two aggregate rungs are exercised against (U019). Its own again, and for a
+#: reason the M1 corpus cannot satisfy: `skim_documents` groups **documents**, and the M1 corpus
+#: is one document. See :func:`aggregate_records`.
+AGGREGATE_COLLECTION = "vsir_pages_u019"
+AGGREGATE_RUNS = "vsir_runs_u019"
 #: The base name of the collection the served app is pointed at. Its own, so a suite that seeds
 #: pages cannot change what `test_probes.py` or the acceptance table sees.
 SERVED_COLLECTION = "vsir_pages_u014"
@@ -265,6 +271,126 @@ def skimming(qdrant: QdrantClient, skim_collection: str) -> Iterator[Any]:
                 qdrant.delete_collection(SKIM_RUNS)
 
 
+# ── a multi-document corpus, for the aggregate rungs (U019) ─────────────────────────────────────
+
+#: The three documents the `skim_documents` suite reads, and the one number each exists to show.
+#:
+#: `searchable_ratio` is the point of the rung, so the corpus is built around the three values it
+#: can take: a binder that is entirely text, one that is half scanned, and one that is **entirely**
+#: scanned — the agent's blind spot, at ``0.00``. The last is why the M1 corpus cannot be reused:
+#: it is one document, and one document has no grouping to prove and no blind spot to disclose.
+AGGREGATE_DOCS = (
+    # (doc_id, doc_type, [(page_no, has_text)], [(section ordinal, title, page_range)])
+    ("AGG-TEXT", "manual",
+     [(1, True), (2, True), (3, True), (4, True), (5, True), (6, True)],
+     [(1, "Carton discharge", (1, 3)), (2, "Emergency stop reset", (4, 6))]),
+    ("AGG-MIXED", "manual",
+     [(1, False), (2, False), (3, True), (4, True)],
+     [(1, "Carton discharge conveyor", (1, 4))]),
+    # No text layer anywhere. Its pages still carry a dense vector — D4 fuses the raster — so a
+    # prose query finds them; a query carrying a printed code cannot, because the phrase filter
+    # runs over `text` and this document has none. That is the case the disclosure row exists for.
+    ("AGG-SCAN", "manual",
+     [(1, False), (2, False), (3, False)],
+     [(1, "Scanned binder", (1, 3))]),
+)
+
+#: Twelve one-page documents, so a `skim_documents` call has more than ten groups to cut. Their
+#: own `doc_type`, which is how a scope tells the two sub-corpora apart in one collection: seeding
+#: twice would be two session fixtures for one question.
+AGGREGATE_LEAFLETS = 12
+
+#: Printed on `AGG-TEXT` page 2 and nowhere else. `decompose()` splits it out of a query as an
+#: identifier (it contains a digit), so it becomes a phrase filter over `text` — which is what
+#: makes every page of `AGG-SCAN` fall out of every branch.
+AGGREGATE_CODE = "K158"
+
+#: The words every text page of the corpus carries, so the lexical branch has something to rank.
+AGGREGATE_QUERY = "carton discharge restart"
+
+
+def _aggregate_page(doc_id: str, revision: str, page_no: int, *, has_text: bool, doc_type: str,
+                    section: Any, text: str) -> Any:
+    """One §5.3 record. `has_text=False` is a scanned page: no text, `no_text`, no rate (§5.7)."""
+    from vsir.core.record import PageContent, PageRecord, Provenance, StoredSection, Summary
+
+    stored = (StoredSection(section_id=section[0], title=section[1], page_range=section[2],
+                            series_id=section[3])
+              if section else None)
+    return PageRecord(
+        doc_id=doc_id, revision=revision, is_current=True, doc_type=doc_type,
+        page_kind="prose", lang=["en"], page_no=page_no,
+        section_id=[stored.section_id] if stored else [],
+        series_id=[stored.series_id] if stored else [],
+        has_text=has_text,
+        text_trust="ok" if has_text else "no_text",
+        run_id="r-u019-seed",
+        text=text if has_text else "",
+        content=PageContent(
+            printed_page_no=str(page_no),
+            label_verified=has_text,
+            summaries=[Summary(lang="en",
+                               text=f"{doc_id} page {page_no}: carton discharge and the "
+                                    f"emergency stop reset interlock.")],
+            sections=[stored] if stored else [],
+            # §5.7 — `None` where there is no text layer, never 0.0.
+            grounded_rate=1.0 if has_text else None,
+        ),
+        provenance=Provenance(page_id=ids.page_id(doc_id, revision, page_no),
+                              run_id="r-u019-seed", release_id="test"),
+    )
+
+
+def aggregate_records() -> list[Any]:
+    """The U019 corpus: three `manual` documents to group, twelve `leaflet`s to cut at ten."""
+    revision = "1.0"
+    records = []
+    for doc_id, doc_type, pages, sections in AGGREGATE_DOCS:
+        stored = {
+            ordinal: (ids.section_id(doc_id, revision, ordinal), title, span,
+                      ids.series_id(doc_id, title))
+            for ordinal, title, span in sections
+        }
+        for page_no, has_text in pages:
+            section = next((entry for entry in stored.values()
+                            if entry[2][0] <= page_no <= entry[2][1]), None)
+            code = f" {AGGREGATE_CODE}" if (doc_id == "AGG-TEXT" and page_no == 2) else ""
+            records.append(_aggregate_page(
+                doc_id, revision, page_no, has_text=has_text, doc_type=doc_type, section=section,
+                text=f"Carton discharge restart interlock on page {page_no}.{code}"))
+    for leaflet in range(1, AGGREGATE_LEAFLETS + 1):
+        doc_id = f"AGG-L{leaflet:02d}"
+        records.append(_aggregate_page(
+            doc_id, revision, 1, has_text=True, doc_type="leaflet",
+            section=(ids.section_id(doc_id, revision, 1), "Leaflet", (1, 1),
+                     ids.series_id(doc_id, "Leaflet")),
+            text="Carton discharge restart leaflet."))
+    return records
+
+
+@pytest.fixture(scope="session")
+def aggregate_collection(qdrant: QdrantClient, stub_embedder: Any) -> Iterator[str]:
+    """The U019 corpus, with all three surfaces, in the collection the aggregate app reads."""
+    name = f"{AGGREGATE_COLLECTION}_{EMBED_DIM}"
+    seed_with_vectors(qdrant, name, aggregate_records(), dim=EMBED_DIM, embedder=stub_embedder)
+    try:
+        yield name
+    finally:
+        synthetic.drop(qdrant, name)
+
+
+@pytest.fixture
+def aggregating(qdrant: QdrantClient, aggregate_collection: str) -> Iterator[Any]:
+    """A :class:`TestClient` over an app pointed at the multi-document corpus."""
+    with TestClient(create_app(serve_env(VSIR_COLLECTION=AGGREGATE_COLLECTION,
+                                         VSIR_RUNS_COLLECTION=AGGREGATE_RUNS))) as client:
+        try:
+            yield client
+        finally:
+            if qdrant.collection_exists(AGGREGATE_RUNS):
+                qdrant.delete_collection(AGGREGATE_RUNS)
+
+
 # ── one real ingest, for the raster suites (U018) ────────────────────────────────────────────────
 
 #: The document the four U018 suites look at, ingested **once** for the session.
@@ -333,6 +459,21 @@ class RasterStack:
         body = {"page_ids": list(page_ids), **arguments}
         return self.client.post("/tools/fetch", headers=self.header, json=body)
 
+    def read(self, page_ids: Any, question: str, **arguments: Any) -> Any:
+        """`POST /tools/read` over the same ingested document (U020).
+
+        The same client, the same collection and the same document store as `fetch`: `read`
+        renders from the store U029 wrote and stamps against the index step 10 wrote, so a
+        second stack here would be a `read` over pages nothing had really ingested.
+        """
+        body = {"page_ids": list(page_ids), "question": question, **arguments}
+        return self.client.post("/tools/read", headers=self.header, json=body)
+
+    @property
+    def env(self) -> dict:
+        """The environment this instance was built from — the base for a variant app."""
+        return dict(self.client.app.state.env)
+
 
 @pytest.fixture(scope="session")
 def rastered(qdrant: QdrantClient, tmp_path_factory: Any) -> Iterator[RasterStack]:
@@ -353,7 +494,15 @@ def rastered(qdrant: QdrantClient, tmp_path_factory: Any) -> Iterator[RasterStac
     pages, runs = f"{stamp}_{EMBED_DIM}", f"{stamp}_runs"
     root = tmp_path_factory.mktemp("u018-documents")
     create_collection(qdrant, pages, EMBED_DIM, recreate=True)
-    env = serve_env(VSIR_COLLECTION=stamp, VSIR_RUNS_COLLECTION=runs, VSIR_DOC_STORE=str(root))
+    # ``VSIR_FIXTURE`` is on the **app** and not only on the upload request from U020 onward:
+    # `read` resolves its backend from the release's configuration (§15 Factor X), so an instance
+    # with no fixture directory is an instance whose `read` is a `503 vlm_unavailable` — which is
+    # correct, and is exercised deliberately by `test_read_caps.py`, not by accident here.
+    # The read quota is the session's, not a bound under test: `test_read_caps.py` exercises the
+    # ceiling on an instance of its own (`VSIR_READ_QUOTA=0`), and a low ceiling here would only
+    # make the *other* suites fail as a side effect of how many reads they happen to make.
+    env = serve_env(VSIR_COLLECTION=stamp, VSIR_RUNS_COLLECTION=runs, VSIR_DOC_STORE=str(root),
+                    VSIR_FIXTURE=str(RASTER_FIXTURE), VSIR_READ_QUOTA="500")
     try:
         with TestClient(create_app(env)) as client:
             header = {"Authorization": f"Bearer {TEST_TOKEN}"}

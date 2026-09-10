@@ -45,7 +45,8 @@ from vsir.serve.app import create_app
 from vsir.serve.tools import lookup as lookup_module
 from vsir.serve.tools import verify as verify_module
 
-from conftest import TEST_TOKEN, serve_env
+from conftest import (AGGREGATE_COLLECTION, AGGREGATE_QUERY, AGGREGATE_RUNS,
+                      TEST_TOKEN, serve_env)
 
 EXPECTED = synthetic.load().expected
 LOOKUP_LABEL = EXPECTED["compact_labels"][0]["label"]
@@ -136,9 +137,9 @@ def sse_call(base_url: str, name: str, arguments: dict, token: str = TEST_TOKEN)
                                         CALL_TIMEOUT_S))
 
 
-def http_body(name: str, arguments: dict) -> bytes:
+def http_body(name: str, arguments: dict, **env: str) -> bytes:
     """The same call over `POST /tools/{name}`, as raw bytes. The thing MCP must match."""
-    with TestClient(create_app(serve_env())) as client:
+    with TestClient(create_app(serve_env(**env))) as client:
         response = client.post(f"/tools/{name}", json=arguments,
                                headers={"Authorization": f"Bearer {TEST_TOKEN}"})
         return response.content
@@ -159,8 +160,9 @@ def test_the_mcp_server_declares_the_releases_tools_and_no_others(served_collect
         "vision-segmentation-retriever"
     assert initialised.instructions == mcp_server.INSTRUCTIONS
     assert sorted(tool.name for tool in listing.tools) == sorted(app_module.tool_table())
-    assert sorted(tool.name for tool in listing.tools) == ["fetch", "lookup", "resolve",
-                                                            "skim_pages", "verify"]
+    assert sorted(tool.name for tool in listing.tools) == [
+        "fetch", "lookup", "read", "resolve", "skim_documents", "skim_pages", "skim_sections",
+        "verify"], "§7.2's eight, complete from U020 — `read` is the one that spends"
 
 
 def test_the_published_input_schema_is_the_http_request_model(served_collection):
@@ -203,6 +205,29 @@ def test_stdio_result_is_byte_identical_to_the_http_body(served_collection, name
 
     assert text_of(result).encode("utf-8") == expected
     assert result.is_error is False
+
+
+@pytest.mark.parametrize("name", ["skim_documents", "skim_sections", "skim_pages"])
+def test_the_three_skim_rungs_are_byte_identical_over_mcp(aggregate_collection, name):
+    """U019's criterion: *"the same three rungs … return byte-identical envelopes to HTTP"*.
+
+    Against the multi-document corpus rather than the M1 one, because these rungs read vectors
+    and group **documents** — over a one-document collection with no vectors the identity would
+    hold over two empty envelopes and prove nothing about grouping.
+
+    The env override is what points both surfaces at that collection; everything else — the
+    table, the validation, the `INDEXED` gate — is the same object on both, which is why the
+    bytes match rather than being made to.
+    """
+    env = {"VSIR_COLLECTION": AGGREGATE_COLLECTION, "VSIR_RUNS_COLLECTION": AGGREGATE_RUNS}
+    arguments = {"query": AGGREGATE_QUERY, "scope": {"doc_type": "manual"}}
+
+    expected = http_body(name, arguments, **env)
+    [result] = stdio_calls([(name, arguments)], **env)
+
+    assert text_of(result).encode("utf-8") == expected
+    assert result.is_error is False
+    assert json.loads(text_of(result))["hits"], "the rung returned nothing to compare"
 
 
 def test_sse_result_is_byte_identical_to_the_http_body(served_collection):
@@ -267,13 +292,18 @@ def test_a_page_not_found_is_an_error_on_mcp_too(served_collection):
 
 
 def test_an_unknown_tool_over_mcp_is_the_typed_404(served_collection):
-    """A tool this release does not serve is *absent*, and the body lists what is served."""
-    [result] = stdio_calls([("read", {"page_ids": ["SYN-M1@1.0#p001"], "question": "?"})])
+    """A tool this release does not serve is *absent*, and the body lists what is served.
+
+    `expand` is the name asked for because it is the one a client of the previous service would
+    reach for: §2.5 A struck the endpoint and kept the capability as `next.expand` on every hit.
+    """
+    [result] = stdio_calls([("expand", {"page_ids": ["SYN-M1@1.0#p001"], "question": "?"})])
 
     assert result.is_error is True
     body = json.loads(text_of(result))
     assert body["error"] == "tool_not_found"
-    assert body["available"] == ["fetch", "lookup", "resolve", "skim_pages", "verify"]
+    assert body["available"] == ["fetch", "lookup", "read", "resolve", "skim_documents",
+                                 "skim_pages", "skim_sections", "verify"]
 
 
 def test_is_current_is_injected_on_the_mcp_surface_too(served_collection):

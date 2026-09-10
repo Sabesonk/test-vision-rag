@@ -132,10 +132,12 @@ def test_the_request_context_holds_no_scope_cursor_or_history():
 
     from vsir.serve.app import ToolContext, ToolRuntime
 
+    # `embedder` and `vlm` are **backend handles** and not state: each holds a connection and a
+    # pinned model id, and nothing about a caller, a session or a previous call (§15 Factor VI).
     assert {field.name for field in dataclasses.fields(ToolContext)} == {
-        "client", "cfg", "identity", "reads_remaining", "provenance", "embedder"}
+        "client", "cfg", "identity", "reads_remaining", "provenance", "embedder", "vlm"}
     assert {field.name for field in dataclasses.fields(ToolRuntime)} == {
-        "config", "search", "tools", "embedder"}
+        "config", "search", "tools", "embedder", "vlm"}
 
 
 def test_the_tool_modules_hold_no_module_level_mutable_store():

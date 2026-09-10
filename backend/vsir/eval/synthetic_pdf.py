@@ -49,7 +49,7 @@ import json
 import sys
 from pathlib import Path
 from types import MappingProxyType
-from typing import Iterable, Sequence
+from typing import Iterable, Mapping, Sequence
 
 import pymupdf
 
@@ -334,6 +334,122 @@ REATTRIBUTED_FROM_PAGE = 22
 UNGROUNDED_PAGE = 30
 UNGROUNDED_CODE = "K999"
 
+#: The four frozen `read` calls (§7.2.6, U020), and the whole reason they are frozen: `read` is
+#: the one tool that spends, so every level below L4 has to be able to drive it for free (D10).
+#:
+#: Each case exists for one behaviour the L2 suite has to be able to assert, and the responses are
+#: written the way a vision model plausibly answers rather than the way the assertion would be
+#: easiest:
+#:
+#: * ``answer`` — two ordinary text pages and a question they settle. Its ``codes`` carry one
+#:   deliberate misread, ``K152``, which is what a model does when a character on a schematic is
+#:   ambiguous. Pages 19 and 20 print ``K119`` and ``K120``, so the stamp is `absent` **with**
+#:   ``present_instead`` — the disclosure of F16, and the case §7.2.6's own example shows.
+#: * ``second_question`` — the *same two pages* and a different question. It exists to be a cache
+#:   **miss** (F19): if the question were not on ``read_key`` this response would be unreachable,
+#:   because the ``answer`` case's would be served for it.
+#: * ``wrong_pages`` — the right question, two pages that do not answer it. ``sufficient: false``
+#:   with an empty extract, which is the honest answer §7.2.6 makes mandatory and the one a
+#:   boolean-free response cannot express.
+#: * ``scanned`` — the two rasterised front-matter pages. Every code it names is `unverifiable`
+#:   forever (R2), including ``K119``, which *is* printed elsewhere in this document: the check is
+#:   per `(code, page)`, and a page nobody can read cannot support a code that lives next door.
+READ_QUESTION = "what must be true before the guard door interlock releases?"
+READ_SECOND_QUESTION = "which contactor is named on these sheets?"
+#: The misread. Shares the prefix ``k1`` with what pages 19 and 20 really print, and nothing else.
+READ_MISREAD_CODE = "K152"
+
+READ_CASES: tuple[dict[str, object], ...] = (
+    {
+        "name": "answer",
+        "pages": (19, 20),
+        "question": READ_QUESTION,
+        "out": {
+            "extract": "The guard door interlock stage releases only once B219 has closed and "
+                       "K119 is monitored on the safe input channel SI4; the following sheet "
+                       "records the same arrangement for K120. The stop category is verified at "
+                       "commissioning and after every replacement of the monitored relay.",
+            "codes": ["K119", "SI4", "K120", READ_MISREAD_CODE],
+            "sufficient": True,
+        },
+    },
+    {
+        "name": "second_question",
+        "pages": (19, 20),
+        "question": READ_SECOND_QUESTION,
+        "out": {
+            "extract": "Q69 is the contactor on the first sheet and Q70 on the second, both "
+                       "printed as TELEMECANIQUE LC1-D38BL.",
+            "codes": ["Q69", "Q70"],
+            "sufficient": True,
+        },
+    },
+    {
+        "name": "wrong_pages",
+        "pages": (3, 4),
+        "question": READ_QUESTION,
+        "out": {
+            "extract": "",
+            "codes": [],
+            "sufficient": False,
+        },
+    },
+    {
+        "name": "scanned",
+        "pages": (1, 2),
+        "question": READ_QUESTION,
+        "out": {
+            "extract": "These two sheets are the scanned cover and a photocopied notice. They "
+                       "name the manual and its revision and say nothing about the guard door "
+                       "interlock.",
+            "codes": ["C24", "K119"],
+            "sufficient": False,
+        },
+    },
+)
+
+#: What each case's codes must be stamped, written from §7.2.4's vocabulary **before** the tool
+#: existed, and read by the L2 suite rather than computed by it (C10). ``pages`` is by PDF index,
+#: because the doc_id a test ingests under is the test's business and the page is not.
+READ_STAMPS: dict[str, tuple[dict[str, object], ...]] = {
+    "answer": (
+        {"raw": "K119", "status": "present", "pages": [19], "present_instead": []},
+        {"raw": "SI4", "status": "present", "pages": [19], "present_instead": []},
+        {"raw": "K120", "status": "present", "pages": [20], "present_instead": []},
+        # The prefix lookup over the observed tokens of *these two pages*, lowercase and sorted —
+        # `present_instead` is a statement about what is printed, never a nearest match (F16).
+        {"raw": READ_MISREAD_CODE, "status": "absent", "pages": [19, 20],
+         "present_instead": ["k119", "k120"]},
+    ),
+    "second_question": (
+        {"raw": "Q69", "status": "present", "pages": [19], "present_instead": []},
+        {"raw": "Q70", "status": "present", "pages": [20], "present_instead": []},
+    ),
+    "wrong_pages": (),
+    "scanned": (
+        {"raw": "C24", "status": "unverifiable", "pages": [], "present_instead": []},
+        {"raw": "K119", "status": "unverifiable", "pages": [], "present_instead": []},
+    ),
+}
+
+#: Which flags each case must raise, from `serve/tools/read.py`'s closed list.
+READ_EXPECTED_FLAGS: dict[str, tuple[str, ...]] = {
+    "answer": ("unverified_codes",),
+    "second_question": (),
+    "wrong_pages": (),
+    "scanned": ("no_text_layer", "unverified_codes"),
+}
+
+
+def read_body(case: Mapping[str, object]) -> str:
+    """One frozen `read` response, as it is written into the fixture.
+
+    Indented and key-sorted for the same reason `window_body` is: the body is the receipt, and a
+    reviewer has to be able to read the diff when the corpus is regenerated.
+    """
+    return json.dumps(case["out"], indent=2, sort_keys=True) + "\n"
+
+
 #: Which §5.2 page kind each section reads as. Eight kinds describe a *sheet of paper*, so this
 #: table is a property of how the fixture is drawn, not a taxonomy of any corpus.
 SECTION_PAGE_KINDS = MappingProxyType({
@@ -466,7 +582,34 @@ def _trap_top_fraction(pdf: Path) -> float:
         return round(boxes[0].y0 / page.rect.height, 6)
 
 
-def expected_table(pdf: Path, *, page_hashes: Sequence[str]) -> dict[str, object]:
+def read_expectations(read_keys: Mapping[str, str], *, schema_hash: str) -> dict[str, object]:
+    """The acceptance table for the frozen `read` calls (§7.2.6), checked in beside them.
+
+    Absolute, not comparative (C10): the stamps are written from §7.2.4's vocabulary and the
+    corpus's own printed text, and the L2 suite reads them. A suite that derived them from
+    `serve/tools/read.py` could not fail — a wrong stamp would simply re-baseline itself.
+    """
+    return {
+        "dpi": DPI_ANSWER,
+        "schema_hash": schema_hash,
+        "cases": {
+            str(case["name"]): {
+                "pages": list(case["pages"]),
+                "question": case["question"],
+                "cache_key": read_keys[str(case["name"])],
+                "sufficient": case["out"]["sufficient"],
+                "extract": case["out"]["extract"],
+                "codes": list(case["out"]["codes"]),
+                "stamps": [dict(stamp) for stamp in READ_STAMPS[str(case["name"])]],
+                "flags": list(READ_EXPECTED_FLAGS[str(case["name"])]),
+            }
+            for case in READ_CASES
+        },
+    }
+
+
+def expected_table(pdf: Path, *, page_hashes: Sequence[str],
+                   read_keys: Mapping[str, str], read_schema_hash: str) -> dict[str, object]:
     """The acceptance numbers for this corpus, checked in beside it so none can be re-baselined.
 
     Spec §12.3's table is absolute, not comparative (C10). The same rule applies here: the demo and
@@ -498,6 +641,7 @@ def expected_table(pdf: Path, *, page_hashes: Sequence[str]) -> dict[str, object
         "sections": [{"first": a, "last": b, "title": t} for a, b, t in SECTIONS],
         "straddling_sections": ["Emergency stop chain", "Light curtain muting"],
         "render": {"dpi": DPI_ANSWER, "page_sha256": list(page_hashes)},
+        "read": read_expectations(read_keys, schema_hash=read_schema_hash),
         "extraction": {
             "windows": 3,
             "page_forms": PAGE_COUNT,
@@ -534,6 +678,7 @@ def build(source_dir: Path, fixture_dir: Path, *, vlm_model: str, prompt_version
     from vsir.ingest import extract as extract_module
     from vsir.ingest import probe as probe_module
     from vsir.ingest import window as window_module
+    from vsir.serve.tools import read as read_module
     from vsir import vlm
 
     pdf = source_dir / f"{DOC_STEM}.pdf"
@@ -557,9 +702,25 @@ def build(source_dir: Path, fixture_dir: Path, *, vlm_model: str, prompt_version
         vlm.write(fixture_dir, vlm.EXTRACT, key, window_body(window.start, window.end))
         extract_keys[f"{window.start}-{window.end}"] = key
 
+    # The `read` namespace (§7.2.6, U020). Keyed the same way and for the same reason: the key is
+    # built from the pixels the model will actually see, plus the question — so a case's response
+    # is unreachable under any other question, which is F19 expressed as a directory.
+    read_keys: dict[str, str] = {}
+    for case in READ_CASES:
+        pages = [int(page_no) for page_no in case["pages"]]
+        key = vlm.read_key(
+            [page_hashes[page_no - 1] for page_no in pages],
+            vlm_model=vlm_model, prompt_version=prompt_version, dpi=DPI_ANSWER,
+            schema_hash=read_module.READ_SCHEMA_HASH, question=str(case["question"]),
+        )
+        vlm.write(fixture_dir, vlm.READ, key, read_body(case))
+        read_keys[str(case["name"])] = key
+
     expected_path = fixture_dir / "expected.json"
     expected_path.write_text(
-        json.dumps(expected_table(pdf, page_hashes=page_hashes), indent=2, sort_keys=True) + "\n"
+        json.dumps(expected_table(pdf, page_hashes=page_hashes, read_keys=read_keys,
+                                  read_schema_hash=read_module.READ_SCHEMA_HASH),
+                   indent=2, sort_keys=True) + "\n"
     )
     return {
         "pdf": str(pdf),
@@ -569,6 +730,8 @@ def build(source_dir: Path, fixture_dir: Path, *, vlm_model: str, prompt_version
         "facts": str(facts_path),
         "extract_keys": extract_keys,
         "s2_schema_hash": extract_module.S2_SCHEMA_HASH,
+        "read_keys": read_keys,
+        "read_schema_hash": read_module.READ_SCHEMA_HASH,
         "expected": str(expected_path),
     }
 

@@ -169,6 +169,147 @@
     "8": "6",
     "9": "7"
   },
+  "read": {
+    "cases": {
+      "answer": {
+        "cache_key": "2155005ed066096d7cb57d8b1601fbbfac4449794be6c4797387ad86772e7be1",
+        "codes": [
+          "K119",
+          "SI4",
+          "K120",
+          "K152"
+        ],
+        "extract": "The guard door interlock stage releases only once B219 has closed and K119 is monitored on the safe input channel SI4; the following sheet records the same arrangement for K120. The stop category is verified at commissioning and after every replacement of the monitored relay.",
+        "flags": [
+          "unverified_codes"
+        ],
+        "pages": [
+          19,
+          20
+        ],
+        "question": "what must be true before the guard door interlock releases?",
+        "stamps": [
+          {
+            "pages": [
+              19
+            ],
+            "present_instead": [],
+            "raw": "K119",
+            "status": "present"
+          },
+          {
+            "pages": [
+              19
+            ],
+            "present_instead": [],
+            "raw": "SI4",
+            "status": "present"
+          },
+          {
+            "pages": [
+              20
+            ],
+            "present_instead": [],
+            "raw": "K120",
+            "status": "present"
+          },
+          {
+            "pages": [
+              19,
+              20
+            ],
+            "present_instead": [
+              "k119",
+              "k120"
+            ],
+            "raw": "K152",
+            "status": "absent"
+          }
+        ],
+        "sufficient": true
+      },
+      "scanned": {
+        "cache_key": "a0df54b9ed872ef057b5fbeefde9e741465a61e5080d5373965c514d034093ef",
+        "codes": [
+          "C24",
+          "K119"
+        ],
+        "extract": "These two sheets are the scanned cover and a photocopied notice. They name the manual and its revision and say nothing about the guard door interlock.",
+        "flags": [
+          "no_text_layer",
+          "unverified_codes"
+        ],
+        "pages": [
+          1,
+          2
+        ],
+        "question": "what must be true before the guard door interlock releases?",
+        "stamps": [
+          {
+            "pages": [],
+            "present_instead": [],
+            "raw": "C24",
+            "status": "unverifiable"
+          },
+          {
+            "pages": [],
+            "present_instead": [],
+            "raw": "K119",
+            "status": "unverifiable"
+          }
+        ],
+        "sufficient": false
+      },
+      "second_question": {
+        "cache_key": "3a5e38f4f79bfe8b42e8bd483b089a9c3b683b00d8127691717f3e0b27c65201",
+        "codes": [
+          "Q69",
+          "Q70"
+        ],
+        "extract": "Q69 is the contactor on the first sheet and Q70 on the second, both printed as TELEMECANIQUE LC1-D38BL.",
+        "flags": [],
+        "pages": [
+          19,
+          20
+        ],
+        "question": "which contactor is named on these sheets?",
+        "stamps": [
+          {
+            "pages": [
+              19
+            ],
+            "present_instead": [],
+            "raw": "Q69",
+            "status": "present"
+          },
+          {
+            "pages": [
+              20
+            ],
+            "present_instead": [],
+            "raw": "Q70",
+            "status": "present"
+          }
+        ],
+        "sufficient": true
+      },
+      "wrong_pages": {
+        "cache_key": "fc6ac259c9d307637fd6670253e0e978e7de8621a621e005678a78a480765911",
+        "codes": [],
+        "extract": "",
+        "flags": [],
+        "pages": [
+          3,
+          4
+        ],
+        "question": "what must be true before the guard door interlock releases?",
+        "stamps": [],
+        "sufficient": false
+      }
+    },
+    "dpi": 220,
+    "schema_hash": "b1b0c56ffa2d726187c5ccd8a5a467da79cc1e3d0475a194d5f87675ae218de4"
+  },
   "render": {
     "dpi": 220,
     "page_sha256": [

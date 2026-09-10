@@ -16,10 +16,10 @@ written (`serve/auth.py`).
 :func:`tool_table`, validates the body against that tool's own Pydantic model, charges the budget
 if the tool spends, runs it, stamps ``reads_remaining`` on the envelope and — for `read` and
 `fetch` only — writes the ten-field audit line of §7.4. Adding a tool is adding a row, so no tool
-can arrive with its own idea of auth, of the budget, or of which failures are which. The table in
-this release holds five of the ladder's free moves — `skim_pages`, `lookup`, `resolve`, `verify`
-and `fetch`; the rest of §7.2 joins it as its milestone lands, and a name that is not in the table
-is a typed `404` naming what is, never a 501-shaped silence.
+can arrive with its own idea of auth, of the budget, or of which failures are which. The table
+holds all eight tools of §7.2 — the three `skim_*` rungs, `lookup`, `resolve`, `verify`, `fetch`
+and, from U020, `read`, the one row that spends. A name that is not in the table is a typed `404`
+naming what is, never a 501-shaped silence.
 
 **And the table is not the HTTP surface's — it is the release's.** §7.5 requires the MCP server to
 expose the same tools *"calling the identical implementations (no second code path)"*, so the
@@ -94,10 +94,15 @@ from vsir.serve.envelope import Provenance, wire
 from vsir.serve.tools.fetch import INCLUDE_ALL, PART
 from vsir.serve.tools.fetch import fetch as fetch_tool
 from vsir.serve.tools.lookup import lookup as lookup_tool
+from vsir.serve.tools.read import precheck as read_precheck
+from vsir.serve.tools.read import read as read_tool
 from vsir.serve.tools.resolve import resolve as resolve_tool
 from vsir.serve.tools.skim import SKIM_LIMIT
+from vsir.serve.tools.skim import skim_documents as skim_documents_tool
 from vsir.serve.tools.skim import skim_pages as skim_pages_tool
+from vsir.serve.tools.skim import skim_sections as skim_sections_tool
 from vsir.serve.tools.verify import verify as verify_tool
+from vsir import vlm as vlm_module
 from vsir.vlm.cache import VlmCallFailed, VlmError, VlmUnavailable
 
 #: A local boot check that has started failing after boot (a rotated variable, say).
@@ -348,6 +353,41 @@ class SkimPagesRequest(ToolRequest):
     limit: int = SKIM_LIMIT
 
 
+class SkimAggregateRequest(ToolRequest):
+    """``skim_documents`` / ``skim_sections`` — §7.2.1, and `skim_pages`' body minus ``limit``.
+
+    **No ``limit``**, and that is the signature §7.2.1 declares rather than an omission: the two
+    aggregate rungs return at most ten *groups*, full stop. A caller who wants more rows wants a
+    different rung — `skim_pages` with a `limit` — and a `limit` here would let one call ask for
+    every document in the corpus, which is the triage this rung exists to do, undone.
+
+    Two bodies rather than one shared model with a `granularity` field: the tool name is what an
+    agent chooses between (§7.2.1), and the MCP schema published for each name has to be the
+    schema of *that* tool.
+    """
+
+    query: str = ""
+    #: base64, decoded by the adapter — as on `skim_pages`, and never reaching the exact surface.
+    image: str = ""
+    scope: dict[str, Any] = Field(default_factory=dict)
+    exclude: list[str] = Field(default_factory=list)
+
+
+class SkimDocumentsRequest(SkimAggregateRequest):
+    """``skim_documents(query, image=None, scope?, exclude?)`` — §7.2.1."""
+
+
+class SkimSectionsRequest(SkimAggregateRequest):
+    """``skim_sections(query, image=None, scope, exclude?)`` — §7.2.1.
+
+    §7.2.1 writes this rung's ``scope`` without the `?` `skim_documents` has, and it still
+    defaults to empty here — exactly as `skim_pages`' does, whose signature is written the same
+    way. An unscoped call is answered and told so: `needs_scope` is the server's judgement on
+    whether the scope was wide enough (§7.1), computed from the pages searched and not from
+    whether the caller passed a dict, and refusing here would be a second, weaker version of it.
+    """
+
+
 class ResolveRequest(ToolRequest):
     """``resolve(printed_label, doc_id?)`` — §7.2.3. A citation, not a query: no scope, no image."""
 
@@ -383,6 +423,24 @@ class FetchRequest(ToolRequest):
     inline: bool = True
 
 
+class ReadRequest(ToolRequest):
+    """``read(page_ids, question)`` — §7.2.6. Two parameters, and that is the contract.
+
+    **There is no `dpi`.** The pinned answer dpi of 220 is an input to ``read_key`` (§6.3), so a
+    caller that could raise it could ask one question three times and miss the cache three times.
+    ``extra="forbid"`` makes a hopeful ``"dpi": 400`` an `invalid_request` naming the field rather
+    than a parameter this service silently ignores — which is the honest half of *"a caller cannot
+    change it"*: refused, not quietly dropped.
+
+    No `region` either, for the same reason and one more: a crop is a claim about where the answer
+    is on the page, and it is the caller's claim. `fetch` is where a caller crops, and `fetch` is
+    free (§7.2.5).
+    """
+
+    page_ids: list[str]
+    question: str
+
+
 @dataclass(frozen=True)
 class ToolContext:
     """Everything a tool call needs that is not in its body. Built per request, held nowhere.
@@ -401,6 +459,10 @@ class ToolContext:
     #: still serve every free tool that does not embed — so the refusal happens when a query is
     #: actually embedded, as a `503 vlm_unavailable`, and not at boot (§11.3).
     embedder: Callable[[], Any] = lambda: None
+    #: The VLM backend, on the same terms and for the same reason: `read` is the only tool that
+    #: needs one, and §11.3 requires every free tool to keep working while it is unreachable. A
+    #: factory means that failure lands on `read` as a `503` instead of on start-up.
+    vlm: Callable[[], Any] = lambda: None
 
 
 @dataclass(frozen=True)
@@ -410,8 +472,12 @@ class ToolSpec:
     name: str
     request: type[ToolRequest]
     call: Callable[[ToolContext, Any], tuple[BaseModel, Usage]]
-    #: Charges the per-caller `read` quota before running (§7.3). `read`'s row sets it at U020.
+    #: Charges the per-caller `read` quota before running (§7.3). Only `read` sets it (§7.2.6).
     spends: bool = False
+    #: Bounds that can be settled from the request alone, run **before** the quota is charged.
+    #: Only a spending tool needs one, and it needs one badly: a caller that named four pages
+    #: must not have a read taken off its quota to be told it named four pages (§7.3, F18).
+    precheck: Callable[[Any], None] | None = None
     #: What an agent reads when it is choosing a move. Published as the MCP tool description
     #: (§7.5) and as the route's OpenAPI summary, from one string, because a tool described two
     #: ways is a tool two clients understand differently.
@@ -439,6 +505,8 @@ class ToolRuntime:
     #: :func:`query_embedder`. A backend handle like ``search``, not state: it holds a connection
     #: and a pinned model id, and nothing about a caller, a session or a previous call (§15 VI).
     embedder: Callable[[], Any] = lambda: None
+    #: The VLM backend `read` calls, memoised per process by :func:`vlm_backend`. Same terms.
+    vlm: Callable[[], Any] = lambda: None
 
 
 @dataclass(frozen=True)
@@ -494,28 +562,58 @@ def _call_verify(context: ToolContext, body: VerifyRequest) -> tuple[BaseModel, 
 
 
 def _call_skim_pages(context: ToolContext, body: SkimPagesRequest) -> tuple[BaseModel, Usage]:
-    """The adapter for §7.2.1's page rung. Decodes the image, and adds no behaviour.
-
-    The base64 is decoded **here** rather than in the tool, because it is a property of the
-    transport: `serve/tools/skim.py` takes bytes, the way `ingest/embed.py` does, and a malformed
-    encoding is the caller's request being wrong rather than the search being empty.
-    """
-    image: bytes | None = None
-    if body.image:
-        try:
-            image = base64.b64decode(body.image, validate=True)
-        except (binascii.Error, ValueError):
-            raise ToolError(
-                "image_invalid",
-                "image is base64 of the photograph's bytes (§7.2.1, D12) and this did not decode",
-                field="image", length=len(body.image),
-            ) from None
-        if not image:
-            raise ToolError("image_invalid", "image decoded to zero bytes", field="image")
-
+    """The adapter for §7.2.1's page rung. Decodes the image, and adds no behaviour."""
+    image = _skim_image(body)
     response = skim_pages_tool(
         context.client, context.cfg.pages_collection,
         query=body.query, image=image, scope=body.scope, exclude=body.exclude, limit=body.limit,
+        embedder=context.embedder(),
+        provenance=context.provenance, reads_remaining=context.reads_remaining,
+    )
+    return response, Usage.free()
+
+
+def _skim_image(body: SkimPagesRequest | SkimAggregateRequest) -> bytes | None:
+    """The base64 of a photographed panel → bytes, or a typed refusal naming the field.
+
+    Decoded **here** rather than in the tool, because it is a property of the transport:
+    `serve/tools/skim.py` takes bytes, the way `ingest/embed.py` does, and a malformed encoding is
+    the caller's request being wrong rather than the search being empty. One function for all
+    three rungs, so a photograph is refused identically whichever one receives it.
+    """
+    if not body.image:
+        return None
+    try:
+        image = base64.b64decode(body.image, validate=True)
+    except (binascii.Error, ValueError):
+        raise ToolError(
+            "image_invalid",
+            "image is base64 of the photograph's bytes (§7.2.1, D12) and this did not decode",
+            field="image", length=len(body.image),
+        ) from None
+    if not image:
+        raise ToolError("image_invalid", "image decoded to zero bytes", field="image")
+    return image
+
+
+def _call_skim_documents(context: ToolContext,
+                         body: SkimDocumentsRequest) -> tuple[BaseModel, Usage]:
+    """§7.2.1's document rung. The same adapter shape, and no ``limit`` to pass on."""
+    response = skim_documents_tool(
+        context.client, context.cfg.pages_collection,
+        query=body.query, image=_skim_image(body), scope=body.scope, exclude=body.exclude,
+        embedder=context.embedder(),
+        provenance=context.provenance, reads_remaining=context.reads_remaining,
+    )
+    return response, Usage.free()
+
+
+def _call_skim_sections(context: ToolContext,
+                        body: SkimSectionsRequest) -> tuple[BaseModel, Usage]:
+    """§7.2.1's section rung — the same fused candidates, grouped by ``section_id``."""
+    response = skim_sections_tool(
+        context.client, context.cfg.pages_collection,
+        query=body.query, image=_skim_image(body), scope=body.scope, exclude=body.exclude,
         embedder=context.embedder(),
         provenance=context.provenance, reads_remaining=context.reads_remaining,
     )
@@ -552,6 +650,24 @@ def _call_fetch(context: ToolContext, body: FetchRequest) -> tuple[BaseModel, Us
     )
 
 
+def _call_read(context: ToolContext, body: ReadRequest) -> tuple[BaseModel, Usage]:
+    """§7.2.6 — the only adapter that hands a tool the **model** boundary.
+
+    ``context.vlm()`` is built on first use and refuses by name when it cannot be: no credential,
+    or `VSIR_VLM=stub` with no fixture directory. That refusal arrives here rather than at boot on
+    purpose (§11.3) — every free tool must keep answering while the model backend is unreachable,
+    and it only can if nothing but this line depends on one existing.
+
+    The dpi is not passed, because there is nothing to pass: it is pinned at 220 inside the tool
+    and it is an input to ``read_key`` (§7.2.6, §6.3).
+    """
+    return read_tool(
+        context.client, context.cfg, body.page_ids, body.question,
+        backend=context.vlm(),
+        provenance=context.provenance, reads_remaining=context.reads_remaining,
+    )
+
+
 #: What each tool is *for*, in the words an agent needs to choose between them. Kept beside the
 #: table rather than lifted from the Python docstrings: those explain the implementation to a
 #: maintainer, and a tool description explains a **move** to a caller (§7.2, §8.2).
@@ -567,6 +683,24 @@ SKIM_PAGES_DESCRIPTION = (
     "already rejected — the service holds no memory of them. Every row carries an `image.url` and "
     "a `next` to expand into the section or step to a neighbour, and **no row carries page text "
     "or image bytes**: choose a page, then pay for it with `fetch` or `read`. Free."
+)
+SKIM_DOCUMENTS_DESCRIPTION = (
+    "NARROW, top rung. *Which binder?* — the same page search as `skim_pages`, grouped by "
+    "document, so one chatty manual cannot occupy every slot and bury the binder that answers. "
+    "At most 10 rows, ordered by `best_rank` then by how many of its pages matched. A row is a "
+    "**scope, not a citation**: it carries no `page_id`, and `next.expand` is the dict to pass "
+    "back as the next rung's `scope`. Every row states `searchable_ratio` — the share of that "
+    "binder that has a text layer at all — and **a binder at 0.00 is returned even when nothing "
+    "in it matched**, with `pages_matched: 0` and a thumbnail: it is the one place a scanned "
+    "document can be seen, and concluding a part does not exist from a search that could not "
+    "read it is the mistake this row exists to prevent. Free."
+)
+SKIM_SECTIONS_DESCRIPTION = (
+    "NARROW, middle rung. *Which chapter?* — the same page search grouped by section, with each "
+    "row's `page_range` and, in `next.expand`, the scope that opens it. At most 10 rows, ordered "
+    "by `best_rank` then by pages matched; a page that straddles two sections counts in both. "
+    "Like `skim_documents` it carries no `page_id` and no page text — descend to `skim_pages` "
+    "for those. Free."
 )
 RESOLVE_DESCRIPTION = (
     "FOLLOW. A printed page label — `\"8\"`, `\"Page 8 of 55\"` — to the `page_id` that opens it, "
@@ -600,6 +734,20 @@ FETCH_DESCRIPTION = (
     "`text` cannot be mistaken for a blank page. Use `read` only when you need a model to "
     "interpret the image."
 )
+READ_DESCRIPTION = (
+    "COMPREHEND. **The one tool that costs money.** A directed vision read of at most 3 pages you "
+    "have already chosen, at a pinned 220 dpi you cannot change, answering one question. Returns "
+    "a bounded `extract`, a `codes` table and `sufficient` — and nothing that decides anything "
+    "for you. Every code the model emits is phrase-checked against that page's own extracted "
+    "text before you see it, and stamped `present`, `absent` (with `present_instead` — a "
+    "different part, never a nearest match) or `unverifiable`; on a page with no text layer every "
+    "code is `unverifiable`, which is the honest answer and not a defect. **`sufficient` is the "
+    "field to read first**: `false` means these pages do not answer the question, which is a "
+    "different fact from an answer of 'no' and is your signal to look elsewhere rather than to "
+    "compose from what came back. A fourth page is a typed 400 naming the bound; an exhausted "
+    "quota is a 429, never a truncated page list. Prefer `fetch` when you can look at the page "
+    "yourself — `read` is for delegating a bounded sub-answer, and it is the step that bills."
+)
 VERIFY_DESCRIPTION = (
     "CHECK. Is each of these codes actually printed on each of these pages? Per (claim, page), "
     "so a draft citing two pages cannot borrow the neighbouring page's evidence. Three verdicts: "
@@ -618,16 +766,22 @@ def tool_table() -> dict[str, ToolSpec]:
     one app at a different table would be changing every other app's. Each :func:`create_app`
     gets its own, parked on ``app.state`` and handed to the :class:`ToolRuntime`.
 
-    Three of §7.2's eight are absent here and that is a fact about the release, not a gap in the
-    dispatcher: `skim_documents` and `skim_sections` land at U019 and `read` at U020. Until then
-    their names are a typed `404` that lists what *is* available, because a caller that asked for
-    `read` needs to know it is not here — not receive an empty result.
+    All eight of §7.2 are here from U020. A name that is *not* in the table is a typed `404`
+    listing what is served, because a tool that is not in this release is absent, not empty —
+    the same argument §7.1 makes about results, applied to the surface itself.
 
     The order of the rows is the order of the ladder, not alphabetical: an agent reading the tool
-    list for the first time is choosing a **move**, and `skim_pages` → `lookup` → `resolve` →
-    `verify` → `fetch` is narrow, jump, follow, check, look (§7.2, §8.1).
+    list for the first time is choosing a **move**, and `skim_documents` → `skim_sections` →
+    `skim_pages` → `lookup` → `resolve` → `verify` → `fetch` → `read` is the narrowing ladder,
+    then jump, follow, check, look, and only then the step that spends (§7.2, §8.1).
     """
     return {
+        "skim_documents": ToolSpec(name="skim_documents", request=SkimDocumentsRequest,
+                                   call=_call_skim_documents,
+                                   description=SKIM_DOCUMENTS_DESCRIPTION),
+        "skim_sections": ToolSpec(name="skim_sections", request=SkimSectionsRequest,
+                                  call=_call_skim_sections,
+                                  description=SKIM_SECTIONS_DESCRIPTION),
         "skim_pages": ToolSpec(name="skim_pages", request=SkimPagesRequest, call=_call_skim_pages,
                                description=SKIM_PAGES_DESCRIPTION),
         "lookup": ToolSpec(name="lookup", request=LookupRequest, call=_call_lookup,
@@ -640,6 +794,12 @@ def tool_table() -> dict[str, ToolSpec]:
         # movement, which is the resource this tool actually consumes.
         "fetch": ToolSpec(name="fetch", request=FetchRequest, call=_call_fetch,
                           description=FETCH_DESCRIPTION),
+        # The one row with `spends=True`, and therefore the one row with a `precheck`: the budget
+        # is charged before the call, so every bound that can be checked without the store is
+        # checked before the charge (§7.3, F18).
+        "read": ToolSpec(name="read", request=ReadRequest, call=_call_read, spends=True,
+                         precheck=lambda body: read_precheck(body.page_ids, body.question),
+                         description=READ_DESCRIPTION),
     }
 
 
@@ -666,6 +826,29 @@ def query_embedder(cfg: Config) -> Callable[[], Any]:
     return backend
 
 
+def vlm_backend(cfg: Config) -> Callable[[], Any]:
+    """A memoised VLM backend for one process — built on first use, then held.
+
+    :func:`query_embedder`'s shape, for the same three reasons: building one per request would
+    open an SDK client per request, building one at boot would make a release refuse to start
+    without a credential even though seven of the eight tools are free and need none, and a held
+    backend is a connection pool rather than the session state §15.2 bans.
+
+    The fourth reason is this one's alone and it is §11.3's row: *"Gemini unreachable → `503
+    vlm_unavailable` on `read`; every free tool keeps working."* That sentence is only true if
+    nothing but `read` ever calls this — so :class:`~vsir.vlm.cache.VlmUnavailable` is raised at
+    the call, where :func:`_failure_response` turns it into the `503` the row asks for.
+    """
+    held: list[Any] = []
+
+    def backend() -> Any:
+        if not held:
+            held.append(vlm_module.backend(cfg))
+        return held[0]
+
+    return backend
+
+
 def runtime_from_env(env: Mapping[str, str]) -> tuple[ToolRuntime, QdrantClient]:
     """A :class:`ToolRuntime` for a process with no ASGI lifespan to build one for it.
 
@@ -687,7 +870,7 @@ def runtime_from_env(env: Mapping[str, str]) -> tuple[ToolRuntime, QdrantClient]
     cfg = load_config(env)
     client = QdrantClient(url=cfg.qdrant_url, timeout=SEARCH_TIMEOUT_S, check_compatibility=False)
     return ToolRuntime(config=cfg, search=client, tools=tool_table(),
-                       embedder=query_embedder(cfg)), client
+                       embedder=query_embedder(cfg), vlm=vlm_backend(cfg)), client
 
 
 def _tool_refusal(code: str, detail: str, *, status: int, **details: Any) -> ToolOutcome:
@@ -755,6 +938,11 @@ def run_tool(runtime: ToolRuntime, spec: ToolSpec, body: ToolRequest, *, identit
     with vsir_logging.correlate(tool=tool, **{k: v for k, v in correlation.items() if v}):
         timer = audit_module.Timer()
         try:
+            # Before the charge, never after: a bound that can be settled from the request alone
+            # must not cost a read to discover. `read` with four pages is a `400` naming the
+            # bound and a quota that is exactly where it was (§7.3, F18).
+            if spec.precheck is not None:
+                spec.precheck(body)
             # Before the call, never after: money is spent inside the tool, so a caller at the
             # ceiling is refused rather than billed for a call whose result is then thrown away.
             if spec.spends:
@@ -770,7 +958,7 @@ def run_tool(runtime: ToolRuntime, spec: ToolSpec, body: ToolRequest, *, identit
                 ToolContext(client=runtime.search, cfg=cfg, identity=identity,
                             reads_remaining=reads_remaining,
                             provenance=Provenance(release_id=cfg.release_id),
-                            embedder=runtime.embedder),
+                            embedder=runtime.embedder, vlm=runtime.vlm),
                 body)
         except BaseException as failure:  # noqa: BLE001 — every path out is a typed refusal
             if isinstance(failure, (KeyboardInterrupt, SystemExit)):
@@ -877,7 +1065,7 @@ def create_app(env: Mapping[str, str] | None = None) -> FastAPI:
         # surface at the same instant — there is no second table to keep in step (§7.5).
         app.state.runtime = ToolRuntime(config=cfg, search=app.state.search,
                                         tools=app.state.tools,
-                                        embedder=query_embedder(cfg))
+                                        embedder=query_embedder(cfg), vlm=vlm_backend(cfg))
         _log.info("startup", port=cfg.port, collection=cfg.pages_collection,
                   tools=sorted(app.state.tools), mcp=sorted(app.state.mcp_paths))
         try:

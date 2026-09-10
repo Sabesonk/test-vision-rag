@@ -16,7 +16,7 @@ in `development/cr1/progress/implementation-progress.md`.
 | `e2e/` | Playwright |
 | `data/fixtures/` | frozen extractions, checked in |
 | `data/fixtures/synthetic_pages/` | the §13 M1 corpus: hand-written page text + `expected.json` |
-| `data/fixtures/synthetic_3window/` | the M2a corpus's replay fixture: frozen S1 `facts/` + S2 `extract/`, keyed by §6.3 hash, + `expected.json` |
+| `data/fixtures/synthetic_3window/` | the M2a corpus's replay fixture: frozen S1 `facts/` + S2 `extract/` + `read/` (U020), keyed by §6.3 hash, + `expected.json` |
 | `data/fixtures/legacy/` | the ported `impl` baseline of §12.1: 19 old-schema S2 responses + `labels.jsonl` / `withheld.jsonl` / `manifest.json` from `r-poc-5`, + `SOURCE.json` |
 | `data/source/` | input PDFs, gitignored — except the generated `synthetic_3window.pdf` |
 
@@ -358,9 +358,8 @@ the audit line and the budget ledger is `caller-<sha256(token)[:12]>`, never the
 a rotated credential is a new caller id and no log line ever held the secret (§15.1).
 
 `POST /tools/{tool_name}` dispatches through the release's tool table — `fetch`, `lookup`,
-`resolve`, `skim_pages` and `verify` today. A name that is not in it — `read`, `skim_documents`
-and `skim_sections` until U019/U020 — is a typed `404` listing what *is* served, never an empty
-result. One append-only audit line goes to stdout per `read` and per `fetch` and none for a free
+`resolve`, `skim_documents`, `skim_pages`, `skim_sections` and `verify` today. A name that is not
+in it — `read`, until U020 — is a typed `404` listing what *is* served, never an empty result. One append-only audit line goes to stdout per `read` and per `fetch` and none for a free
 tool; **cost is in that line and never in a response body**, where the caller gets the single
 integer `reads_remaining` (§7.4). The per-caller quota is `VSIR_READ_QUOTA` reads per UTC day,
 held as a `kind: budget` point in `vsir_runs` so N replicas enforce one ceiling, and exhausting it
@@ -380,6 +379,8 @@ uses — so there is no second code path and nothing to keep in step:
 backend/.venv/bin/vsir skim pages "emergency stop reset" --scope doc_id=SYN-M1   # NARROW, §7.2.1
 backend/.venv/bin/vsir skim pages --image ./panel.png --scope doc_id=SYN-M1      # D12, dense only
 backend/.venv/bin/vsir skim pages "reset K158" --limit 3 --exclude "SYN-M1@1.0#p001"
+backend/.venv/bin/vsir skim documents "emergency stop reset"          # which binder? §7.2.1
+backend/.venv/bin/vsir skim sections "emergency stop reset" --scope doc_id=SYN-M1  # which chapter?
 backend/.venv/bin/vsir resolve "Page 8 of 55" --doc-id SYN-M1                    # FOLLOW, §7.2.3
 backend/.venv/bin/vsir lookup "SF 1.1A"                      # JUMP, §7.2.2
 backend/.venv/bin/vsir lookup "alarm 152" --json | jq        # the envelope, verbatim
@@ -389,6 +390,11 @@ backend/.venv/bin/vsir verify --claims K73 --pages "SYN-M1@1.0#p006"     # CHECK
 backend/.venv/bin/vsir fetch --pages "synthetic-3window@1.0#p019,synthetic-3window@1.0#p021"
 backend/.venv/bin/vsir fetch --pages "SYN-M1@1.0#p001" --include text,summary   # no store needed
 backend/.venv/bin/vsir fetch --pages "synthetic-3window@1.0#p019" --dpi 400 --region 0,0,1,0.55
+# COMPREHEND (§7.2.6) — the ONE tool that spends. Free here only because VSIR_VLM=stub replays a
+# frozen response by `read_key`; with VSIR_VLM=gemini this call bills. No --dpi: it is pinned at
+# 220 server-side because it is a `read_key` input (§6.3), so a caller cannot vary it.
+backend/.venv/bin/vsir read --pages "synthetic-3window@1.0#p019,synthetic-3window@1.0#p020" \
+  --question "what must be true before the guard door interlock releases?"
 
 backend/.venv/bin/vsir mcp --stdio     # one client on a pipe; stdout is JSON-RPC, events on stderr
 backend/.venv/bin/vsir mcp --sse       # == `vsir serve`: the SSE transport binds $VSIR_PORT
@@ -405,6 +411,15 @@ seeded by `vsir demo exact --synthetic` (payloads only, §13 M1) answers it with
 text beside it the two sparse branches are skipped and every row's `why` is `["dense"]` (D12).
 `--limit` is 1…25 and **truncates** the fused list rather than re-ranking it, so the first three
 rows of a ten-row skim are the three rows of a three-row skim.
+
+**`skim documents` and `skim sections` run the same search and group it** — one `_candidates()`
+call, grouped by `doc_id` or by `section_id`, so their rows can never disagree with `skim pages`
+about what matched. They take no `--limit`: ten groups, and a caller who wants rows wants
+`skim pages`. Two things to expect from `skim documents` and nowhere else: `searchable_ratio` on
+every row, and **a row for a binder with no text layer at all even when nothing in it matched**
+(`pages_matched: 0`, `best_rank: 0`), because a query carrying a printed code excludes every page
+of such a binder from every branch and its silent absence is what F4 is about. Both rungs carry
+`next.expand` — the dict to hand the next rung down as its `--scope`.
 
 `resolve` takes the label **as printed** — `"8"`, or the citation `"Page 8 of 55"`, whose
 digit-bearing words are probed as labels in their own right when the citation as typed matches

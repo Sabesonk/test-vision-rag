@@ -167,8 +167,20 @@ class ScopeStats(BaseModel):
 
 # ── Hit models — one per rung, so no field is ambiguous (§7.1) ───────────────────────────────────
 
+#: The ordinal a group carries when **no page of it was ranked** — a disclosure row (§5.7, F4),
+#: not a result. Ranks are 1-based everywhere in this surface, so zero cannot be confused with a
+#: position; `pages_matched` is 0 beside it and the row sorts after every group that did match.
+UNRANKED = 0
+
+
 class DocHit(BaseModel):
-    """*"Which binder?"* — hands back a scope to descend into, and carries no `page_id` at all."""
+    """*"Which binder?"* — hands back a scope to descend into, and carries no `page_id` at all.
+
+    ``next.expand`` is that scope, and it is why the row needs no `page_id`: §7.1 says the row's
+    *"job is to hand back a **scope** to descend into (`next.expand`)"*, so the caller passes the
+    dict straight back as the next rung's ``scope`` argument rather than assembling one from
+    ``doc_id`` and hoping the key is spelled the way `INDEXED` spells it.
+    """
 
     model_config = ConfigDict(extra="forbid")
 
@@ -176,11 +188,14 @@ class DocHit(BaseModel):
     title: str = ""
     doc_type: str = ""
     pages_matched: int = 0
+    #: The best position any page of this group reached in the fused list. :data:`UNRANKED` on a
+    #: disclosure row — a document that matched nothing and is returned anyway (§5.7).
     best_rank: int
     #: pages with a text layer ÷ pages. The agent's blind spot, as a number (§5.7).
     searchable_ratio: float = 0.0
     summary: str = ""
     preview: Preview | None = None
+    next: NextMoves | None = None
 
 
 class SectionHit(BaseModel):
@@ -194,6 +209,7 @@ class SectionHit(BaseModel):
     pages_matched: int = 0
     best_rank: int
     preview: Preview | None = None
+    next: NextMoves | None = None
 
 
 class PageHit(BaseModel):
@@ -388,6 +404,77 @@ class FetchResult(BaseModel):
     pages: list[FetchPage] = Field(default_factory=list)
 
 
+class ReadCode(BaseModel):
+    """One code the vision model emitted, stamped against the page's own text (§7.2.6, Loop 1).
+
+    **The same three states `verify` uses, because it is the same check.** The stamp is not this
+    model's opinion and not the vision model's claim: it is
+    :func:`~vsir.core.verify.verify_claims`' verdict, transcribed. One vocabulary, one meaning,
+    one implementation — a second phrase-checker here would be free to disagree with the index it
+    is checking, which is exactly what F2 is about.
+
+    ``raw`` is the code **as the model returned it**, never normalised. That is what makes an
+    `absent` stamp legible: *"the model read `K153`, and `K153` is not printed on this page"* is a
+    statement about a transcription error, and correcting the string first would hide the very
+    thing the stamp exists to expose.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    raw: str
+    status: Literal["present", "absent", "unverifiable"]
+    #: The pages the stamp is about: the ones carrying it for `present`, the ones actually checked
+    #: for `absent`. Empty for `unverifiable`, where no page could be checked at all.
+    page_ids: list[str] = Field(default_factory=list)
+    #: Observed tokens sharing a prefix, labelled *"different part"* — never a nearest match, and
+    #: never returnable as the code itself (F16). Only ever on an `absent` stamp.
+    present_instead: list[str] = Field(default_factory=list)
+    #: Why it could not be checked, e.g. `no_text`. Only ever on an `unverifiable` stamp.
+    reason: str = ""
+
+
+class PageProvenance(BaseModel):
+    """One page the read actually saw, and how far its text layer can be trusted (§7.2.6, §5.7).
+
+    Every requested page appears, including one whose ``text_trust`` makes every code on it
+    permanently `unverifiable` (R2). That is the disclosure, not a gap: an agent that cannot see
+    which of the three pages was the scanned one cannot tell *"this code is not printed here"*
+    from *"nobody could read this page"*.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    page_id: str
+    text_trust: TextTrust = "no_text"
+
+
+class ReadResult(BaseModel):
+    """`read`'s Family B result (§7.2.6) — the one tool that spends, and it still never answers.
+
+    ``sufficient`` is **mandatory and has no default**. §7.2.6: without it *"the agent cannot
+    separate 'the answer is no' from 'wrong page', and will compose an answer from a page that
+    never contained one"* — and a field that defaults to `True` when a model omits it defaults to
+    the dangerous one. A response the model did not put it in fails to parse instead.
+
+    There is no `score`, no confidence and no ranking (§7.6), and there is nothing here that says
+    which page to read next: **retrieval judgment never happens inside `read`** — that would make
+    the engine the answerer.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    #: The model's bounded answer from these pages, in the document's words. Empty when the pages
+    #: do not answer the question — an honest empty extract, never a padded one.
+    extract: str = ""
+    codes: list[ReadCode] = Field(default_factory=list)
+    #: Whether these pages answer the question **on their own**. Mandatory (see the class note).
+    sufficient: bool
+    #: Server-derived disclosures about the read, from the closed list in
+    #: :data:`~vsir.serve.tools.read.READ_FLAGS`. Never the model's, and never a free-text note.
+    flags: list[str] = Field(default_factory=list)
+    page_provenance: list[PageProvenance] = Field(default_factory=list)
+
+
 ResultT = TypeVar("ResultT", bound=BaseModel)
 
 
@@ -409,7 +496,8 @@ class ToolEnvelope(BaseModel, Generic[ResultT]):
 #: Re-exported so a tool module does not have to reach into `core.status` for the vocabulary.
 __all__ = [
     "CHECK_STATES", "WEAK_ABS", "ClaimVerdict", "DocHit", "DocScopeStat", "FetchImage",
-    "FetchPage", "FetchResult", "ImageRef", "LookupHit", "NextMoves", "PageHit", "Preview",
-    "Provenance", "ResolveHit", "ScopeStats", "SearchResponse", "SectionHit", "Status", "Summary",
-    "ToolEnvelope", "VerifyResult", "weakness", "wire",
+    "FetchPage", "FetchResult", "ImageRef", "LookupHit", "NextMoves", "PageHit", "PageProvenance",
+    "Preview", "Provenance", "ReadCode", "ReadResult", "ResolveHit", "ScopeStats",
+    "SearchResponse", "SectionHit", "Status", "Summary", "ToolEnvelope", "VerifyResult",
+    "weakness", "wire",
 ]

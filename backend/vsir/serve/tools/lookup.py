@@ -129,7 +129,13 @@ def _with(query: qm.Filter, *conditions: qm.Condition) -> qm.Filter:
     return qm.Filter(must=[query, *conditions])
 
 
-def _no_text() -> qm.Condition:
+def no_text() -> qm.Condition:
+    """§5.7's *"this page has no text layer"*, as one condition.
+
+    Public because `skim_documents` counts the same pages to put `searchable_ratio` on a document
+    row (§7.2.1, U019). Two spellings of `has_text == False` in two modules is how a ratio and the
+    `pages_no_text` beside it in the same response come to disagree.
+    """
     return qm.FieldCondition(key="has_text", match=qm.MatchValue(value=False))
 
 
@@ -145,7 +151,7 @@ def scope_stats(client: Any, collection: str, scoped: qm.Filter) -> tuple[ScopeS
     is the wider notion that also excludes ``untrusted``, and it is what chooses the status.
     """
     pages = count_exact(client, collection, scoped)
-    pages_no_text = count_exact(client, collection, _with(scoped, _no_text()))
+    pages_no_text = count_exact(client, collection, _with(scoped, no_text()))
     searchable_pages = count_exact(client, collection, searchable(scoped))
 
     per_doc = {hit.value: hit.count for hit in
@@ -153,7 +159,7 @@ def scope_stats(client: Any, collection: str, scoped: qm.Filter) -> tuple[ScopeS
                             limit=SCOPE_STAT_DOCS, exact=True).hits}
     no_text_per_doc = {hit.value: hit.count for hit in
                        client.facet(collection, key="doc_id",
-                                    facet_filter=_with(scoped, _no_text()),
+                                    facet_filter=_with(scoped, no_text()),
                                     limit=SCOPE_STAT_DOCS, exact=True).hits} if pages_no_text else {}
     docs = [
         DocScopeStat(doc_id=str(doc_id),

@@ -7,10 +7,10 @@
 
 | | |
 |---|---|
-| **Complete** | 21 / 31 units (68%) — 17 of the planned 26, plus U027, U028, U029 and U030 added after the plan was written (plan §4b) |
-| **Current milestone** | **M4 — closed**: `skim_pages` and `resolve` (U017), the document store (U029) and now the page-image route, the raster cache and `fetch` (U018). M0, M1, M2a, M3 and M4 closed and tagged; M2b's non-paid half shipped |
-| **Next unit** | **U019** — `skim_documents`, `skim_sections` and `searchable_ratio`: the two aggregate rungs, which are *the same page query grouped differently* over the candidates U017 already produces. Free, and it lands before U020 so the free rungs of M5 exist before the paid one |
-| **Then** | **U020** — `read`, the paid step, with stamped codes and a question-keyed cache |
+| **Complete** | 24 / 31 units (77%) — 20 of the planned 26, plus U027, U028, U029 and U030 added after the plan was written (plan §4b) |
+| **Current milestone** | **M5 — complete**: the ladder rungs and the paid step. `skim_documents`/`skim_sections` (U019) group the very same fused candidates `skim_pages` returns, and `read` (U020) is the one tool that spends — three pages at the pinned dpi 220, every code it emits stamped `present`/`absent`/`unverifiable` by `core/verify.py`, a mandatory `sufficient`, and a cache a new question always misses. **All eight tools of §7.2 are served.** M0, M1, M2a, M3, M4 and M5 closed; M2b's non-paid half shipped |
+| **Next unit** | **U021** — tri-state triage, the five safeguards, and the `fetch`-vs-`read` routing decision (M6). Free: every one of those choices is made *before* any money moves (§8.2) |
+| **Then** | **U022** — the loop, the six correction loops, the answer gate (I8) and `POST /ask` — the first thing in this build that may return prose |
 | **Read first** | **Plan §4c — six open defects found by running the system.** None breaks a build; all of them mislead somebody who trusts the output. P1 (a live run records no cost) and P2 (no VLM cache store, so a re-ingest re-bills) both land on U013 |
 | **Blocked** | **U013** — the paid re-bill only, and now on **OQ-1 alone**: `data/source/TC1E-SF.pdf` is still not present. **OQ-2 is closed** — a key is configured and was exercised live on 2026-09-10, ingesting a real 4-page datasheet to `published` through `POST /documents`. The ladder is no longer a blocker either: the shipped `plan()` refused the 55-page pilot at **step 05**, one step before the spend everyone thought it was waiting on a credential for, and `fixes/001` now folds it to `[[1, 30], [31, 55]]` — byte-for-byte what its own acceptance table declared. Nothing downstream is blocked (§17) |
 
@@ -103,8 +103,9 @@ Two things a later unit should not have to rediscover:
 - [x] U018 The page-image endpoint, the raster cache, and `fetch` — **M4 closes here**
 
 ### M5 — the ladder rungs and `read` (spend: read)
-- [ ] U019 `skim_documents`, `skim_sections`, and `searchable_ratio` — spend: none
-- [ ] U020 `read` — the paid step, with stamped codes and a question-keyed cache — spend: paid
+- [x] U019 `skim_documents`, `skim_sections`, and `searchable_ratio` — spend: none
+- [x] U020 `read` — the paid step, with stamped codes and a question-keyed cache — spend: paid
+
 
 ### M6 — the runner, the loop, the answer gate (spend: read)
 - [ ] U021 Tri-state triage, the safeguards, and fetch-vs-read routing — spend: none
@@ -416,7 +417,7 @@ closed. F10 stays open until U004's filter gate consumes the dict, as the plan s
 | M2b | `VSIR_ALLOW_PAID=1 vsir ingest data/source/TC1E-SF.pdf` | ⬜ | |
 | M3 | `vsir serve & vsir lookup "SF 1.1A" && vsir eval acceptance` | ✅ | see the M3 milestone gate below |
 | M4 | `vsir demo narrow` | ✅ | exit 0; see the M4 milestone gate below |
-| M5 | `VSIR_ALLOW_PAID=1 vsir read --pages … --question …` | ⬜ | |
+| M5 | `VSIR_ALLOW_PAID=1 vsir read --pages … --question …` | ✅ | ran live against Gemini; see the M5 milestone gate below |
 | M6 | `VSIR_ALLOW_PAID=1 vsir ask "carton discharge won't restart after an E-stop reset"` | ⬜ | |
 | M7 | `bash scripts/test-e2e.sh` then browse `http://localhost:5174` | ⬜ | |
 | M8 | `vsir ingest --resume <run_id>` and `vsir eval corpus` | ⬜ | |
@@ -3536,3 +3537,371 @@ naming its bound, held by `test_fetch_budget_exceeded`-family and `test_dpi_requ
   `extract_key` and `read_key`. Nothing this unit renders can change a cache key.
 - **M4 is complete** — U017, U029 and U018. `skim_documents`/`skim_sections` are M5 (U019), and
   `stack.sh status` says so rather than listing them as missing.
+
+---
+
+### U019 — `skim_documents`, `skim_sections`, and `searchable_ratio`
+
+**Milestone:** M5 · **Spend:** none · **Status:** `[x]` Complete · **Completed:** 2026-09-10
+
+The narrowing ladder is complete, and it is complete without a second search. §7.2.1's *"one
+implementation, exposed three times"* is now a fact about the code: `_candidates()` runs the
+branches and fuses them, and `skim_pages`, `skim_documents` and `skim_sections` are three
+renderings of the one list it returns — truncated to `limit`, grouped by `doc_id`, grouped by
+`section_id`. The load-bearing test is the set equality, not the shapes: the `doc_id`s
+`skim_documents` returns are exactly the distinct `doc_id`s of the `skim_pages` rows for the same
+`(query, scope, exclude)`, `pages_matched` is the number of those rows in the group and `best_rank`
+is the smallest `rank` in it. If the aggregates ever become a second retrieval, those three fail
+together.
+
+The other half of the unit is one number. `searchable_ratio` on every document row is §5.7's blind
+spot made visible, and the row that carries it is returned **even when nothing in that document
+matched**. That is not a nicety: a fully scanned binder has no text surface, so a query carrying a
+printed code puts every one of its pages behind a phrase filter it cannot satisfy, and the binder
+does not rank low — it is *not there*. The agent reads a confident list of the binders that were
+searched and concludes the part does not exist. F4, at the document level. So the binder comes back
+at `0.00` with `pages_matched: 0`, `best_rank: 0`, a thumbnail of its first page and a
+`next.expand` to descend into with `fetch` — sorted after every group that matched, so a disclosure
+can never displace a result.
+
+**Demo output** — the plan's demo command, adapted to the corpus that exists. `TC1E-SF` is still
+absent (OQ-1), so the demo runs against what `bash scripts/stack.sh up` ingests through the real
+pipeline, plus a **second document from the same bytes** (`--doc-id CELL-B-BINDER`, replayed from
+the same content-hash-keyed fixture, free) — because a document rung with one document has no
+grouping to show. Same code path as `POST /tools/skim_documents`, asserted byte-for-byte in
+`test_mcp_parity.py`.
+
+```
+$ vsir skim documents "emergency stop reset"
+
+status       ok · total 84 page(s) · capped false · weak true · needs_scope true
+scope        {'is_current': True} · searched 84 page(s), 4 with no text layer
+
+rank  doc_id                          matched  searchable  preview
+1     synthetic-3window               39       0.95        /pages/synthetic-3window@1.0%23p031/image?dpi=72
+      Page 29 covers light curtain muting stage 29 within the light curtain muting section. It names K131
+      next: expand {'doc_id': 'synthetic-3window'}
+3     CELL-B-BINDER                   33       0.95        /pages/CELL-B-BINDER@1.0%23p013/image?dpi=72
+      Page 11 covers emergency stop chain stage 11 within the emergency stop chain section. It names K113
+      next: expand {'doc_id': 'CELL-B-BINDER'}
+
+P2           no aggregate row carries a page_id, page text or image bytes: confirmed
+reads_left   50 · release dev-0 · schema 1
+
+$ vsir skim sections "emergency stop reset" --scope doc_id=synthetic-3window
+
+rank  section_id                      matched  pages       preview
+1     synthetic-3window@1.0#s004      5        13–17       /pages/synthetic-3window@1.0%23p013/image?dpi=72
+      Emergency stop chain
+      next: expand {'section_id': ['synthetic-3window@1.0#s004']}
+2     synthetic-3window@1.0#s003      4        9–12        /pages/synthetic-3window@1.0%23p009/image?dpi=72
+      Machine layout and access points
+3     synthetic-3window@1.0#s007      5        27–31       /pages/synthetic-3window@1.0%23p031/image?dpi=72
+      Light curtain muting
+…
+35    synthetic-3window@1.0#s002      6        3–8         /pages/synthetic-3window@1.0%23p003/image?dpi=72
+      General information and symbols
+37    synthetic-3window@1.0#s001      2        1–2         /pages/synthetic-3window@1.0%23p001/image?dpi=72
+      Front matter
+
+$ vsir skim documents "muting K131" --scope page_no=1      # the blind spot, disclosed
+
+status       not_searchable · total 0 page(s) · capped false · weak false · needs_scope false
+scope        {'page_no': 1, 'is_current': True} · searched 2 page(s), 2 with no text layer
+
+rank  doc_id                          matched  searchable  preview
+—     CELL-B-BINDER                   0        0.00        /pages/CELL-B-BINDER@1.0%23p001/image?dpi=72  ← no text layer at all: nothing in it can be searched
+      This is the scanned cover sheet of the manual. It shows the title, the revision and the validity sta
+      next: expand {'doc_id': 'CELL-B-BINDER'}
+—     synthetic-3window               0        0.00        /pages/synthetic-3window@1.0%23p001/image?dpi=72  ← no text layer at all: nothing in it can be searched
+      This is the scanned cover sheet of the manual. It shows the title, the revision and the validity sta
+      next: expand {'doc_id': 'synthetic-3window'}
+
+next         suggest ['lookup']
+```
+
+That third call is the whole unit in one screen. The scope is the two cover sheets, both scanned;
+the query carries `K131`, which `decompose()` splits out as a phrase filter over `text`; nothing
+can match, so `skim_pages` returns nothing at all and the status is `not_searchable` —
+*escalate to vision*. The two rows say **which binders to escalate to**, at `0.00`, with a
+thumbnail each. The status is decided by the pages and not by the presence of the rows: saying `ok`
+because the blind spot was disclosed would turn the disclosure into the answer.
+
+Over HTTP, in the container, the same call:
+
+```
+$ curl -s -H "Authorization: Bearer $TOKEN" -X POST http://localhost:8055/tools/skim_documents \
+       -H 'Content-Type: application/json' -d '{"query":"emergency stop reset"}'
+status ok · total 84 · rows 2
+  synthetic-3window 39 1 0.9523809523809523 /pages/synthetic-3window@1.0%23p031/image?dpi=72
+  CELL-B-BINDER     33 3 0.9523809523809523 /pages/CELL-B-BINDER@1.0%23p013/image?dpi=72
+keys ['best_rank', 'doc_id', 'doc_type', 'next', 'pages_matched', 'preview', 'searchable_ratio', 'summary', 'title']
+```
+
+**Tests:** `bash scripts/test-unit.sh` → 1216 passed. `bash scripts/test-api.sh` → 1321 passed,
+13 skipped (all thirteen the pre-existing U013/OQ-1 rows of `test_acceptance_real.py`). The 43 new
+rows are `test_skim_aggregates.py` (27) and `test_searchable_ratio.py` (13), plus three in
+`test_mcp_parity.py` for byte identity on the three rungs against a multi-document corpus.
+
+**Invariants / failure rows closed:** none newly, as the plan says. What this unit adds is the
+surface that makes **F4**'s disclosure visible at the *document* level, and the §13 M5 acceptance
+clause C13 moved here from M4 — *every aggregate row carries a `preview.thumb_url`, the group's
+best-ranked matched page, falling back to page 1, a reference and never bytes* (D12).
+
+**Notes / decisions**
+
+- **The aggregates group the full fused candidate list, not the page rung's ten rows.** §7.2.1
+  rule 4 says they *"group the same fused candidates"*, and `limit` is a property of the page
+  rung's output rather than of the search. The set-equality criterion is therefore asserted with
+  `skim_pages(limit=25)` on a corpus whose candidates fit inside it — otherwise the test would be
+  comparing two different cuts and calling the difference a drift.
+- **`DocHit` and `SectionHit` gained a `next`.** §7.1's hit-shape *list* omits it, but the prose
+  three paragraphs down says their *"job is to hand back a **scope** to descend into
+  (`next.expand`)"*, and the unit's AC requires that scope to reproduce the group. One field on
+  each, `NextMoves` as everywhere else, and `expand` is `{"doc_id": …}` / `{"section_id": [id]}` —
+  a dict the caller passes straight back rather than a string it assembles.
+- **`best_rank: 0` is `envelope.UNRANKED`, a disclosure row's ordinal.** Ranks are 1-based
+  everywhere in this surface, so zero cannot be read as a position; `pages_matched: 0` sits beside
+  it and the row sorts after every group that matched.
+- **`searchable_ratio` is the ratio over what was *searched*, and it is counted, not read off
+  `scope_stats.docs`.** Two facets bounded by the ten rows, on the same `scoped` filter, so where
+  a document appears in both the two numbers are the same number — asserted. Reading it off
+  `scope_stats.docs` instead would have been free and wrong at the edge: that breakdown is capped
+  at 64 documents because it is a display, and a matched binder outside the cap would have
+  inherited the field's `0.0` default and been reported as a blind spot. The one number on the row
+  an agent is meant to act on, inverted.
+- **Only ratio `0.00` earns a disclosure row.** A half-scanned binder is found through the pages
+  that do have text and is an ordinary group; disclosing every document that merely failed to
+  match would return the corpus and undo the narrowing the rung exists to do.
+- **`lookup._no_text()` became `lookup.no_text()`** — public, so `skim_documents` counts §5.7's
+  *"this page has no text layer"* through the same one condition `scope_stats` counts it with.
+  Two spellings in two modules is how a ratio and the `pages_no_text` beside it in one response
+  come to disagree.
+- **`DocHit.title` is empty, and that is a fact about the record.** §5.3 has no document-level
+  title field. S1 *does* return one — `data/fixtures/synthetic_3window/facts/*.json` carries
+  `"title": "C24 SYNTHETIC SAFETY MANUAL"` — and derivation drops it, because there is nowhere on
+  the page record to put it. Deriving one here from the filename or the first section heading would
+  be an interpretation of the kind §5.2 refuses, so the field stays in the contract like
+  `next.references`, and `summary` carries the sentence a person actually needs. **Follow-up for
+  whoever owns the next record-schema change:** a `title` on the run record or as a document-level
+  payload facet would fill it for free, since S1 already paid for it.
+- **The free stub cannot ingest a new PDF, so the demo's scanned binder is a scope and not a new
+  document.** `VSIR_VLM=stub` *requires* `VSIR_FIXTURE` and refuses `vlm_backend_unavailable`
+  without it (D10) — there is no generative stub — and a fixture is keyed by content hash, so any
+  new PDF is a `fixture_miss`. The `0.00` rows above are therefore the two real scanned cover
+  sheets of the ingested corpus, reached with `--scope page_no=1`. A fully scanned *document* is
+  exercised in L2 instead, where `conftest.AGGREGATE_DOCS` seeds one (`AGG-SCAN`, three pages, no
+  text) beside a half-scanned and an all-text binder.
+
+---
+
+### U020 — `read`, the paid step: stamped codes, a mandatory `sufficient`, and a question-keyed cache
+
+**Milestone:** M5 · **Spend:** paid (read) · **Status:** `[x]` Complete · **Completed:** 2026-09-10
+
+The tool that spends, and the one that still never answers. `read(page_ids, question)` renders at
+most three pages the caller already chose, at the **pinned dpi 220**, asks one question about
+them, and hands back a bounded `extract`, a `codes` table where every code has been phrase-checked
+against that page's own text, a **mandatory `sufficient`**, `flags` and `page_provenance`. There is
+no `dpi` parameter, no `region`, no ranking, no `next` and no suggestion about where else to look:
+§7.6's *"retrieval judgment never happens inside `read`"* is enforced by an AST scan of the module
+in the L0 suite, beside the scan that proves it builds no matcher of its own.
+
+**The stamp is `verify`'s, and that is the whole unit.** `impl` stamped `text_layer_backed` from
+its own `token_set()` over its own tokeniser, with no relationship to the index anything else
+searched — so the tool that found a page and the check that confirmed it could disagree. Here every
+code goes through `core/verify.py::verify_claims`, the same function `POST /tools/verify` calls,
+which asks `core/exact.py::exact_filter` the question `lookup` asks, scoped to one page. One
+vocabulary, `present | absent | unverifiable`; one meaning; one code path (F2). And `unverifiable`
+exists, which a boolean could not say: on a page with no text layer **every** code is
+`unverifiable` — including a code genuinely printed three sheets away, because the check is per
+`(code, page)` and a page nobody can read cannot support a code that lives next door (R2).
+
+**Nothing is withheld.** §2.5 B struck `withheld[]`, `id_class` and the identifier grammar: a code
+that failed its check is returned *stamped*, never removed, because dropping it hides the
+transcription error from the only party that can act on it.
+
+**Demo output — the plan's demo command, against real Gemini** (`VSIR_ALLOW_PAID=1`). OQ-1 is
+still open, so the pages are the generated corpus's rather than `TC1E-SF`'s — which is the
+stronger fixture for what this row proves, because every line printed on every page of it is known
+exactly from `vsir.eval.synthetic_pdf.expected_text`, and the assertion is against the paper rather
+than against the index.
+
+```
+$ VSIR_ALLOW_PAID=1 VSIR_VLM=gemini vsir read --pages "C24-DEMO@1.0#p019,C24-DEMO@1.0#p020" \
+    --question "which monitored relay and which safe input channel does each of these two sheets name?"
+
+{"event":"vlm_call","model":"gemini-3.8-flash","stage":"read","images":2,"finish_reason":"STOP", …}
+{"event":"read","origin":"model","dpi":220,"pages":2,"codes":6,"present":6,"absent":0,
+ "unverifiable":0,"sufficient":true,"flags":[], "cache_key":"3106175f44ae5afc…"}
+{"event":"audit","audit":{"tool":"read","dpi":220,"input_tokens":2858,"output_tokens":165,
+ "cache_hit":false,"latency_ms":10290,"page_ids":["C24-DEMO@1.0#p019","C24-DEMO@1.0#p020"], …}}
+
+status       ok — the CALL ran; the answer is below
+sufficient   true — these pages answer the question on their own
+
+extract      'For stage 17 (first sheet), the document lists relay K119 and safe input channel SI4
+              ("B219 --> K119 - SI4"), with verification required after replacement of K119. For
+              stage 18 (second sheet), it lists relay K120 and safe input channel SI1
+              ("B220 --> K120 - SI1"), with verification required after replacement of K120.'
+
+codes        6 stamped against the page's own text (§7.2.6, Loop 1)
+  PRESENT       K119  ·  on C24-DEMO@1.0#p019
+  PRESENT       SI4   ·  on C24-DEMO@1.0#p019
+  PRESENT       B219  ·  on C24-DEMO@1.0#p019
+  PRESENT       K120  ·  on C24-DEMO@1.0#p020
+  PRESENT       SI1   ·  on C24-DEMO@1.0#p020
+  PRESENT       B220  ·  on C24-DEMO@1.0#p020
+
+flags        —
+  page       C24-DEMO@1.0#p019 · text_trust ok
+  page       C24-DEMO@1.0#p020 · text_trust ok
+
+reads_left   49 · release dev-0 · schema 1
+```
+
+Six codes, all transcribed verbatim off the raster, all six genuinely printed where the stamp says
+they are. **The same call again is a cache hit and bills nothing**, and the identical call from a
+*second instance* is too, because the entry is a control point in `vsir_runs` and not a dict on a
+process:
+
+```
+   read       origin cache · present 6
+   audit      cache_hit True · input_tokens 0
+```
+
+**The failure branch, also live — R2, on the two scanned cover sheets:**
+
+```
+$ VSIR_ALLOW_PAID=1 VSIR_VLM=gemini vsir read --pages "C24-DEMO@1.0#p001,C24-DEMO@1.0#p002" \
+    --question "which machine or equipment code is printed on these sheets, and which revision do they state?"
+
+extract      'C24 SYNTHETIC SAFETY MANUAL\nRevision 1.0'
+codes        2 stamped against the page's own text (§7.2.6, Loop 1)
+  UNVERIFIABLE  C24  ·  no_text
+  UNVERIFIABLE  1.0  ·  no_text
+flags        ['no_text_layer', 'unverified_codes']
+  page       C24-DEMO@1.0#p001 · text_trust no_text
+  page       C24-DEMO@1.0#p002 · text_trust no_text
+```
+
+That is the whole design in six lines. The model **did** read the sheet — `C24` and `1.0` are
+correct, and a person can see them — and the system says `unverifiable`, not `present`. It refuses
+to convert a legible pixel into evidence, forever if need be, and the badge is the deliverable.
+
+**The free half, replayed through the stack** (`bash scripts/stack.sh vsir read …`, spends nothing,
+D10) — the case §7.2.6's own example is drawn from, with a deliberate misread:
+
+```
+codes        4 stamped against the page's own text (§7.2.6, Loop 1)
+  PRESENT       K119  ·  on synthetic-3window@1.0#p019
+  PRESENT       SI4   ·  on synthetic-3window@1.0#p019
+  PRESENT       K120  ·  on synthetic-3window@1.0#p020
+  ABSENT        K152  ·  on …#p019, …#p020  ·  different part: k119, k120
+flags        ['unverified_codes']
+
+# the same two pages, a different question — a MISS (F19), a second call, its own answer
+   vlm_replay  a SECOND call — the question is on read_key
+   read        origin replay · cache_key 3a5e38f4f79bfe8b…
+extract      'Q69 is the contactor on the first sheet and Q70 on the second, both printed as
+              TELEMECANIQUE LC1-D38BL.'
+
+# a fourth page — a typed 400 naming its bound, zero model calls, quota untouched
+   REFUSED  400 read_page_cap_exceeded: read takes at most 3 pages, got 4
+```
+
+**Invariants / failure rows closed:** **F18 (read half)** — the ≤ 3-page cap as a typed 400 naming
+its bound, checked *before* the quota is charged (`test_read_page_cap_exceeded`,
+`test_the_page_cap_does_not_cost_the_caller_a_read`). **F19** — `read_key` includes the question, so
+a new question is a miss (`test_a_new_question_about_the_same_pages_makes_a_second_call`). §11.3's
+two `read` rows: `429 budget_exhausted` and `503 vlm_unavailable` **while all seven free tools still
+return 200**. No invariant is newly asserted here — I8 is U022's, and this unit provides one of its
+inputs.
+
+**Tests:** 43 L0 (`test_read_stamps.py`) · 44 L2 (`test_read_replay.py`, `test_read_caps.py`,
+`test_read_cache.py`) · 10 L4 (`test_read_real.py`, gated). Every L0–L2 row runs with `VSIR_VLM=stub`
+and no credential.
+
+**Notes:**
+
+- **The live run found a defect four replay suites could not.** The audit line for a **cache hit**
+  reported the *original* call's `input_tokens: 2858` beside `cache_hit: true`. In replay both are
+  zero, so no fixture-backed test could see it; against a real model it means an operator summing
+  §7.4's token columns over a month bills every re-read at the price of the read it replaced. A
+  cache hit now reports `0 / 0`, and `test_the_audit_line_says_which_call_cost_nothing` asserts it.
+  This is U028's lesson recurring exactly as U028 predicted it would.
+- **The first live call abstained, and it was right to.** The question originally chosen for the L4
+  row — *"what must be true before the guard door interlock releases?"* — is not answerable from
+  two safety-function **list** sheets, and the model returned an empty extract with
+  `sufficient: false` rather than composing one. That is the behaviour §7.2.6 makes `sufficient`
+  mandatory for, so it is now its own L4 row (`test_a_real_model_abstains_rather_than_composing…`)
+  and the *answerable* rows ask something the sheets actually print. Worth stating plainly: a green
+  L4 whose every code list was empty would assert nothing, so
+  `test_the_model_actually_read_the_sheet_and_named_codes` is the row that separates *"the model
+  abstained"* from *"the raster never arrived"*.
+- **The `read` cache is net-new infrastructure, and plan §4c's P2 can now be closed by whoever owns
+  it.** `vlm/cache.py::ControlPlaneStore` is a read/write cache keyed exactly as §6.3 says, living
+  on `kind: vlm_cache` points in `vsir_runs` (D9) — not process memory, not local disk. `read` uses
+  it; **ingestion does not yet**, which is P2's remaining half: `extract_window` still calls the
+  backend directly, so a live re-ingest re-bills S2. The store it needs now exists and takes two
+  lines to adopt.
+- **A store failure on the way *into* the cache is swallowed and logged; on the way *out* it
+  raises.** The model has already answered and the caller is owed that answer, so a failed cache
+  write costs only the next identical call; a cache *read* that cannot reach the store is a `503`,
+  because guessing *"probably not cached"* during an outage is how an outage becomes an unmetered
+  afternoon.
+- **`prompts/read.md` joined `s2-v1` rather than opening a version of its own.** The version labels
+  the released prompt *set*; the two extraction digests under it are unchanged and `read` had no
+  cached response in existence to invalidate. Opening `s2-v2` for a file no extraction call reads
+  would have re-keyed every frozen S2 response in the repository and re-billed a full corpus.
+- **`precheck` is a new field on `ToolSpec`, and only `read` sets one.** The budget is charged
+  before the tool runs — it must be, because the money is spent inside it — so every bound that can
+  be settled from the request alone is settled before that. Without it a caller that named four
+  pages would have a read taken off its quota to be told it named four pages.
+- **Five L2 rows used `read` as *the* example of a tool this release does not serve** and now name
+  `expand` and `compare` instead — `impl` endpoints struck by §2.5 A, which is what a client
+  migrating from the previous service actually reaches for. §7.2's eight are all served from here.
+- **The paid demo ran against the generated corpus, not `TC1E-SF` (OQ-1).** What remains deferred
+  is exactly one line of U020's acceptance: *"one real `read` against the frozen `TC1E-SF` pages …
+  matches the human-verified entry in `expected.json`"*. Everything it was there to prove — the
+  call is well-formed, a real transcription never lands falsely `present`, an unreadable page is
+  `unverifiable`, a real model abstains — is proved above against a corpus whose printed text is
+  known exactly. Point `VSIR_PILOT_PDF` at the pilot and `tests/paid/test_read_real.py` reads that
+  instead, unchanged.
+
+---
+
+## Milestone gate — M5 (`cr1-m5`)
+
+**Demo command (Spec §0):** `VSIR_ALLOW_PAID=1 vsir read --pages … --question …` — **run live
+against `gemini-3.8-flash` on 2026-09-10**, output recorded in the U020 entry above. One real
+call, 2,858 input / 165 output tokens, six codes transcribed off the raster and all six stamped
+`present` against text they are genuinely printed in; a second call over the two scanned sheets
+returned `C24` and `1.0` read from the image and stamped `unverifiable`, which is R2 working.
+
+**Acceptance (Spec §13 M5), verified against the implementation by a subagent, ✓/✗ with evidence:**
+
+| # | Clause | | Evidence |
+|---|---|---|---|
+| 1 | Loop 1 stamps a deliberately misread code `absent` **with** `present_instead` | ✓ | `serve/tools/read.py:161-186` (`_stamp` → `verify_claims`), fold at `core/verify.py:166-172`, disclosure at `core/present_instead.py:60-79`. `tests/unit/test_read_stamps.py:108-118` (`K73`→`["k78"]`); `tests/api/test_read_replay.py:63-77` against the checked-in table (`K152` → `absent`, `["k119","k120"]`) |
+| 2 | F19 — same pages + a new question is a cache **miss** | ✓ | `vlm/cache.py:171-184`, call site `read.py:234-236`, miss branch `read.py:239-246`. `tests/api/test_read_cache.py:166-182` (same pages asserted equal, two distinct keys); identical-call half at `:107-115`; `tests/unit/test_read_stamps.py:339-342` |
+| 3 | F18 for `read` — a 4-page call is a typed 400 | ✓ | `serve/caps.py:75-79`, reached from `read.py:145` (`precheck`), run **before** the charge at `serve/app.py:944-949`. `tests/api/test_read_caps.py:58-67` (400, bound named, zero model calls) and `:70-80` (quota untouched) |
+| 4 | Every code on a text-free page comes back `unverifiable` | ✓ | `core/verify.py:103-109` and `:120-122`, fold `:174-176`. `tests/unit/test_read_stamps.py:121-133` (incl. a code printed elsewhere in the same document); `tests/api/test_read_replay.py:124-137` |
+| 5 | Every aggregate row carries `preview.thumb_url` — best-ranked matched page, falling back to page 1, a **reference never bytes** (D12) | ✓ | `serve/tools/skim.py:655-662`, `:775`, `:901`; fallback `:725-750` + `:809-825`. `tests/api/test_skim_aggregates.py:164-177` (preview page == the `best_rank` page, `dpi=72`); `tests/api/test_searchable_ratio.py:124-145` (unranked row falls back to `#p001`) |
+
+**P2, checked separately:** no `skim_*` row can carry image bytes *by type*, not by convention —
+`Preview` and `ImageRef` both set `extra="forbid"` and have no bytes field, `FetchImage` is a
+different model returned only by `fetch`, and `skim.py` base64-encodes nothing. Asserted at
+`tests/unit/test_envelope.py:153-156` and `:166-180`, and over the wire at
+`test_skim_aggregates.py:154` and `test_searchable_ratio.py:143`.
+
+**Test layers at the gate:** L0/L1 `1261 passed`; L2/L3 `1365 passed, 13 skipped`; L4
+`10 passed, 1 skipped` (gated, real model). No test skipped, xfailed or weakened to pass.
+
+**One finding to carry forward (not an M5 ✗, and not U020's surface).** A blind-spot document
+whose page numbering does not start at `page_no: 1` gets **no disclosure row at all** rather than
+a row without a preview: `skim.py:811` filters the resolved set to the doc_ids `_first_pages`
+found. For the F4 disclosure that is the wrong direction to fail in — the row exists precisely to
+be seen — and no test covers it. Every document in the corpora today starts at 1, so it is latent.
+Whoever next touches `_blind_spots` should fall back to the document's *lowest* current page
+rather than to the literal page 1.

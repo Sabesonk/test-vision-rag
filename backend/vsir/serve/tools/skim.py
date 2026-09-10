@@ -1,4 +1,4 @@
-"""NARROW — ``skim_pages`` and the deterministic fusion behind it (Spec §7.2.1, D2, D12).
+"""NARROW — the three rungs and the deterministic fusion behind them (Spec §7.2.1, D2, D12).
 
 Ported with changes from ``impl/app/retrieve.py``: `rrf()` as-is (it was already ranks-only),
 `decompose()` for its judgement, and `search()` replaced by the rung this module serves. The
@@ -24,13 +24,29 @@ Per-surface ranks are kept, not just which surfaces hit: they are what the fusio
 consumed, so they are what makes a weight change explicable — and they are what `PageHit.why`
 reports.
 
-**The rung itself.** Three branches run inside the scope, minus `exclude`: `page` (the fused
+**The rungs themselves.** Three branches run inside the scope, minus `exclude`: `page` (the fused
 image+text dense vector of D4), `lexical` (sparse over the extracted text) and `captions` (sparse
 over generated text, weighted 0.4). :func:`decompose` splits exact identifiers out of the query
 **first**, so a printed code becomes a phrase filter over the one exact code path
 (:func:`~vsir.core.exact.exact_filter`) instead of being blurred into an embedding, and only the
 prose is embedded. The three rankings fuse at ``rrf_k=60`` and the fused ordinal is the row's
 ``rank``.
+
+**One implementation, exposed three times** (§7.2.1), and here that is a fact about the code and
+not a description of it: :func:`_candidates` is the search, and `skim_pages`, `skim_documents` and
+`skim_sections` are three renderings of the one list it returns — truncated to ``limit``, grouped
+by ``doc_id``, grouped by ``section_id``. No second collection, no second filter, no extra
+storage. An agent chooses far more reliably between three names than between three values of a
+`granularity` enum, and grouping by `doc_id` is also what stops one chatty document occupying
+every slot and burying the binder that answers.
+
+`DocHit` and `SectionHit` carry **no `page_id`**: they answer *"which binder?"* and *"which
+chapter?"* and hand back a scope to descend into (``next.expand``). What they do carry is a
+`preview` — the thumbnail of the group's best-ranked matched page — and, on a document row,
+`searchable_ratio`. That number is the point of the rung: a binder nothing can be found in by
+text is **returned anyway**, at ``0.00`` with ``pages_matched: 0``, because the alternative is
+that it disappears from the answer set in silence and the agent concludes the part is not in a
+binder nobody looked in (§5.7, F4).
 
 Three rules for an image query (D12), each of them stated in the response rather than implied:
 
@@ -63,7 +79,7 @@ from qdrant_client.http import models as qm
 
 from vsir import logging as vsir_logging
 from vsir.config import RRF_K, SURFACE_WEIGHTS
-from vsir.core import ids
+from vsir.core import health, ids
 from vsir.core.exact import UnknownScopeKey, exact_filter, scope_conditions
 from vsir.core.indexed import DENSE_VECTOR, SPARSE_VECTORS
 from vsir.core.observed_tokens import is_code_like
@@ -72,10 +88,15 @@ from vsir.ingest import sparse
 from vsir.ingest.embed import query_vector
 from vsir.serve.caps import ToolError, as_tool_error, validate_skim_limit
 from vsir.serve.envelope import (
+    UNRANKED,
+    DocHit,
     NextMoves,
     PageHit,
+    Preview,
     Provenance,
+    ScopeStats,
     SearchResponse,
+    SectionHit,
     Status,
     weakness,
 )
@@ -84,6 +105,7 @@ from vsir.serve.tools.lookup import (
     count_exact,
     effective_scope,
     image_ref,
+    no_text,
     scope_filter,
     scope_stats,
 )
@@ -120,7 +142,13 @@ BRANCH_DEPTH = 50
 #: structural rather than careful: the page's text is never loaded into this process at all, so
 #: there is no path by which it could reach a row. It also keeps a three-branch skim to a bounded
 #: response from the store instead of 150 full pages of prose.
-ROW_PAYLOAD = ("page_no", "page_kind", "text_trust", "section_id", "content", "provenance")
+#:
+#: ``doc_id`` and ``doc_type`` are here for the two aggregate rungs, which group these very rows
+#: (§7.2.1) — one payload list for all three, because "the same page query aggregated differently"
+#: has to be true of the *query*, and a second `with_payload` list is the first step towards a
+#: second query.
+ROW_PAYLOAD = ("doc_id", "doc_type", "page_no", "page_kind", "text_trust", "section_id",
+               "content", "provenance")
 
 #: The page numbers a hit offers as ``next.neighbours`` — the page before and the page after.
 NEIGHBOUR_OFFSETS = (-1, 1)
@@ -304,6 +332,119 @@ def _sparse_query(text: str) -> qm.SparseVector | None:
     return qm.SparseVector(indices=indices, values=values) if indices else None
 
 
+# ── the candidate set the three rungs share (§7.2.1: "the same page query") ─────────────────────
+
+@dataclass(frozen=True)
+class Candidates:
+    """One page query, run once — and the only thing any of the three rungs ever ranks.
+
+    §7.2.1's *"one implementation, exposed three times"* is this object. `skim_pages` truncates
+    :attr:`fused` to ``limit`` and renders a row per page; `skim_documents` and `skim_sections`
+    group the very same list and render a row per group. There is no second collection, no second
+    filter and no second `with_payload`, so the three rungs cannot drift apart into three
+    retrievals that happen to be described by one paragraph.
+    """
+
+    #: The caller's scope with ``is_current=True`` injected — echoed back as `effective_scope`.
+    scope: dict
+    #: The same scope, built once and gated by `INDEXED` once — the denominator every count in
+    #: this module is taken against, so no rung rebuilds it and risks building it differently.
+    scoped: qm.Filter
+    split: Decomposed
+    #: Every fused candidate, in rank order and **untruncated**. `limit` is a property of the page
+    #: rung's output, not of the search.
+    fused: tuple[FusedRow, ...]
+    payloads: Mapping[Any, Mapping[str, Any]]
+    stats: ScopeStats
+    #: Pages of the scope with a text layer that may be believed — what chooses the absence (§5.7).
+    searchable_pages: int
+    #: ``count(exact=True)`` over the narrowed filter: the size of the set the branches were
+    #: allowed to rank. Pages, on every rung — `weak` means the same thing on all three.
+    total: int
+    branches: tuple[str, ...]
+
+    def payload(self, row: FusedRow) -> Mapping[str, Any]:
+        return self.payloads[row.point_id]
+
+    def page_id(self, row: FusedRow) -> str:
+        return str((self.payload(row).get("provenance") or {}).get("page_id") or "")
+
+
+def _candidates(client: Any, collection: str, *, rung: str, query: str, image: bytes | None,
+                scope: Mapping[str, Any] | None, exclude: Sequence[str],
+                embedder: Any) -> Candidates:
+    """Run the three branches inside the scope and fuse them. The whole of §7.2.1's ordering.
+
+    Every refusal is a typed :class:`~vsir.serve.caps.ToolError` naming its bound and it happens
+    here, before a round trip is spent: a query that is neither words nor a photograph, and a
+    filter key absent from `INDEXED` — ``filter_unknown_key``, a `400` rather than an unindexed
+    scan (I6, F10). ``rung`` names the tool in the refusal, because an agent that asked
+    `skim_sections` for nothing should be told about `skim_sections`.
+    """
+    has_query = bool((query or "").strip())
+    if not has_query and image is None:
+        raise ToolError(
+            "query_required",
+            f"{rung} takes a query, an image, or both (§7.2.1) — neither is not a search, and "
+            "an empty query embedded as the empty string still returns ten confident-looking rows",
+            requested={"query": bool(has_query), "image": image is not None},
+        )
+
+    scope_in_force = effective_scope(scope)
+    split = decompose(query or "")
+    try:
+        scoped = scope_filter(scope_in_force)
+        narrowed = branch_filter(scope_in_force, split.identifiers, exclude)
+    except UnknownScopeKey as refusal:
+        raise as_tool_error(refusal) from None
+
+    stats, searchable_pages = scope_stats(client, collection, scoped)
+    total = count_exact(client, collection, narrowed)
+
+    # **A branch runs when it has an input, and says so in `why` when it did.** One rule, applied
+    # twice. An image-only query has no text to build a sparse vector from, so `lexical` and
+    # `captions` are skipped and RRF degenerates to the dense ranking (D12 rule 2). A query that
+    # decomposes to identifiers only — `"K158"` — has nothing left to embed once the code has gone
+    # to the phrase filter, so the dense branch is skipped for the same reason and in the same
+    # spelling: embedding the code anyway would be the blurring rule 1 exists to prevent, and
+    # inventing a query for it would be worse. Every query reaches at least one branch, because
+    # the two conditions are exhaustive over "words, a photograph, or both".
+    branches: dict[str, list[Any]] = {}
+    if split.embedded.strip() or image is not None:
+        branches["page"] = _points(client, collection, query=query_vector(
+            embedder, text=split.embedded, image=image),
+            using=DENSE_VECTOR, query_filter=narrowed, limit=BRANCH_DEPTH)
+    sparse_query = _sparse_query(split.text) if has_query else None
+    if sparse_query is not None:
+        for surface in SPARSE_VECTORS:
+            branches[surface] = _points(client, collection, query=sparse_query, using=surface,
+                                        query_filter=narrowed, limit=BRANCH_DEPTH)
+
+    return Candidates(
+        scope=scope_in_force,
+        scoped=scoped,
+        split=split,
+        fused=tuple(rrf(branches)),
+        payloads={point.id: (point.payload or {})
+                  for points in branches.values() for point in points},
+        stats=stats,
+        searchable_pages=searchable_pages,
+        total=total,
+        branches=tuple(sorted(branches)),
+    )
+
+
+def _absence_moves(found: bool, split: Decomposed) -> NextMoves | None:
+    """The affordance an empty rung owes its caller — the same one on all three (§7.1).
+
+    The narrowing is what emptied it, and the caller cannot see that from `effective_scope`: the
+    identifiers are a filter, not a scope key. `lookup` is the move that answers *"is this code
+    printed anywhere at all"*, so the affordance names it rather than leaving the agent to abstain
+    about a code that may simply not be in this document.
+    """
+    return None if found or not split.identifiers else NextMoves(suggest=["lookup"])
+
+
 # ── the rung ────────────────────────────────────────────────────────────────────────────────────
 
 def _summary(content: Mapping[str, Any], scope: Mapping[str, Any]) -> tuple[str, str]:
@@ -412,9 +553,8 @@ def skim_pages(client: Any, collection: str, *,
                reads_remaining: int = 0) -> SearchResponse[PageHit]:
     """The page rung of the narrowing ladder: ≤ ``limit`` triage rows, score-free and repeatable.
 
-    Every refusal is a typed :class:`~vsir.serve.caps.ToolError` naming its bound: a ``limit``
-    outside 1…25, a query that is neither words nor a photograph, and a filter key absent from
-    `INDEXED` — ``filter_unknown_key``, a 400 rather than an unindexed scan (I6, F10).
+    ``limit`` outside 1…25 is a typed refusal naming its bound; the rest of the refusals belong to
+    :func:`_candidates`, which is the search all three rungs run.
 
     ``total`` is the size of the set the branches were allowed to rank — the scope, narrowed by the
     identifiers and by ``exclude`` — and not the length of the fused list. That is what makes
@@ -425,107 +565,386 @@ def skim_pages(client: Any, collection: str, *,
     parameter can flip it.
     """
     validate_skim_limit(limit)
-    has_query = bool((query or "").strip())
-    if not has_query and image is None:
-        raise ToolError(
-            "query_required",
-            "skim_pages takes a query, an image, or both (§7.2.1) — neither is not a search, and "
-            "an empty query embedded as the empty string still returns ten confident-looking rows",
-            requested={"query": bool(has_query), "image": image is not None},
-        )
+    found = _candidates(client, collection, rung="skim_pages", query=query, image=image,
+                        scope=scope, exclude=exclude, embedder=embedder)
 
-    scope_in_force = effective_scope(scope)
-    split = decompose(query or "")
-    try:
-        scoped = scope_filter(scope_in_force)
-        narrowed = branch_filter(scope_in_force, split.identifiers, exclude)
-    except UnknownScopeKey as refusal:
-        raise as_tool_error(refusal) from None
-
-    stats, searchable_pages = scope_stats(client, collection, scoped)
-    total = count_exact(client, collection, narrowed)
-
-    # **A branch runs when it has an input, and says so in `why` when it did.** One rule, applied
-    # twice. An image-only query has no text to build a sparse vector from, so `lexical` and
-    # `captions` are skipped and RRF degenerates to the dense ranking (D12 rule 2). A query that
-    # decomposes to identifiers only — `"K158"` — has nothing left to embed once the code has gone
-    # to the phrase filter, so the dense branch is skipped for the same reason and in the same
-    # spelling: embedding the code anyway would be the blurring rule 1 exists to prevent, and
-    # inventing a query for it would be worse. Every query reaches at least one branch, because
-    # the two conditions are exhaustive over "words, a photograph, or both".
-    depth = BRANCH_DEPTH
-    branches: dict[str, list[Any]] = {}
-    if split.embedded.strip() or image is not None:
-        branches["page"] = _points(client, collection, query=query_vector(
-            embedder, text=split.embedded, image=image),
-            using=DENSE_VECTOR, query_filter=narrowed, limit=depth)
-    sparse_query = _sparse_query(split.text) if has_query else None
-    if sparse_query is not None:
-        for surface in SPARSE_VECTORS:
-            branches[surface] = _points(client, collection, query=sparse_query, using=surface,
-                                        query_filter=narrowed, limit=depth)
-
-    payloads = {point.id: (point.payload or {})
-                for points in branches.values() for point in points}
-    fused = rrf(branches)[:limit]
-    documents = []
-    for row in fused:
-        page_id = str(((payloads[row.point_id].get("provenance") or {}).get("page_id")) or "")
-        if page_id:
-            doc_id, revision, _ = ids.parse_page_id(page_id)
-            documents.append((doc_id, revision))
-    counts = _page_counts(client, collection, documents)
+    rows = found.fused[:limit]
+    counts = _page_counts(client, collection,
+                          [ids.parse_page_id(page_id)[:2]
+                           for page_id in (found.page_id(row) for row in rows) if page_id])
 
     hits: list[PageHit] = []
-    for row in fused:
-        payload = payloads[row.point_id]
-        page_id = str((payload.get("provenance") or {}).get("page_id") or "")
+    for row in rows:
+        payload = found.payload(row)
+        page_id = found.page_id(row)
         doc_key = ids.parse_page_id(page_id)[:2] if page_id else ("", "")
-        hits.append(hit_from(row, payload, scope=scope_in_force,
-                             pages=counts.get(doc_key, 0)))
+        hits.append(hit_from(row, payload, scope=found.scope, pages=counts.get(doc_key, 0)))
 
-    is_weak = weakness(total, stats.pages)
-    status = Status.OK if hits else absence(stats.pages, searchable_pages)
-    next_moves: NextMoves | None = None
-    if status != Status.OK and split.identifiers:
-        # The narrowing is what emptied this, and the caller cannot see it from `effective_scope`:
-        # the identifiers are a filter, not a scope key. `lookup` is the move that answers *"is
-        # this code printed anywhere at all"*, so the affordance names it rather than leaving the
-        # agent to abstain about a code that may simply not be in this document (§7.1).
-        next_moves = NextMoves(suggest=["lookup"])
-
+    is_weak = weakness(found.total, found.stats.pages)
+    status = Status.OK if hits else absence(found.stats.pages, found.searchable_pages)
     response = SearchResponse[PageHit](
         status=status,
         hits=hits,
-        total=total,
-        capped=total > len(hits),
+        total=found.total,
+        capped=found.total > len(hits),
         weak=is_weak,
         needs_scope=is_weak,
-        next=next_moves,
-        effective_scope=scope_in_force,
-        scope_stats=stats,
+        next=_absence_moves(bool(hits), found.split),
+        effective_scope=found.scope,
+        scope_stats=found.stats,
         reads_remaining=reads_remaining,
         provenance=provenance,
     )
-    # `debug`, like `lookup`: §7.4 audits the two tools that spend, and §11.4 asks for nothing per
-    # call from a free one. The branches that ran and the identifiers that were split out are what
-    # an operator needs to explain an order, and neither is reconstructible from the response.
+    _log_rung("skim_pages", found, response, query=query, image=image, exclude=exclude,
+              limit=limit)
+    return response
+
+
+# ── the two aggregate rungs — the same fused candidates, grouped (§7.2.1 rule 4) ─────────────────
+
+@dataclass(frozen=True)
+class Group:
+    """One aggregate row's worth of fused candidates, in fused order.
+
+    ``rows`` is a slice of the one fused list, never a re-query, which is what makes
+    ``pages_matched`` *the number of `skim_pages` rows in this group* rather than a second
+    count that agrees with it most of the time.
+    """
+
+    key: str
+    rows: tuple[FusedRow, ...]
+
+    @property
+    def pages_matched(self) -> int:
+        return len(self.rows)
+
+    @property
+    def best_rank(self) -> int:
+        """The best position any page of this group reached — the rows are in fused order."""
+        return self.rows[0].rank if self.rows else UNRANKED
+
+    @property
+    def order(self) -> tuple[int, int, str]:
+        """§7.2.1 rule 4: ``(best_rank, -pages_matched)``, made total.
+
+        The key is the last element, so two groups sharing a best page — which is what a page
+        straddling two sections is — come back in the same order on every call (§16). Only
+        groups that matched are ever sorted: a disclosure row has no rank to sort on and is
+        appended after all of them.
+        """
+        return (self.best_rank, -self.pages_matched, self.key)
+
+
+def group_by(found: Candidates, keys_of: Any) -> list[Group]:
+    """Group the fused candidates by whatever ``keys_of(payload)`` returns, in §7.2.1's order.
+
+    ``keys_of`` returns a *sequence*, because a page belongs to one document and to **any number
+    of sections**: a page straddling two sections is counted in both groups, which is §5.3's
+    array field arriving at the surface it exists for (F8). Insertion order is fused order, so
+    each group's first row is its best-ranked page and no group is ever re-sorted.
+    """
+    grouped: dict[str, list[FusedRow]] = {}
+    for row in found.fused:
+        for key in keys_of(found.payload(row)):
+            if key:
+                grouped.setdefault(str(key), []).append(row)
+    groups = [Group(key=key, rows=tuple(rows)) for key, rows in grouped.items()]
+    return sorted(groups, key=lambda group: group.order)
+
+
+def _preview(page_id: str) -> Preview | None:
+    """The group's thumbnail — a **reference**, at the 72-dpi triage tier, rendering nothing.
+
+    Built through :func:`~vsir.serve.tools.lookup.image_ref`, which owns the route's grammar and
+    its percent-encoding: a ``page_id`` contains a ``#`` (§5.1) and an unencoded one makes every
+    reference a request for the document with a fragment the server never sees.
+    """
+    return Preview(page_id=page_id, thumb_url=image_ref(page_id).thumb_url) if page_id else None
+
+
+def _facet_counts(client: Any, collection: str, query: qm.Filter, limit: int) -> dict[str, int]:
+    """``doc_id → pages`` under ``query``. Exact, because a ratio built on an estimate is a lie."""
+    return {str(hit.value): hit.count for hit in
+            client.facet(collection, key="doc_id", facet_filter=query,
+                         limit=limit, exact=True).hits}
+
+
+def _ratios(client: Any, collection: str, found: Candidates,
+            doc_ids: Sequence[str]) -> dict[str, float]:
+    """``doc_id → searchable_ratio`` for the documents that will be rows (§5.7).
+
+    Counted for **these documents** rather than read off `scope_stats.docs`, which is capped at
+    :data:`~vsir.serve.tools.lookup.SCOPE_STAT_DOCS` documents because it is a display. A row is
+    not a display: a matched binder that fell outside that cap would inherit the default `0.0`
+    and be reported as a blind spot — the one number on this row an agent is meant to act on,
+    inverted. Two facets, bounded by the ten rows, and the same ``scoped`` filter underneath, so
+    where a document appears in both the two numbers are the same number.
+
+    It is therefore the ratio over **what was searched**: with the ordinary scopes — none, or a
+    `doc_id` — that is exactly the document's §5.7 ratio, and with a narrower one it answers the
+    question the caller actually asked, *"how much of what you searched in this binder could be
+    searched at all"*.
+    """
+    if not doc_ids:
+        return {}
+    within = qm.Filter(must=[found.scoped,
+                             qm.FieldCondition(key="doc_id",
+                                               match=qm.MatchAny(any=list(doc_ids)))])
+    pages = _facet_counts(client, collection, within, len(doc_ids))
+    blank = _facet_counts(client, collection, qm.Filter(must=[within, no_text()]), len(doc_ids))
+    return {doc_id: health.ratio(pages.get(doc_id, 0),
+                                 pages.get(doc_id, 0) - blank.get(doc_id, 0))
+            for doc_id in doc_ids}
+
+
+def _blind_spots(stats: ScopeStats, matched: Iterable[str]) -> list[str]:
+    """The documents in scope that matched nothing **and cannot be matched by text** (§5.7, F4).
+
+    This is the disclosure the rung exists for. A fully scanned binder has no text surface, so a
+    query carrying a printed code excludes every one of its pages from every branch — and without
+    this it would leave the answer set in silence, leaving the agent to conclude the part is not
+    in a binder nobody looked in. It is returned instead, with ``searchable_ratio: 0.00``,
+    ``pages_matched: 0`` and a thumbnail, sorted after every group that did match so it can never
+    displace a result.
+
+    Only ratio **zero** qualifies (:func:`~vsir.core.health.blind_spot`): a partly scanned
+    document is found through the pages that do have text, and disclosing every document that
+    merely failed to match would return the corpus and undo the narrowing.
+
+    `scope_stats.docs` is the input, so the disclosure reaches as far as that breakdown does. A
+    document is only ever *added* from it, never scored from it — the ratio a row carries is
+    counted by :func:`_ratios`.
+    """
+    seen = set(matched)
+    return sorted(stat.doc_id for stat in stats.docs
+                  if stat.doc_id not in seen and health.blind_spot(stat.searchable_ratio))
+
+
+def _first_pages(client: Any, collection: str,
+                 doc_ids: Sequence[str]) -> dict[str, Mapping[str, Any]]:
+    """``doc_id → the payload of page 1``, for the disclosure rows (§7.1's preview fallback).
+
+    §7.1: the preview is *"the group's best-ranked matched page, falling back to page 1 when
+    nothing matched"* — and page 1 is the only page of a document a caller can be offered without
+    a ranking to choose from. One scroll per disclosed document, and only for the ones that
+    survive the ≤ 10 cut, so an unscoped skim of a corpus of scanned binders costs at most ten.
+
+    It also supplies what the row would otherwise have to invent: the document's current
+    ``revision`` — the page id needs it and a `DocHit` carries no revision field — its
+    ``doc_type``, and page 1's own summary, which is the one sentence about a binder that has no
+    other way of saying what it is.
+    """
+    found: dict[str, Mapping[str, Any]] = {}
+    for doc_id in doc_ids:
+        # The document's first page, not the scope's: this identifies a page rather than
+        # searching for one, so the caller's other keys are not applied — a `page_no: 5` scope
+        # must not turn *"page 1"* into *"page 5"*. ``is_current`` **is** applied, unconditionally
+        # and server-side as everywhere else: a superseded cover sheet cannot preview a current
+        # document (I7, F9).
+        points, _ = client.scroll(
+            collection,
+            scroll_filter=scope_filter({"doc_id": doc_id, "is_current": True, "page_no": 1}),
+            limit=1, with_payload=list(ROW_PAYLOAD), with_vectors=False)
+        if points:
+            found[doc_id] = points[0].payload or {}
+    return found
+
+
+def _doc_hit(group: Group, payload: Mapping[str, Any], *, scope: Mapping[str, Any],
+             searchable: float, page_id: str) -> DocHit:
+    """One group → one *"which binder?"* row (§7.1, §7.2.1).
+
+    **No `page_id`, no text, no bytes.** The row hands back a scope — ``next.expand`` — and the
+    caller descends with it; choosing the page for them is the routing §7.6 refuses.
+
+    ``title`` is empty and that is a fact about the record, not an oversight: §5.3 has no
+    document-level title to read, the PDF's ``/Info`` title is metadata this pipeline never
+    stores, and deriving one from the filename or the first section heading would be an
+    interpretation — the same argument §5.2 makes against a scraped grammar. The field stays in
+    the contract, like ``next.references``, and ``summary`` carries the sentence a person
+    actually needs.
+    """
+    summary, _lang = _summary(payload.get("content") or {}, scope)
+    return DocHit(
+        doc_id=group.key,
+        doc_type=str(payload.get("doc_type") or ""),
+        pages_matched=group.pages_matched,
+        best_rank=group.best_rank,
+        searchable_ratio=searchable,
+        summary=summary,
+        preview=_preview(page_id),
+        next=NextMoves(expand={"doc_id": group.key}),
+    )
+
+
+def skim_documents(client: Any, collection: str, *,
+                   query: str = "",
+                   image: bytes | None = None,
+                   scope: Mapping[str, Any] | None = None,
+                   exclude: Sequence[str] = (),
+                   embedder: Any,
+                   provenance: Provenance,
+                   reads_remaining: int = 0) -> SearchResponse[DocHit]:
+    """*"Which binder?"* — the same fused candidates as `skim_pages`, grouped by ``doc_id``.
+
+    Grouping is not only a presentation: it is what stops one chatty document occupying every
+    slot and burying the binder that answers (§7.2.1). ≤ 10 rows, ordered by
+    ``(best_rank, -pages_matched)``, and every row carries `searchable_ratio` — the agent's blind
+    spot as a number (§5.7) — plus, sorted after them, a row for every fully scanned document in
+    scope that matched nothing at all (:func:`_blind_spots`).
+
+    `status` is decided by the pages, exactly as on the page rung, and **not** by whether a
+    disclosure row is present: a scope in which nothing searchable matched is `not_searchable`
+    even when this rung can name the binders to escalate to. Saying `ok` because the blind spot
+    was disclosed would turn the disclosure into the answer.
+    """
+    found = _candidates(client, collection, rung="skim_documents", query=query, image=image,
+                        scope=scope, exclude=exclude, embedder=embedder)
+
+    every = group_by(found, lambda payload: (payload.get("doc_id"),))
+    groups = every[:SKIM_LIMIT]
+    # The disclosure rows are chosen **before** any of them is rendered, so the ratio every row
+    # carries — matched or disclosed — is counted by one call for one list of documents.
+    spots = _blind_spots(found.stats, (group.key for group in groups))
+    disclosed = spots[:SKIM_LIMIT - len(groups)]
+    page_ones = _first_pages(client, collection, disclosed)
+    resolved = [doc_id for doc_id in disclosed if doc_id in page_ones]
+    ratios = _ratios(client, collection, found,
+                     [group.key for group in groups] + resolved)
+
+    hits = [
+        _doc_hit(group, found.payload(group.rows[0]), scope=found.scope,
+                 searchable=ratios.get(group.key, 0.0), page_id=found.page_id(group.rows[0]))
+        for group in groups
+    ]
+    hits += [
+        _doc_hit(Group(key=doc_id, rows=()), page_ones[doc_id], scope=found.scope,
+                 searchable=ratios.get(doc_id, 0.0),
+                 page_id=str((page_ones[doc_id].get("provenance") or {}).get("page_id") or ""))
+        for doc_id in resolved
+    ]
+
+    is_weak = weakness(found.total, found.stats.pages)
+    response = SearchResponse[DocHit](
+        status=Status.OK if groups else absence(found.stats.pages, found.searchable_pages),
+        hits=hits,
+        total=found.total,
+        # `capped` is about the **rows**, and on an aggregate rung a row is a group: `total`
+        # counts pages, so comparing it with `len(hits)` would report a cut on every call that
+        # grouped anything at all. What a caller needs to know here is that there was more to
+        # show than came back — a group that did not fit, or a blind spot that did not.
+        capped=len(every) > len(groups) or len(spots) > len(disclosed),
+        weak=is_weak,
+        needs_scope=is_weak,
+        next=_absence_moves(bool(groups), found.split),
+        effective_scope=found.scope,
+        scope_stats=found.stats,
+        reads_remaining=reads_remaining,
+        provenance=provenance,
+    )
+    _log_rung("skim_documents", found, response, query=query, image=image, exclude=exclude,
+              groups=len(groups), disclosed=len(hits) - len(groups))
+    return response
+
+
+def _section_of(payload: Mapping[str, Any], section_id: str) -> Mapping[str, Any]:
+    """The stored section with this id, off the page that belongs to it (§5.3 ``content.sections``).
+
+    ``title`` and ``page_range`` are read from the **best-ranked** page of the group rather than
+    recomputed from the group's own pages: the range is the section's extent after stitching
+    (§6.1 step 07), which is a property of the document, and a range derived from the pages that
+    happened to match would shrink as the query narrowed and read as though the chapter itself
+    were smaller.
+    """
+    for section in (payload.get("content") or {}).get("sections") or ():
+        if str(section.get("section_id") or "") == section_id:
+            return section
+    return {}
+
+
+def skim_sections(client: Any, collection: str, *,
+                  query: str = "",
+                  image: bytes | None = None,
+                  scope: Mapping[str, Any] | None = None,
+                  exclude: Sequence[str] = (),
+                  embedder: Any,
+                  provenance: Provenance,
+                  reads_remaining: int = 0) -> SearchResponse[SectionHit]:
+    """*"Which chapter?"* — the same fused candidates, grouped by ``section_id``.
+
+    A page that straddles two sections is counted in both (§5.3, F8), so the groups may overlap
+    and two of them may share a best-ranked page; the ordering is total, so the rows come back
+    the same way on every call.
+
+    There is no blind-spot disclosure here and that is deliberate. `searchable_ratio` is a
+    **document** signal (§5.7) and a `SectionHit` has no field to carry it, so a disclosed
+    section would be a row that says *"this chapter matched nothing"* without the one number
+    that explains why — which is a row an agent cannot act on. The binder is disclosed one rung
+    up, by `skim_documents`, where the ratio is on the row.
+    """
+    found = _candidates(client, collection, rung="skim_sections", query=query, image=image,
+                        scope=scope, exclude=exclude, embedder=embedder)
+
+    every = group_by(found, lambda payload: payload.get("section_id") or ())
+    groups = every[:SKIM_LIMIT]
+    hits: list[SectionHit] = []
+    for group in groups:
+        payload = found.payload(group.rows[0])
+        section = _section_of(payload, group.key)
+        page_range = section.get("page_range")
+        hits.append(SectionHit(
+            section_id=group.key,
+            title=str(section.get("title") or ""),
+            page_range=tuple(page_range) if page_range else None,
+            pages_matched=group.pages_matched,
+            best_rank=group.best_rank,
+            preview=_preview(found.page_id(group.rows[0])),
+            next=NextMoves(expand={"section_id": [group.key]}),
+        ))
+
+    is_weak = weakness(found.total, found.stats.pages)
+    response = SearchResponse[SectionHit](
+        status=Status.OK if hits else absence(found.stats.pages, found.searchable_pages),
+        hits=hits,
+        total=found.total,
+        capped=len(every) > len(hits),
+        weak=is_weak,
+        needs_scope=is_weak,
+        next=_absence_moves(bool(hits), found.split),
+        effective_scope=found.scope,
+        scope_stats=found.stats,
+        reads_remaining=reads_remaining,
+        provenance=provenance,
+    )
+    _log_rung("skim_sections", found, response, query=query, image=image, exclude=exclude,
+              groups=len(every))
+    return response
+
+
+def _log_rung(tool: str, found: Candidates, response: SearchResponse, *,
+              query: str, image: bytes | None, exclude: Sequence[str], **extra: Any) -> None:
+    """One `debug` line per rung, in one shape (§7.4, §11.4).
+
+    `debug`, like `lookup`: §7.4 audits the two tools that spend and §11.4 asks for nothing per
+    call from a free one. The branches that ran and the identifiers that were split out are what
+    an operator needs to explain an order, and neither is reconstructible from the response.
+    """
     _log.debug(
-        "skim_pages",
-        tool="skim_pages",
+        tool,
+        tool=tool,
         query=query,
-        identifiers=list(split.identifiers),
-        embedded=split.embedded,
+        identifiers=list(found.split.identifiers),
+        embedded=found.split.embedded,
         image=image is not None,
-        branches=sorted(branches),
+        branches=list(found.branches),
         status=response.status.value,
-        total=total,
-        hits=len(hits),
-        limit=limit,
+        total=found.total,
+        hits=len(response.hits),
+        candidates=len(found.fused),
         excluded=len(exclude),
         weak=response.weak,
-        scope_keys=sorted(scope_in_force),
-        pages=stats.pages,
-        pages_no_text=stats.pages_no_text,
+        scope_keys=sorted(found.scope),
+        pages=found.stats.pages,
+        pages_no_text=found.stats.pages_no_text,
+        **extra,
     )
-    return response

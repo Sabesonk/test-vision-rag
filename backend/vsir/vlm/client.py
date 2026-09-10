@@ -54,9 +54,11 @@ _log = vsir_logging.get_logger(__name__)
 #: is not configuration (§15 Factor III): changing one changes every cache key, so it is a release.
 PROMPT_DIR = Path(__file__).resolve().parent / "prompts"
 
-#: One stage per call the pipeline makes. ``read`` arrives with the paid read step (§7.2.6, U020);
-#: asking for it before its prompt exists is a named refusal, not a fallback to another stage's.
-PROMPT_STAGES: tuple[str, ...] = ("s1", "s2")
+#: One stage per call this release makes: two at ingest (§6.1 steps 04 and 06) and one on the
+#: request path (§7.2.6). Asking for a stage that is not here is a named refusal, never a fallback
+#: to another stage's instructions — a `read` answered under the S2 prompt would return extraction
+#: structure to a caller that asked a question, and report success.
+PROMPT_STAGES: tuple[str, ...] = ("s1", "s2", "read")
 
 #: The digest each released prompt version was published with — ``sha256`` over the file's bytes.
 #:
@@ -65,10 +67,16 @@ PROMPT_STAGES: tuple[str, ...] = ("s1", "s2")
 #: alone and every frozen response in the fixture, and every cached response in production, is
 #: output produced by instructions that no longer exist. Recording the digest makes that edit fail
 #: here, and the only way through is a new version — which re-keys every response by design.
+#: ``read.md`` joins ``s2-v1`` rather than opening a version of its own, and that is the cheap
+#: choice **and** the correct one: the version is a label on the released prompt *set*, the two
+#: extraction digests under it are unchanged, and `read` had no cached response in existence to
+#: invalidate. Opening ``s2-v2`` for a file no extraction call reads would have re-keyed every
+#: frozen S2 response in the repository and re-billed a full corpus to publish a new document.
 PROMPT_DIGESTS = MappingProxyType({
     "s2-v1": MappingProxyType({
         "s1": "1aa9320abc7ef034c6291f826bf728a4b40b48482368cd727c2650a37f6793a7",
         "s2": "85f5b47fd4aaee08103b24c65cdc8534a7156b3b924f48f5b94ed885399c4f5c",
+        "read": "0f0acdba0ef1ecf61baea84b3b34e70918ca5c1ac1450d4a6e640c8c82db04a5",
     }),
 })
 
@@ -173,8 +181,11 @@ class Request:
     schema: type[BaseModel]
     #: The window's rasters, in **absolute page order**, at the dpi that is in ``key``.
     images: tuple[bytes, ...] = ()
-    #: The one line of context the model is given about where this excerpt sits. Never a fact the
-    #: model is asked to report back: the page range is ours, from our own windowing (§6.4).
+    #: The call's one text part, sent after the rasters. At ingest it is the line of context
+    #: saying where the excerpt sits — never a fact the model is asked to report back, because the
+    #: page range is ours, from our own windowing (§6.4). On the `read` path it carries the
+    #: caller's question and the page list (§7.2.6), which is the *whole* of what varies between
+    #: two reads of the same pixels — and is therefore on ``read_key`` (F19).
     hint: str = ""
     #: What to call this call in a log line or a refusal. Never part of the key.
     label: str = ""

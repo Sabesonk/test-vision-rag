@@ -113,13 +113,48 @@ def median(rates: Iterable[float | None]) -> float | None:
     return float(_median(measured)) if measured else None
 
 
+def ratio(pages: int, pages_with_text: int) -> float:
+    """§5.7's ratio from two **counts** — the form a store answers in.
+
+    :func:`searchable_ratio` computes it from a page-parallel list, which is what derivation holds
+    (U009); `skim_documents` holds two `count(exact=True)` results instead and never loads a page.
+    Both are the same rule, so it is written once here rather than twice as `M / N` — the second
+    spelling is where a `0/0` becomes a `ZeroDivisionError` on a document with no pages, or where
+    somebody rounds.
+    """
+    return (pages_with_text / pages) if pages else 0.0
+
+
 def searchable_ratio(has_text: Sequence[bool]) -> float:
     """§5.7 — pages with a text layer ÷ pages. The agent's blind spot, made a number.
 
     Zero pages is 0.0 rather than a division error: a document with no pages is not searchable,
     and the caller of `skim_documents` gets a number rather than a 500.
     """
-    return (sum(1 for flag in has_text if flag) / len(has_text)) if has_text else 0.0
+    return ratio(len(has_text), sum(1 for flag in has_text if flag))
+
+
+#: The `searchable_ratio` at which a document cannot be reached by text **at all** (§5.7).
+#:
+#: The threshold is exactly zero and not "below some coverage", and the difference is the whole
+#: reason `skim_documents` discloses these rows. A document at 0.4 is still *found* by the pages
+#: that do have text — a lexical branch ranks them, a `lookup` returns them, and its row appears
+#: in a skim like any other; the ratio then tells the agent how much of the binder it is not
+#: seeing. A document at 0.0 has no text surface to be found through, so a query carrying a
+#: printed code excludes it from every branch and it would leave the answer set **silently**.
+#: That is F4 at the document level: *"that part doesn't exist"* said about a binder nobody
+#: looked in.
+BLIND_SPOT_RATIO = 0.0
+
+
+def blind_spot(searchable: float) -> bool:
+    """Is this document one `skim_documents` must disclose even when nothing in it matched?
+
+    Takes the ratio rather than the document, because the caller has it from the scope facets and
+    loading pages to re-derive a number already in hand is how a triage rung starts costing what
+    a `fetch` costs.
+    """
+    return searchable <= BLIND_SPOT_RATIO
 
 
 @dataclass(frozen=True)

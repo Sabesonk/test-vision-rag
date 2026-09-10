@@ -157,13 +157,15 @@ def test_an_authorised_call_gets_the_routes_own_answer_and_never_another_401(ser
 
 
 def test_an_authorised_call_to_an_unbuilt_route_is_a_404_not_a_401(served, token_header):
-    """The same distinction on a path nothing has built: `read` lands at U020.
+    """The same distinction on a name nothing has built: `expand` was `impl`'s and is struck.
 
-    With a valid token the call falls through to the tool table, which does not hold `read` in
-    this release — so the caller is told it is absent, and told which tools are here, rather than
-    being asked again for the credential that just worked.
+    §2.5 A removed the endpoint and kept the capability as `next.expand` plus a re-scoped skim,
+    so this is the name a caller migrating from the previous service actually tries. With a
+    valid token the call falls through to the tool table, which does not hold it — so the caller
+    is told it is absent, and told which tools *are* here, rather than being asked again for the
+    credential that just worked.
     """
-    response = served.post("/tools/read", headers=token_header, json={"page_ids": []})
+    response = served.post("/tools/expand", headers=token_header, json={"page_ids": []})
 
     assert response.status_code == 404
     assert response.json()["error"] == "tool_not_found"
@@ -227,16 +229,19 @@ def test_a_tool_this_release_does_not_serve_is_a_404_naming_what_it_does(served,
     The literal list is deliberate and it is expected to change: it is an assertion about **this
     release's** surface, so a milestone that adds a tool updates this line on purpose rather than
     discovering later that the 404 body had quietly gained a name. `verify` joined at U015;
-    `skim_pages` and `resolve` at U017; `fetch` at U018; `skim_documents`/`skim_sections` arrive
-    at U019 and `read` at U020.
+    `skim_pages` and `resolve` at U017; `fetch` at U018; `skim_documents`/`skim_sections` at
+    U019; `read` at U020, which completes §7.2's eight. The name asked for here is `compare` —
+    `impl`'s two-segment comparison endpoint, struck by §2.5 A because the agent holds both pages
+    in its own context and compares them itself.
     """
-    response = served.post("/tools/read", json={"page_ids": ["x"], "question": "?"},
+    response = served.post("/tools/compare", json={"page_ids": ["x"], "question": "?"},
                            headers=token_header)
 
     assert response.status_code == 404
     body = response.json()
     assert body["error"] == "tool_not_found"
-    assert body["available"] == ["fetch", "lookup", "resolve", "skim_pages", "verify"]
+    assert body["available"] == ["fetch", "lookup", "read", "resolve", "skim_documents",
+                                 "skim_pages", "skim_sections", "verify"]
     assert body["available"] == sorted(served.app.state.tools)
 
 

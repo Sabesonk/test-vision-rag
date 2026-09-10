@@ -128,12 +128,44 @@ def test_a_prompt_version_with_no_released_text_is_refused():
 
 
 def test_a_stage_this_release_does_not_ship_never_borrows_another_stages_prompt():
-    """`read` arrives with the paid read step (U020). Until then, asking for it is a named refusal
-    — serving S2's instructions to a `read` call would answer a different question entirely."""
+    """A stage with no released text is a named refusal, never a fallback to another stage's.
+
+    Serving S2's instructions to a call that asked a question would answer a different question
+    entirely and report success. `read` shipped at U020 and is a released stage now (below); the
+    property is about any stage that is **not**, which is what a future one arrives as.
+    """
     with pytest.raises(PromptUnavailable) as refusal:
-        prompt("read", PROMPT)
+        prompt("s3", PROMPT)
 
     assert refusal.value.details["stages"] == list(PROMPT_STAGES)
+
+
+def test_every_stage_this_release_ships_has_released_text_behind_it():
+    """The three of §6.1 steps 04 and 06 and §7.2.6 — and the digest each was published with.
+
+    :func:`prompt` refuses a file that does not hash to its published digest, so this is the one
+    assertion that keeps `PROMPT_DIGESTS` honest for **every** stage at once: add a stage without
+    releasing its text, or edit a released file, and it fails here rather than at the first live
+    call (F11).
+    """
+    assert set(PROMPT_STAGES) == {"s1", "s2", "read"}
+    for stage in PROMPT_STAGES:
+        assert prompt(stage, PROMPT).text.strip()
+
+
+def test_the_read_prompt_binds_the_rules_sufficient_exists_for():
+    """§7.2.6 — the two instructions a `read` response is unusable without.
+
+    `sufficient` has to separate *"the answer is no"* from *"wrong pages"*, and the model has to
+    be told not to answer from what it knows: those are the two ways a paid read produces a
+    confident wrong answer, and both are binding text rather than a hope about the schema.
+    """
+    flat = " ".join(prompt("read", PROMPT).text.split())
+
+    assert "Only these pages" in flat
+    assert "`sufficient` is the answer to a different question than `extract` is" in flat
+    assert "verbatim" in flat.lower()
+    assert "Nothing about where else to look" in flat
 
 
 def test_the_s2_prompt_carries_the_binding_rules_of_the_spec():

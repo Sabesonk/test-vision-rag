@@ -24,8 +24,10 @@ from vsir.config import Config
 from vsir.vlm.cache import (
     EXTRACT,
     FACTS,
+    KIND_VLM_CACHE,
     NAMESPACES,
     READ,
+    ControlPlaneStore,
     Entry,
     FixtureMiss,
     FixtureStore,
@@ -34,6 +36,7 @@ from vsir.vlm.cache import (
     VlmSchemaInvalid,
     VlmTruncated,
     VlmUnavailable,
+    cache_point_id,
     embed_key,
     extract_key,
     facts_key,
@@ -70,11 +73,12 @@ BACKENDS = MappingProxyType({
 })
 
 __all__ = [
-    "BACKENDS", "EXTRACT", "FACTS", "MAX_ATTEMPTS", "NAMESPACES", "PROMPT_DIGESTS", "PROMPT_DIR",
-    "PROMPT_STAGES", "READ", "Backend", "Entry", "FixtureMiss", "FixtureStore", "GeminiBackend",
-    "Prompt", "PromptUnavailable", "Request", "StubBackend", "TokenBucket", "VlmCallFailed",
-    "VlmError", "VlmSchemaInvalid", "VlmTierUnsupported", "VlmTruncated", "VlmUnavailable",
-    "backend", "embed_key", "extract_key", "facts_key", "hint", "prompt", "read_key", "write",
+    "BACKENDS", "EXTRACT", "FACTS", "KIND_VLM_CACHE", "MAX_ATTEMPTS", "NAMESPACES",
+    "PROMPT_DIGESTS", "PROMPT_DIR", "PROMPT_STAGES", "READ", "Backend", "ControlPlaneStore",
+    "Entry", "FixtureMiss", "FixtureStore", "GeminiBackend", "Prompt", "PromptUnavailable",
+    "Request", "StubBackend", "TokenBucket", "VlmCallFailed", "VlmError", "VlmSchemaInvalid",
+    "VlmTierUnsupported", "VlmTruncated", "VlmUnavailable", "backend", "cache_point_id",
+    "embed_key", "extract_key", "facts_key", "hint", "prompt", "read_key", "write",
 ]
 
 

@@ -35,20 +35,33 @@ same output, so putting the tier in a key would re-bill a whole corpus for choos
 discount (§6.3).
 
 **What the store is, and is not.** In production the entries live beside the run in the ``vsir_runs``
-control plane (D9, U011) — never on the instance's filesystem (§15.2). In replay mode (D10) they
-come from ``VSIR_FIXTURE``, a read-only directory of frozen responses checked into the repository,
-and a key that is not in it is a typed :class:`FixtureMiss` — never a live call, never a fabricated
-response. Both are the *same* code path with a different attached service (§15 Factor IV).
+control plane (D9, U011) — :class:`ControlPlaneStore`, never the instance's filesystem and never a
+dict on the process (§15.2). In replay mode (D10) they come from ``VSIR_FIXTURE``, a read-only
+directory of frozen responses checked into the repository, and a key that is not in it is a typed
+:class:`FixtureMiss` — never a live call, never a fabricated response. Both are the *same* code
+path with a different attached service (§15 Factor IV).
+
+The two are not alternatives to each other. The **backend** is chosen by ``VSIR_VLM`` and decides
+who answers a call that has to be made; the **cache** sits in front of whichever backend that is
+and decides whether one has to be made at all. A replayed response is cached like any other,
+because the expensive thing a cache saves on the request path is not only the money — it is the
+round trip, and `read` is on a caller's clock (§7.2.6).
 """
 from __future__ import annotations
 
 import hashlib
 import json
+import uuid
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
+from qdrant_client.http import models as qm
+
+from vsir import logging as vsir_logging
 from vsir.config import COMPOSITION_VERSION
+from vsir.core.ids import NAMESPACE
 
 #: The three namespaces a frozen response can live under, and the subdirectory each one uses.
 #: One namespace per *call*, not per model: two calls that ask different questions must not be
@@ -289,3 +302,121 @@ def write(root: Path, namespace: str, key: str, body: str,
         store.meta_path(namespace, key).write_text(
             json.dumps(dict(meta), indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return destination
+
+
+# ── the durable store: frozen responses beside the run, in `vsir_runs` (D9) ─────────────────────
+
+#: The ``kind`` discriminator for a cached response point, beside `run`, `window`,
+#: `observed_tokens`, `fingerprint` and `budget`. Every point in `vsir_runs` says which control
+#: record it is (§4.2).
+KIND_VLM_CACHE = "vlm_cache"
+
+_log = vsir_logging.get_logger(__name__)
+
+
+def cache_point_id(namespace: str, key: str) -> str:
+    """The point a namespace and a key address. Derived, so a write is idempotent (I1's habit).
+
+    The namespace is **in** the id and not only in the payload: two calls that ask different
+    questions must not be able to collide even if their keys somehow did, and a point id that
+    encodes only the key would make the namespace a claim in the payload rather than a fact about
+    the address.
+    """
+    if namespace not in NAMESPACES:
+        raise ValueError(f"not a cache namespace: {namespace!r} (expected {list(NAMESPACES)})")
+    if not key:
+        raise ValueError("a cache point needs a key: it is the receipt (§6.3)")
+    return str(uuid.uuid5(NAMESPACE, f"vsir:vlm:{namespace}:{key}"))
+
+
+@dataclass(frozen=True)
+class ControlPlaneStore:
+    """The read/write cache of §6.3, in the one durable thing every replica shares (D9).
+
+    :class:`FixtureStore` is replay's read-only half; this is the production half, and the two are
+    deliberately different objects rather than one with a flag. What they have in common is the
+    key and the verbatim body — *"keep the receipt, not your summary of it"* — and what they do
+    not is who may write: a fixture is reviewed and checked in, and this fills itself from calls
+    that have already been paid for.
+
+    **Not process memory and not local disk** (§15 Factor VI, §15.2). A dict on the process is N
+    caches for N replicas, each of which forgets on deploy — so the second identical `read` after
+    a rolling restart bills again, and a cache that only sometimes saves money is one nobody can
+    reason about. `vsir_runs` is where the run records, the window states, the observed-token
+    inventory and the budget ledger already live, for the same reason.
+
+    **A store failure on the way *in* is not a failure of the call.** :meth:`put` swallows it and
+    logs: the model has already answered and the caller is owed that answer, and the only cost of
+    a cache write that did not happen is that the next identical call pays again. A failure on the
+    way *out* is different and is left to raise — a store that cannot be read is `503
+    qdrant_unavailable` (§11.3), and guessing *"probably not cached"* during an outage is how an
+    outage becomes an unmetered afternoon.
+    """
+
+    client: Any
+    collection: str
+
+    def get(self, namespace: str, key: str) -> Entry | None:
+        """The cached response for this key, or ``None``. Never a fabricated body."""
+        if not self.client.collection_exists(self.collection):
+            return None
+        found = self.client.retrieve(self.collection,
+                                     ids=[cache_point_id(namespace, key)], with_payload=True)
+        if not found:
+            return None
+        payload = dict(found[0].payload or {})
+        if payload.get("kind") != KIND_VLM_CACHE:
+            raise VlmError(
+                f"the control point for {namespace}/{key} is a {payload.get('kind')!r} record",
+                namespace=namespace, cache_key=key, kind=payload.get("kind"))
+        usage = payload.get("usage")
+        return Entry(
+            key=key, namespace=namespace, body=str(payload.get("body") or ""),
+            # `cache`, not `model` and not `replay`: §6.9's provenance question is *which service
+            # answered*, and "the answer we had already bought" is a third answer to it. The audit
+            # line's `cache_hit` is computed from exactly this (§7.4).
+            origin="cache",
+            finish_reason=str(payload.get("finish_reason") or "STOP"),
+            usage={str(k): int(v) for k, v in usage.items()} if isinstance(usage, dict) else None,
+        )
+
+    def put(self, entry: Entry, *, vlm_model: str = "", prompt_version: str = "") -> bool:
+        """Freeze one response beside the run. Returns whether it was actually written.
+
+        ``vlm_model`` and ``prompt_version`` are recorded and are **not** part of the address:
+        they are already inputs to the key (§6.3), so this is the provenance sidecar of register
+        B1 — enough to identify an orphaned entry — and never a second place the key is decided.
+        """
+        try:
+            _ensure(self.client, self.collection)
+            self.client.upsert(
+                collection_name=self.collection,
+                points=[qm.PointStruct(
+                    id=cache_point_id(entry.namespace, entry.key), vector={},
+                    payload={"kind": KIND_VLM_CACHE, "namespace": entry.namespace,
+                             "cache_key": entry.key, "body": entry.body,
+                             "finish_reason": entry.finish_reason,
+                             "usage": dict(entry.usage or {}),
+                             "vlm_model": vlm_model, "prompt_version": prompt_version,
+                             "created_at": datetime.now(timezone.utc).isoformat()})],
+                wait=True)
+        except Exception as failure:  # noqa: BLE001 — the answer is bought; the cache is not
+            _log.warning("vlm_cache_write_failed", namespace=entry.namespace,
+                         cache_key=entry.key,
+                         detail=f"{type(failure).__name__}: {failure}")
+            return False
+        _log.debug("vlm_cache_write", namespace=entry.namespace, cache_key=entry.key,
+                   bytes=len(entry.body), origin=entry.origin)
+        return True
+
+
+def _ensure(client: Any, collection: str) -> None:
+    """Create `vsir_runs` if this deployment has never run one. Imported late, on purpose.
+
+    `vsir.ingest.run` owns the control plane's shape, and this module is imported by the ingest
+    steps that write to it — so the import is made at the call rather than at module scope, where
+    it would be a cycle between the boundary and the pipeline that uses it.
+    """
+    from vsir.ingest import run as run_module
+
+    run_module.ensure_control_plane(client, collection)

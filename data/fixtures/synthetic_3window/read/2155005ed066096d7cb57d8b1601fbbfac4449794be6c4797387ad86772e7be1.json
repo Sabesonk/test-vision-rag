@@ -1,0 +1,10 @@
+{
+  "codes": [
+    "K119",
+    "SI4",
+    "K120",
+    "K152"
+  ],
+  "extract": "The guard door interlock stage releases only once B219 has closed and K119 is monitored on the safe input channel SI4; the following sheet records the same arrangement for K120. The stop category is verified at commissioning and after every replacement of the monitored relay.",
+  "sufficient": true
+}
