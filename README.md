@@ -54,7 +54,53 @@ development/cr1/   spec, plan, progress
 Modules are created by the milestone that implements them, never as empty placeholders: Spec §4.1
 is a map, not a checklist.
 
-## Running it
+## The local stack
+
+One command brings up Qdrant, creates the collection, starts the API and seeds a document:
+
+```bash
+bash scripts/stack.sh up
+```
+
+It spends nothing — the stack runs `VSIR_VLM=stub`, which replays frozen responses by cache key and
+refuses a missing one as a typed `fixture_miss` rather than calling a model (D10). Same image as
+production and as the test stack, differing only in environment and ports.
+
+| | |
+|---|---|
+| **Swagger UI** | <http://localhost:8055/docs> — paste the token into **Authorize** once |
+| API | <http://localhost:8055> |
+| Qdrant | <http://localhost:6353> |
+| token | `dev-token-not-a-secret`, or set `VSIR_DEV_API_TOKENS` |
+
+```bash
+bash scripts/stack.sh status          # probes, tools, documents, and the token to use
+bash scripts/stack.sh seed your.pdf   # ingest your own PDF
+bash scripts/stack.sh vsir runs show <run_id>
+bash scripts/stack.sh logs api        # the JSON event stream
+bash scripts/stack.sh down            # keep the index; `down --wipe` drops it
+```
+
+**What is servable at this release:** `POST /documents`, `POST /tools/lookup`,
+`POST /tools/verify`, `GET /runs/{run_id}` and its two exports, the three probes, and MCP over SSE.
+`skim_documents`, `skim_sections`, `skim_pages`, `resolve`, `fetch` and `read` return a typed `404`
+listing what *is* there — they arrive with M4–M5.
+
+Ingesting your own PDF over HTTP:
+
+```bash
+curl -H "Authorization: Bearer dev-token-not-a-secret" -X POST http://localhost:8055/documents \
+     -F file=@your.pdf -F doc_id=YOUR-DOC -F revision=1.0
+# -> 202 {"run_id": "...", "poll": "/runs/..."}   then poll that until state=published
+```
+
+`POST /documents` is a transport for `vsir ingest`, not a second pipeline (§15 Factor XII): it
+spools the bytes and runs the same subcommand an operator would. Steps 01–03 need no model; step 04
+onward replays from the fixture, so **a PDF with no recorded fixture stops at step 04** unless you
+run the release against a live model deliberately — which `VSIR_ALLOW_PAID=0` refuses with
+`403 spend_not_permitted`.
+
+## Running it directly
 
 Configuration is the environment and only the environment. Copy the example, fill it in, load it:
 

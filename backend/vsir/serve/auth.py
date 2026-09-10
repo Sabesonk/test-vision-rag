@@ -52,7 +52,28 @@ from vsir import logging as vsir_logging
 
 #: The three free probes of §7.4. An orchestrator holds no token, and a liveness probe that could
 #: fail on a credential rotation would turn a secret rotation into a restart loop (§15.1).
-PUBLIC_PATHS = frozenset({"/health", "/ready", "/metrics"})
+PROBE_PATHS = frozenset({"/health", "/ready", "/metrics"})
+
+#: The API's own description, and the two pages that render it. Free to **read**, because what they
+#: contain is the shape of the interface — paths, parameters, envelope schemas, the typed refusal
+#: codes — and none of it is corpus data, a run, a page or a token.
+#:
+#: They have to be free for the interface to be usable at all: a browser cannot attach an
+#: `Authorization` header to a plain navigation, so an authenticated `/docs` is a 401 and nothing
+#: else. The alternative that was tried first was a local proxy that injected the token, and it was
+#: the wrong answer — it put the credential in a second place, made the working surface something
+#: that is not the shipped one, and left `/docs` broken for everybody who did not run the proxy.
+#:
+#: **This does not open the API.** The document declares a `bearerAuth` requirement on every
+#: operation, so Swagger's *Authorize* is where the caller's own token goes and every `Try it out`
+#: is an ordinary authenticated request. Reading the description authorises nothing.
+DOC_PATHS = frozenset({"/openapi.json", "/docs", "/docs/oauth2-redirect", "/redoc"})
+
+#: Every path that does not require a token. Two sets rather than one, because they are free for
+#: different reasons and only one of them may ever grow: a probe is free so an orchestrator can
+#: reach it, a document is free so a human can read it. Anything that returns corpus data, a run,
+#: a raster or prose belongs in neither.
+PUBLIC_PATHS = PROBE_PATHS | DOC_PATHS
 
 #: Where the authenticated :class:`Identity` is parked on the ASGI scope. A private key rather than
 #: ``scope["state"]`` so it cannot collide with another middleware's, and so nothing reads it by

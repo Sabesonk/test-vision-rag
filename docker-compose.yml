@@ -1,0 +1,156 @@
+# docker-compose.yml — the local stack for trying the features that exist (Spec §15 Factor X).
+#
+# Same image as production and as the test stack, differing only in environment and ports: the
+# stub VLM is selected by `VSIR_VLM=stub` (D10), so what you exercise here is the production code
+# path replaying frozen responses. **It spends nothing.** Set `VSIR_VLM=gemini` only deliberately —
+# see the `api` service's notes.
+#
+#   bash scripts/stack.sh up        build, start, create the collection, seed a document
+#   bash scripts/stack.sh status    what is running and what is queryable
+#   bash scripts/stack.sh down      stop and keep the data  ·  `down --wipe` to drop it
+#
+# Ports are deliberately unusual (6353, 8055). This machine already runs Qdrant on 6333/6334 and
+# something on 8000, and a stack that quietly answered from the wrong instance is worse than one
+# that will not start.
+#
+# Swagger UI is served by the app itself at http://localhost:8055/docs — no proxy and no sidecar.
+# The document declares a `bearerAuth` requirement on every operation that has one, so paste a
+# token into **Authorize** once and `Try it out` works for the rest of the session.
+#
+# What is servable at this release: POST /documents, POST /tools/lookup, POST /tools/verify,
+# GET /runs/{run_id} and its two exports, the three probes, and MCP over SSE. `skim_*`, `resolve`,
+# `fetch` and `read` return a typed 404 that lists what is there — they arrive with M4-M5.
+
+name: vsir-dev
+
+services:
+
+  # ── Store ─────────────────────────────────────────────────────────────────────────────────────
+  qdrant:
+    # The same version as the test stack and production: `phrase_matching` needs 1.19 (§4.2), and
+    # a store that differs between environments is a correctness difference, not a convenience.
+    image: qdrant/qdrant:v1.19.0
+    ports:
+      - "127.0.0.1:6353:6333"      # 6353, because 6333/6334 already belong to another instance
+    volumes:
+      - qdrant-storage:/qdrant/storage
+    networks: [vsir-net]
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c ':> /dev/tcp/127.0.0.1/6333' || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+
+  # ── One-off: create the collection (§15 Factor XII) ───────────────────────────────────────────
+  init:
+    # `vsir serve` refuses to start when the live payload schema does not match `INDEXED` (§4.3,
+    # I6), and "does not exist" does not match — so on a fresh volume the collection has to be
+    # built before the server can boot. It is an admin process of the same image and release, not
+    # a branch inside the server, which is the whole of Factor XII.
+    build: &image
+      context: ./backend
+      dockerfile: Dockerfile
+    image: vsir:dev
+    command: ["doctor", "--create-collection"]
+    environment: &env
+      VSIR_PORT: "8000"
+      VSIR_QDRANT_URL: "http://qdrant:6333"
+      VSIR_COLLECTION: "vsir_pages"
+      VSIR_VLM: "${VSIR_VLM:-stub}"
+      VSIR_VLM_MODEL: "${VSIR_VLM_MODEL:-gemini-3.8-flash-001}"
+      VSIR_EMBED_MODEL: "${VSIR_EMBED_MODEL:-gemini-embedding-2}"
+      VSIR_PROMPT_VERSION: "s2-v1"
+      VSIR_API_TOKENS: "${VSIR_DEV_API_TOKENS:-dev-token-not-a-secret}"
+      VSIR_READ_QUOTA: "50"
+      # A live model bills S1, S2 and one embedding per page. `POST /documents` refuses
+      # `403 spend_not_permitted` while this is 0 and the release names a live backend, which is
+      # the one place the variable decides anything.
+      VSIR_ALLOW_PAID: "${VSIR_ALLOW_PAID:-0}"
+      VSIR_LOG_LEVEL: "${VSIR_LOG_LEVEL:-INFO}"
+      VSIR_RELEASE_ID: "dev"
+      # Absolute, because the ingest child's working directory is the server's and a relative path
+      # resolves against that rather than against the caller's idea of the repository root. The
+      # route refuses `400 fixture_not_found` naming what it tried, so this is not a silent trap.
+      VSIR_FIXTURE: "/srv/data/fixtures/synthetic_3window"
+      # Only read when VSIR_VLM=gemini. Absent from the image and from this file: it arrives from
+      # the environment, and never appears in a log line or a response (§15.1).
+      VSIR_VLM_KEY: "${VSIR_VLM_KEY:-}"
+    volumes: &data
+      # Read-only: the corpus and the frozen fixtures are inputs. Nothing in the pipeline writes
+      # here — the exports stream from the index and touch no filesystem (§6.8).
+      - ./data:/srv/data:ro
+    networks: [vsir-net]
+    depends_on:
+      qdrant:
+        condition: service_healthy
+    restart: "no"
+
+  # ── Web ───────────────────────────────────────────────────────────────────────────────────────
+  api:
+    build: *image
+    image: vsir:dev
+    # The image's ENTRYPOINT is `vsir`, so `web` is a subcommand of the same binary the one-off
+    # admin commands run. Not a `uvicorn` invocation: the boot self-check runs inside `vsir serve`
+    # before anything binds, so a misconfigured stack fails to start rather than serving (§4.3).
+    command: ["serve"]
+    environment: *env
+    volumes: *data
+    ports:
+      - "127.0.0.1:8055:8000"
+    networks: [vsir-net]
+    # Production runs read-only, so this does too: a container that only works with a writable
+    # root filesystem is not the one being shipped (§15 Factor V).
+    read_only: true
+    tmpfs:
+      # Rasters are re-rendered on demand and are never a source of truth (§4.2) — and this is
+      # also where `POST /documents` spools an upload for the life of one run, which is why it is
+      # larger than the test stack's 512m. A spooled PDF dies with the container, so a run started
+      # by upload is not resumable across a restart; a CLI ingest is, because the operator still
+      # has the file.
+      - /tmp:rw,noexec,nosuid,size=2g
+    depends_on:
+      qdrant:
+        condition: service_healthy
+      init:
+        # Not "started": the collection has to exist before the boot self-check reads it.
+        condition: service_completed_successfully
+    healthcheck:
+      # Liveness, not readiness: `/health` must stay green through a Qdrant outage, or the
+      # orchestrator restart-loops a process whose backing service is the thing that is down
+      # (§15.1). `/ready` is the one that goes red — `scripts/stack.sh status` reads both.
+      test: ["CMD", "python", "-c",
+             "import urllib.request as u, sys; sys.exit(0 if u.urlopen('http://localhost:8000/health', timeout=2).status == 200 else 1)"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 5s
+
+  # ── One-off: put a document in the index so there is something to query ───────────────────────
+  seed:
+    build: *image
+    image: vsir:dev
+    # The generated 42-page corpus, replayed from its frozen fixture: three windows, two scanned
+    # pages, a section straddling each fold, and the off-by-one, crop and reattribution traps.
+    # Free and deterministic — a fixture miss is a typed `fixture_miss`, never a live call (D10).
+    command: ["ingest", "/srv/data/source/synthetic_3window.pdf",
+              "--vlm", "stub", "--fixture", "/srv/data/fixtures/synthetic_3window"]
+    environment: *env
+    volumes: *data
+    networks: [vsir-net]
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=1g
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    restart: "no"
+
+networks:
+  vsir-net:
+    driver: bridge
+
+volumes:
+  qdrant-storage:
+    # Named, so the index survives `stack.sh down` and a machine restart. `down --wipe` is the
+    # only thing that drops it, and it says so before it does.

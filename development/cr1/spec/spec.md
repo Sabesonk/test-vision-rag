@@ -1046,6 +1046,7 @@ Each is a **typed 400**, never a clamp, never a silent truncation.
 | `GET /health` | **liveness** — the process is up; MUST NOT fail on a backing-service outage (§15.1) | none |
 | `GET /ready` | **readiness** — boot self-check passed, Qdrant reachable, pinned index schema present | none |
 | `GET /metrics` | Prometheus (§11.4) | none (internal network) |
+| `GET /openapi.json` · `GET /docs` · `GET /redoc` | **the API's own description**, and the two pages that render it. Free to *read*: what they contain is the shape of the interface — paths, parameters, envelope schemas, typed refusal codes — and no corpus data, run, page or token. They have to be free for the interface to be usable, because a browser cannot attach an `Authorization` header to a plain navigation, so an authenticated `/docs` is a `401` and nothing else. **Reading the description authorises nothing:** the document declares a `bearerAuth` requirement on every operation that has one, derived from the same path list the middleware reads, so Swagger's *Authorize* is where the caller's own token goes | none |
 
 Bearer token required on every tool (`401` without one); identity is propagated, never
 client-supplied. One append-only audit line per `read` and `fetch`:

@@ -63,6 +63,7 @@ from typing import (Any, AsyncIterator, Awaitable, Callable, Iterator, Literal, 
                     MutableMapping, Sequence)
 
 from fastapi import FastAPI, File, Form, Request, Response, UploadFile
+from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse, PlainTextResponse, StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from qdrant_client import QdrantClient
@@ -943,7 +944,56 @@ def create_app(env: Mapping[str, str] | None = None) -> FastAPI:
                 f"the control plane did not answer: {type(failure).__name__}"), 503)
         return PlainTextResponse(render_metrics(snapshot), media_type=PROMETHEUS_MEDIA_TYPE)
 
+    app.openapi = _described(app)                                    # type: ignore[method-assign]
     return app
+
+
+def _described(app: FastAPI) -> Callable[[], dict[str, Any]]:
+    """The OpenAPI document, with the bearer requirement §7.4 actually enforces written into it.
+
+    FastAPI infers a schema from the routes, and what it cannot infer is the thing this app does in
+    middleware: **default deny by path**. Auth is not a per-route `Depends`, deliberately — a
+    dependency is opt-in and the route added next milestone would be unauthenticated until somebody
+    remembered (see `serve/auth.py`). The cost of that choice is that the generated document
+    described an API with no security at all, which is wrong in the direction that matters: a reader
+    concludes no token is needed, and Swagger UI shows no *Authorize* button, so every `Try it out`
+    comes back 401 with nowhere to put a credential.
+
+    So the requirement is declared here, once, from the same list the middleware reads — every path
+    that is not in :data:`~vsir.serve.auth.PUBLIC_PATHS` gets ``security: [{bearerAuth: []}]`` and a
+    documented ``401``. Derived rather than annotated: a route added later is covered without
+    anyone remembering, which is the same property the middleware has.
+    """
+    described: dict[str, Any] = {}
+
+    def openapi() -> dict[str, Any]:
+        if described:
+            return described
+        schema = get_openapi(title=app.title, version=app.version,
+                             description=app.description, routes=app.routes)
+        schema.setdefault("components", {}).setdefault("securitySchemes", {})["bearerAuth"] = {
+            "type": "http",
+            "scheme": "bearer",
+            "description": (
+                "One of `VSIR_API_TOKENS` (§7.4). Identity comes from the token and from nothing "
+                "else — there is no `X-User-Id` and a client-supplied one is ignored and logged. "
+                "Paste the token into **Authorize** and every request below carries it."),
+        }
+        for path, operations in schema.get("paths", {}).items():
+            if path in auth_module.PUBLIC_PATHS:
+                continue
+            for operation in operations.values():
+                if not isinstance(operation, dict):
+                    continue
+                operation["security"] = [{"bearerAuth": []}]
+                operation.setdefault("responses", {}).setdefault("401", {
+                    "description": "no bearer token, or one this release does not know. The body "
+                                   "names neither which part failed nor which tokens exist (§15.1)",
+                })
+        described.update(schema)
+        return described
+
+    return openapi
 
 
 def app_factory() -> FastAPI:

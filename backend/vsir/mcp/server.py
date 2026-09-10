@@ -65,8 +65,9 @@ from vsir.serve.auth import Identity
 SERVER_NAME = "vision-segmentation-retriever"
 
 #: Where the SSE transport lives on the serving app. Both paths are behind `BearerAuth`, because
-#: neither is in :data:`~vsir.serve.auth.PUBLIC_PATHS` — the three probes are the whole
-#: unauthenticated surface and a route added here does not change that.
+#: neither is in :data:`~vsir.serve.auth.PUBLIC_PATHS` — whose members are the probes an
+#: orchestrator must reach and the documents a human must read, and a route added here does not
+#: change that.
 SSE_PATH = "/sse"
 MESSAGES_PATH = "/messages/"
 
