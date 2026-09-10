@@ -12,18 +12,19 @@ Qdrant and a real child process and lives in `tests/api/test_upload_route.py`.
 from __future__ import annotations
 
 import dataclasses
+import re
 from pathlib import Path
 
 import pytest
 
+from vsir import config as config_module
 from vsir.config import Config
 from vsir.serve import ingest as upload
 
 PDF = b"%PDF-1.7\n%\xc7\xec\x8f\xa2\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF\n"
 
 
-@pytest.fixture
-def cfg() -> Config:
+def _config() -> Config:
     """A replay-mode release: free by construction, so the spend switch is not in the way."""
     return Config(
         port=8000, qdrant_url="http://localhost:6333", collection="vsir_pages", vlm="stub",
@@ -33,6 +34,11 @@ def cfg() -> Config:
         fixture_dir="data/fixtures/synthetic_3window", vlm_tier="standard", vlm_rpm=60,
         embed_text_chars=2000, api_tokens=("test-token",),
     )
+
+
+@pytest.fixture
+def cfg() -> Config:
+    return _config()
 
 
 # ── what can be refused before anything is spawned (§7.3, §11.3) ─────────────────────────────────
@@ -188,6 +194,53 @@ def test_the_steps_this_route_accepts_are_the_pipelines_own():
     assert upload.INGEST_UNTIL == INGEST_STEPS
 
 
+# ── the replay directory: a request-time property, refused at request time ──────────────────────
+
+def test_a_relative_replay_directory_is_resolved_rather_than_passed_through(tmp_path, monkeypatch):
+    """The child's working directory is the server's, not the caller's, so relative is a trap."""
+    (tmp_path / "fx").mkdir()
+    monkeypatch.chdir(tmp_path)
+
+    assert upload.check_fixture("fx", vlm="stub") == str(tmp_path.resolve() / "fx")
+
+
+def test_a_missing_replay_directory_is_refused_at_the_boundary_not_at_step_four():
+    """§6.9's control plane starts at step 09, so a step-04 death leaves nothing to poll.
+
+    That made a bad fixture path a ``202`` followed by a permanent ``404`` — the caller holding a
+    run_id that would never exist, with the reason only in the server's log.
+    """
+    with pytest.raises(upload.UploadRefused) as refusal:
+        upload.check_fixture("/tmp/not-a-fixture-directory-at-all", vlm="stub")
+
+    assert refusal.value.code == "fixture_not_found"
+    assert refusal.value.http_status == 400
+    # The absolute path it actually tried, which is the point of reporting it — and not necessarily
+    # the string given: `resolve()` follows symlinks, so on macOS `/tmp` reads back `/private/tmp`.
+    resolved = refusal.value.details["resolved"]
+    assert resolved.startswith("/") and resolved.endswith("not-a-fixture-directory-at-all")
+
+
+def test_replay_mode_with_no_fixture_at_all_is_refused_with_the_reason():
+    with pytest.raises(upload.UploadRefused) as refusal:
+        upload.check_fixture("", vlm="stub")
+
+    assert refusal.value.code == "fixture_required"
+
+
+def test_a_live_release_may_have_no_fixture(tmp_path):
+    """`gemini` calls the model; a fixture is where ``--record`` would write, and is optional."""
+    assert upload.check_fixture("", vlm="gemini") == ""
+    assert upload.check_fixture(str(tmp_path), vlm="gemini") == str(tmp_path.resolve())
+
+
+def test_the_resolved_fixture_is_what_reaches_the_child_not_the_configured_one(cfg):
+    """`check_fixture` already folded in `cfg.fixture_dir`; re-reading it would undo the resolve."""
+    child = upload.child_env(cfg, vlm="stub", fixture="/abs/fx", base={})
+
+    assert child["VSIR_FIXTURE"] == "/abs/fx"
+
+
 # ── the child's environment: this instance's configuration, not the process's ───────────────────
 
 def test_the_child_ingests_into_the_collection_this_instance_serves(cfg):
@@ -218,6 +271,35 @@ def test_the_child_gets_every_variable_the_pipeline_requires(cfg):
     child = upload.child_env(cfg, vlm="", fixture="", base={})
 
     assert set(REQUIRED_ENV) <= set(child), sorted(set(REQUIRED_ENV) - set(child))
+
+
+def test_the_child_gets_every_variable_load_config_reads_not_only_the_required_ones():
+    """The guard that would have caught the bug: read the names out of `config.py` itself.
+
+    A hand-written list drifts, and this one did. ``VSIR_RUNS_COLLECTION`` was missing, so a child
+    wrote its run record to the default `vsir_runs` while its parent polled the collection it was
+    configured for — ``GET /runs/{run_id}`` answered 404 for a run that was publishing perfectly
+    well. ``VSIR_EMBED_DIM`` and ``VSIR_EMBED_TEXT_CHARS`` were missing too, and those are worse:
+    both feed the §6.6 fingerprint and the D4 composition, where a silent default is a refusal to
+    upsert or a vector that does not mean what its neighbours mean.
+
+    An **optional** variable is exactly the dangerous kind, because a missing one does not refuse —
+    it takes a default, and the run succeeds against the wrong thing.
+    """
+    source = Path(config_module.__file__).read_text()
+    reads = set(re.findall(r'_(?:optional|require)\(env,\s*"(VSIR_[A-Z_]+)"', source))
+    reads |= set(re.findall(r'_require\(env,\s*"(VSIR_[A-Z_]+)"\)', source))
+
+    assert reads, "the regex found no configuration reads — has config.py been restructured?"
+
+    # A fixture is passed because `VSIR_FIXTURE` is legitimately conditional — a `gemini` release
+    # may have none — and the question here is coverage, not whether an empty value is written.
+    covered = set(upload.child_env(_config(), vlm="", fixture="/abs/fx", base={}))
+    missing = sorted(reads - covered)
+
+    assert not missing, (
+        f"child_env does not pass {missing}, so a child would silently take the default for each "
+        f"instead of this instance's value")
 
 
 def test_only_the_backend_and_the_fixture_may_be_influenced_by_a_request(cfg):

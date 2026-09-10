@@ -139,6 +139,47 @@ def check_spend_allowed(cfg: Config) -> None:
     )
 
 
+def check_fixture(fixture: str, *, vlm: str) -> str:
+    """Resolve a replay directory to an absolute path, or refuse. Returns what the child gets.
+
+    Two bugs in one check, both found by running the thing rather than reading it.
+
+    *Relative paths do not mean what the caller thinks.* The child's working directory is this
+    process's, which is wherever the server was started — so ``data/fixtures/synthetic_3window``
+    resolves against that and not against the caller's idea of the repository root. Resolving here
+    makes the path unambiguous and makes the refusal name the absolute path it actually tried.
+
+    *A missing directory used to be a doomed 202.* `stub` refuses ``vlm_backend_unavailable`` at
+    step 04 — correctly, because replay mode never falls back to a live call (D10) — but step 04 is
+    before the control plane exists, so the run vanished: the caller held a ``run_id`` that would
+    never appear at ``/runs/{run_id}``. It is a property of the request, so it belongs here as a
+    ``400`` the caller can read.
+
+    Only checked for `stub`. A `gemini` release calls the model and may legitimately have no
+    fixture; one given is where ``--record`` would write, and `cli.py` owns that.
+    """
+    if not fixture:
+        if vlm == "stub":
+            raise UploadRefused(
+                "fixture_required",
+                "VSIR_VLM=stub replays frozen responses by cache key and never makes a live call "
+                "(D10), so it needs a fixture directory to read them from. Pass `fixture`, or set "
+                "VSIR_FIXTURE on the release",
+                status=400, vlm=vlm)
+        return ""
+
+    resolved = Path(fixture).expanduser().resolve()
+    if not resolved.is_dir():
+        raise UploadRefused(
+            "fixture_not_found",
+            f"the replay directory {fixture!r} resolves to {resolved} and is not a directory. A "
+            f"relative path is resolved against the server's working directory, not the caller's. "
+            f"Refused here rather than at step 04, because the control plane does not exist until "
+            f"step 09 and a run that dies before it leaves nothing to poll",
+            status=400, fixture=fixture, resolved=str(resolved))
+    return str(resolved)
+
+
 def check_upload(filename: str, head: bytes, size: int) -> None:
     """Everything about the bytes that can be refused before a child process is spawned."""
     if not size:
@@ -180,26 +221,46 @@ def child_env(cfg: Config, *, vlm: str, fixture: str,
     """
     child = dict(base if base is not None else os.environ)
     child.update({
+        # The twelve §15 Factor III variables. `VSIR_API_TOKENS` unconditionally, even when empty:
+        # the child authenticates nobody — it is an ingest process — but its boot self-check
+        # requires the variable, so omitting it would either strand the run on a named refusal or,
+        # worse, let it inherit a stale value from an environment this instance is deliberately not
+        # using. An empty value refuses loudly, which is the honest outcome.
         "VSIR_PORT": str(cfg.port),
         "VSIR_QDRANT_URL": cfg.qdrant_url,
         "VSIR_COLLECTION": cfg.collection,
         "VSIR_VLM_MODEL": cfg.vlm_model,
         "VSIR_EMBED_MODEL": cfg.embed_model,
         "VSIR_PROMPT_VERSION": cfg.prompt_version,
+        "VSIR_API_TOKENS": ",".join(cfg.api_tokens),
         "VSIR_READ_QUOTA": str(cfg.read_quota),
         "VSIR_ALLOW_PAID": "1" if cfg.allow_paid else "0",
         "VSIR_LOG_LEVEL": cfg.log_level,
         "VSIR_RELEASE_ID": cfg.release_id,
         "VSIR_VLM": vlm or cfg.vlm,
-        # Unconditionally, even when empty. The child does not authenticate anyone — it is an
-        # ingest process — but ``VSIR_API_TOKENS`` is one of the twelve §15 Factor III variables
-        # its boot self-check requires, so omitting it would either strand the run on a named
-        # refusal or, worse, let it inherit a stale value from a process environment this instance
-        # is deliberately not using. An empty value refuses loudly, which is the honest outcome.
-        "VSIR_API_TOKENS": ",".join(cfg.api_tokens),
+        # And every optional one, because a default is not the same as this instance's value.
+        # `VSIR_RUNS_COLLECTION` is the one that made this a bug rather than a tidiness point: the
+        # child wrote its run record to the default `vsir_runs` while the app polled the collection
+        # it was configured for, so `GET /runs/{run_id}` returned 404 for a run that was completing
+        # perfectly well a few metres away. `VSIR_EMBED_DIM` and `VSIR_EMBED_TEXT_CHARS` are worse
+        # if they drift: both are part of the §6.6 fingerprint and the D4 composition, so a
+        # mismatch is a refusal to upsert, or a vector that does not mean what the collection's
+        # other vectors mean.
+        "VSIR_RUNS_COLLECTION": cfg.runs_collection,
+        "VSIR_EMBED_DIM": str(cfg.embed_dim),
+        "VSIR_EMBED_TEXT_CHARS": str(cfg.embed_text_chars),
+        "VSIR_READS_PER_QUESTION": str(cfg.reads_per_question),
+        "VSIR_VLM_TIER": cfg.vlm_tier,
+        "VSIR_VLM_RPM": str(cfg.vlm_rpm),
+        "VSIR_SAFETY_DOC_TYPES": ",".join(cfg.safety_doc_types),
+        "VSIR_SAFETY_TOPICS": ",".join(cfg.safety_topics),
+        "VSIR_VLM_KEY": cfg.vlm_key,
     })
-    if fixture or cfg.fixture_dir:
-        child["VSIR_FIXTURE"] = fixture or cfg.fixture_dir
+    # Already absolute, and already the resolution of `fixture or cfg.fixture_dir`, because
+    # `check_fixture` did both — falling back to `cfg.fixture_dir` a second time here would put the
+    # unresolved relative path back into the child's environment.
+    if fixture:
+        child["VSIR_FIXTURE"] = fixture
     return child
 
 
@@ -235,9 +296,13 @@ def accept(cfg: Config, *, filename: str, body: bytes, until: str = "publish",
 
     The ``run_id`` is minted **here** rather than read out of the child's output, so the caller has
     something to poll before the child has done anything, and so the id in the audit line is the id
-    in the control plane. `cli.py` accepts it through ``--resume``, whose contract is exactly
-    *"continue under this id"* — a fresh run under a chosen id is the same operation with no prior
-    state, and it is why that flag keeps the id rather than minting one (§6.7).
+    in the control plane (see :func:`command` for why it travels as ``--run-id``).
+
+    **Everything refusable is refused before the child starts**, and that is not tidiness. §6.9's
+    control plane is written from step 09 onward, because steps 01-08 need no store — so a child
+    that dies at step 02 leaves *no run record at all*, and a caller who was handed ``202`` polls
+    ``404`` for ever with the reason only in this process's log. Every refusal that can be decided
+    from the request has to happen here, where it is a status code the caller actually sees.
     """
     if until not in INGEST_UNTIL:
         raise UploadRefused("unknown_step", f"no ingestion step {until!r}; §6.1 has "
@@ -246,8 +311,13 @@ def accept(cfg: Config, *, filename: str, body: bytes, until: str = "publish",
     if resolved_vlm not in ("stub", "gemini"):
         raise UploadRefused("unknown_vlm", f"no VLM backend {resolved_vlm!r} in this release",
                             status=400, vlm=resolved_vlm)
-    check_spend_allowed(cfg if not vlm else _with_vlm(cfg, resolved_vlm))
+    # Order matters, and it is the caller's point of view that sets it: what they *sent* is more
+    # concrete than how the release is configured, so a JPEG is `not_a_pdf` whether or not a
+    # fixture is set. Spend comes before the fixture because it is the more serious refusal of the
+    # two, and a caller who may not spend does not need to hear about a replay directory.
     check_upload(filename, body[:8], len(body))
+    check_spend_allowed(cfg if not vlm else _with_vlm(cfg, resolved_vlm))
+    fixture = check_fixture(fixture or cfg.fixture_dir, vlm=resolved_vlm)
 
     run_id = ids.run_id()
     target = (spool or spool_dir()) / f"{run_id}.pdf"
