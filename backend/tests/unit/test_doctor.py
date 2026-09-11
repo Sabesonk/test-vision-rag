@@ -140,6 +140,10 @@ def test_doctor_prints_release_model_ids_and_index_fingerprint(captured_log):
         "sparse_version": "bm25-v1",
     }
     assert len(summary["fingerprint_id"]) == 16
+    # Both released pins that feed the fingerprint are release facts in their own right; printing
+    # one and not the other reads as "the sparse recipe is not part of this release".
+    assert summary["composition_version"] == "d4-fused-v1"
+    assert summary["sparse_version"] == "bm25-v1"
 
 
 @pytest.mark.parametrize("var", MODEL_ENV)

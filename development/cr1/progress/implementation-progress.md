@@ -5786,8 +5786,10 @@ excluded and AC-014 recorded as waived. **That is a call for the project owner, 
 
 **Spend:** none to apply. The evidence is the paid run of 2026-09-10, already bought.
 **Files:** `ingest/sparse.py` (rewritten), `ingest/index.py`, `ingest/fingerprint.py`,
-`serve/tools/skim.py`, `core/indexed.py`, `config.py`, `ingest/embed.py`, `docker-compose.yml`,
-`scripts/stack.sh`; six test files.
+`serve/tools/skim.py`, `core/indexed.py`, `config.py`, `doctor.py`, `ingest/embed.py`,
+`docker-compose.yml`, `scripts/stack.sh`; six test files. `AGENTS.md` carries the three
+operational consequences (the five-field fingerprint and what bumps it, that a stub run and a
+live run no longer reuse each other's vectors, and that `--record` needs a writable path).
 **Spec touched:** **C16** and **C17** (§2.3), and with them §2.4's `app/sparse.py` row, §5.3's
 surface list, §6.6's field set and D2's cell. **Plan:** §4c **P10**, **P11**.
 

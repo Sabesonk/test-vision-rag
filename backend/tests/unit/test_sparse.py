@@ -133,8 +133,7 @@ def test_the_page_that_prints_the_phrase_loses_to_pages_that_repeat_a_common_wor
 
     `LEXICAL_BRANCH` is that document, reduced to what the branch actually scores. It is the
     measurement rather than the text because the S2 receipts it came from are a paid artefact and
-    are not in the repository — :doc:`fixes/005 <../../../fixes/005-the-lexical-surface-ranks-by-repetition>`
-    records the one-liner that re-derives it.
+    are not in the repository — `fixes/005` records the one-liner that re-derives it.
     """
     ranked = _ranked(lambda tf, length: tf)          # raw term frequency, as shipped before
     assert ranked.index(PRINTS_THE_PHRASE) + 1 == 9, "the defect, so the fix cannot regress"

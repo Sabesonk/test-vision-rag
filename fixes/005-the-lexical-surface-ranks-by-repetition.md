@@ -2,8 +2,8 @@
 
 **Status:** **applied**
 **Files:** `backend/vsir/ingest/sparse.py` (rewritten), `ingest/index.py`, `ingest/fingerprint.py`,
-`serve/tools/skim.py`, `core/indexed.py`, `config.py`; tests `test_sparse.py`, `test_fingerprint.py`,
-`test_doctor.py`, `tests/api/test_indexed_collection.py`, `tests/api/conftest.py`
+`serve/tools/skim.py`, `core/indexed.py`, `config.py`, `doctor.py`; tests `test_sparse.py`,
+`test_fingerprint.py`, `test_doctor.py`, `tests/api/test_indexed_collection.py`, `tests/api/conftest.py`
 **Spend:** none to apply. No re-embedding — the dense vectors are untouched. But **every existing
 collection is refused at boot**; see *Migration*.
 **Spec touched:** §2.4 (`app/sparse.py` — *port as-is*), §5.3, §6.6, D2. Spec corrections **C16**

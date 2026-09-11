@@ -47,6 +47,7 @@ from vsir.config import (
     FLOATING_SUFFIX,
     MODEL_ENV,
     REQUIRED_ENV,
+    SPARSE_VERSION,
     Config,
     ConfigError,
     load_config,
@@ -449,6 +450,10 @@ def report(env: Mapping[str, str] | None = None) -> dict[str, object]:
         "dpi_answer": DPI_ANSWER,
         "distance": DISTANCE,
         "composition_version": COMPOSITION_VERSION,
+        # Beside `composition_version` and for the same reason: both are released pins that feed
+        # the §6.6 fingerprint, and a reader who sees only one of them here concludes the other is
+        # not part of the release (fixes/005, C17).
+        "sparse_version": SPARSE_VERSION,
     }
     try:
         cfg: Config | None = load_config(env)
