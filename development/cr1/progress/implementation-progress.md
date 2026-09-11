@@ -5128,12 +5128,13 @@ count(REV-DOC@1.3, is_current)  = 0
 
 | Suite | Result |
 |---|---|
-| `test-unit.sh -k "series_id or ladder_level_2"` | 22 passed (12 ladder + 10 series_id) |
+| `bash scripts/test-unit.sh` | **1447 backend + 166 frontend passed**, conformance green |
+| `test-unit.sh -k "series_id or ladder_level_2"` | 28 passed (13 ladder + 15 series_id) |
 | `test-api.sh -k "revision_lifecycle"` | 15 passed |
 | `test-api.sh -k "retire"` | 11 passed |
 | `test-api.sh -k "sigterm_checkpoint"` | 7 passed |
 | `test-api.sh -k "resume"` | 12 passed |
-| `test-api.sh` (whole L2/L3 suite, clean stack) | 1620 passed, 13 skipped |
+| `bash scripts/test-api.sh` (the whole L2/L3 suite) | **1636 passed, 13 skipped, 0 failed** |
 
 **Invariants / failure rows closed**
 
@@ -5308,6 +5309,14 @@ and that is correct — see the next note.
    asserts numbers from `expected.json` no longer ingests to read a file; the two `claim()` tests
    seed a `stopped` run record instead of killing a real one (a real kill is proved next door);
    and the read-only tests share one module-scoped `published` corpus. 441 s → 360 s for the file.
+
+   **The previous commit's message is stale on this point.** `c1d3100` records *"`test_resume.py`
+   fails 5 of its tests … its fixture deletes the collection its own subprocess ingest created"*.
+   That was the symptom, not the cause, and the cause was the `SIGTERM` race of finding 5: a run
+   left `running` with a live lease made every resume after it refuse, and the collection was
+   missing because the ingest had refused rather than because a fixture removed it. With the
+   cooperative shutdown in place the whole L2/L3 suite is green — **1636 passed, 13 skipped, 0
+   failed** — measured after that commit, on the same tree.
 
    What is left for somebody: the session fixtures have **no retry around collection creation**,
    so a single transient Qdrant error is unrecoverable for the session. A `_retry` around
