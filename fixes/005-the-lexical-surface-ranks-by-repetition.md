@@ -151,13 +151,13 @@ vectors with `stub:` hash vectors. And there is no embedding cache outside the c
 collection deletes the cache and the re-embed is a live call. Two documents and 58 pages is
 pennies; at corpus scale it is not.
 
-The cheap path exists and is not built: both sparse surfaces are derived **entirely from payload
-already stored** — `text`, and `summaries[] + topics` through `dedupe` — so they can be recomputed
-with no model call and no re-embed at all: scroll the collection, rebuild the two sparse vectors,
-`update_vectors`, then rewrite the fingerprint point. That is a `vsir` subcommand nobody has
-written, and §15 Factor XII means an operational action without one **is not supported** — no
-laptop-only script, no live collection surgery. Recorded as plan **§4c P10** rather than invented
-here.
+The cheap path exists and **is now built** — `fixes/008`, `vsir migrate sparse`. Both sparse
+surfaces are derived entirely from payload already stored — `text`, and `summaries[] + topics`
+through `dedupe` — so they are recomputed with no model call and no re-embed at all: scroll the
+collection, rebuild the two sparse vectors, `update_vectors`, then rewrite the fingerprint point
+last. It was recorded as plan **§4c P10** rather than invented inside this change, because §15
+Factor XII means an operational action without a subcommand **is not supported** — no laptop-only
+script, no live collection surgery — and that made it a deliverable rather than a footnote.
 
 ## What breaks
 

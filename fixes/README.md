@@ -6,7 +6,9 @@ verify, how to roll back.
 
 001–004 are ingest (§6.1 steps 01-11). **005–007 are the same method applied one surface over** —
 retrieval, the embedding cache, and the deployment anchors — because the fixtures cannot show a
-ranking defect, a backend confusion or an environment variable that reaches no container.
+ranking defect, a backend confusion or an environment variable that reaches no container. **008 is
+the debt 005 itself created**: versioning the sparse recipe refused every existing collection at
+boot, correctly, and left no supported way to stop being refused.
 
 A fix here is **proposed until applied**. The status line at the top of each file is the truth.
 
@@ -20,11 +22,26 @@ A fix here is **proposed until applied**. The status line at the top of each fil
 | 004 | S1 is asked for a table of contents the file already declares (register A6) | `ingest/probe.py`, `cli.py` | not written up |
 | **005** | [The lexical surface ranks by repetition, not by relevance](005-the-lexical-surface-ranks-by-repetition.md) | `ingest/sparse.py`, `ingest/index.py`, `ingest/fingerprint.py`, `serve/tools/skim.py`, `core/indexed.py`, `config.py` | **applied** |
 | 006 | A stub vector can be reused by the live backend, so a paid re-embed buys nothing | `ingest/embed.py` | **applied** |
-| 007 | `VSIR_EMBED_DIM` reached no container, and `stack.sh status` read a hardcoded collection | `docker-compose.yml`, `scripts/stack.sh` | **applied** |
+| **007** | `VSIR_EMBED_DIM` reached no container, and `stack.sh status` read a hardcoded collection | `docker-compose.yml`, `scripts/stack.sh` | **applied** |
+| **008** | [A `sparse_version` change has no supported migration](008-a-sparse-version-change-has-no-migration.md) | `ingest/resparse.py` (new), `ingest/index.py`, `cli.py`, `eval/synthetic_pdf.py` | **applied** |
 
 Applied in the register's order — 002, 003, then 001. 004 changes only which input `plan()` gets,
 so it wanted 001 already in, which it now is. 005–007 are independent of each other and of
 001–004; 005 and 006 both move a cache key, so they were applied together and verified once.
+
+**008 closes plan §4c P10.** `vsir migrate sparse` rebuilds both sparse surfaces from payload the
+collection already holds — no model call, no re-embed, and the dense vector is never fetched — then
+restamps the fingerprint **last**, so a kill partway leaves the collection refused rather than
+published half-rebuilt. It refuses any fingerprint difference outside `sparse_version`: those
+fields describe the dense vector, and stamping this release over them is the in-place mix §6.6
+forbids, wearing the costume of a repair.
+
+**008's L2 run also found five pre-existing failures**, all one cause and none of them its own:
+`fixes/005`'s ranking change re-keyed the `ask_vision` replay fixture, because §6.3 makes page
+order an input to `read_key` and Loop 5 takes its escalation order from the ranking. D10 worked —
+the miss was typed, never a fabricated response — but it surfaced four suites away from the change
+that caused it, and the generator left the superseded fixture on disk. Fixed at the generator;
+recorded as plan §4c **P12**.
 
 **Two deviations from the write-ups, both measured rather than argued:**
 

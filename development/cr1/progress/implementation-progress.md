@@ -7,14 +7,15 @@
 
 | | |
 |---|---|
-| **Complete** | **32 / 33 units (97%)** — 25 of the planned 26 (every one but **U013**), plus U027, U028, U029, U030, U031 and U032 added after the plan was written (plan §4b) and the `fixes/` bundle, now **001–007** |
+| **Complete** | **32 / 33 units (97%)** — 25 of the planned 26 (every one but **U013**), plus U027, U028, U029, U030, U031 and U032 added after the plan was written (plan §4b) and the `fixes/` bundle, now **001–008** |
 | **Current milestone** | **M8 is closed, and so is the plan.** U025 closed revisions, resume and graceful shutdown; **U026** closes the last one — `vsir eval corpus`, §12.6's report and the D11 gates. **Every milestone M0-M8 is now closed.** The only unit that is not `[x]` is **U013**, whose paid re-bill waits on OQ-1 |
-| **Latest** | **`fixes/005`, `006`, `007` — the retrieval, cache and deployment audit (2026-09-11).** Three defects the fixtures could not show, all found against the one real run. **005:** both sparse surfaces stored **raw term counts**, so the lexical branch had no term-frequency saturation and no length normalisation — over the 56 real pages, the query *"Safeguard Detector individual sensors"* ranked the **only page that prints the phrase** **9th**, behind prose pages repeating `sensors` 13, 9, 9 and 8 times. BM25's tf component puts it **2nd**; `sparse_version` is now the fifth §6.6 field (spec **C16**, **C17**). Every sparse assertion in the suite was about *shape*; **not one was about order**, which is why 1,473 green tests could not see it. **006:** `embed_key` carries the model id but not the backend, so a stub-seeded collection re-ingested live **reused every hash vector and billed nothing** while reporting them as `reused` — the stub id is now namespaced. **007:** `VSIR_EMBED_DIM` was absent from the compose anchor, so exporting it changed nothing a container could see, and `stack.sh status` read a hardcoded `vsir_pages_1536` — the failure, hidden by the tool you would use to find it. Two claims in the change as written did not reproduce and were corrected rather than kept (the rank was *16th*, the captions `avg_len` *"mean 15.8"*); the ranking test now carries the whole measurement. New open defects: **§4c P10** (a `sparse_version` change has no supported migration) and **P11** (the only paid run's receipts are untracked) |
-| **Previously** | **The completion gate ran — 15 of 16 ACs closed with evidence, all 19 §10 rows closed by the milestone that owns them, and `v0.1.0` deliberately NOT tagged.** It closed two criteria that were open and found three bad pointers in this file. **AC-012** was missing §4.3's third refusal: `fingerprint.require` guards the *write*, but a process that only ever **reads** embeds the query with one model and compares it against vectors made by another — no guard fires and the only symptom is worse neighbours, which is indistinguishable from a thin corpus. `doctor.check_collection_fingerprint` now refuses that boot. **AC-013**'s `summaries[]` was on Part A's wire and off the test: the field set was asserted against the export module's **own constant**, so deleting the field from both left the suite green. **AC-014 is 8 of 9** — M2b's demo cannot run without OQ-1's PDF, so the tag waits on a decision that is the project owner's. See **Completion gate** at the foot of this file |
-| **Before that** | **U026 — the catalogue, measured rather than asserted.** `vsir eval corpus` prints §12.6's five metrics against D11's gates, exits non-zero on any failure, and stops with a named **P0 STOP** on a `code_precision` under 1.00. Three findings the build produced: **(1)** `0/0` is the one arithmetic accident that turns an absent corpus into a perfect safety score, so a zero denominator is `None` and a named skip, never `1.00`; **(2)** the document-wide `lookup` status explains a recall miss *wrongly* — a code printed on an untrusted page inside a searchable document answers `not_found`, and a report echoing that would send a reader hunting a tokenisation bug that is not there, so a miss is explained from the page's own record; **(3)** a ground-truth file is found by the `doc_id` it **declares**, not by its directory name — fixture directories are named after the corpus (`synthetic_pages` holds `SYN-M1`), so the obvious `data/fixtures/<doc_id>/` path finds nothing for most of them. The report also prints `1/denominator` and marks a set **underpowered** when one miss costs more than its gate's whole tolerance |
+| **Latest** | **`fixes/008` — `vsir migrate sparse`, the repair for the boot refusal `005` created (2026-09-11).** Versioning the sparse recipe refused every existing collection at boot — correct, and with no matching way to say yes. The only path was delete-and-re-ingest, and the reason that is the wrong price is not visible from the command: **deleting the collection deletes the embedding cache with it** (the cache *is* the index, register B5), so a change whose entire content is arithmetic over text that is already stored became a full **live** re-embed. 58 pages is pennies; 5,630 is a bill and an outage. The new subcommand rebuilds both sparse surfaces from stored payload — no model call, and the dense vector is never fetched — and **refuses any fingerprint difference outside `sparse_version`**, which is the reason the module exists: rebuilding sparse under a dense difference would stamp this release onto vectors another model made, the in-place mix §6.6 forbids wearing the costume of a repair. The fingerprint is written **last**, so a kill leaves the collection refused rather than published half-rebuilt. Closes plan §4c **P10**. Its L2 run also found **five pre-existing failures** — one cause, `fixes/005`'s ranking change re-keying the `ask_vision` replay fixture through §6.3's page-order input, four suites away from the change that caused it. Fixed at the generator and recorded as §4c **P12**. §4c **P11** (the paid run's untracked receipts) is still open |
+| **Previously** | **`fixes/005`, `006`, `007` — the retrieval, cache and deployment audit (2026-09-11).** Three defects the fixtures could not show, all found against the one real run. **005:** both sparse surfaces stored **raw term counts**, so the lexical branch had no term-frequency saturation and no length normalisation — over the 56 real pages, the query *"Safeguard Detector individual sensors"* ranked the **only page that prints the phrase** **9th**, behind prose pages repeating `sensors` 13, 9, 9 and 8 times. BM25's tf component puts it **2nd**; `sparse_version` is now the fifth §6.6 field (spec **C16**, **C17**). Every sparse assertion in the suite was about *shape*; **not one was about order**, which is why 1,473 green tests could not see it. **006:** `embed_key` carries the model id but not the backend, so a stub-seeded collection re-ingested live **reused every hash vector and billed nothing** while reporting them as `reused` — the stub id is now namespaced. **007:** `VSIR_EMBED_DIM` was absent from the compose anchor, so exporting it changed nothing a container could see, and `stack.sh status` read a hardcoded `vsir_pages_1536` — the failure, hidden by the tool you would use to find it. Two claims in the change as written did not reproduce and were corrected rather than kept (the rank was *16th*, the captions `avg_len` *"mean 15.8"*); the ranking test now carries the whole measurement. New open defects: **§4c P10** (a `sparse_version` change has no supported migration) and **P11** (the only paid run's receipts are untracked) |
+| **Before that** | **The completion gate ran — 15 of 16 ACs closed with evidence, all 19 §10 rows closed by the milestone that owns them, and `v0.1.0` deliberately NOT tagged.** It closed two criteria that were open and found three bad pointers in this file. **AC-012** was missing §4.3's third refusal: `fingerprint.require` guards the *write*, but a process that only ever **reads** embeds the query with one model and compares it against vectors made by another — no guard fires and the only symptom is worse neighbours, which is indistinguishable from a thin corpus. `doctor.check_collection_fingerprint` now refuses that boot. **AC-013**'s `summaries[]` was on Part A's wire and off the test: the field set was asserted against the export module's **own constant**, so deleting the field from both left the suite green. **AC-014 is 8 of 9** — M2b's demo cannot run without OQ-1's PDF, so the tag waits on a decision that is the project owner's. See **Completion gate** at the foot of this file |
+| **And before** | **U026 — the catalogue, measured rather than asserted.** `vsir eval corpus` prints §12.6's five metrics against D11's gates, exits non-zero on any failure, and stops with a named **P0 STOP** on a `code_precision` under 1.00. Three findings the build produced: **(1)** `0/0` is the one arithmetic accident that turns an absent corpus into a perfect safety score, so a zero denominator is `None` and a named skip, never `1.00`; **(2)** the document-wide `lookup` status explains a recall miss *wrongly* — a code printed on an untrusted page inside a searchable document answers `not_found`, and a report echoing that would send a reader hunting a tokenisation bug that is not there, so a miss is explained from the page's own record; **(3)** a ground-truth file is found by the `doc_id` it **declares**, not by its directory name — fixture directories are named after the corpus (`synthetic_pages` holds `SYN-M1`), so the obvious `data/fixtures/<doc_id>/` path finds nothing for most of them. The report also prints `1/denominator` and marks a set **underpowered** when one miss costs more than its gate's whole tolerance |
 | **Next unit** | **None — the plan and the completion gate are both done.** The only work left is not a unit: it is the **`v0.1.0` decision**, which needs an input this build cannot produce |
 | **Then** | **`v0.1.0` is blocked on one thing, twice.** **U013** is `[!]` and **AC-014** is ⚠ for the same reason — OQ-1's `data/source/TC1E-SF.pdf` was never delivered, so M2b's paid ingest and M2b's demo command have both never run. Either the pilot PDF lands (and one paid run closes both), or the owner decides to ship v0.1.0 with the M2b slice **explicitly waived**. Tagging while a top-level criterion is knowingly unmet would put the untrue claim in the one place nobody re-reads |
-| **Read first** | **`fixes/README.md`'s register (001–007) and plan §4c — eight open defects found by running the system.** None breaks a build; all of them mislead somebody who trusts the output. P1 (a live run records no cost) and P2 (no VLM cache store, so a re-ingest re-bills) both land on U013 |
+| **Read first** | **`fixes/README.md`'s register (001–008) and plan §4c — eight open defects found by running the system.** None breaks a build; all of them mislead somebody who trusts the output. P1 (a live run records no cost) and P2 (no VLM cache store, so a re-ingest re-bills) both land on U013 |
 | **Blocked** | **U013** — the paid re-bill only, and now on **OQ-1 alone**: `data/source/TC1E-SF.pdf` is still not present. **OQ-2 is closed** — a key is configured and was exercised live on 2026-09-10, ingesting a real 4-page datasheet to `published` through `POST /documents`. The ladder is no longer a blocker either: the shipped `plan()` refused the 55-page pilot at **step 05**, one step before the spend everyone thought it was waiting on a credential for, and `fixes/001` now folds it to `[[1, 30], [31, 55]]` — byte-for-byte what its own acceptance table declared. Nothing downstream is blocked (§17) |
 
 ---
@@ -5896,7 +5897,9 @@ call is billed.
 
 ### Two things this left open, both recorded rather than decided
 
-- **§4c P10 — a `sparse_version` change has no supported migration.** Every collection built
+- **§4c P10 — a `sparse_version` change has no supported migration.** ~~Open.~~ **Closed the same
+  day by `fixes/008` (`vsir migrate sparse`), recorded at the foot of this file.** As found: every
+  collection built
   before this is refused at boot, correctly. The cheap repair needs no model call at all — both
   sparse surfaces are derived entirely from payload already stored — but there is no `vsir`
   subcommand that rewrites them in place, and §15 Factor XII means an operational action without
@@ -5914,3 +5917,143 @@ No invariant or failure row changes ownership. **F11** (the fingerprint) is *str
 also refuses a collection whose sparse recipe differs, which is a failure it could not previously
 see. **I2, I3** untouched: no model output reaches a lexical index by a new route, `exact_filter`
 is not involved, and no `score` field appears anywhere (RRF is still ranks-only, §7.6).
+
+---
+
+## fixes/008 — `vsir migrate sparse`: the repair for the boot refusal 005 created (2026-09-11)
+
+**Status:** applied. **Spend:** none to apply, and none to run — that is the whole point of it.
+**Closes:** plan **§4c P10**.
+**Files:** `ingest/resparse.py` (new), `ingest/index.py` (`sparse_vectors` extracted), `cli.py`;
+tests `tests/unit/test_resparse.py` (16, new) and `tests/api/test_resparse_migration.py` (6, new);
+`AGENTS.md`. **Spec touched:** none — §6.6's refusal is unchanged and this does not weaken it.
+
+`fixes/005` versioned the sparse recipe, so every collection built before it is refused at boot.
+Correct, and it had no matching way to say yes. The only path was delete-and-re-ingest, and the
+reason that is the wrong price is not visible from the command: **deleting the collection deletes
+the embedding cache with it.** The cache *is* the index (`index.cached_vectors`, register B5 closed
+by adding no state anywhere), so a change whose entire content is arithmetic over text that is
+already stored became a full **live** re-embed of every page. 58 pages is pennies; 5,630 is a bill
+and an outage. And §15 Factor XII is explicit that an operational action with no `vsir` subcommand
+is not a supported operation — so a release could put every collection into a state the release
+itself had no supported way to repair.
+
+`vsir migrate sparse` scrolls the collection, re-derives both sparse surfaces from stored payload,
+writes back only those two vectors, and restamps the fingerprint. No model call, no raster, and the
+dense vector is never even fetched.
+
+**Three decisions worth keeping:**
+
+1. **The vectors are derived from `index.sparse_vectors` — the function the write path itself
+   calls**, extracted in this change for exactly that purpose. A second implementation of the same
+   recipe would agree on the day it was written and drift on the day the recipe changed, which is
+   the only day it is ever used. `test_every_rebuilt_vector_equals_what_a_fresh_ingest_would_write`
+   asserts against that function rather than recomputing BM25 in the test's own terms.
+2. **It refuses any fingerprint difference outside `sparse_version` — and that refusal is the
+   reason the module exists.** A migration that rebuilt sparse under *any* difference would stamp
+   this release onto a collection whose **dense** vectors came from another model: the in-place mix
+   §6.6 forbids, wearing the costume of a repair, and its only symptom is worse neighbours. The
+   message names only the *unrepairable* fields — naming `sparse_version` alongside them would send
+   the operator back to the migration that is already refusing them.
+3. **The fingerprint is written last, and that ordering is the crash-safety argument.** A kill
+   partway leaves the *old* fingerprint over a partly-rebuilt collection, so the boot check goes on
+   refusing, nothing serves a mixed index, and re-running repairs it (deriving a sparse vector from
+   a payload is idempotent). `test_the_fingerprint_is_written_last` asserts the call order rather
+   than describing it.
+
+One case that looks like nothing to do: `update_vectors` cannot express removal and an omitted name
+means *leave it alone*, so a surface the new recipe scores no terms for is **deleted** explicitly.
+Otherwise a vector built by the old recipe is stranded on the one page where the migration appeared
+to have no work.
+
+### Demo evidence
+
+A real 31-point collection on the dev Qdrant, seeded in the pre-`fixes/005` state (raw term counts,
+old recipe recorded), then dropped afterwards — the operator's three real collections untouched.
+
+```
+── vsir doctor (before) ──
+"event": "boot_check_failed", "check": "collection_fingerprint",
+"differences": {"sparse_version": ["raw-term-frequency", "bm25-v1"]}
+"event": "doctor_refused", "failed_checks": ["collection_fingerprint"]        exit 1
+
+── vsir migrate sparse --dry-run ──
+recipe        sparse_version 'raw-term-frequency' -> 'bm25-v1'
+              (fingerprint b32e867dc83e61c3 -> 22877f531eec095d)
+scanned       31 point(s)
+would rebuild 31 point(s): 30 lexical, 30 captions
+spend         none: both surfaces are a pure function of the stored payload, so no model was
+              called and no dense vector was read or rewritten
+fingerprint   NOT written — this was a rehearsal, so the collection is still refused at boot
+
+── vsir migrate sparse ──
+rebuilt      31 point(s): 30 lexical, 30 captions
+fingerprint  written last, after every point: 22877f531eec095d
+
+── vsir doctor (after) ──                                                     exit 0
+
+── vsir migrate sparse (again) ──
+REFUSED  migration_unsupported: the stored fingerprint already matches this release
+(22877f531eec095d): there is nothing to rebuild … would make a real migration
+indistinguishable from a no-op in the logs                                    exit 1
+
+── a dense difference alongside the sparse one (VSIR_EMBED_MODEL changed) ──
+REFUSED  migration_unsupported: … also differs in ['embed_model'] … Those fields describe how
+the **dense** vector was made, and no stored payload can re-derive one … The remedy for a dense
+change is unchanged: a NEW collection, a full re-embed, an alias swap. Nothing was written
+"fields": ["embed_model"]                                                     exit 1
+```
+
+### Invariants / failure rows
+
+No invariant or failure row changes ownership, and none is weakened. **F11** is *served* rather
+than changed: the fingerprint still refuses, and there is now a supported way to stop being
+refused that refuses in every case where stopping would be wrong. **I1** holds — the migration
+writes no points, only vectors on existing ones, so no total moves. **I2, I3, §7.6** untouched: no
+model output reaches a lexical index by a new route, `exact_filter` is not involved, and no `score`
+field appears anywhere.
+
+### What this does not fix
+
+**A migration for a `composition_version`, `embed_model`, `dim` or `distance` change is still
+absent, and is a different problem** — those cannot be re-derived from payload at any price. The
+remedy stays §6.6's: a new collection, a full re-embed, an alias swap. What is missing there is not
+arithmetic but an **alias**, so the swap can happen without a window where nothing answers, and
+`config.pages_collection` is a computed name rather than an alias today. Not recorded as a new
+defect because §6.6 already prescribes that path — recorded because the shape of this fix might
+otherwise read as a promise about the other four fields.
+
+### The pre-existing failure this uncovered, and fixed
+
+Running the full L2 suite for `fixes/008` found **five failures that had nothing to do with it**.
+Confirmed pre-existing by stashing the work and reproducing them at `c2d5645`, so they were
+`fixes/005` catching up with a corner of the replay corpus four suites away, not a regression.
+
+All five were one cause. `synthetic_pdf.py`'s `ask_vision` entry freezes Loop 5's escalation to the
+two image-only pages, and the loop takes their **order from the `skim_pages` ranking**. §6.3 makes
+page order an input to `read_key` — deliberately, because a model shown the same sheets in a
+different order is being asked a different question. BM25 flipped the ranking, the loop asked
+`(1, 2)` where the frozen response was keyed on `(2, 1)`, and all five tests that reach the vision
+escalation — across `test_ask_near_miss.py`, `test_ask_replay.py` and `test_correction_loops.py` —
+stopped with `fixture_miss`.
+
+**That is D10 working, not failing** — a miss is typed, and replay never invents a response or makes
+a live call. The repair is at the source: the `pages` tuple in the generator's spec table, its prose
+reordered to match, and
+`python -m vsir.eval.synthetic_pdf --vlm-model gemini-3.8-flash --prompt-version s2-v1`, which
+regenerates the fixture and the `expected.json` row together. **Every other key came back
+byte-identical**, which is what confirms the pins were right.
+
+Two things worth not rediscovering:
+
+- **The generator does not prune.** The superseded `(2, 1)` fixture stayed on disk, unreferenced,
+  and had to be deleted by hand after grepping the repo to prove nothing asked for it.
+- **Regenerating with the wrong pins re-keys everything, and reports success.** `.env` carries
+  `VSIR_PROMPT_VERSION=s2-v2` while the committed corpus is `s2-v1`, so the first regeneration
+  wrote a complete parallel fixture set beside the real one and printed a clean report. Pass
+  `--vlm-model` and `--prompt-version` explicitly; the tell is that *every* key moved rather than
+  the one that was meant to.
+
+Recorded as plan §4c **P12**. Making Loop 5 order its escalation set by page rather than by rank
+would make the call stable under any future ranking change — that is a behaviour change to the
+answer loop, so it is the owner's call rather than this fix's.

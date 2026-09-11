@@ -517,18 +517,26 @@ READ_CASES: tuple[dict[str, object], ...] = (
     },
     {
         "name": "ask_vision",
-        # Loop 5's escalation, and the page **order** is the dense ranking's rather than the
-        # document's: the loop asks for the pages with no text layer at all
+        # Loop 5's escalation: the loop asks for the pages with no text layer at all
         # (`has_text: False`) with the identifiers stripped out of the query, because a phrase
         # filter on a page with no text can only ever return nothing. These two sheets are the
-        # photocopied notice and the scanned cover, and they do not answer — which is what makes
+        # scanned cover and a photocopied notice, and they do not answer — which is what makes
         # the abstention that follows able to say the corpus was searched: every image-only page
         # in scope was examined (§8.5).
-        "pages": (2, 1),
+        #
+        # **The page order here is the dense ranking's, not the document's, and that makes this
+        # entry a hostage to retrieval.** It was `(2, 1)` until `fixes/005` replaced raw term
+        # counts with BM25; the ranking flipped, the loop asked `(1, 2)`, and because §6.3 makes
+        # page order an input to `read_key` — deliberately, since a model shown the same sheets
+        # in a different order is being asked a different question — the frozen response stopped
+        # being found at all and five tests across three `ask` suites failed with `fixture_miss`. That is D10 working
+        # (a miss is typed, never a fabricated response), but it is worth knowing that any future
+        # change to ranking re-keys this one entry. Recorded as plan §4c **P12**.
+        "pages": (1, 2),
         "question": ASK_REJECTED_QUESTION,
         "out": {
-            "extract": "These two sheets are the photocopied notice and the scanned cover of the "
-                       "manual. Neither of them names a contactor or an interlock relay.",
+            "extract": "These two sheets are the scanned cover of the manual and a photocopied "
+                       "notice. Neither of them names a contactor or an interlock relay.",
             "codes": [],
             "sufficient": False,
         },

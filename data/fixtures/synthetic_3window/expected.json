@@ -374,15 +374,15 @@
         "sufficient": true
       },
       "ask_vision": {
-        "cache_key": "86963a0589fc97efd87246ac9f19a8ccde88fdb4106628b6342924eb56baf73e",
+        "cache_key": "cdbf41c519225eb986b135cd9c0d203bca6382698c62c483145a045d5b969e5c",
         "codes": [],
-        "extract": "These two sheets are the photocopied notice and the scanned cover of the manual. Neither of them names a contactor or an interlock relay.",
+        "extract": "These two sheets are the scanned cover of the manual and a photocopied notice. Neither of them names a contactor or an interlock relay.",
         "flags": [
           "no_text_layer"
         ],
         "pages": [
-          2,
-          1
+          1,
+          2
         ],
         "question": "which contactor does the interlock relay K120 switch",
         "stamps": [],

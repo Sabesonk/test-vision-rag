@@ -57,6 +57,7 @@ from vsir.ingest import extract as extract_module
 from vsir.ingest import fingerprint as fingerprint_module
 from vsir.ingest import gates as gates_module
 from vsir.ingest import index as index_module
+from vsir.ingest import resparse as resparse_module
 from vsir.ingest import run as run_module
 from vsir.ingest import store as store_module
 from vsir.ingest import manifest, probe, render
@@ -2120,7 +2121,7 @@ def _with_store(handler: Any) -> Any:
         try:
             return handler(args, cfg, client)
         except (run_module.RunRefused, gates_module.OverrideRefused,
-                export_module.ExportRefused) as refusal:
+                export_module.ExportRefused, resparse_module.MigrationRefused) as refusal:
             _log.error("command_refused", reason=refusal.code, detail=str(refusal),
                        **getattr(refusal, "details", {}))
             print(f"   REFUSED  {refusal.code}: {refusal}")
@@ -2206,6 +2207,43 @@ def _cmd_retire(args: argparse.Namespace, cfg: Any, client: Any) -> int:
     print(f"still current {report['still_current']} page(s) of {args.doc_id} "
           f"{'(other revisions)' if args.revision else '— none, the document is withdrawn'}")
     print("idempotent   a filtered write of a constant: running this again demotes 0 more")
+    return EXIT_OK
+
+
+def _cmd_migrate_sparse(args: argparse.Namespace, cfg: Any, client: Any) -> int:
+    """`vsir migrate sparse [--dry-run]` — rebuild both sparse surfaces in place (plan §4c P10).
+
+    Free, and it says so: the surfaces are derived from payload the collection already holds, so
+    the command calls no model, reads no raster and never touches the dense vector. What it prints
+    is the before/after recipe and the counts, because the operator running it has a refused boot
+    in front of them and needs to see that the thing that was refused is the thing that moved.
+    """
+    report = resparse_module.rebuild_sparse(
+        client, pages_collection=cfg.pages_collection, runs_collection=cfg.runs_collection,
+        configured=fingerprint_module.Fingerprint.of(cfg), batch=args.batch,
+        dry_run=args.dry_run)
+    verb = "would rebuild" if report.dry_run else "rebuilt"
+    print(f"collection   {report.collection}")
+    print(f"recipe       sparse_version {report.stored.sparse_version!r} -> "
+          f"{report.configured.sparse_version!r} "
+          f"(fingerprint {report.stored.digest} -> {report.configured.digest})")
+    print(f"scanned      {report.scanned} point(s)")
+    print(f"{verb:<12} {report.updated} point(s): {report.lexical_written} lexical, "
+          f"{report.captions_written} captions")
+    print(f"untouched    {report.untouched} point(s) with no sparse terms on either surface")
+    if report.surfaces_dropped:
+        print(f"dropped      {len(report.surfaces_dropped)} surface(s) that the new recipe scores "
+              f"no terms for — deleted rather than left stale")
+    print("spend        none: both surfaces are a pure function of the stored payload, so no "
+          "model was called and no dense vector was read or rewritten")
+    if report.dry_run:
+        print("fingerprint  NOT written — this was a rehearsal, so the collection is still "
+              "refused at boot. Re-run without --dry-run to migrate")
+        return EXIT_OK
+    print(f"fingerprint  written last, after every point: {report.configured.digest}. A kill "
+          f"partway leaves the OLD fingerprint over a partly-rebuilt collection, so the boot "
+          f"check goes on refusing and re-running this repairs it (deriving a sparse vector from "
+          f"a payload is idempotent)")
     return EXIT_OK
 
 
@@ -3685,6 +3723,31 @@ def build_parser() -> argparse.ArgumentParser:
     )
     gates_rerun.add_argument("run_id", help="the run to re-evaluate")
     gates_rerun.set_defaults(handler=_with_store(_cmd_gates_rerun))
+
+    migrate_parser = commands.add_parser(
+        "migrate",
+        help="in-place repairs to a collection this release refuses at boot (§6.6, §15 Factor "
+             "XII). Only what can be re-derived from stored payload is offered here",
+    )
+    migrate_commands = migrate_parser.add_subparsers(dest="migrate_command", metavar="<subcommand>",
+                                                     required=True)
+    migrate_sparse = migrate_commands.add_parser(
+        "sparse",
+        help="rebuild the `lexical` and `captions` vectors under this release's SPARSE_VERSION "
+             "and restamp the §6.6 fingerprint. Free — both surfaces are a pure function of the "
+             "payload, so nothing is re-embedded. REFUSES if the fingerprint also differs in a "
+             "field that describes the dense vector: that needs a new collection and a re-embed",
+    )
+    migrate_sparse.add_argument(
+        "--dry-run", action="store_true",
+        help="scan and report what would change, write nothing. The fingerprint stays as it is, "
+             "so the collection stays refused at boot",
+    )
+    migrate_sparse.add_argument(
+        "--batch", type=int, default=resparse_module.BATCH, metavar="N",
+        help=f"points per scroll and per write (default {resparse_module.BATCH})",
+    )
+    migrate_sparse.set_defaults(handler=_with_store(_cmd_migrate_sparse))
 
     publish_parser = commands.add_parser(
         "publish",

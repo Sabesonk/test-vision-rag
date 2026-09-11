@@ -115,14 +115,20 @@ def caption_text(record: PageRecord) -> str:
     return sparse.dedupe(generated, against=record.text)
 
 
-def _vectors(record: PageRecord, dense: Sequence[float]) -> dict[str, Any]:
-    """The three surfaces for one page. A surface with nothing to say is **absent**, not zeroed.
+def sparse_vectors(record: PageRecord) -> dict[str, qm.SparseVector]:
+    """The two sparse surfaces for one page. A surface with nothing to say is **absent**, not zeroed.
 
     An all-zero sparse vector is not "no keywords", it is a vector with no terms that Qdrant still
     stores, indexes and scores; omitting the name is how a page with no summaries says it has no
     generated text (which the acceptance criteria assert).
+
+    Split out of :func:`_vectors` because it now has a second caller: :mod:`vsir.ingest.resparse`,
+    which rebuilds these two surfaces in place when ``sparse_version`` moves. Both are a pure
+    function of the payload, so the migration can re-derive them with no model call — but only if
+    it derives them *here*. A second implementation of the same recipe would agree on the day it
+    was written and drift on the day the recipe changed, which is the only day it is ever used.
     """
-    vectors: dict[str, Any] = {DENSE_VECTOR: list(dense)}
+    vectors: dict[str, qm.SparseVector] = {}
     lexical_indices, lexical_values = sparse.build_document(
         record.text, avg_len=BM25_AVG_LEN_LEXICAL)
     if lexical_indices:
@@ -132,6 +138,11 @@ def _vectors(record: PageRecord, dense: Sequence[float]) -> dict[str, Any]:
     if caption_indices:
         vectors[CAPTIONS] = qm.SparseVector(indices=caption_indices, values=caption_values)
     return vectors
+
+
+def _vectors(record: PageRecord, dense: Sequence[float]) -> dict[str, Any]:
+    """The three surfaces for one page: step 09's dense vector, and the two sparse ones."""
+    return {DENSE_VECTOR: list(dense), **sparse_vectors(record)}
 
 
 def build_point(record: PageRecord, dense: Sequence[float]) -> qm.PointStruct:
@@ -305,5 +316,6 @@ def count(client: Any, name: str, scope: Mapping[str, Any] | None = None) -> int
 __all__ = [
     "CAPTIONS", "FORBIDDEN_PAYLOAD_KEYS", "LEXICAL", "CollectionState", "DuplicatePage",
     "FingerprintMismatch", "IndexRefused", "PublishedBeforeGates", "Upserted", "VectorMissing",
-    "build_point", "cached_vectors", "caption_text", "count", "ensure_collection", "upsert",
+    "build_point", "cached_vectors", "caption_text", "count", "ensure_collection",
+    "sparse_vectors", "upsert",
 ]

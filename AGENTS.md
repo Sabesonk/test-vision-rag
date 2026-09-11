@@ -1,7 +1,8 @@
 # AI Agent Context — vision_segmentation_index_and_retrieval
 
-Operational reference: run, build and test commands only. No status, no progress notes — those live
-in `development/cr1/progress/implementation-progress.md`.
+Operational reference: the two run modes, every environment variable and every piece of external
+state, then the run, build and test commands. No status, no progress notes — those live in
+`development/cr1/progress/implementation-progress.md`.
 
 ## Layout
 
@@ -45,6 +46,238 @@ Regenerate the lock after any change to `backend/requirements.txt`:
 cd backend && uv pip compile requirements.txt --universal --python-version 3.11 \
   --generate-hashes --no-annotate --output-file requirements.lock
 ```
+
+## Modes: replay (`stub`) and live (`gemini`)
+
+**`VSIR_VLM` is the whole switch.** It selects the extraction backend *and* the embedding backend
+together — one variable for "does this release make live model calls", so a run that replays S2
+from a fixture cannot quietly spend on embeddings and there is no second variable to forget
+(§15 Factor X, D10). Both backends are built into the image unconditionally and chosen by a dict
+lookup (`vsir.vlm.BACKENDS`, `vsir.ingest.embed.EMBEDDERS`): **never a code branch, never a
+test-only import, and there is no `if TESTING:` in the production path** — the conformance grep in
+`scripts/test-unit.sh -k conformance` fails the build if one appears.
+
+| | **replay** — `VSIR_VLM=stub` | **live** — `VSIR_VLM=gemini` |
+|---|---|---|
+| S1 facts, S2 extract | frozen bodies out of `$VSIR_FIXTURE`, by the §6.3 key | `$VSIR_VLM_MODEL`: one S1 call, one per window |
+| `read` (§7.2.6) | frozen body, by `read_key` | one call, billed, per `read` |
+| embeddings | `StubEmbedder` — a deterministic function of the composition | `GeminiEmbedder` on `$VSIR_EMBED_MODEL`, one call per page |
+| credential | none — `VSIR_VLM_KEY` is not read | `VSIR_VLM_KEY` required, else `vlm_backend_unavailable` |
+| a key the fixture lacks | typed `fixture_miss`, non-zero exit — **never** a fallback call | — |
+| cost | zero on every path | real money on every row above |
+| who runs it | CI, L0–L3, E2E, the console, `stack.sh up`, every demo | a deliberate ingest, `stack.sh up --live`, L4 |
+
+The stub is not a mock of the pipeline, it is a different **attached service** (§15 Factor IV): the
+code path under test is the code path that ships. It never calls live on a miss, never fabricates a
+`WindowOut`, and never looks at the pixels — the rasters are on the request because the *key* was
+computed from them (`vsir/vlm/stub.py`).
+
+### Activating replay — the default on every surface
+
+Two variables, and the second is not optional:
+
+```bash
+export VSIR_VLM=stub
+export VSIR_FIXTURE=data/fixtures/synthetic_3window   # or synthetic_large, or a --record output
+backend/.venv/bin/vsir ingest data/source/synthetic_3window.pdf
+```
+
+`VSIR_VLM=stub` with an empty or non-existent `VSIR_FIXTURE` is a **refusal by name**
+(`vlm_backend_unavailable`), not a skip: a suite that quietly asserted nothing would be worse than
+one that stopped. `Config.replay` is exactly `vlm == "stub" and bool(fixture_dir)` and `vsir doctor`
+prints it.
+
+Per-run, without touching the environment — `ingest` takes both as flags and writes them into
+`os.environ` before `load_config()`, so the override is the ordinary configuration path:
+
+```bash
+backend/.venv/bin/vsir ingest <pdf> --vlm stub --fixture /tmp/recorded
+```
+
+Everything else needs no flag: `scripts/stack.sh up`, `docker-compose.test.yml`, `scripts/test-*.sh`
+and CI all set `VSIR_VLM=stub` + `VSIR_ALLOW_PAID=0` themselves, and CI references no secret.
+
+### Activating live — four things that move together
+
+```bash
+export VSIR_VLM=gemini                  # 1. the backend, for extraction AND embeddings
+export VSIR_VLM_KEY=<from the secret store>   # 2. never in the image, never in a log line
+export VSIR_PROMPT_VERSION=s2-v2        # 3. the RELEASED prompt set, not the fixtures' s2-v1
+export VSIR_ALLOW_PAID=1                # 4. the upload boundary and scripts/test-paid.sh
+backend/.venv/bin/vsir ingest data/source/<doc>.pdf --record data/fixtures/live/<doc>
+```
+
+or, for the whole stack at once — it exports all four, refuses without the key, prints what an
+ingest will now cost, and **seeds nothing**, so no money is spent by accident:
+
+```bash
+bash scripts/stack.sh up --live         # VSIR_PROMPT_VERSION_LIVE overrides the s2-v2 default
+bash scripts/stack.sh status            # reads VSIR_VLM/VSIR_ALLOW_PAID out of the RUNNING container
+```
+
+Each of the four earns its place:
+
+- **`VSIR_VLM_KEY`** comes from the platform secret store at runtime. §15.2 bans it from the image
+  and from a committed file; `.env.example` ships it empty. Missing, the run refuses
+  `vlm_backend_unavailable` rather than failing per call.
+- **`VSIR_PROMPT_VERSION`** stays at `s2-v1` in `.env` because that is what the checked-in fixtures
+  were frozen under and replay keys on it. A live run has no fixture to match and must use the text
+  this release actually ships (`s2-v2`), or `prompt()` refuses `prompt_unavailable` — a prompt is
+  part of the release, not configuration, and editing `vsir/vlm/prompts/*.md` without adding a
+  version to `PROMPT_DIGESTS` is refused by name.
+- **`VSIR_ALLOW_PAID`** is read in exactly one place — `serve/ingest.py::check_spend_allowed`, the
+  `POST /documents` boundary — and in `scripts/test-paid.sh`. It is `403 spend_not_permitted` for an
+  upload to a live release that has not set it. **It does not gate the CLI**: `vsir ingest --vlm
+  gemini` bills whatever `VSIR_ALLOW_PAID` says, because a CLI ingest is already deliberate.
+- **`VSIR_VLM_RPM`** (default 60) bounds the burst as a token bucket, and **`VSIR_VLM_TIER`**
+  (`standard | batch`) picks the endpoint — batch is 50% off and ingestion has no latency
+  requirement. Neither is an `extract_key` input, so switching either re-bills nothing.
+
+Three consequences of the switch worth knowing before flipping it:
+
+- **A stub run and a live run never reuse each other's vectors.** `StubEmbedder` namespaces its
+  model id as `stub:<model>` (`fixes/006`), so `embed_key` differs and switching `VSIR_VLM` on an
+  existing collection **re-embeds** rather than reporting hash vectors as `reused`. The §6.6
+  *fingerprint* is unchanged by the switch — it records the operator's own `VSIR_EMBED_MODEL` — so
+  the collection is not refused, it is simply re-bought, page by page.
+- **Freeze the paid run or pay again.** `--record DIR` writes the verbatim S1/S2 bodies under the
+  §6.3 keys replay reads back, which is how one paid ingest buys a permanent test corpus. It writes
+  *after* the response is back, so an unwritable path fails **after the call is billed** — and
+  `./data` is mounted read-only in the container. Record to a writable bind mount or run on the host.
+- **Live is the only mode `vsir read` and `POST /ask` spend in.** Every other tool of §7.2 is free
+  on both, and the per-caller ceiling (`VSIR_READ_QUOTA` per UTC day) and per-question ceiling
+  (`VSIR_READS_PER_QUESTION`) apply identically in replay — so the budget path is exercised for free.
+
+### What proves which mode you are in
+
+```bash
+backend/.venv/bin/vsir doctor            # boot_check_ok check=config_valid carries vlm, vlm_model,
+                                         # replay, fixture_dir, vlm_key_present; doctor_ok carries
+                                         # vlm, replay, models and the fingerprint
+bash scripts/stack.sh status             # the same, read out of the RUNNING container, not this shell
+```
+
+In the event stream: `vlm_replay` is a served fixture, `vlm_cache_hit` is a call that did not happen,
+and a live call is neither. `Config.redacted()` is what reaches a log line — the key is reported as
+`vlm_key_present: true`, never as a value, and `api_tokens` as a count.
+
+## Environment
+
+Configuration is the environment and only the environment (§15 Factor III). Nothing reads `.env` for
+you; `cp .env.example .env && set -a && . ./.env && set +a`. Every value below varies by deployment —
+anything that does not (dpi, fusion weights, BM25 constants, page caps, `COMPOSITION_VERSION`,
+`SPARSE_VERSION`, `TRUST_OK_MIN`) is a **pin in code**, reviewed and released, and is deliberately
+not an env var.
+
+### The twelve required (`config.REQUIRED_ENV`) — no fallback, a named refusal at boot (§4.3)
+
+| Variable | Example | What it decides |
+|---|---|---|
+| `VSIR_PORT` | `8000` | what `vsir serve` / `vsir mcp --sse` binds. 1…65535 |
+| `VSIR_QDRANT_URL` | `http://localhost:6333` | the only store. Userinfo is scrubbed from every log line |
+| `VSIR_COLLECTION` | `vsir_pages` | the pages collection **stem**; the served name is `{stem}_{dim}` |
+| `VSIR_VLM` | `stub` \| `gemini` | replay or live — extraction *and* embeddings (see Modes) |
+| `VSIR_VLM_MODEL` | `gemini-3.8-flash` | S1/S2/`read` model. `-latest` is refused (F11); a §6.3 key input |
+| `VSIR_EMBED_MODEL` | `gemini-embedding-2` | the dense model. `-latest` refused; in the §6.6 fingerprint |
+| `VSIR_PROMPT_VERSION` | `s2-v1` (live: `s2-v2`) | the prompt set; a §6.3 key input, so a change re-keys every fixture |
+| `VSIR_API_TOKENS` | comma-separated | bearer tokens. Identity is `caller-<sha256(token)[:12]>`; never logged |
+| `VSIR_READ_QUOTA` | `50` | `read`s per caller per UTC day, held in `vsir_runs`. Exhausted → `429` |
+| `VSIR_ALLOW_PAID` | `0` | `POST /documents` and `test-paid.sh` only. Not a CLI gate |
+| `VSIR_LOG_LEVEL` | `INFO` | `DEBUG…CRITICAL` |
+| `VSIR_RELEASE_ID` | `dev-0` | stamped on every run record and every response envelope |
+
+### Optional, defaulted in code (`config.load_config`)
+
+| Variable | Default | What it decides |
+|---|---|---|
+| `VSIR_EMBED_DIM` | `1536` | `768 \| 1536 \| 3072` (MRL). **In the collection name and the fingerprint** |
+| `VSIR_RUNS_COLLECTION` | `vsir_runs` | the D9 control plane |
+| `VSIR_READS_PER_QUESTION` | `3` | the runner's ceiling per question, surfaced as `reads_remaining` |
+| `VSIR_FIXTURE` | *(empty)* | the replay directory. **Required when `VSIR_VLM=stub`** |
+| `VSIR_VLM_TIER` | `standard` | `standard \| batch`. Not a cache-key input |
+| `VSIR_VLM_RPM` | `60` | the client's token bucket, in calls a minute |
+| `VSIR_EMBED_TEXT_CHARS` | `2000` | characters of page text carried into the dense composition (§5.3) |
+| `VSIR_DOC_STORE` | *(platform temp)* | the mounted volume the **source PDFs** live on (§4.2, U029) |
+| `VSIR_SAFETY_DOC_TYPES` | *(empty)* | §6.8 `safety_flag` source 1 — the uploader's `doc_type` |
+| `VSIR_SAFETY_TOPICS` | *(empty)* | §6.8 `safety_flag` source 2 — the model's own lowercase `topics[]` |
+| `VSIR_VLM_KEY` | *(empty)* | the VLM credential. **Required only when `VSIR_VLM=gemini`** |
+
+### Read outside `load_config` — paths, fixtures and one report
+
+| Variable | Default | Read by |
+|---|---|---|
+| `VSIR_SPOOL_DIR` | *(platform temp)*`/vsir-spool` | `serve/ingest.py` — where `POST /documents` spools a body. Deliberately **not** one of the twelve: a release that never takes an upload must not be unstartable by it |
+| `VSIR_SYNTHETIC_PAGES` | `data/fixtures/synthetic_pages/` | `eval/synthetic.py` — the §13 M1 corpus |
+| `VSIR_LEGACY_FIXTURE` | `data/fixtures/legacy/` | `eval/legacy.py` — the §12.1 `impl` parity baseline |
+| `VSIR_CORPUS_TRUTH` | beside the corpus | `eval/corpus.py` — §12.6's `corpus_truth.json` |
+| `VSIR_IMPL_ROOT` | *(unset)* | `eval/legacy.py` + `test_legacy_fixture_integrity.py` — an `impl` tree to re-port from |
+| `VSIR_GROUNDED_RATE_THRESHOLD` | *(unset)* | `eval/grounded_rate.py` **and nothing that gates** — the publish bar is the `core.health.TRUST_OK_MIN` pin, so adopting a threshold is a release (R4, F14) |
+| `VSIR_TC1E_FIXTURE` | `data/fixtures/TC1E-SF/` | `test_acceptance_real.py`, `tests/paid/` — the pilot fixture |
+| `VSIR_PILOT_PDF` | `data/source/TC1E-SF.pdf` | `tests/paid/` — the pilot source |
+
+None of the fixture directories are in the image — the Docker build context is `backend/` — so a
+container running a demo or an eval **mounts them and points these at the mounts**. A section whose
+fixture is missing is a refusal naming the path, never a silent pass.
+
+### Compose, scripts and the console — not read by the app
+
+| Variable | Default | Where |
+|---|---|---|
+| `VSIR_DOCUMENTS_DIR` | `./var/documents` | `docker-compose.yml` — the **host** side of `VSIR_DOC_STORE`. Git-ignored; `stack.sh down --wipe` empties it |
+| `VSIR_CONSOLE_PORT` | `5173` | `docker-compose.yml`, the dev console |
+| `VSIR_PROMPT_VERSION_LIVE` | `s2-v2` | `scripts/stack.sh up --live` |
+| `VSIR_TEST_API_TOKENS` | `test-only-not-a-secret` | the test stack's bearer — deliberately **not** `VSIR_API_TOKENS`, which is a developer's real token. `tests/api/conftest.py::CONTAINER_TOKEN` resolves the same name: override both or neither |
+| `VSIR_TEST_READ_QUOTA` | `10` (E2E: `500`) | `docker-compose.test.yml`; the ceiling itself is tested on its own instance |
+| `VSIR_TEST_FIXTURE` | `/srv/data/fixtures/synthetic_3window` | moves the **whole** E2E run to another corpus; `E2E_FIXTURE` is derived from it host-side |
+| `VSIR_TEST_SOURCE` | `/srv/data/source/synthetic_3window.pdf` | what `test-seed` ingests |
+| `VSIR_TEST_CONSOLE_PORT` | `5174` | for a port collision; threaded through compose, the readiness wait and `PLAYWRIGHT_BASE_URL` |
+| `VSIR_TEST_QDRANT_URL` | `http://localhost:6335` | `tests/api/` — **never 6334**, that is the dev instance's gRPC port |
+| `VSIR_TEST_BASE_URL` | `http://localhost:8001` | `tests/api/` |
+| `E2E_API_URL` / `E2E_FIXTURE` | `http://localhost:8001` / derived | `e2e/tests/console.ts` |
+| `VITE_API_URL` | `http://localhost:8000` | `frontend/vite.config.ts` — a **proxy target**, not a base URL the browser sees. There is no `VITE_API_TOKEN` and must not be: it would be baked into the bundle. The token is typed into the page and lives in `sessionStorage` |
+
+## External state
+
+Everything the process does not carry in memory. Each one is named by an environment variable, and
+the first three are a **typed refusal** when they are absent — never a placeholder, a clamp or a 500.
+
+1. **Qdrant** (`VSIR_QDRANT_URL`) — the only store. No relational database, no ORM, no migrations.
+   Two collections. The pages collection is built by `vsir doctor --create-collection` — the
+   compose `init` admin run of the same image, because `serve` refuses a payload schema that does
+   not match `INDEXED` and "does not exist" does not match. `vsir_runs` is created on demand by the
+   first ingest (`ingest/run.py::ensure_control_plane`), so a serving-only release never needs it:
+   - **`{VSIR_COLLECTION}_{VSIR_EMBED_DIM}`** — one point per page: the dense vector plus the two
+     sparse surfaces (`lexical`, `captions`), the §6.8 payload, and `is_current`. The **embedding
+     cache is this collection** (register B5), which is why dropping it turns a re-ingest into a
+     full re-embed and why a `SPARSE_VERSION` bump has `vsir migrate sparse` instead.
+   - **`VSIR_RUNS_COLLECTION`** (`vsir_runs`) — payload-only (`vectors_config={}`), every point
+     tagged with its `kind`: the §6.9 run records and per-window checkpoints, the advisory lease a
+     resume may `--steal`, the §6.3 VLM response cache, the `kind: fingerprint` record §6.6 compares
+     against at boot, the `kind: budget` per-caller daily ledger, and the observed-token inventory.
+   - Unreachable → `qdrant_unavailable`: a non-zero exit from `doctor`, a `503` from `GET /ready`,
+     and a refusal from the store-backed ingest steps (`embed`, `index`, `publish`) *before* the
+     first model call, so nothing is spent against a store that cannot take it.
+2. **The document store** (`VSIR_DOC_STORE`, host side `VSIR_DOCUMENTS_DIR`) — one
+   `<doc_id>@<revision>.pdf` per document, deposited at ingest step 02. It is the **source**, not a
+   raster cache. `fetch`, `GET /pages/{page_id}/image` and `ingest --resume` all resolve through it;
+   a page whose document is not on the volume is a **`503 document_not_stored`** naming
+   `doc_id@revision`, because the citation is fine and a volume is missing. Bytes that disagree with
+   the run record's `content_hash` are `document_hash_mismatch`.
+3. **Fixture directories** (`VSIR_FIXTURE` and the eval paths above) — read-only, checked in,
+   outside the image. A *directory* that is missing is `vlm_backend_unavailable` under `stub`, or a
+   refusal naming the path for an eval; a *key* that is missing inside one is `fixture_miss`.
+4. **The upload spool** (`VSIR_SPOOL_DIR`) — the request body of `POST /documents`, on disk only
+   between the upload and the pipeline reading it. A disposable instance's temp directory is the
+   honest default; the **document store**, not the spool, is what makes an uploaded run resumable
+   after the instance that took it is gone.
+5. **The Gemini API** — reached only when `VSIR_VLM=gemini`, keyed by `VSIR_VLM_KEY`, paced by
+   `VSIR_VLM_RPM`, on the `VSIR_VLM_TIER` endpoint. The only network dependency that costs money.
+6. **stdout** — the event stream, one JSON object per line (§15 XI). The app never opens a log file.
+   `--json` and `vsir mcp --stdio` move it to stderr so stdout is the machine surface.
+
+**Not external state, deliberately.** Page rasters are re-rendered on demand into an in-process LRU
+and are **never persisted** (§4.2) — U029 gave them something to be re-rendered *from*, and did not
+weaken that. The frontend holds only the bearer token, in `sessionStorage`, for the tab.
 
 ## Run
 
@@ -127,6 +360,30 @@ vectors made by another. A collection nobody has ingested into yet has no record
 ```bash
 VSIR_EMBED_MODEL=some-other-embed-model backend/.venv/bin/vsir doctor   # exit 1, named refusal
 ```
+
+**A `SPARSE_VERSION` bump is the one of the five that has an in-place repair** — `vsir migrate
+sparse`. Both sparse surfaces are derived from payload the collection already holds (`text` for
+`lexical`, `summaries[] + topics` deduped for `captions`), so they are rebuilt by scrolling and
+writing back two vectors: no model call, no raster, and the dense vector is never read. That
+matters because delete-and-re-ingest — the only path before this — deletes the embedding cache
+with the collection (the cache *is* the index, register B5), turning a change that touches no
+embedding into a full live re-embed:
+
+```bash
+backend/.venv/bin/vsir migrate sparse --dry-run   # scan and report; writes nothing
+backend/.venv/bin/vsir migrate sparse             # rebuild, then restamp the fingerprint
+```
+
+It **refuses** (`migration_unsupported`) if the fingerprint also differs in `embed_model`, `dim`,
+`distance` or `composition_version`: those describe the *dense* vector, no payload can re-derive
+one, and restamping over them is the in-place mix §6.6 forbids. For those the remedy is unchanged.
+It also refuses when the collection already matches, so a real migration stays distinguishable
+from a no-op in the logs.
+
+The fingerprint is rewritten **last**, after every page. A kill partway therefore leaves the *old*
+fingerprint over a partly-rebuilt collection — the boot check goes on refusing, nothing serves a
+mixed index, and re-running repairs it, because deriving a sparse vector from a payload is
+idempotent.
 
 `--vlm gemini` is a live call and needs `VSIR_VLM_KEY` (from the platform secret store, never the
 image); without it the run refuses `vlm_backend_unavailable`. **`VSIR_VLM` selects the embedding
@@ -866,3 +1123,16 @@ The working system this CR ports from is **outside this repo**:
 
 16 modules, 3,268 lines, no tests. Read the module a new one descends from before writing it — Spec
 §2.4 is the port ledger and §4.1 maps new → old.
+
+<!-- OPENWIKI:START -->
+
+## OpenWiki
+
+This repository has a generated `openwiki/` evidence index. It is optional just-in-time context, not required startup reading.
+
+- Treat source code and tests as authoritative. A brief's unknowns and review items are verification gaps, not automatic requirements.
+- Prefer the narrowest quiet validation that proves the changed behavior. Preserve complete failure output.
+
+The scheduled OpenWiki GitHub Actions workflow refreshes the repository wiki. Do not hand-edit generated OpenWiki pages unless explicitly asked; prefer updating source code/docs and letting OpenWiki regenerate.
+
+<!-- OPENWIKI:END -->
