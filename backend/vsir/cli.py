@@ -81,6 +81,8 @@ from vsir.serve import app as app_module
 from vsir.serve import auth as auth_module
 from vsir.serve import raster_cache
 from vsir.serve.app import config_of, create_app
+from vsir.runner import answer as answer_module
+from vsir.runner import loop as loop_module
 from vsir.runner import prompt as prompt_module
 from vsir.runner import route as route_module
 from vsir.runner import triage as triage_module
@@ -2888,17 +2890,12 @@ def _cmd_ask(args: argparse.Namespace) -> int:
     tools that were dispatched and refuses the VLM backend outright, so a spend would be a
     traceback and not a line of output.
 
-    Without ``--explain`` there is no answer to give yet — composing prose is U022's `POST /ask`
-    and its server-side gate (I8) — so the command says which milestone owns it and exits
-    non-zero rather than printing something that looks like an answer.
+    Without ``--explain`` it answers: the same descent, then the look step, the draft and the
+    server-side gate of §8.4 — the whole of §8.1, through the release's own dispatcher, and the
+    only path in this CLI that can spend anything.
     """
-    if not args.explain:
-        print("   REFUSED  answer_not_built: composing an answer is the answer gate's (§8.4, I8) "
-              "and lands with U022 in M6. `vsir ask --explain \"<question>\"` runs the free half "
-              "— the descent, the tri-state triage and the route — and spends nothing.")
-        return EXIT_REFUSED
-
-    print(f"vsir ask --explain — release {os.environ.get('VSIR_RELEASE_ID', 'unknown')}")
+    print(f"vsir ask{' --explain' if args.explain else ''} — release "
+          f"{os.environ.get('VSIR_RELEASE_ID', 'unknown')}")
     print(f"   question  {args.question!r}")
     try:
         runtime, client = app_module.runtime_from_env(dict(os.environ))
@@ -2930,10 +2927,133 @@ def _cmd_ask(args: argparse.Namespace) -> int:
           f"{len(runtime.tools)} tool(s) offered")
     if args.prompt:
         print("\n" + system)
+    scope = _scope_from(args.scope)
     try:
-        return _ask_explain(watched, spy, args.question, caller)
+        if args.explain:
+            return _ask_explain(watched, spy, args.question, caller)
+        # The real runtime, not the watched one: this path is allowed to spend, once, late, on
+        # the pages free narrowing chose (§8.1). What bounds it is `VSIR_READS_PER_QUESTION` and
+        # the caller's own quota, and both are the server's — not a flag on this command.
+        return _ask_answer(runtime, args.question, scope=scope, exclude=args.exclude)
     finally:
         client.close()
+
+
+def _print_move(move: Any) -> None:
+    """One row of the trace: the state, the move, and what it decided (§13 M6's *"move-by-move"*)."""
+    marker = "$" if move.spends else " "
+    print(f"   {move.step:>2}{marker} {move.state:<16}{move.action:<16}"
+          f"{f'--{move.signal}-->' if move.signal else ''}")
+    print(f"       {move.detail}")
+
+
+def _print_answer(outcome: Any) -> None:
+    """The gated answer: the prose, then every code with the badge it cleared under (§8.4)."""
+    answer = outcome.answer
+    print(f"\n   ANSWER — route {outcome.route} · {outcome.reads} paid read(s) · "
+          f"reads_remaining {outcome.reads_remaining}")
+    print(f"   citing {', '.join(answer.citations) or '—'}")
+    print(f"\n   {answer.text}\n")
+    if answer.claims:
+        print(f"   {'code':<20}{'badge':<38}page")
+        for claim in answer.claims:
+            print(f"   {claim.code:<20}{claim.badge:<38}{claim.page_id}")
+    for warning in answer.warnings:
+        print(f"   ! {warning}")
+
+
+def _print_abstention(outcome: Any) -> None:
+    """The abstention: the constrained wording, then the numbers that make it honest (§8.5)."""
+    abstention = outcome.abstention
+    print(f"\n   ABSTAINED — {abstention.reason} · {outcome.reads} paid read(s) · "
+          f"reads_remaining {outcome.reads_remaining}")
+    print(f"\n   {abstention.text}\n")
+    print(f"   searched {abstention.searched or '—'} · {abstention.pages_searched} page(s) · "
+          f"pages_no_text {abstention.pages_no_text} · read {abstention.pages_no_text_read} · "
+          f"unexamined {abstention.image_only_unexamined}")
+    if abstention.rejected_claims:
+        print(f"   {abstention.rejected_claims} claim(s) were rejected by the gate — the codes "
+              f"they named are not printed on the pages they were cited from, and neither the "
+              f"draft nor the codes appear above (§8.4)")
+
+
+def _ask_answer(runtime: Any, question: str, *, scope: Mapping[str, Any],
+                exclude: Sequence[str]) -> int:
+    """`vsir ask` — §8.1's loop, driven to an answer, an abstention or a typed refusal.
+
+    The tools are called through :func:`vsir.serve.app.dispatch`, which is what `POST /ask` calls
+    and what the MCP surface calls: the budget, the audit line and the typed refusals are the
+    release's, so this command is a *client* of the same surface a customer's agent uses and not
+    a second runner with its own idea of the rules (§7.5, §15 Factor XII).
+
+    The assertions at the end are the properties a reviewer came to check, and they are read off
+    the outcome rather than off the prose: every rendered code has a `(claim, page)` check behind
+    it (I8), no rejected code is anywhere in the output, and the read budget was respected.
+    """
+    calls: list[str] = []
+
+    def call(tool: str, arguments: Mapping[str, Any]) -> Any:
+        calls.append(tool)
+        return app_module.dispatch(runtime, tool, dict(arguments),
+                                   identity=auth_module.local_identity(CLI_PROCESS),
+                                   correlation={})
+
+    _step("01", "THE LOOP — §8.1, through the release's own dispatcher")
+    try:
+        outcome = loop_module.run(question, call=call,
+                                  reads_per_question=runtime.config.reads_per_question,
+                                  scope=dict(scope), exclude=list(exclude))
+    except loop_module.LoopBounded as bounded:
+        print(f"   REFUSED  loop_bounded: {bounded}")
+        return EXIT_REFUSED
+    for move in outcome.trace:
+        _print_move(move)
+
+    print(f"\n   tools called: {calls}")
+    print(f"   correction loops fired: {list(outcome.loops) or '—'} "
+          f"(of {list(loop_module.LOOPS)})")
+
+    if outcome.refusal is not None:
+        print(f"\n   REFUSED  {outcome.refusal.status} {outcome.refusal.error}: "
+              f"{outcome.refusal.detail}")
+        print("   A refusal is never an abstention (§7.1): retry or report it, and do not "
+              "conclude anything about the corpus from it.")
+        return EXIT_REFUSED
+
+    if outcome.answered:
+        _print_answer(outcome)
+    else:
+        _print_abstention(outcome)
+
+    _step("02", "THE GATE — every rendered code, checked against the page it is cited on (I8)")
+    rendered = list(outcome.answer.claims) if outcome.answered else []
+    checked = {(row.claim, row.page_id) for row in outcome.checks if row.claim}
+    passed = _check(
+        "every code in the answer has a (claim, page) verification behind it",
+        f"{len(rendered)} rendered · {len(outcome.checks)} check(s) made · "
+        f"missing {[c.code for c in rendered if (c.code, c.page_id) not in checked] or '—'}",
+        all((claim.code, claim.page_id) in checked for claim in rendered))
+    passed &= _check(
+        "no code the gate rejected appears anywhere in the output",
+        f"{len(outcome.rejections)} rejection(s), each disclosing only its page and "
+        f"`present_instead`: "
+        f"{[(one.page_id, one.present_instead) for one in outcome.rejections] or '—'}",
+        all(not getattr(one, "code", "") for one in outcome.rejections))
+    passed &= _check(
+        "the read budget was respected",
+        f"{outcome.reads} read(s) against a ceiling of "
+        f"{runtime.config.reads_per_question} (VSIR_READS_PER_QUESTION)",
+        outcome.reads <= runtime.config.reads_per_question)
+    if not outcome.answered:
+        passed &= _check(
+            "the abstention names the coverage numbers and does not claim the corpus is "
+            "exhausted while image-only pages are unread (§8.5)",
+            f"unexamined {outcome.abstention.image_only_unexamined} · "
+            f"forbidden wording present: "
+            f"{answer_module.FORBIDDEN_WORDING in outcome.abstention.text.lower()}",
+            outcome.abstention.image_only_unexamined == 0
+            or answer_module.FORBIDDEN_WORDING not in outcome.abstention.text.lower())
+    return _ask_done(passed)
 
 
 def _ask_explain(runtime: Any, spy: _Spy, question: str, caller: Any) -> int:
@@ -3588,11 +3708,21 @@ def build_parser() -> argparse.ArgumentParser:
 
     ask_parser = commands.add_parser(
         "ask",
-        help="the runner of §8. `--explain` runs the free half — the descent, the tri-state "
-             "triage of §8.2 and the §8.1a route — and spends nothing; the answer itself is the "
-             "gate's (§8.4, I8) and lands with U022",
+        help="the runner of §8: narrow, look once, draft, and answer only what the gate of §8.4 "
+             "cleared (I8). `--explain` runs the free half — the descent, the tri-state triage "
+             "of §8.2 and the §8.1a route — and spends nothing",
     )
     ask_parser.add_argument("question", help="the question, as a person would ask it")
+    ask_parser.add_argument(
+        "--scope", action="append", default=[], metavar="key=value",
+        help="narrow every rung, e.g. `--scope doc_id=TC1E-SF`. A parameter and never a session: "
+             "the scope the loop finishes on is echoed back with the answer (C11)",
+    )
+    ask_parser.add_argument(
+        "--exclude", type=_csv_arg, default=[], metavar="page_id,…",
+        help="pages you have already rejected. The runner adds its own as triage marks them "
+             "`irrelevant` (§8.2, Loop 0)",
+    )
     ask_parser.add_argument(
         "--explain", action="store_true",
         help="print the plan instead of answering: every rung of the descent, every candidate's "

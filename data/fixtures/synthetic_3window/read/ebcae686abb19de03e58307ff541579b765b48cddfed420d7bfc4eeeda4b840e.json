@@ -1,0 +1,9 @@
+{
+  "codes": [
+    "K120",
+    "Q70",
+    "K152"
+  ],
+  "extract": "The interlock relay K120 switches contactor Q70, a TELEMECANIQUE LC1-D38BL, and the same sheet lists K152 on the safe input channel.",
+  "sufficient": true
+}

@@ -63,6 +63,7 @@ import json
 import math
 import random
 import time
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -434,6 +435,20 @@ class GeminiEmbedder:
     #: part of its identity, so it is excluded from `repr` and from comparison.
     _sdk_client: Any = field(default=None, repr=False, compare=False)
 
+    #: Guards the lazy build of :attr:`_sdk_client`. **Not optional.** `embed_pages` fans batches
+    #: out over a ``ThreadPoolExecutor`` of :data:`~vsir.config.EMBED_CONCURRENCY` workers, and an
+    #: unguarded ``if self._sdk_client is None`` is a race every one of them runs at once: two
+    #: threads both see ``None``, both build a client, and the second assignment orphans the
+    #: first. The orphan is collected, its `httpx` transport closes with it, and the thread still
+    #: holding it fails with `RuntimeError: Cannot send a request, as the client has been closed`
+    #: — mid-run, after the S2 spend, on the step that writes the vectors.
+    #:
+    #: Observed on a live 56-page ingest on 2026-09-11. It cannot happen on a small document: one
+    #: batch is one worker, so the whole class of bug is invisible below
+    #: :data:`~vsir.config.EMBED_BATCH_SIZE` pages — which is why a green suite and a two-page
+    #: live run both missed it (the U028 lesson, again).
+    _client_lock: Any = field(default_factory=threading.Lock, repr=False, compare=False)
+
     @classmethod
     def from_config(cls, cfg: Config) -> "GeminiEmbedder":
         if not cfg.vlm_key:
@@ -457,8 +472,12 @@ class GeminiEmbedder:
         as the client has been closed`. A document is one embedding call per batch of pages, so
         this is also where the connection pool starts paying for itself.
         """
+        # Double-checked under the lock: the common path stays a plain attribute read, and the
+        # first-use path is serialised so exactly one client is ever built. See `_client_lock`.
         if self._sdk_client is None:
-            self._sdk_client = genai.Client(api_key=self.credential)
+            with self._client_lock:
+                if self._sdk_client is None:
+                    self._sdk_client = genai.Client(api_key=self.credential)
         return self._sdk_client
 
     def _sdk(self, **call: Any) -> Any:

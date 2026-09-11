@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import pytest
 
+from vsir.ingest import gates
 from vsir.ingest import run as run_module
 from vsir.serve import auth as auth_module
 from vsir.serve import manage
@@ -41,11 +42,16 @@ def history(qdrant, served) -> None:
         update = {"state": state, "step": step, "updated_at": stamp, "pages_indexed": 4,
                   "windows_done": 1}
         if state == run_module.GATED:
+            # `pass`, not `passed` — `GateResult.as_dict()` renames it on the way into the run
+            # record, so this is the shape the control plane actually holds. Built through
+            # `as_dict()` rather than typed out, so the fixture cannot drift from the writer.
             update["gate_results"] = {
-                "grounded_rate": {"name": "grounded_rate", "passed": False, "blocking": True,
-                                  "detail": "below threshold"},
-                "window_coverage": {"name": "window_coverage", "passed": True, "blocking": True,
-                                    "detail": "covered"},
+                "grounded_rate": gates.GateResult(
+                    name="grounded_rate", passed=False, blocking=True,
+                    detail="below threshold", metric=0.61, threshold=0.8).as_dict(),
+                "window_coverage": gates.GateResult(
+                    name="window_coverage", passed=True, blocking=True,
+                    detail="covered").as_dict(),
             }
         run_module.save(qdrant, SERVED_RUNS, record.model_copy(update=update))
 

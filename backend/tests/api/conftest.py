@@ -531,3 +531,66 @@ def rastered(qdrant: QdrantClient, tmp_path_factory: Any) -> Iterator[RasterStac
         synthetic_module.drop(qdrant, pages)
         if qdrant.collection_exists(runs):
             qdrant.delete_collection(runs)
+
+
+# ── the runner, over the same corpus, with its own budget ledger (U022) ──────────────────────────
+
+class AskStack:
+    """`POST /ask` over the ingested corpus, on an instance whose spending is its own.
+
+    The corpus, the document store and the frozen responses are the `rastered` stack's — the loop
+    is a *caller* of the eight tools and has to reach the real ones. What is **not** shared is the
+    control plane: `read` charges the caller quota against a point in the runs collection (§7.3),
+    and `POST /ask` spends reads by design, so a runner sharing that ledger would make every other
+    suite's `reads_remaining` depend on which files pytest collected first — `test_fetch.py`
+    asserts the quota is untouched, and it is right to.
+    """
+
+    def __init__(self, client: Any, corpus: Any) -> None:
+        self.client = client
+        self.corpus = corpus
+
+    @property
+    def header(self) -> dict[str, str]:
+        return {"Authorization": f"Bearer {TEST_TOKEN}"}
+
+    @property
+    def config(self) -> Any:
+        return self.client.app.state.config
+
+    @property
+    def env(self) -> dict:
+        return dict(self.client.app.state.env)
+
+    @property
+    def runtime(self) -> Any:
+        """The release's own :class:`ToolRuntime`, for driving the loop in process (§7.5)."""
+        return self.client.app.state.runtime
+
+    def page_id(self, page_no: int) -> str:
+        return self.corpus.page_id(page_no)
+
+    def page_ids(self, *page_nos: int) -> list[str]:
+        return self.corpus.page_ids(*page_nos)
+
+    def ask(self, question: str, **arguments: Any) -> Any:
+        """One question through `POST /ask` — the loop of §8.1, over the shipped route."""
+        return self.client.post("/ask", headers=self.header,
+                                json={"question": question, **arguments})
+
+    def gate(self, question: str, *, draft: dict) -> Any:
+        """A draft the caller wrote, submitted to the gate — §8.1a's `fetch` route."""
+        return self.client.post("/ask", headers=self.header,
+                                json={"question": question, "draft": draft})
+
+
+@pytest.fixture(scope="session")
+def asking(qdrant: QdrantClient, rastered: RasterStack) -> Iterator[AskStack]:
+    """The runner's instance over the shared corpus, and its ledger dropped afterwards."""
+    runs = f"{rastered.env['VSIR_RUNS_COLLECTION']}_ask"
+    with TestClient(create_app({**rastered.env, "VSIR_RUNS_COLLECTION": runs})) as client:
+        try:
+            yield AskStack(client, rastered)
+        finally:
+            if qdrant.collection_exists(runs):
+                qdrant.delete_collection(runs)

@@ -241,7 +241,9 @@ def test_an_upload_started_run_resumes_from_the_store_with_no_path_at_all(qdrant
             unpublished = client.get(f"/runs/{run_id}", headers=header).json()
 
         # The instance is gone. Its spool went with it; the document did not.
-        _wait_for_reap(Path(tempfile.gettempdir()) / "vsir-spool" / f"{run_id}.pdf")
+        # The upload is spooled as `<run_id>/<uploader's filename>.pdf` — a directory per run, so
+        # the uploader's own name can survive into step 01 without two uploads colliding (§4c P4).
+        _wait_for_reap(Path(tempfile.gettempdir()) / "vsir-spool" / run_id)
         assert DocumentStore(root).holds("resumed-doc", "1.1")
 
         finished = subprocess.run(

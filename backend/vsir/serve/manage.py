@@ -475,9 +475,13 @@ def runs(client: Any, runs_collection: str, *, limit: int = DEFAULT_PAGE_SIZE,
             started_at=str(row.get("started_at", "") or ""),
             updated_at=str(row.get("updated_at", "") or ""),
             published_at=row.get("published_at") or None,
+            # `pass`, not `passed`: `GateResult.as_dict()` renames it on the way to the control
+            # plane (`ingest/gates.py`), and `from_mapping` reads it back under that name. The
+            # same read `run.py`'s metrics snapshot does — a skipped gate is not a failed one.
             failed_gates=sorted(
                 name for name, result in (row.get("gate_results") or {}).items()
-                if isinstance(result, dict) and result.get("passed") is False),
+                if isinstance(result, dict) and not result.get("pass", True)
+                and not result.get("skipped", False)),
             release_id=str(row.get("release_id", "") or ""),
         )
         for row in ordered[:limit]

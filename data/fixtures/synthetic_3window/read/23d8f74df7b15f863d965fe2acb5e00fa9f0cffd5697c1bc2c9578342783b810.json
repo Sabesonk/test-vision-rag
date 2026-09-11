@@ -1,0 +1,9 @@
+{
+  "codes": [
+    "B219",
+    "K119",
+    "SI4"
+  ],
+  "extract": "Of these three sheets it is the guard door interlock stage that carries the condition: B219 must close before K119 is monitored on the safe input channel SI4. The emergency stop chain and the two-hand control sheets add none.",
+  "sufficient": true
+}

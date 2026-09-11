@@ -2551,7 +2551,7 @@ these documents"* while unread image-only pages remain.
 
 ## Unit: The operator console — viewer, agent panel, trust badges (ID: U023)
 
-**Status:** 🔵 Not Started
+**Status:** ✅ Complete (2026-09-11)
 **Milestone:** M7
 **Priority:** P1-High
 **Type:** frontend
@@ -2583,6 +2583,14 @@ Clicking a code scrolls the viewer to its cited page.
 - `frontend/src/components/AgentPanel/*` — collapsible moves, the triage panel, the badged draft.
 - `frontend/src/api/*` — the typed client generated from / matched to `serve/envelope.py`.
 - `frontend/src/**/*.test.ts` — **written**: badge mapping and citation-scroll logic.
+- **The backend half of the panel:** `backend/vsir/runner/loop.py` — **extended**: a typed
+  `TriageTable` / `TriageRow` (`page_id`, `mark`, `reason`, `rank`, `why`, `matched`, `promoted`)
+  carried on `Outcome`, built from the last triage pass and the loop's cumulative `excluded` list;
+  `backend/vsir/serve/app.py` — **extended**: one additive `triage` field on `AskResponse`, `null`
+  when nothing was triaged (the submitted-draft route, or an abstention before any candidate);
+  `backend/tests/api/test_ask_triage_table.py` — **written**: the table is the marks the loop really
+  made, and the `exclude` set is the `irrelevant` page ids. **Additive only** — no new tool, no
+  second dispatcher, no change to any existing field, and **no `score`** (§7.6).
 
 ### Requirements
 - Spec §13 M7: runs in **replay mode (D10) — no Gemini, no key, no spend** — against whichever fixture
@@ -2595,6 +2603,9 @@ Clicking a code scrolls the viewer to its cited page.
 - Spec §13 M7 **right zone**: collapsible agent moves (skim / read / verify), the tri-state triage
   panel, the draft answer with **trust badges** (`verified` / *read from image* / `unverifiable`) and
   amber verification warnings. **Clicking a code in the draft scrolls the viewer to its cited page.**
+- Spec §13 M7 / §8.2: the triage panel is driven by the typed `triage` table on the `POST /ask`
+  body, **never by parsing a trace `Move.detail`** — a console that regexes prose is a second
+  declaration of the contract, and the `exclude` set's page ids are not in the body at all.
 - Spec §16 Frontend: colours via CSS variables or utilities, **no raw hex in components**; lists of
   more than 50 items **virtualized**; **no `any`** in new TypeScript.
 - Spec §16 Security: rasters are never returned without auth — the browser must send the bearer token.
@@ -2620,7 +2631,8 @@ Clicking a code scrolls the viewer to its cited page.
 - [ ] A code the answer gate rejected is **absent** from the rendered draft.
 - [ ] An amber verification warning appears exactly when a rendered code carries the *read from image* badge.
 - [ ] Clicking a cited code scrolls the left viewer to that code's cited page.
-- [ ] The triage panel shows all three states and the `exclude` set.
+- [ ] `POST /ask` returns a typed `triage` table whose rows carry the mark, the reason it was given and the terms it was matched on, and whose `exclude` is exactly the `irrelevant` page ids.
+- [ ] The console's triage panel renders all three states and that `exclude` set **from that field**, not from a trace `Move.detail`.
 - [ ] A `tsc --noEmit` run passes and an AST scan finds no `any` in `frontend/src/**`.
 - [ ] A style scan finds no raw hex colour in a component; a list of >50 rows is virtualized (asserted on the rendered DOM node count).
 
@@ -3248,6 +3260,9 @@ of them mislead somebody who trusts the system.**
 | **P4** | **An upload with no declared `doc_id` is named after its own run.** The route spools to `<run_id>.pdf` and §6.1 step 01 derives `doc_id` from the filename, so a Festo datasheet published as `01M25E2HPS3KSEHSX6ZNEYBG9W`. Unfindable, un-scopable, and a re-upload becomes a *different* document every time, so retirement never supersedes anything. | U027 | Observed on 2026-09-10. Fix: spool under the uploader's sanitised filename. |
 | **P5** | **`VSIR_FIXTURE` means two things in `cli.py`** — the replay directory and the location of the run's acceptance table. U028 stopped a live run inheriting it, which is a guard, not the fix. | U013 | Separating them is what makes an acceptance table something a run can be checked against *deliberately*. |
 | **P6** | **A single-page PDF returned `page_index: 20`.** The §6.4 structural check refused it rather than indexing garbage — correct behaviour — but the model ignoring a 1-page window looks like a real weak spot, not a one-off. | U013 | 100 documents of the real corpus are ≤ 4 pages; whatever this is, it is not rare. |
+| **P7** | **The triage panel had nothing typed to render.** `AskResponse` exposed no structured triage at all: the only triage that reached a caller was one prose line inside a trace `Move.detail`, and the `exclude` set's page ids were not in the body anywhere — they lived only in `Loop.excluded`, and `effective_scope` does not carry them. U023's *"the triage panel shows all three states and the `exclude` set"* was therefore unsatisfiable by a frontend-only change. | U023 | Found 2026-09-11 while starting U023. **Amended in the plan rather than left open:** U023 now also ships a typed `TriageTable` on `Outcome` and one additive `triage` field on `AskResponse` — `triage.Mark` already keeps `matched` *"so a triage table can be reviewed rather than trusted"*, and the console **is** that table. A console that regexes a sentence is a second declaration of the contract in a language that cannot fail a test when the sentence is reworded. |
+| **P8** | **A wire type declared outside `types.ts` is an unchecked wire type.** `GET /documents`' `DocumentRow` / `DocumentList` were hand-written in `client.ts`, which `test_frontend_client_contract.py` does not read, and every field of them was wrong — a `title` and a `grounded_rate` the route has never sent, and no `revisions` array, which is the one thing that row exists to carry (§6.7 keeps superseded revisions rather than deleting them). | U023 | Found 2026-09-11 by calling the running service and comparing. **Closed in U023:** both shapes moved into `types.ts` and the contract ledger is now exhaustive (33 response models, 8 request bodies, compared in both directions). The general lesson is the one worth keeping — the contract test's coverage is defined by *where a type is written*, so the guard is only as good as the ledger is complete. |
+| **P9** | **`scripts/test-unit.sh` had been reporting `Layer 0/1 FAILED` on the frontend layers.** `tsc --noEmit` failed on `vite.config.ts` (`Cannot find name 'process'`) and `vitest` exited 1 with *"No test files found"*, from the moment the M7 scaffold landed and before any console code existed. | U023 | **Closed in U023** — one ambient `declare const process` rather than adding `@types/node` (§4.2), and the suite the unit was going to write anyway. Worth recording because the failure was in the *harness's own* output and was read past twice: a red layer that is red for a known, boring reason is how a red layer stops being read. |
 
 ## 5. Dependency Graph
 

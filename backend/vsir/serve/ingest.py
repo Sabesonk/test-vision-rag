@@ -41,7 +41,9 @@ one; a caller who can spend can spend everything the release allows.
 """
 from __future__ import annotations
 
+import contextlib
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -341,6 +343,30 @@ def _spawn(argv: list[str], *, env: Mapping[str, str]) -> subprocess.Popen:
         start_new_session=True)
 
 
+def spool_name(filename: str, run_id: str) -> str:
+    """The name to spool an upload under — the uploader's, sanitised, or the run id.
+
+    **This is not cosmetic, and it is defect P4 of plan §4c.** Step 01 of the pipeline derives
+    `doc_id` from the source filename and `manifest.filename_tags()` derives **tags** from it, so
+    whatever this file is called becomes part of the document's identity *and* part of its `scope`
+    surface (§5.3). Spooling to ``<run_id>.pdf`` therefore did two things:
+
+    * an upload with no declared `doc_id` was published under its own run id — unfindable,
+      un-scopable, and a re-upload became a *different* document, so retirement never superseded
+      anything;
+    * and even with `doc_id` declared, the lowercased run id was still added as a **tag** — a junk
+      filter key, unique per upload, on every document the console ever ingested. Observed on
+      2026-09-11 on a live run: `tags: ["01m26aj9cpjve2vcty72pcgw4q"]`.
+
+    So the uploader's own filename is used, reduced to the characters a file name may hold. The
+    fallback is the run id, for a name that survives none of that — which keeps this total, since
+    a `filename` is caller-supplied and may be empty or entirely separators.
+    """
+    stem = Path(filename or "").stem
+    safe = re.sub(r"[^A-Za-z0-9._+-]+", "-", stem).strip("-.")
+    return f"{safe or run_id}.pdf"
+
+
 def accept(cfg: Config, *, filename: str, body: bytes, until: str = "publish",
            vlm: str = "", fixture: str = "", declared: Mapping[str, str] | None = None,
            caller: str = "", spool: Path | None = None) -> Accepted:
@@ -388,7 +414,10 @@ def accept(cfg: Config, *, filename: str, body: bytes, until: str = "publish",
     check_store(cfg)
 
     run_id = ids.run_id()
-    target = (spool or spool_dir()) / f"{run_id}.pdf"
+    # The uploader's name, not the run id — see :func:`spool_name` (§4c P4). Two uploads of the
+    # same filename in one instance would collide, so the run id keeps them apart by directory.
+    target = (spool or spool_dir()) / run_id / spool_name(filename, run_id)
+    target.parent.mkdir(parents=True, exist_ok=True)
     target.write_bytes(body)
 
     argv = command(target, run_id=run_id, until=until, declared=declared or {})
@@ -439,6 +468,10 @@ def _reap(child: subprocess.Popen, spooled: Path, *, run_id: str) -> None:
         output = child.communicate()[0] or ""
         code = child.returncode
         spooled.unlink(missing_ok=True)
+        # The upload now lives in its own `<run_id>/` directory (see `spool_name`), so removing
+        # the file leaves an empty one behind — one per upload, forever, on a tmpfs.
+        with contextlib.suppress(OSError):
+            spooled.parent.rmdir()
         if code == 0:
             _log.info("upload_run_finished", run_id=run_id, pid=child.pid, exit_code=code)
             return
@@ -455,12 +488,17 @@ def clear_spool(spool: Path | None = None) -> int:
     """Remove every spooled upload. For a start-up sweep after an unclean shutdown."""
     target = spool or spool_dir()
     removed = 0
-    for leftover in target.glob("*.pdf"):
+    # `rglob`, because an upload is spooled as `<run_id>/<uploader's name>.pdf` — a flat glob
+    # swept the old layout and would silently leave every upload of the new one behind.
+    for leftover in target.rglob("*.pdf"):
         try:
             leftover.unlink()
             removed += 1
         except OSError:                                  # another instance is using the same dir
             continue
+    for directory in sorted(target.glob("*/"), reverse=True):
+        with contextlib.suppress(OSError):               # only if it is empty
+            directory.rmdir()
     if removed:
         _log.info("spool_cleared", removed=removed, spool=str(target))
     return removed

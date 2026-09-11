@@ -178,11 +178,22 @@ def test_an_empty_triage_branches_on_coverage_and_still_proves_it_spent_nothing(
     assert "08 SPEND" in out and "ALL ASSERTIONS PASSED" in out
 
 
-def test_without_explain_the_command_refuses_and_names_what_owns_the_answer(capsys):
-    """Composing prose is the gate's (§8.4, I8) and is U022's. Not a stub, a named refusal."""
+def test_without_explain_the_command_runs_the_loop_and_refuses_by_name_rather_than_abstaining(
+        ask_env, capsys):
+    """U022 replaced the `answer_not_built` refusal: the command answers now (§8.1, §8.4).
+
+    It is pointed at the U019 corpus here, which is **seeded payloads with no document store
+    behind them** — so the loop narrows for free, gets as far as the look step, and cannot resolve
+    a raster. That is a typed refusal naming what is missing, never an empty answer and never an
+    abstention: concluding anything about the corpus from our own missing bytes is the failure
+    §11.3 exists to prevent.
+    """
     assert run("ask", QUESTION) != 0
     out = capsys.readouterr().out
-    assert "answer_not_built" in out and "U022" in out
+    assert "answer_not_built" not in out, "that refusal was U021's placeholder and is gone"
+    assert "01 THE LOOP" in out, "the loop ran: the trace is printed move by move"
+    assert "REFUSED" in out
+    assert "ABSTAINED" not in out and "not in these documents" not in out.lower()
 
 
 # ── the marks, on rows a real search returned ───────────────────────────────────────────────────

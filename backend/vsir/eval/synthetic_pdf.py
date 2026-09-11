@@ -359,6 +359,26 @@ READ_SECOND_QUESTION = "which contactor is named on these sheets?"
 #: The misread. Shares the prefix ``k1`` with what pages 19 and 20 really print, and nothing else.
 READ_MISREAD_CODE = "K152"
 
+#: The three questions the **runner** asks (U022, §8.1), and they are questions rather than
+#: prompts on purpose: each one names a printed code, so the loop's handle branch
+#: (*"handle? yes → lookup"*) settles which pages are read from the **exact surface** and not
+#: from a dense ranking. That is what makes a frozen `read` reachable from a whole-loop test at
+#: all — the page set is a function of what the corpus prints, so it is the same on every machine
+#: and in every ordering, and a fixture keyed on the pixels of those pages can be written before
+#: the loop is run.
+#:
+#: `K119` is printed on page 19 alone and `K120` on page 20 alone (see :func:`_codes`), so those
+#: two questions pin a single page each. `SI4` is printed on every fourth page — 3, 7, 11, 15, 19,
+#: … — so the third question pins ten candidates that the three-page `read` cap splits into a
+#: first look and a fallback, which is the shape §8.3's Loop 3 needs to be visible in.
+ASK_ANSWER_QUESTION = "why won't the guard door interlock release when K119 is monitored"
+ASK_LADDER_QUESTION = "what must be true before the guard door interlock stage releases on SI4"
+ASK_REJECTED_QUESTION = "which contactor does the interlock relay K120 switch"
+#: The fourth is the odd one out and deliberately so: it names **no** code, so the loop descends
+#: the whole ladder, finds nothing its triage can call relevant, and zooms out twice before it
+#: looks at anything at all. Nothing in this corpus is about hydraulics — which is the point.
+ASK_WIDENED_QUESTION = "hydraulic accumulator bladder precharge procedure"
+
 READ_CASES: tuple[dict[str, object], ...] = (
     {
         "name": "answer",
@@ -406,6 +426,128 @@ READ_CASES: tuple[dict[str, object], ...] = (
             "sufficient": False,
         },
     },
+    # ── the four the runner's loop reaches (U022, §8.1) ─────────────────────────────────────────
+    # Each one is the response to a page set the loop **chooses**, not one a test names: the
+    # question carries a printed code, the handle branch asks the exact surface which pages carry
+    # it, and the read that follows is over exactly those pages in exactly that order (`lookup`
+    # orders by `page_no`, and the read cap takes the first three). So these are frozen answers to
+    # calls the machine makes on its own, which is the only way a whole-loop test can be free.
+    {
+        "name": "ask_answer",
+        # `K119` is printed on page 19 and nowhere else: one candidate, one page, one read. The
+        # worked trace of §13 M6, and the M6 demo.
+        "pages": (19,),
+        "question": ASK_ANSWER_QUESTION,
+        "out": {
+            "extract": "The guard door interlock stage releases only once B219 has closed and "
+                       "K119 is monitored on the safe input channel SI4. The stop category is "
+                       "verified at commissioning and after every replacement of that monitored "
+                       "relay.",
+            # Every one of them is printed on page 19, so every one clears the gate and renders
+            # with the `verified` badge (§8.4). Nothing here is a misread: the rejection path has
+            # its own case below, and an answer that could not be rendered would prove the gate
+            # and leave the answer path unproved.
+            "codes": ["B219", "K119", "SI4"],
+            "sufficient": True,
+        },
+    },
+    {
+        "name": "ask_insufficient",
+        # `SI4` is on pages 3, 7, 11, 15, 19, 23, 27, 31, 35 and 39; the read cap takes the first
+        # three, and those three are front-matter general information and the machine layout —
+        # they genuinely do not answer a question about the guard door interlock stage. This is
+        # the honest `sufficient: false` §7.2.6 makes mandatory, and Loop 3's trigger.
+        "pages": (3, 7, 11),
+        "question": ASK_LADDER_QUESTION,
+        "out": {
+            "extract": "",
+            "codes": [],
+            "sufficient": False,
+        },
+    },
+    {
+        "name": "ask_pool",
+        # Loop 3's second look: the next three candidates the first read deferred, drained
+        # **before** the scope is widened (safeguard 1). Page 19 is the guard door interlock
+        # sheet, so this set answers — and the fact that it took two looks is what the trace
+        # shows.
+        "pages": (15, 19, 23),
+        "question": ASK_LADDER_QUESTION,
+        "out": {
+            "extract": "Of these three sheets it is the guard door interlock stage that carries "
+                       "the condition: B219 must close before K119 is monitored on the safe "
+                       "input channel SI4. The emergency stop chain and the two-hand control "
+                       "sheets add none.",
+            "codes": ["B219", "K119", "SI4"],
+            "sufficient": True,
+        },
+    },
+    {
+        "name": "ask_widened",
+        # The page the loop reaches **after** two widenings: triage marks every candidate of the
+        # chosen chapter `irrelevant` (Loop 0), the pool is empty, so the scope zooms out to the
+        # binder and then to the whole document, and the only candidate it can still call
+        # `uncertain` is a page with no text layer. It does not answer, which is the honest thing
+        # for a photocopied notice to say about hydraulics.
+        "pages": (2,),
+        "question": ASK_WIDENED_QUESTION,
+        "out": {
+            "extract": "This sheet is a photocopied notice with no text layer. It says nothing "
+                       "about a hydraulic accumulator or a precharge procedure.",
+            "codes": [],
+            "sufficient": False,
+        },
+    },
+    {
+        "name": "ask_widened_cover",
+        # The last thing the loop looks at before it is allowed to conclude anything. After the
+        # ladder is spent, one image-only page is still unexamined — so §8.1's second empty
+        # branch fires from the **end** of the ladder (`(WIDEN, EMPTY_NO_TEXT) → VISION_FIRST`)
+        # and the scanned cover is read. It does not answer either, and *now* the abstention can
+        # say the corpus was searched: both image-only pages were examined (§8.5).
+        "pages": (1,),
+        "question": ASK_WIDENED_QUESTION,
+        "out": {
+            "extract": "This is the scanned cover sheet of the manual. It names the manual and "
+                       "its revision and says nothing about a hydraulic accumulator or a "
+                       "precharge procedure.",
+            "codes": [],
+            "sufficient": False,
+        },
+    },
+    {
+        "name": "ask_vision",
+        # Loop 5's escalation, and the page **order** is the dense ranking's rather than the
+        # document's: the loop asks for the pages with no text layer at all
+        # (`has_text: False`) with the identifiers stripped out of the query, because a phrase
+        # filter on a page with no text can only ever return nothing. These two sheets are the
+        # photocopied notice and the scanned cover, and they do not answer — which is what makes
+        # the abstention that follows able to say the corpus was searched: every image-only page
+        # in scope was examined (§8.5).
+        "pages": (2, 1),
+        "question": ASK_REJECTED_QUESTION,
+        "out": {
+            "extract": "These two sheets are the photocopied notice and the scanned cover of the "
+                       "manual. Neither of them names a contactor or an interlock relay.",
+            "codes": [],
+            "sufficient": False,
+        },
+    },
+    {
+        "name": "ask_rejected",
+        # I8's teeth, through the whole loop: a sufficient read whose codes include one the page
+        # does not print. `K152` is printed nowhere in this document, so the gate rejects the
+        # draft and **no part of it is rendered** — and the rejection discloses `k120`, which is
+        # what page 20 really carries (F16).
+        "pages": (20,),
+        "question": ASK_REJECTED_QUESTION,
+        "out": {
+            "extract": "The interlock relay K120 switches contactor Q70, a TELEMECANIQUE "
+                       "LC1-D38BL, and the same sheet lists K152 on the safe input channel.",
+            "codes": ["K120", "Q70", READ_MISREAD_CODE],
+            "sufficient": True,
+        },
+    },
 )
 
 #: What each case's codes must be stamped, written from §7.2.4's vocabulary **before** the tool
@@ -430,6 +572,31 @@ READ_STAMPS: dict[str, tuple[dict[str, object], ...]] = {
         {"raw": "C24", "status": "unverifiable", "pages": [], "present_instead": []},
         {"raw": "K119", "status": "unverifiable", "pages": [], "present_instead": []},
     ),
+    "ask_answer": (
+        {"raw": "B219", "status": "present", "pages": [19], "present_instead": []},
+        {"raw": "K119", "status": "present", "pages": [19], "present_instead": []},
+        {"raw": "SI4", "status": "present", "pages": [19], "present_instead": []},
+    ),
+    "ask_insufficient": (),
+    "ask_widened": (),
+    "ask_widened_cover": (),
+    "ask_vision": (),
+    "ask_pool": (
+        {"raw": "B219", "status": "present", "pages": [19], "present_instead": []},
+        {"raw": "K119", "status": "present", "pages": [19], "present_instead": []},
+        # On all three sheets, because `SI4` is printed on every fourth page and all three of
+        # these are fourth pages. The verdict names the pages that carry it, not the page the
+        # extract happens to be about (§7.2.4).
+        {"raw": "SI4", "status": "present", "pages": [15, 19, 23], "present_instead": []},
+    ),
+    "ask_rejected": (
+        {"raw": "K120", "status": "present", "pages": [20], "present_instead": []},
+        {"raw": "Q70", "status": "present", "pages": [20], "present_instead": []},
+        # The prefix lookup over page 20's own observed tokens: `k152` truncates to `k15`, then
+        # `k1`, and the only thing this page prints under that prefix is `k120` (§7.2.4, F16).
+        {"raw": READ_MISREAD_CODE, "status": "absent", "pages": [20],
+         "present_instead": ["k120"]},
+    ),
 }
 
 #: Which flags each case must raise, from `serve/tools/read.py`'s closed list.
@@ -438,6 +605,17 @@ READ_EXPECTED_FLAGS: dict[str, tuple[str, ...]] = {
     "second_question": (),
     "wrong_pages": (),
     "scanned": ("no_text_layer", "unverified_codes"),
+    "ask_answer": (),
+    "ask_insufficient": (),
+    # Page 2 is rasterised, so the read discloses that it had no text layer to check against —
+    # and there is no `unverified_codes` beside it, because it claimed no code (§7.2.6).
+    "ask_widened": ("no_text_layer",),
+    "ask_widened_cover": ("no_text_layer",),
+    # Both pages are rasterised, so the read discloses that there was no text layer to check
+    # against — and no `unverified_codes` beside it, because it claimed no code (§7.2.6).
+    "ask_vision": ("no_text_layer",),
+    "ask_pool": (),
+    "ask_rejected": ("unverified_codes",),
 }
 
 

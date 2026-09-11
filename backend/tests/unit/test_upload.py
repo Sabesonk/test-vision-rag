@@ -465,3 +465,49 @@ def test_clearing_the_spool_removes_leftovers_and_reports_how_many(tmp_path):
 
     assert upload.clear_spool(tmp_path) == 2
     assert (tmp_path / "keep.txt").is_file()
+
+
+# ── §4c P4: what an upload is spooled as becomes the document's identity ────────────────────────
+
+@pytest.mark.parametrize("filename,expected", [
+    ("20210412130239-Datasheet-BES0068-en.pdf", "20210412130239-Datasheet-BES0068-en.pdf"),
+    ("my doc (v2).pdf", "my-doc-v2.pdf"),
+    ("Datasheet_BES0068+rev2.PDF", "Datasheet_BES0068+rev2.pdf"),
+])
+def test_an_upload_is_spooled_under_the_uploaders_own_name(filename, expected):
+    """Step 01 derives `doc_id` from this name and `manifest.filename_tags()` derives **tags**
+    from it, so the spool name becomes part of the document's identity and of its `scope`
+    surface (§5.3) — which is why it may not be the run id."""
+    assert upload.spool_name(filename, "01RUNID") == expected
+
+
+@pytest.mark.parametrize("hostile", ["../../etc/passwd", "/absolute/path", "...", "", "///"])
+def test_a_hostile_or_empty_filename_cannot_escape_or_produce_nothing(hostile):
+    """A filename is caller-supplied. The stem strips directories and the substitution strips
+    everything a file name may not hold, so the worst case is a boring name — and a name that
+    survives none of it falls back to the run id, which keeps this total."""
+    produced = upload.spool_name(hostile, "01RUNID")
+
+    assert "/" not in produced and ".." not in produced
+    assert produced.endswith(".pdf")
+    assert produced not in (".pdf", "")
+
+
+def test_the_run_id_is_the_fallback_and_never_the_default():
+    """The defect itself: the run id used to be the name **always**, so an upload with no declared
+    `doc_id` was published as `01M25E2HPS3KSEHSX6ZNEYBG9W` — unfindable and un-scopable — and even
+    with one declared, the lowercased run id was added as a tag on every uploaded document."""
+    assert upload.spool_name("", "01RUNID") == "01RUNID.pdf"
+    assert upload.spool_name("real-name.pdf", "01RUNID") == "real-name.pdf"
+
+
+def test_the_sweep_finds_an_upload_in_its_run_directory(tmp_path):
+    """`clear_spool` globbed `*.pdf` flat, which would silently leave every upload behind now
+    that one is spooled as `<run_id>/<name>.pdf`."""
+    nested = tmp_path / "01RUNID"
+    nested.mkdir()
+    (nested / "doc.pdf").write_bytes(b"%PDF-1.7\n")
+    (tmp_path / "legacy.pdf").write_bytes(b"%PDF-1.7\n")
+
+    assert upload.clear_spool(tmp_path) == 2
+    assert not nested.exists(), "the empty run directory is taken too"

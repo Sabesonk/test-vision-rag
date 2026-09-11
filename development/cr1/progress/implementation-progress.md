@@ -7,11 +7,11 @@
 
 | | |
 |---|---|
-| **Complete** | 26 / 32 units (81%) — 21 of the planned 26, plus U027, U028, U029, U030 and U031 added after the plan was written (plan §4b) |
-| **Current milestone** | **M6 — in progress**: the runner. U021 shipped Loop 0 — §8.2's tri-state triage as a real state machine with all five safeguards binding, and §8.1a's `fetch`-vs-`read` route — and it spends nothing on any path, which `vsir ask --explain` **proves with a call spy** rather than asserting. U022 is what remains: the loop, the six correction loops, the server-side answer gate (I8) and `POST /ask` — the first surface in this build that may return prose. **M0, M1, M2a, M3, M4 and M5 are closed** and all eight tools of §7.2 are served; M2b's non-paid half shipped |
-| **Latest** | **U031 — the typed API surface** (post-plan). Each of the eight tools has its own path publishing its own schema; the corpus is readable at `GET /documents`, `/documents/{doc_id}`, `/documents/{doc_id}/pages` and `GET /runs`; refusals finally have a **model**; and MCP serves the corpus as a `vsir://corpus` **resource**, so the tool surface is still the eight of §7.2. One dispatcher, one validator, one serialiser — asserted rather than promised. **Three defects found reviewing it before it shipped**, each now with a regression test |
-| **Next unit** | **U022** — the loop, the six correction loops, the answer gate (I8) and `POST /ask` — the first thing in this build that may return prose. It executes a machine it does not have to design: `runner/triage.py::TRANSITIONS` already declares `draft`/`verify`/`answer` and §8.1's edges between them |
-| **Then** | **U023 / U024** — the operator console and the Playwright replay suite (M7) |
+| **Complete** | 28 / 32 units (88%) — 23 of the planned 26, plus U027, U028, U029, U030 and U031 added after the plan was written (plan §4b) |
+| **Current milestone** | **M7 — open.** U023 shipped the console: a React + TypeScript + Vite app in two zones, driven entirely by replayed data, and the backend half the plan's §4c P7 called for — a typed `TriageTable` on `Outcome` and an additive `triage` field on `AskResponse`, so the triage panel reads a contract instead of regexing a sentence out of a trace `Move.detail`. **M0, M1, M2a, M3, M4, M5 and M6 are closed**; M7 closes at U024. Previously: **M6 — closed.** U021 shipped Loop 0 — §8.2's tri-state triage as a real state machine with all five safeguards binding — and U022 closed the loop: §8.1's machine executed, all six correction loops of §8.3 firing under their own named tests, and the **server-side answer gate** (I8) in front of `POST /ask`, the only surface in this release that may return prose. **M0, M1, M2a, M3, M4, M5 and M6 are closed**; all eight tools of §7.2 are served and the ninth surface — the runner — answers behind the gate. M2b's non-paid half shipped |
+| **Latest** | **U023 — the operator console.** Two zones: the zoom ladder on the left (corpus → binder → chapter → page, then a normalised crop at escalated dpi), the agent on the right (collapsible moves, the tri-state triage table, the badged draft, the gate's own call log). Every code in an answer carries `verified` or *read from image, not text-verified*; a rejected code cannot render, because `RenderedClaim`'s union has no `absent` in it. **Two defects found by running it, neither visible to a green suite:** `GET /documents`'s row type was declared in `client.ts` rather than `types.ts` — outside the contract test's reach — and every field of it was wrong; and `tsc --noEmit` had been failing on `vite.config.ts` since the scaffold landed. The first is why the contract test's ledger is now exhaustive |
+| **Next unit** | **U024** — the Playwright replay suite and `frontend/Dockerfile` (M7's acceptance, in a browser: an `unverifiable` code renders with its badge, a rejected code is absent from the rendered answer, and the abstention names the unread image-only pages). The `frontend-test` service already exists in `docker-compose.test.yml` behind the `e2e` profile and points at a `Dockerfile` U024 writes |
+| **Then** | **U025 / U026** (M8) — revisions, resume, graceful shutdown, and the measured NFRs |
 | **Read first** | **Plan §4c — six open defects found by running the system.** None breaks a build; all of them mislead somebody who trusts the output. P1 (a live run records no cost) and P2 (no VLM cache store, so a re-ingest re-bills) both land on U013 |
 | **Blocked** | **U013** — the paid re-bill only, and now on **OQ-1 alone**: `data/source/TC1E-SF.pdf` is still not present. **OQ-2 is closed** — a key is configured and was exercised live on 2026-09-10, ingesting a real 4-page datasheet to `published` through `POST /documents`. The ladder is no longer a blocker either: the shipped `plan()` refused the 55-page pilot at **step 05**, one step before the spend everyone thought it was waiting on a credential for, and `fixes/001` now folds it to `[[1, 30], [31, 55]]` — byte-for-byte what its own acceptance table declared. Nothing downstream is blocked (§17) |
 
@@ -117,11 +117,11 @@ Two things a later unit should not have to rediscover:
 
 ### M6 — the runner, the loop, the answer gate (spend: read)
 - [x] U021 Tri-state triage, the safeguards, and fetch-vs-read routing — spend: none
-- [ ] U022 The loop, the six correction loops, the answer gate, and `POST /ask` — spend: paid
+- [x] U022 The loop, the six correction loops, the answer gate, and `POST /ask` — spend: paid — **M6 closes here**
 
 
 ### M7 — operator console (spend: none, fixture-backed)
-- [ ] U023 The operator console — viewer, agent panel, trust badges
+- [x] U023 The operator console — viewer, agent panel, trust badges
 - [ ] U024 The Playwright replay suite and `scripts/test-e2e.sh`
 
 ### M8 — revisions, resumable ingest, scale-out (spend: ingest)
@@ -426,7 +426,7 @@ closed. F10 stays open until U004's filter gate consumes the dict, as the plan s
 | M3 | `vsir serve & vsir lookup "SF 1.1A" && vsir eval acceptance` | ✅ | see the M3 milestone gate below |
 | M4 | `vsir demo narrow` | ✅ | exit 0; see the M4 milestone gate below |
 | M5 | `VSIR_ALLOW_PAID=1 vsir read --pages … --question …` | ✅ | ran live against Gemini; see the M5 milestone gate below |
-| M6 | `VSIR_ALLOW_PAID=1 vsir ask "carton discharge won't restart after an E-stop reset"` | ⬜ | |
+| M6 | `VSIR_ALLOW_PAID=1 vsir ask "carton discharge won't restart after an E-stop reset"` | ✅ | run in replay on the OQ-1 fallback corpus, **both branches**; see the M6 milestone gate below |
 | M7 | `bash scripts/test-e2e.sh` then browse `http://localhost:5174` | ⬜ | |
 | M8 | `vsir ingest --resume <run_id>` and `vsir eval corpus` | ⬜ | |
 
@@ -4225,3 +4225,526 @@ cd backend && COMPOSE_PROJECT_NAME=vsir-u021 VSIR_TEST_QDRANT_URL=http://localho
   §8.1's diagram draws (`verify` on `contradicted` → `triage`, on `cleared` → `answer`), so
   `loop.py` executes a machine it does not also design. Nothing in this unit drafts, composes or
   renders prose, and `answer.py` does not exist yet.
+
+---
+
+### U022 — The loop, the six correction loops, the answer gate, and `POST /ask`
+
+**Milestone:** M6 · **Spend:** paid (read) · **Status:** `[x]` Complete · **Completed:** 2026-09-11
+
+The loop closes and the product has an answer surface. Two net-new modules —
+`backend/vsir/runner/loop.py` (§8.1's machine, executed, and §8.3's six correction loops) and
+`backend/vsir/runner/answer.py` (§8.4's server-side gate and §8.5's constrained wording) — plus
+`POST /ask`, the only route in this release that may return prose, and `vsir ask` without
+`--explain`.
+
+**The machine is executed, not re-designed.** `runner/triage.py::TRANSITIONS` (U021) already
+declared every state and edge; `loop.py` is one method per state, each returning one of §8.1's
+signals, with the successor coming from `next_state()` — which **raises** on a pair it has no edge
+for. So safeguard 1 is not a line of code a later edit could reorder: there is no
+`(LOOK, INSUFFICIENT) → WIDEN` transition to reach, and widening is only reachable through
+`DRAIN_UNCERTAIN`.
+
+**The gate, in the three outcomes §8.4 names, per `(claim, page)`, unconditionally:**
+
+| verdict | what happens | badge |
+|---|---|---|
+| `present` | renders | `verified` |
+| `unverifiable` | renders | *read from image, not text-verified* |
+| `absent` | **the whole draft is rejected** — not the code, the draft | — |
+
+Four decisions in it are worth reading before changing anything:
+
+- **One `verify` call per `(claim, page)` pair, never one over the set.** §8.4's pseudocode is
+  literal here, so the call log answers *"was this code checked against the page it is cited
+  on?"* and not *"was it checked somewhere?"* — which is the question that lets a code from the
+  facing sheet through. The log ships **in the response** as `checks`, so a caller can hold us to
+  I8 without reading the prose.
+- **A rejection never echoes the code it rejected.** `Rejection` has no field for it: the page and
+  `present_instead` are enough to act on, and a body saying *"K152 is not printed on p019"* puts
+  the misread code in front of the reader in the one place they are reading for an answer. The
+  `(claim, page)` row survives in `checks` with its claim redacted, so the call stays auditable.
+- **The claims are the union of what `read` declared and what its sentence contains.** Gating the
+  model's `codes` list alone is I8 with a hole in it — a code that reached the prose and not the
+  list would render unchecked. One narrowing: a token of digits alone (*"Category 3"*,
+  *"stage 17"*) is not collected, because it is `present` on essentially any page of a technical
+  document and would put `3 — verified` beside a real part number. A **declared** code is checked
+  exactly as the model spelled it.
+- **A check that could not run is not a verdict** (`GateUnavailable`). Read as `absent` it would
+  reject good drafts during an outage; read as `unverifiable` it would badge an unchecked code as
+  *read from image* and render it. So the loop ends as the tool's own refusal — §7.1's *"`error`
+  means retry or report, and never abstain"* applied at the last possible moment.
+
+**Where the answer comes from, and why `/ask`'s route is always `read`.** §8.1a's default is
+`fetch` *"when the runner is itself a vision-capable model"* — and this runner is Python holding an
+envelope, so the default's own condition is false and `route.decide()` reports
+`caller_not_vision_capable`. The `fetch` route is not dead: a vision-capable caller takes it in
+**its own** context and posts the draft back as `{"draft": {...}}`, where the identical gate runs
+on it for free (`loop.gate_submitted`). That is what makes §8.4's *unconditional* mean something
+rather than being a claim about a branch nothing takes — Loop 1's automatic stamp lives inside
+`read`, so on the `fetch` route nothing checked those codes at all.
+
+**Demo output** — the plan's demo command is the pilot question (`TC1E-SF`, **OQ-1 still open**),
+so this is §17's documented fallback: the generated 42-page corpus, replayed, with the question
+the frozen `read` was recorded for. Boot-check JSON elided.
+
+```
+$ vsir ask "why won't the guard door interlock release when K119 is monitored"
+
+vsir ask — release dev-0
+   question  "why won't the guard door interlock release when K119 is monitored"
+   prompt    runner-v1 · sha256 e1cc7b09255c · 5 safeguard(s) bound · 8 tool(s) offered
+
+01 THE LOOP — §8.1, through the release's own dispatcher ─────────────────────
+    1  descend         lookup          --candidates-->
+       handle 'K119' → status ok · 1 page(s) print it · total 1
+    2  triage          triage          --look_set-->
+       1 candidate(s) → relevant 1 · uncertain 0 (the pool, retained) · irrelevant 0 · safeguard 2: ≤3 candidates, none filtered
+    3  look            route
+       read over ['synthetic-3window@1.0#p019'] · caller_not_vision_capable
+    4$ look            read            --sufficient-->
+       1 page(s) at the pinned dpi · sufficient true · 3 code(s) stamped · flags [] · 0 page(s) image-only
+    5  draft           draft           --candidates-->
+       218 character(s) from 1 page(s) · 3 claim(s) to check (3 declared by `read`)
+    6  verify          gate            --cleared-->
+       3 (claim, page) check(s) · rendered 3 · rejected 0 · badges ['verified']
+
+   tools called: ['lookup', 'read', 'verify', 'verify', 'verify']
+   correction loops fired: ['loop2_verify'] (of six)
+
+   ANSWER — route read · 1 paid read(s) · reads_remaining 49
+   citing synthetic-3window@1.0#p019
+
+   The guard door interlock stage releases only once B219 has closed and K119 is monitored on the
+   safe input channel SI4. The stop category is verified at commissioning and after every
+   replacement of that monitored relay.
+
+   code                badge                                 page
+   B219                verified                              synthetic-3window@1.0#p019
+   K119                verified                              synthetic-3window@1.0#p019
+   SI4                 verified                              synthetic-3window@1.0#p019
+
+02 THE GATE — every rendered code, checked against the page it is cited on (I8)
+   PASS  every code in the answer has a (claim, page) verification behind it
+         3 rendered · 3 check(s) made · missing —
+   PASS  no code the gate rejected appears anywhere in the output
+   PASS  the read budget was respected
+         1 read(s) against a ceiling of 3 (VSIR_READS_PER_QUESTION)
+
+ALL ASSERTIONS PASSED
+```
+
+**The failure branch, same corpus, same instance** — and it is the more important of the two,
+because it is I8 catching a real misread rather than clearing three good ones:
+
+```
+$ vsir ask "which contactor does the interlock relay K120 switch"
+
+    4$ look            read            --sufficient-->
+       1 page(s) at the pinned dpi · sufficient true · 3 code(s) stamped · flags ['unverified_codes']
+    6  verify          gate
+       5 (claim, page) check(s) · rendered 4 · rejected 1 · badges ['verified']
+    7  verify          gate            --contradicted-->
+       draft rejected — 1 claim(s) the check would not clear. Excluding the page(s) they were
+       cited on and trying a different page; not one word of that draft renders
+   …
+   15  vision_first    vision          --candidates-->
+       escalating to vision on ['…#p002', '…#p001'] — the pages the text search could not read
+   17$ look            read            --insufficient-->
+       2 page(s) at the pinned dpi · sufficient false · 0 code(s) stamped · flags ['no_text_layer']
+   20  descend         skim_pages      --empty_searchable-->
+       zoom 0 · scope {} → status not_found · 0 row(s) · total 0
+
+   correction loops fired: ['loop1_read_stamp', 'loop2_verify', 'loop4_different_page',
+                            'loop3_soft_rejection', 'loop5_vision_escalation']
+
+   ABSTAINED — rejected · 2 paid read(s) · reads_remaining 47
+
+   A draft answer was written from synthetic-3window and rejected: the codes it cited are not
+   printed on the pages it cited them from. 42 page(s) searched across 1 document(s). All 2
+   image-only page(s) in scope were examined, so this is not in these documents.
+
+   searched ['synthetic-3window'] · 42 page(s) · pages_no_text 2 · read 2 · unexamined 0
+   1 claim(s) were rejected by the gate — the codes they named are not printed on the pages they
+   were cited from, and neither the draft nor the codes appear above (§8.4)
+
+   PASS  the abstention names the coverage numbers and does not claim the corpus is exhausted
+         while image-only pages are unread (§8.5)
+         unexamined 0 · forbidden wording present: True
+```
+
+**Read that last line the right way round.** The sentence *"not in these documents"* is present and
+that is correct here: the loop rejected the draft, widened twice, and then **went and looked at
+both image-only pages** before concluding anything (Loop 5, two paid reads of the three it is
+allowed). §8.5 forbids the sentence while `pages_no_text_read < scope_stats.pages_no_text`; here
+they are equal, so the corpus really was searched. Ask the same question with those two pages in
+`exclude` and the same code composes the other wording instead — *"2 image-only page(s) in
+synthetic-3window were not examined"* — which is what `test_ask_replay.py`'s pair of abstention
+rows asserts.
+
+The model really did emit `K152` (a plausible misread of `K120`, and the ordinary way a vision
+model gets a character on a schematic wrong); `read` stamped it `absent` inside the tool (Loop 1),
+the gate rejected the draft that carried it (Loop 4), and the two codes the gate *had* cleared are
+not rendered either — the draft dies whole.
+
+**The milestone gate found one more, and it was the blocking kind.** M6's acceptance was
+verified against the implementation by a subagent before this unit was marked complete (plan §5),
+and it reported a hole in I8 on the one route the gate exists for. On the submitted-draft path
+`POST /ask` built the `Draft` from the caller's `claims` list **as given**, so a draft whose prose
+named a code its own claim list omitted was rendered with **zero** `verify` calls — on precisely
+the `fetch` route where §8.1a says Loop 1's automatic stamp never ran. The union of declared codes
+and prose codes (`claims_from`) was being applied after a `read` and nowhere else. It is now
+applied in `gate_submitted`, so both routes derive the claim set from the draft rather than
+accepting it, and `test_ask_replay.py::test_a_submitted_draft_is_gated_on_the_codes_in_its_prose…`
+submits a draft declaring **no** claims at all and asserts the gate still finds and rejects the
+misread. *A caller declaring its own claim set would have made the gate's coverage the caller's
+choice.*
+
+Three smaller findings from the same review, all fixed:
+
+- **§8.1's second empty branch was reachable from a descent and not from the end of the ladder.**
+  A question whose widest descent returned rows that triage rejected wholesale abstained while an
+  image-only page sat unexamined — honest in its wording (the abstention named the gap) and a
+  missed correction all the same. One edge added to §8.2's table,
+  `(WIDEN, EMPTY_NO_TEXT) → VISION_FIRST`, fires it once from the ladder's end; the demo's failure
+  branch now reads both scanned sheets before it concludes anything, which is why it is allowed to
+  say *"not in these documents"* at all.
+- **An abstention over a coverage that counted nothing claimed completeness.** §8.5's rule is an
+  inequality, and `0 < 0` is false, so a scope that searched no page passed it while asserting the
+  strongest thing this surface can say. It now says what is true — *"No page was searched, so
+  nothing follows about the corpus"*.
+- **A `500` on the `/ask` path reported `reads_remaining: 0`**, which is a plausible-looking lie
+  about the caller's quota on the one path where the loop did not get far enough to read it. It
+  asks the ledger, and omits the field if that fails too.
+
+Two of the review's ⚠ rows are **deliberate readings** rather than defects, and are recorded here
+so the next reader does not re-litigate them:
+
+- **`reads_remaining` is the per-caller quota of §7.3, not the per-question remainder.** §8.4 says
+  `VSIR_READS_PER_QUESTION` is *"reported as `reads_remaining`"* and §7.1 says the field is the
+  caller's quota; one name for one thing wins (the field means the same thing on all nine
+  surfaces), and the `429` body carries `reads` and `reads_per_question` beside it so the refusal
+  explains exactly which ceiling was hit.
+- **`reads_remaining` is absent from the `400`/`401` bodies.** A malformed request and a missing
+  credential are refused before the loop exists, and reading a budget for them would mean a store
+  call on an unauthenticated request. Every response the *loop* produces carries it.
+
+**One defect found by running it, before any test could.** The first implementation widened by
+dropping a key out of the scope dict, and the next descent asked the section rung for the same
+best row and put it straight back: a machine that narrowed exactly as fast as it widened, which
+`LoopBounded` caught after 32 moves on the first off-topic question. Widening is now a **zoom
+level** — both aggregate rungs, then the binder alone, then the caller's scope searched flat —
+and the caller's own scope is never widened away, because the caller asked for it (F8, C11).
+Three descents is the whole ladder, so termination is structural rather than hoped for.
+
+**Test evidence**
+
+| Layer | Command | Result |
+|---|---|---|
+| L0/L1 | `bash scripts/test-unit.sh` | **1365 passed** (+44: `test_answer_gate.py` 15, `test_abstention_wording.py` 18, and the conformance greps still green) |
+| L2/L3 | `bash scripts/test-api.sh -k "ask_replay or correction_loops or ask_near_miss"` | **36 passed** — 22 + 10 + 4 |
+| L2/L3 | `bash scripts/test-api.sh` (whole suite) | **1503 passed, 13 skipped** |
+| L4 | `VSIR_ALLOW_PAID=1 bash scripts/test-paid.sh -k ask_real` | written, **skipped without the opt-in** (module-level `pytest.skip`, §12.2) |
+
+The L2 suites in detail, because what they assert is the deliverable:
+
+- **`test_ask_replay.py`** — the worked trace in **exactly one paid read**, cross-checked against
+  the audit ledger's own `read` line; the trace's move order (`draft` before `verify`); the
+  `unverifiable` badge on a page with no text layer; a rejected draft rendering nothing and
+  leaking no code; the same claim gated identically on both routes; `429 budget_exhausted` at
+  `VSIR_READS_PER_QUESTION=1` **with the control that the same question answers at 3**; a mid-loop
+  store outage as `503 qdrant_unavailable` and never as an abstention; and
+  **`/ask` is the only route that may return prose**, asserted by resolving every operation's
+  published 200 schema and finding `Answer` in exactly one.
+- **`test_correction_loops.py`** — six independently named tests, one per loop of §8.3, each
+  firing from a crafted corpus state and each asserted to terminate well inside `MAX_MOVES`. Loop
+  3's *"pool before widening"* is asserted **on the call order**: the drain produced the second
+  look and no widening happened at all, because the pool answered.
+- **`test_ask_near_miss.py`** — all 100 `near_misses(n=100)` asked as questions: none answered,
+  none cited, and none disclosed as its own `present_instead` (F16). Two controls keep the row
+  from being green by paralysis — the real question still answers, and the one fake that a `read`
+  really did emit is stopped by the gate rather than by the fixture.
+
+**Fixture additions** (`vsir.eval.synthetic_pdf.READ_CASES`, regenerated with
+`python -m vsir.eval.synthetic_pdf`; the PDF's bytes and every pre-existing key are unchanged and
+`expected.json`'s diff is purely additive): seven frozen `read` responses for page sets the **loop
+chooses on its own** —
+
+| case | pages | why the loop asks for exactly these |
+|---|---|---|
+| `ask_answer` | 19 | `K119` is printed there and nowhere else: the worked trace, one read |
+| `ask_insufficient` | 3, 7, 11 | `SI4`'s first three pages, which do not answer — Loop 3's trigger |
+| `ask_pool` | 15, 19, 23 | the three the read cap deferred, drained **before** widening |
+| `ask_widened` | 2 | the only candidate left after two widenings: a page with no text layer |
+| `ask_widened_cover` | 1 | the last unexamined image-only page, looked at before concluding |
+| `ask_rejected` | 20 | a sufficient read naming `K152`, which the gate rejects (I8) |
+| `ask_vision` | 2, 1 | Loop 5's escalation, in the dense order the blind-spot skim returns |
+
+Each question names a printed code, so the handle branch settles the page set on the **exact
+surface** rather than on a dense ranking — which is the only reason a whole-loop test can be free
+and reproducible. Reword one and replay is a typed `fixture_miss`, which is D10 working. The two
+image-only cases are the ones worth reading: they are what makes the abstention able to say the
+corpus was *searched*.
+
+**Invariants / failure rows closed:** **I8** — the server-side answer gate, per `(claim, page)`,
+on both routes, asserted by
+`test_a_draft_carrying_an_unverified_code_is_rejected_and_not_rendered` and
+`test_the_gate_runs_on_the_fetch_route_exactly_as_it_does_on_the_read_route`. M6 owns no failure
+row (§10's *"Closed at"* column); it owns the invariant that makes every earlier guard reach the
+answer.
+
+**Notes and deviations**
+
+- **The demo question is not the plan's.** OQ-1 is still open, so `TC1E-SF` and *"the carton
+  discharge won't restart after an E-stop reset"* have no corpus behind them. §17's fallback is
+  the generated corpus, and on it the question has to name a code the corpus prints — otherwise
+  the page set comes from a dense ranking and no frozen `read` can be keyed to it. The plan's
+  question runs unchanged the day the pilot PDF lands, with a fixture case recorded from that
+  ingest.
+- **`POST /ask` accepts a `draft`, which the plan does not mention.** It is the shipped form of
+  §8.1a's `fetch` route: without it, the *"the agent looks"* half of the spec has no way to reach
+  the gate, and an agent that looked at a raster itself would have to render its own codes with
+  nothing checking them — the exact failure §8.4 is server-side to prevent. It searches nothing
+  and spends nothing.
+- **The eight MCP tools are still eight** (§7.5). `ask` is deliberately **not** an MCP tool: an
+  MCP client *is* the agent, so it drives the ladder with the system prompt and brings its draft
+  back through `POST /ask` to be gated.
+- **`vsir ask --explain` is unchanged** and still spends nothing; the answer path is the same
+  command without the flag.
+- **§11.2's *"zoom-and-re-read"* is a `fetch`-route affordance, and the loop does not have it.**
+  `read` renders one pinned dpi and has no `region` (§7.2.6), so nothing the server-side loop can
+  do amounts to a zoom. What it does instead is exactly §8.4's pseudocode: a code on a page whose
+  `text_trust` is not `ok` comes back `unverifiable` and renders **with the badge**, which is the
+  clause §11.2's own row ends on. A caller that wants the zoom takes the `fetch` route, crops at
+  300/400, and posts the draft back to be gated.
+- **Follow-up (not blocking):** a refusal body carries `reads_remaining` and the typed error but
+  **not** the trace, so a caller that hits a mid-loop outage cannot see how far the loop got. The
+  moves are on the event stream (§11.4) and the console will read them from there; putting them
+  in the refusal body would widen `ErrorResponse` for every surface, so it is a deliberate
+  omission rather than an oversight.
+
+---
+
+## Milestone gate — M6 (`cr1-m6`)
+
+**Demo command (Spec §0):** `VSIR_ALLOW_PAID=1 vsir ask "<question>"` — run twice, on the answer
+branch and the failure branch, output recorded in the U022 entry above. **The question is not the
+spec's**: `TC1E-SF` and *"the carton discharge won't restart after an E-stop reset"* have no corpus
+behind them while OQ-1 is open, so this is §17's documented fallback — the generated 42-page
+corpus, replayed, asked a question that names a code the corpus prints. Nothing else about the
+demo is substituted: the loop, the paid step, the gate and the abstention are the shipped ones,
+and the run spends nothing because `read` is served from a response frozen under exactly the key
+the call was made with (D10).
+
+**Acceptance (Spec §13 M6), verified against the implementation by a subagent, ✓/✗ with evidence:**
+
+| # | Clause | | Evidence |
+|---|---|---|---|
+| 1 | On the worked trace the loop completes in **exactly one paid `read`** | ✓ | Budget decremented in one place (`runner/loop.py::look`), ceiling at `budget_left`. Asserted two independent ways: `payload["reads"] == 1` **and** one `spends` move in the trace (`tests/api/test_ask_replay.py::test_the_worked_trace_answers_in_exactly_one_paid_read`), cross-checked against §7.4's audit ledger (`::test_the_read_call_count_is_one_in_the_audit_log_too`) |
+| 2 | …and cites `p001–p002` | ⚠ **substituted** | The worked trace runs on `synthetic_3window` and cites `p019`: `K119` is printed there and nowhere else, which is what makes the page set a function of the corpus rather than of a ranking. The literal `p001–p002` belongs to `TC1E-SF` and lands with OQ-1 (plan §"Risk (OQ-1/OQ-2)") |
+| 3 | `VSIR_READS_PER_QUESTION` (default 3) is the hard ceiling for the general case | ✓ | `config.py` default `"3"`, `minimum=1`; `loop.py::budget_left` takes the **lower** of it and the caller's quota, so no route exists past it and the refusal is `429 budget_exhausted` — never a silent extra call. `test_ask_replay.py::test_the_per_question_ceiling_refuses_rather_than_answering_from_pages_that_did_not_answer`, with the control that the same question answers at 3 |
+| 4 | The failure branch abstains **with coverage numbers** and never says *"not in these documents"* while unread image-only pages remain | ✓ | `runner/answer.py::abstention` composes three clauses and calls `assert_wording` on **every** path; the guard raises rather than asserting, so `python -O` cannot strip it. Both directions asserted over HTTP: `test_the_abstention_names_the_coverage_numbers` (both blind pages read → the sentence is available and earned) and `test_the_abstention_cannot_claim_the_corpus_is_exhausted_while_a_page_is_unexamined` (the same question with those pages excluded → the sentence is absent) |
+| 5 | A draft containing an unverified code is **rejected, not rendered** (I8) | ✓ *after a fix* | `answer.py::gate` rejects and `Gated.answer()` raises rather than rendering; one rejection discards the whole draft. **The gate review found this held only for declared codes on the submitted-draft route** — see the U022 entry: the claim set is now re-derived from the draft on both routes, and `test_a_submitted_draft_is_gated_on_the_codes_in_its_prose_not_on_the_ones_it_declared` submits a draft with an empty claim list and asserts the misread is still found and refused |
+
+**The seven invariants and refusals checked separately, all ✓:** I8 is per `(claim, page)` with one
+`verify` call per pair and no flag, no config key and no parameter that could bypass it; an error
+is never an abstention (`abstained` requires `refusal is None`, and the loop breaks on any
+refusal); §7.6's four refusals hold (no `score` in any response model, no tool picks the document,
+only the runner composes and only behind the gate, no fuzzy matching anywhere in `runner/`); the
+suite's own AST scan finds **no** module-level mutable state in `runner/`, no local-disk state, no
+`if TESTING`, no test-only import and no session store — `Loop` is constructed at exactly two
+sites, both per call; and **the MCP surface is still exactly the eight tools of §7.2** — the runner
+is a *caller* of them and not a ninth, asserted as a set equality rather than a count.
+
+**Three further findings from the review, fixed in this unit** (the missing
+`(WIDEN, EMPTY_NO_TEXT) → VISION_FIRST` edge, an abstention claiming completeness over a coverage
+that counted nothing, and a `500` reporting `reads_remaining: 0`) and **two deliberate readings
+recorded rather than changed** (`reads_remaining` is §7.3's per-caller quota on all nine surfaces;
+it is absent from the `400`/`401` bodies, which are refused before the loop exists). All five are
+written up in the U022 entry.
+
+---
+
+### U023 — The operator console: viewer, agent panel, trust badges
+
+**Milestone:** M7 · **Spend:** none (fixture-backed replay) · **Status:** `[x]` Complete ·
+**Completed:** 2026-09-11
+
+The console is the first thing in this project a person looks at rather than reads, and its job is
+narrow: make the loop legible without becoming a second place where the contract is declared. Two
+zones. **Left** is the zoom ladder — `corpus → binder → chapter → page`, then a normalised crop at
+escalated dpi, which §7.3 makes the *same* gesture as escalating rather than a second control.
+**Right** is the agent — collapsible moves, the tri-state triage table, the badged draft, and the
+gate's own call log.
+
+**The backend half shipped with it**, because plan §4c **P7** found U023's triage requirement
+unsatisfiable by a frontend-only change: before this unit the only triage a caller could see was
+one prose sentence inside a trace `Move.detail`, and the `exclude` set's page ids were not in the
+response body at all. A console that regexed that sentence would be a second declaration of §8.2's
+contract in a language that cannot fail a test when the sentence is reworded. So `Outcome` now
+carries a typed `TriageTable` / `TriageRow` and `AskResponse` an additive `triage` field — no new
+tool, no second dispatcher, no change to any existing field, and no `score` (§7.6).
+
+**Demo output** — the plan's demo command is
+`VSIR_VLM=stub VSIR_FIXTURE=… vsir serve & npm --prefix frontend run dev`. Port 8000 was occupied
+by an unrelated process on this machine, so the dev server was pointed at the replay-mode stack on
+8055 instead — `VITE_API_URL=http://localhost:8055 npm --prefix frontend run dev`. That is the
+same arrangement, and it is the one §15 Factor III makes configuration rather than a literal.
+
+Everything below went **through the console's own origin on `:5173`**, i.e. through the Vite proxy
+the app actually uses, not directly to the API:
+
+```
+$ curl -s http://localhost:5173/health                     # same-origin, no CORS boundary
+{"status":"ok","release_id":"dev","version":"0.1.0"}
+
+$ POST /tools/skim_documents  {"query":"pressure sensor"}  # the binder rung
+status: ok | hits: 3
+  SICK-DETECTOR-BOX   matched=47 ratio=1.00 thumb=/pages/SICK-DETECTOR-BOX@1.0%23p024/image?dpi=72
+  BES0068-LIVE        matched=2  ratio=1.00 thumb=/pages/BES0068-LIVE@1.0%23p002/image?dpi=72
+  BES0068-Datasheet   matched=2  ratio=1.00 thumb=/pages/BES0068-Datasheet@2.0%23p002/image?dpi=72
+bytes_b64 anywhere in payload: False
+
+$ GET /pages/SICK-DETECTOR-BOX@1.0%23p024/image?dpi=72     # the card's one extra call
+HTTP 200  image/png  70702 bytes   -> PNG image data, 596 x 792, 8-bit/color RGB
+  ... the same GET with no bearer token                    -> HTTP 401
+
+$ GET /pages/SICK-DETECTOR-BOX@1.0%23p024/image?dpi=400    # the request the console cannot make
+{"error":"dpi_requires_region","detail":"dpi 400 exceeds 220 and requires a region: detail that
+ fine is about part of a page, and a full page at this dpi is megapixels of raster",
+ "tool":"page_image","requested":400,"region_required_above":220}
+```
+
+And one question end to end, replayed, through the same proxy:
+
+```
+$ POST /ask {"question":"why won't the guard door interlock release when K119 is monitored",
+             "scope":{"doc_id":"synthetic-3window"}}
+
+status: answered | route: read | reads: 1 | remaining: 42 | loops: ['loop2_verify']
+
+--- trace: the collapsible moves the right zone renders ---
+  01 descend   lookup                 -> candidates
+  02 triage    triage                 -> look_set
+  03 look      route                  ->
+  04 look      read            SPENDS -> sufficient
+  05 draft     draft                  -> candidates
+  06 verify    gate                   -> cleared
+
+--- triage: the typed table this unit added (the field was absent before it) ---
+  query = "why won't the guard door interlock release when K119 is monitored"   small_set = True
+    synthetic-3window@1.0#p019  relevant  exact_hit  rank=1  why=lexical  matched=['k119']
+  exclude (0) = []
+  exclude == the `irrelevant` ids     : True
+  the `uncertain` pool is not excluded: True
+
+--- the badged draft the left zone links to ---
+  The guard door interlock stage releases only once B219 has closed and K119 is monitored on the
+  safe input channel SI4. The stop category is verified at commissioning and after every
+  replacement of that monitored relay.
+    B219  present  'verified'  -> synthetic-3window@1.0#p019
+    K119  present  'verified'  -> synthetic-3window@1.0#p019
+    SI4   present  'verified'  -> synthetic-3window@1.0#p019
+  warnings: (none — every rendered code was text-verified)
+
+--- the gate call log ---
+    claim='B219'  page=synthetic-3window@1.0#p019  present
+    claim='K119'  page=synthetic-3window@1.0#p019  present
+    claim='SI4'   page=synthetic-3window@1.0#p019  present
+
+no "score" in body : True
+no bytes_b64       : True
+```
+
+`npm --prefix frontend run build` → `tsc --noEmit` clean, then `86 modules transformed`,
+`dist/assets/index-*.js 285.13 kB │ gzip: 87.36 kB`, built in 317 ms.
+
+**Tests.** `bash scripts/test-unit.sh` → **1413 backend passed**, **158 frontend passed (16
+files)**, `tsc --noEmit` clean, **Layer 0/1 PASSED**. `bash scripts/test-api.sh` → **1513 passed,
+13 skipped** in 6:27, including `test_ask_triage_table.py`'s six cases: the rows agree with the
+counts the trace's own move printed, every row carries the §8.2 rule and the terms it was matched
+on, `exclude` is the `irrelevant` ids and never the `uncertain` pool, the page the `read` was spent
+on is a `relevant` row, a submitted draft has `null` rather than an empty table, and the table
+carries no page text and no image bytes.
+
+**Invariants / failure rows closed:** none — M7 asserts no invariant and closes no failure row
+(Spec §9, §10). The console **renders** I8's outcome; it does not enforce it.
+
+**What is where**
+
+| Path | What |
+|---|---|
+| `frontend/src/api/{types,requests,client}.ts` | the wire, typed; every tool under its U031 route; `inline:false` pinned in one place |
+| `frontend/src/lib/badges.ts` | the badge mapping — the file the console exists for |
+| `frontend/src/lib/{dpi,ladder,strip,citations,window}.ts` | §7.3's bounds, the ladder, strip rows, the citation target, the windowing maths — all pure |
+| `frontend/src/lib/source-scan.ts` | the lexical scanner the §16 conformance test uses |
+| `frontend/src/components/Viewer/*` | breadcrumbs, the raster + region zoom, the virtualized strip |
+| `frontend/src/components/AgentPanel/*` | moves, the triage table, the badged draft, the abstention |
+| `frontend/src/hooks/*` | the raster's object-URL lifetime, the ask mutation, the three rung queries |
+| `frontend/src/styles.css` | **the only file allowed to name a colour** |
+| `backend/vsir/runner/loop.py` | `TriageRow` / `TriageTable` on `Outcome` (the backend half of P7) |
+| `backend/vsir/serve/app.py` | the additive `triage` field on `AskResponse` |
+| `backend/tests/unit/test_frontend_client_contract.py` | 33 response models + 8 request bodies, compared field for field |
+
+**Notes**
+
+- **Two defects found by running it, and neither was visible to a green suite.** The first is the
+  interesting one. `GET /documents`' row type was declared in `client.ts` instead of `types.ts` —
+  *outside* the file the contract test reads — and every field of it was wrong: a `title` and a
+  `grounded_rate` the route has never sent, and no `revisions` array, which is the one thing that
+  row exists to carry (§6.7 **keeps** superseded revisions rather than deleting them). Nothing
+  consumed it yet, so nothing broke. The lesson is structural rather than local: *a type outside
+  the checked file is an unchecked type*, so both shapes moved into `types.ts` and the contract
+  test's ledger is now exhaustive at 33 models. The second: `tsc --noEmit` had been failing on
+  `vite.config.ts` (`Cannot find name 'process'`) since the scaffold landed, and `vitest` was
+  exiting 1 with *"No test files found"* — `scripts/test-unit.sh` had been reporting **Layer 0/1
+  FAILED** for both. Fixed without adding `@types/node`: one ambient `declare const process` for
+  the single global that file touches.
+
+- **The contract test is a substitution for the code generator the plan's risk register asked
+  for**, and a deliberate one. A generator copies the service's shape into the client, so it can
+  only ever catch a field the service *added*; it is blind to a field the console believes in that
+  the service has never sent — which is precisely the defect above. Comparing the two shapes fails
+  on either side. The limit is honest: it is a **field-name** comparison, not a type one, because
+  `tsc` already holds the frontend to its own declarations.
+
+- **The `any` scan is a lexical scan, not an AST walk.** TypeScript 7 is the native compiler and no
+  longer ships the JavaScript `createSourceFile` API; its replacement (`typescript/unstable/ast`)
+  is unstable and, at 7.0.2, hangs when driven from Node here. ESLint is not a dependency (§4.2),
+  and there is no compiler flag that bans a *written* `any`. So `lib/source-scan.ts` strips
+  comments and literals and looks for the keyword in what is left — which is exactly the
+  discrimination the rule needs, since half the files in `lib/` discuss "any" in prose. It is
+  tested in both directions, because a conformance check that quietly stops finding things is
+  worse than none.
+
+- **A raster is fetched, never `<img src>`-ed.** Every route is bearer-authenticated including the
+  page images (demonstrated above: `401` without a token), and an `<img>` sends no `Authorization`
+  header. The alternative would be a token in the query string, which lands in every access log
+  and every referrer. `hooks/useRaster.ts` fetches with the header and mints an object URL; React
+  Query holds the `Blob` and the effect owns the `URL`, so neither half outlives the other.
+
+- **`trust` is left `null` on a cited page rather than guessed.** `AskResponse` carries page ids
+  and no `text_trust`, and the tempting inference — *"this claim came back `unverifiable`, so the
+  page must be a scan"* — is very often true and still an invention: `unverifiable` has three
+  causes (§5.7), and the body did not say which. A missing badge says *"not known here"*; a
+  guessed one would say *"scan"* about a page that may simply be superseded.
+
+- **The dpi resets when you climb.** `climbTo` clears the crop **and** the escalated dpi along with
+  the page they were made on. Carrying them would render the next page's corner at 400 dpi
+  successfully — a failure that looks like a success, which is the class this project spends most
+  of its effort on. It is the same defect U022 recorded in the runner ("widening by dropping a
+  scope key was undone by the next descent") with a mouse attached.
+
+- **Replay is keyed on the question *and* the page set.** Three of the demo questions came back
+  `fixture_miss`, which is correct behaviour, not a gap in this unit: `read_key` includes the
+  question verbatim and the pages the read was spent on, and the local stack has since been seeded
+  with `CELL-B-BINDER` and `SICK-DETECTOR-BOX` alongside `synthetic-3window`, so an unscoped skim
+  now ranks pages the fixture was never frozen against. Scoping to `doc_id: synthetic-3window` with
+  a frozen question replays. **U024 should scope its Playwright fixtures the same way** rather than
+  relying on an unscoped question, or its assertions will drift the next time the demo corpus
+  changes.
+
+- **Deferred to U024, correctly:** `frontend/Dockerfile` and the Playwright specs are U024's
+  deliverables. `docker-compose.test.yml` already declares `frontend-test` (`5174 → 5173`) behind
+  the `e2e` profile, pointing at the Dockerfile U024 writes, so `docker compose up -d` does not
+  fail on a build context that does not exist yet.

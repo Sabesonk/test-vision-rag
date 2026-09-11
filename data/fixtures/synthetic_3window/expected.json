@@ -228,6 +228,194 @@
         ],
         "sufficient": true
       },
+      "ask_answer": {
+        "cache_key": "487c2880450501ad91045f2d0dd185c479cc960cdb2020e475d7802364cf2c3d",
+        "codes": [
+          "B219",
+          "K119",
+          "SI4"
+        ],
+        "extract": "The guard door interlock stage releases only once B219 has closed and K119 is monitored on the safe input channel SI4. The stop category is verified at commissioning and after every replacement of that monitored relay.",
+        "flags": [],
+        "pages": [
+          19
+        ],
+        "question": "why won't the guard door interlock release when K119 is monitored",
+        "stamps": [
+          {
+            "pages": [
+              19
+            ],
+            "present_instead": [],
+            "raw": "B219",
+            "status": "present"
+          },
+          {
+            "pages": [
+              19
+            ],
+            "present_instead": [],
+            "raw": "K119",
+            "status": "present"
+          },
+          {
+            "pages": [
+              19
+            ],
+            "present_instead": [],
+            "raw": "SI4",
+            "status": "present"
+          }
+        ],
+        "sufficient": true
+      },
+      "ask_insufficient": {
+        "cache_key": "0e5064280f0ad20d3de13bb2603203da533d0f44076d1739e9aac4ee233cff50",
+        "codes": [],
+        "extract": "",
+        "flags": [],
+        "pages": [
+          3,
+          7,
+          11
+        ],
+        "question": "what must be true before the guard door interlock stage releases on SI4",
+        "stamps": [],
+        "sufficient": false
+      },
+      "ask_pool": {
+        "cache_key": "23d8f74df7b15f863d965fe2acb5e00fa9f0cffd5697c1bc2c9578342783b810",
+        "codes": [
+          "B219",
+          "K119",
+          "SI4"
+        ],
+        "extract": "Of these three sheets it is the guard door interlock stage that carries the condition: B219 must close before K119 is monitored on the safe input channel SI4. The emergency stop chain and the two-hand control sheets add none.",
+        "flags": [],
+        "pages": [
+          15,
+          19,
+          23
+        ],
+        "question": "what must be true before the guard door interlock stage releases on SI4",
+        "stamps": [
+          {
+            "pages": [
+              19
+            ],
+            "present_instead": [],
+            "raw": "B219",
+            "status": "present"
+          },
+          {
+            "pages": [
+              19
+            ],
+            "present_instead": [],
+            "raw": "K119",
+            "status": "present"
+          },
+          {
+            "pages": [
+              15,
+              19,
+              23
+            ],
+            "present_instead": [],
+            "raw": "SI4",
+            "status": "present"
+          }
+        ],
+        "sufficient": true
+      },
+      "ask_rejected": {
+        "cache_key": "ebcae686abb19de03e58307ff541579b765b48cddfed420d7bfc4eeeda4b840e",
+        "codes": [
+          "K120",
+          "Q70",
+          "K152"
+        ],
+        "extract": "The interlock relay K120 switches contactor Q70, a TELEMECANIQUE LC1-D38BL, and the same sheet lists K152 on the safe input channel.",
+        "flags": [
+          "unverified_codes"
+        ],
+        "pages": [
+          20
+        ],
+        "question": "which contactor does the interlock relay K120 switch",
+        "stamps": [
+          {
+            "pages": [
+              20
+            ],
+            "present_instead": [],
+            "raw": "K120",
+            "status": "present"
+          },
+          {
+            "pages": [
+              20
+            ],
+            "present_instead": [],
+            "raw": "Q70",
+            "status": "present"
+          },
+          {
+            "pages": [
+              20
+            ],
+            "present_instead": [
+              "k120"
+            ],
+            "raw": "K152",
+            "status": "absent"
+          }
+        ],
+        "sufficient": true
+      },
+      "ask_vision": {
+        "cache_key": "86963a0589fc97efd87246ac9f19a8ccde88fdb4106628b6342924eb56baf73e",
+        "codes": [],
+        "extract": "These two sheets are the photocopied notice and the scanned cover of the manual. Neither of them names a contactor or an interlock relay.",
+        "flags": [
+          "no_text_layer"
+        ],
+        "pages": [
+          2,
+          1
+        ],
+        "question": "which contactor does the interlock relay K120 switch",
+        "stamps": [],
+        "sufficient": false
+      },
+      "ask_widened": {
+        "cache_key": "9fe8c2d3112fc6cf074fb883da49fd5e1cb61101fa9f56f7d1e1fb0799ff2ddf",
+        "codes": [],
+        "extract": "This sheet is a photocopied notice with no text layer. It says nothing about a hydraulic accumulator or a precharge procedure.",
+        "flags": [
+          "no_text_layer"
+        ],
+        "pages": [
+          2
+        ],
+        "question": "hydraulic accumulator bladder precharge procedure",
+        "stamps": [],
+        "sufficient": false
+      },
+      "ask_widened_cover": {
+        "cache_key": "08f04ffe9541c847713f87c9d0db07bb9400b788871b355c613f6fbf0d9348f9",
+        "codes": [],
+        "extract": "This is the scanned cover sheet of the manual. It names the manual and its revision and says nothing about a hydraulic accumulator or a precharge procedure.",
+        "flags": [
+          "no_text_layer"
+        ],
+        "pages": [
+          1
+        ],
+        "question": "hydraulic accumulator bladder precharge procedure",
+        "stamps": [],
+        "sufficient": false
+      },
       "scanned": {
         "cache_key": "a0df54b9ed872ef057b5fbeefde9e741465a61e5080d5373965c514d034093ef",
         "codes": [

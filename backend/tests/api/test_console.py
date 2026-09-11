@@ -81,7 +81,20 @@ def test_the_console_sends_the_token_as_a_bearer_header_and_never_in_a_url(page)
 
 # ── it does not duplicate the contract ──────────────────────────────────────────────────────────
 
-def test_the_console_hard_codes_no_tool_parameter(page):
+def tool_form_source(page: str) -> str:
+    """Just the code that builds and submits a tool form.
+
+    Scoped deliberately. A whole-script scan is the wrong test and fails on things that are not
+    the defect: `class="cap"` is CSS and not `lookup`'s `cap`, and `doc_id`, `dpi` and `region`
+    are query parameters of `GET /runs` and `GET /pages/{page_id}/image` — routes whose
+    parameters live in the path, not in a tool body. What must not be hand-written is the part
+    that turns a tool's **schema** into inputs.
+    """
+    start = page.index("function pickTool")
+    return page[start:page.index("// ── API", start)]
+
+
+def test_the_tool_forms_hard_code_no_tool_parameter(page):
     """The property that makes "self-documenting" true rather than claimed.
 
     The eight tools have nothing in common in their parameters, so a hand-written form per tool
@@ -90,13 +103,23 @@ def test_the_console_hard_codes_no_tool_parameter(page):
     schema instead, which is also the honest test of that schema: if it were not good enough to
     build a UI from, this page could not exist.
     """
-    script = page[page.index("<script>"):]
+    source = tool_form_source(page)
     written = [field for field in TOOL_PARAMETERS
-               if f'"{field}"' in script or f"'{field}'" in script]
+               if f'"{field}"' in source or f"'{field}'" in source]
 
     assert not written, (
-        f"these tool parameters are written into the console: {written}. Its forms are supposed "
-        f"to come from /openapi.json — see `pickTool`.")
+        f"these tool parameters are written into the form builder: {written}. It is supposed to "
+        f"read them from /openapi.json — see `pickTool`.")
+
+
+def test_the_form_builder_reads_the_schemas_own_properties(page):
+    """The mechanism, named — so it cannot be quietly replaced by a literal that passes the test
+    above by listing nothing."""
+    source = tool_form_source(page)
+
+    assert "properties" in source and "Object.entries" in source
+    assert "required" in source, "a required field must be marked as one"
+    assert "spec.description" in source, "each field's own documentation becomes its help text"
 
 
 def test_the_console_reads_the_schema_and_the_index_to_build_its_forms(page):
@@ -119,11 +142,14 @@ def test_the_console_takes_the_ladder_order_from_the_service_index(page):
 def test_every_path_the_console_calls_is_a_path_the_api_serves(page, schema):
     """A console that drifts shows an operator a 404 and calls it an empty corpus."""
     served_paths = set(schema["paths"])
-    # The literal paths it fetches, less the templated ones it builds at run time.
-    called = {"/documents", "/runs", "/openapi.json", "/", "/ready"}
+    # The literal API paths it fetches, less the templated ones it builds at run time.
+    # `/openapi.json` is deliberately absent: it is the document itself, and FastAPI does not
+    # describe its own description route as an operation.
+    called = {"/documents", "/runs", "/", "/ready"}
 
     missing = {path for path in called if path not in served_paths}
     assert not missing, f"the console calls paths the API does not serve: {sorted(missing)}"
+    assert "/openapi.json" in page, "and it does read the document itself"
 
 
 def test_the_console_links_only_to_documentation_that_is_free(page, schema):
@@ -165,10 +191,34 @@ def test_the_console_marks_the_one_tool_that_spends(page):
     assert "spends money" in page
 
 
-def test_the_console_reads_the_gate_field_that_exists(page):
-    """`GateResult` declares `passed`. The previous console read `pass`, which is always
-    undefined — so every gate of every run rendered as a failure."""
+def test_the_console_reads_the_gate_field_the_wire_actually_carries(page):
+    """`GateResult` declares `passed` in Python and `as_dict()` renames it to **`pass`**.
+
+    Worth a test precisely because the Python attribute and the wire field disagree: reading
+    `passed` off a run record yields `undefined`, which is falsey, so every gate of every run
+    would render as a failure — a published document reported as one that failed its gates.
+    """
+    from vsir.ingest.gates import GateResult
+
+    script = page[page.index("<script>"):]
+    wire = GateResult(name="g", passed=True, blocking=True, detail="").as_dict()
+
+    assert "pass" in wire and "passed" not in wire, "the wire name moved; the console must follow"
+    assert "gate.pass" in script
+    assert "gate.passed" not in script
+
+
+def test_the_console_treats_an_early_run_not_found_as_starting(page):
+    """`POST /documents` mints the `run_id` in the route and answers `202` **before** the child
+    process starts, so the first poll routinely arrives before the run record exists.
+
+    Reporting that `404` as a failure was wrong twice over: it is the expected state for the first
+    second or two, and giving up on it *stopped the watch* — so a run that went on to fail for a
+    real reason showed the operator `run_not_found` instead of the actual cause. Observed on a
+    live 56-page ingest whose real failure was at step 09.
+    """
     script = page[page.index("<script>"):]
 
-    assert "gate.passed" in script
-    assert "gate.pass;" not in script and "g.pass;" not in script
+    assert "RUN_APPEARS_WITHIN_MS" in script
+    assert 'failure.code === "run_not_found"' in script
+    assert "starting" in script

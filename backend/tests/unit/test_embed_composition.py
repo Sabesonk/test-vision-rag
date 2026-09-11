@@ -12,6 +12,9 @@ thing the previous implementation got wrong here was not the model call but what
 """
 from __future__ import annotations
 
+import contextlib
+import time
+
 from types import SimpleNamespace
 from typing import Any, Sequence
 
@@ -580,3 +583,65 @@ def test_the_corpus_composition_carries_the_document_title_first(synthetic_pdf, 
 
     assert facts.title
     assert embedding.compositions[0].parts[0] == facts.title
+
+
+# ── the lazy SDK client is built once, under concurrency ────────────────────────────────────────
+
+def test_one_sdk_client_is_built_no_matter_how_many_threads_ask_at_once():
+    """The race that failed a live 56-page ingest at step 09 (2026-09-11).
+
+    `embed_pages` fans batches over a pool of `EMBED_CONCURRENCY` workers, and `_client()` was an
+    unguarded ``if self._sdk_client is None``. Two threads both saw ``None``, both built a client,
+    and the second assignment orphaned the first — whose `httpx` transport then closed under the
+    thread still using it: `RuntimeError: Cannot send a request, as the client has been closed`.
+
+    Invisible below `EMBED_BATCH_SIZE` pages, because one batch is one worker. That is why a green
+    suite and a two-page live run both missed it, and it is why this test drives the threads
+    directly rather than going through a document.
+    """
+    import threading
+    from concurrent.futures import ThreadPoolExecutor
+
+    built: list[object] = []
+    barrier = threading.Barrier(8)
+
+    embedder = gemini()
+
+    def build() -> object:
+        # Every thread arrives at the check together, which is the only way to make the
+        # unguarded version fail reliably rather than one run in ten.
+        barrier.wait()
+        client = embedder._client()
+        built.append(client)
+        return client
+
+    with monkeypatched_genai(built_count := []):
+        with ThreadPoolExecutor(max_workers=8) as pool:
+            clients = list(pool.map(lambda _: build(), range(8)))
+
+    assert len({id(client) for client in clients}) == 1, \
+        "every thread must get the same client instance"
+    assert len(built_count) == 1, \
+        f"the SDK client was constructed {len(built_count)} times; it must be built exactly once"
+
+
+@contextlib.contextmanager
+def monkeypatched_genai(record: list):
+    """Count `genai.Client(...)` constructions without opening a transport."""
+
+    class FakeClient:
+        def __init__(self, **kwargs):
+            # A real `genai.Client` builds an `httpx` transport, which is slow enough that
+            # several threads sit inside this constructor at once. The sleep restores that
+            # window: without it the check-and-assign is effectively atomic under the GIL for a
+            # trivial `__init__`, and the test passes even with the lock removed — which is to
+            # say it would assert nothing. Verified both ways.
+            time.sleep(0.02)
+            record.append(self)
+
+    original = embed_module.genai.Client
+    embed_module.genai.Client = FakeClient
+    try:
+        yield
+    finally:
+        embed_module.genai.Client = original

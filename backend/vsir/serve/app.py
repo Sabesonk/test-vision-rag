@@ -111,6 +111,8 @@ from vsir.serve.tools.skim import skim_documents as skim_documents_tool
 from vsir.serve.tools.skim import skim_pages as skim_pages_tool
 from vsir.serve.tools.skim import skim_sections as skim_sections_tool
 from vsir.serve.tools.verify import verify as verify_tool
+from vsir.runner import answer as answer_module
+from vsir.runner import loop as loop_module
 from vsir import vlm as vlm_module
 from vsir.vlm.cache import VlmCallFailed, VlmError, VlmUnavailable
 
@@ -244,6 +246,120 @@ class ControlError(errors.ErrorResponse):
     run_id: str = Field(
         default="",
         description="The run the refusal is about, where the request named one.")
+
+
+class SubmittedDraft(BaseModel):
+    """A draft the **calling agent** wrote, submitted to be gated (§8.1a's `fetch` route).
+
+    This is how a vision-capable caller honours I8. It took the free route — `fetch`ed the
+    rasters and looked at them in its own context — so Correction Loop 1, the automatic per-code
+    stamp that lives inside `read`, never ran: it has read codes off a picture with nothing
+    checking them (§8.1a). Sending the draft here runs the identical gate over it, per
+    `(claim, page)`, before one word is rendered.
+
+    There is no ``route`` field and no ``sufficient`` field to set. The route is `fetch` by
+    construction — a draft that arrives already written was written by whoever looked — and
+    sufficiency is a statement `read` makes about pages it was given, not something a caller
+    asserts about its own draft.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    text: str = Field(description="The draft answer, in the words it should be rendered in. "
+                                  "Never rewritten by this service (§7.6).")
+    claims: list[answer_module.Claim] = Field(
+        default_factory=list,
+        description="Every code the draft asserts, with the page(s) it is cited on. Codes found "
+                    "in `text` but not listed here are gated too — the union is what is checked.")
+    pages: list[str] = Field(default_factory=list,
+                             description="The pages the draft was written from — its citations.")
+
+
+class AskRequest(BaseModel):
+    """`POST /ask` — a question for the runner, or a draft for the gate.
+
+    ``extra="forbid"`` for the reason every request model here does it: a misspelt parameter that
+    was silently ignored is how a caller is told, with a straight face, that the corpus does not
+    contain what they asked about.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    question: str = Field(description="The question, as a person would ask it. A printed code in "
+                                      "it is split out and matched exactly rather than embedded "
+                                      "(§7.2.1), which is what makes the handle branch of §8.1 "
+                                      "the cheapest way to answer.")
+    scope: dict = Field(default_factory=dict,
+                        description="The scope every rung searches inside, e.g. "
+                                    "`{\"doc_id\": \"TC1E-SF\"}`. A parameter and never a "
+                                    "session: this service remembers nothing between calls (C11).")
+    exclude: list[str] = Field(default_factory=list,
+                               description="Pages you have already rejected. The runner adds its "
+                                           "own as triage marks them `irrelevant` (§8.2).")
+    draft: SubmittedDraft | None = Field(
+        default=None,
+        description="A draft you wrote yourself, to be gated instead of the loop being run. When "
+                    "this is present nothing is searched and nothing is spent: the gate of §8.4 "
+                    "runs on it and returns it rendered, or rejects it.")
+
+
+class AskResponse(BaseModel):
+    """What `POST /ask` returns — the only prose this service produces (§7.4, §8.4).
+
+    ``status`` is **not** the six-value enum of §7.1: that enum answers *"what kind of nothing is
+    this?"* about a search, and this surface answers a different question with two outcomes — an
+    answer that cleared the gate, or an abstention that says what was searched. Everything else
+    is a typed refusal under its own HTTP status (:class:`~vsir.serve.errors.ErrorResponse`),
+    because §7.1's rule that an outage must never look like an absence applies hardest here: this
+    is the surface a person reads.
+
+    There is no `score`, no confidence and no ranking (§7.6). What a reader gets instead is
+    ``checks`` — the gate's own call log, one row per `(claim, page)` pair it verified — and a
+    badge on every rendered code.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    status: Literal["answered", "abstained"]
+    answer: answer_module.Answer | None = Field(
+        default=None, description="Present when the gate cleared a draft. Every code in it was "
+                                  "verified against the page it is cited on (I8).")
+    abstention: answer_module.Abstention | None = Field(
+        default=None, description="Present when there is nothing to answer. It names the coverage "
+                                  "numbers, and it cannot say \"not in these documents\" while "
+                                  "image-only pages are unexamined (§8.5).")
+    trace: list[loop_module.Move] = Field(
+        default_factory=list,
+        description="The move-by-move record: descend → triage → look → draft → verify. Carries "
+                    "no page text and no image bytes.")
+    loops: list[str] = Field(
+        default_factory=list,
+        description="Which of §8.3's six correction loops fired, in order of first firing.")
+    checks: list[answer_module.Check] = Field(
+        default_factory=list,
+        description="The gate's call log. `claim` is empty on a row whose verdict was `absent`: "
+                    "that row is a rejection, and a rejection never echoes the code it rejected.")
+    reads: int = Field(default=0, description="Paid `read` calls this question made. One is the "
+                                              "target; the ceiling is VSIR_READS_PER_QUESTION.")
+    reads_remaining: int = Field(default=0, description="The caller's remaining `read` quota "
+                                                        "(§7.3). Cost goes to the audit log, "
+                                                        "never into this body (§7.4).")
+    route: str | None = Field(default=None, description="§8.1a's route: `read` when a sub-model "
+                                                        "looked, `fetch` when you did.")
+    triage: loop_module.TriageTable | None = Field(
+        default=None,
+        description="Loop 0's tri-state pass, as the table it really was: every candidate's mark "
+                    "`relevant`/`uncertain`/`irrelevant`, the §8.2 rule that produced it, the "
+                    "terms of the question its summary showed, and the `exclude` set the next "
+                    "rung was sent. The pass the loop **finished** on — the trace records each "
+                    "one — and `null` when nothing was ever triaged, which is not the same fact "
+                    "as an empty table. No score and no confidence (§7.6): `rank` is the "
+                    "ordinal the skim already returned.")
+    effective_scope: dict = Field(
+        default_factory=dict,
+        description="The scope the loop finished on — after descending, and after any widening. "
+                    "Echoed back because the service holds no session (F8, C11).")
+    provenance: Provenance
 
 
 #: The Prometheus text exposition format's own content type. Pinned here rather than defaulted,
@@ -735,6 +851,17 @@ OPENAPI_TAGS: list[dict[str, Any]] = [
         "`found_only_in_superseded` are different facts and an agent acts differently on each "
         "(§7.1). And **every bound is a refusal with its own code**, never a clamp and never a "
         "truncation, so a caller is told what it broke rather than silently given less (§7.3)."},
+    {"name": "runner", "description":
+        "`POST /ask` — the loop of §8.1, and **the only surface in this service that may return "
+        "prose**. Everything else hands back a typed envelope and lets the caller decide; this "
+        "one composes, and it may only do so from behind the answer gate of §8.4.\n\nWhat that "
+        "gate means for a caller: every code in a draft is checked against the page it is cited "
+        "on, one `verify` per `(claim, page)`. A code that is **not** printed there rejects the "
+        "whole draft and no part of it is returned — a partly-true answer about an engineering "
+        "code is worse than none. An abstention names the coverage numbers and cannot claim the "
+        "corpus was exhausted while image-only pages are unexamined (§8.5).\n\nIt reaches the "
+        "paid step exactly once, and only after the free moves have narrowed and triaged. Pass a "
+        "`draft` of your own to run the identical gate over it and spend nothing."},
     {"name": "pages", "description":
         "The page raster, rendered on demand and **never persisted** (§4.2) — the "
         "browser-renderable half of `fetch`. Same dpi tiers and same typed refusals as §7.3: "
@@ -1162,6 +1289,8 @@ def create_app(env: Mapping[str, str] | None = None) -> FastAPI:
             "GET /docs": "Swagger UI — Authorize with your token, then Try it out",
             "GET /redoc": "the same document, rendered for reading",
             "GET /console": "the operator console",
+            "POST /ask": "the runner — narrow, look once, draft, and answer only what the gate "
+                         "cleared (§8.4, I8). The only surface that may return prose",
             "POST /documents": "ingest a PDF — 202 and a run_id, never a result (§6.1)",
             "GET /documents": "the corpus — every document, its revisions, its searchable ratio",
             "GET /documents/{doc_id}": "one document and every revision of it",
@@ -1387,6 +1516,150 @@ def create_app(env: Mapping[str, str] | None = None) -> FastAPI:
         serve (§7.1 applied to the surface itself) as well as every client written against it.
         """
         return await _serve_tool(tool_name, request)
+
+    # ── the runner: `POST /ask`, the only surface that may return prose (§7.4, §8.4) ─────────────
+
+    def _ask(body: AskRequest, identity: Identity,
+             correlation: Mapping[str, str]) -> tuple[int, Mapping[str, Any]]:
+        """One question through §8.1's loop, or one submitted draft through §8.4's gate.
+
+        The loop calls the eight tools through :func:`dispatch` — the same function the HTTP tool
+        routes and the MCP server call — so the budget, the audit line, the argument validation
+        and every typed refusal are the ones that shipped, and the runner is a *caller* of the
+        tool surface rather than a ninth path into it (§7.5).
+
+        Three outcomes, and the third is the one that matters: an answer, an abstention, or a
+        **refusal under its own status**. A 503 from the store, a `vlm_unavailable`, an exhausted
+        budget — none of them becomes an abstention, because an outage rendered as *"not found in
+        these documents"* is our failure delivered as the caller's fabricated confidence (§7.1,
+        §11.3). ``reads_remaining`` is on all three (§7.1).
+        """
+        with vsir_logging.correlate(tool="ask", **{k: v for k, v in correlation.items() if v}):
+            def call(tool: str, arguments: Mapping[str, Any]) -> ToolOutcome:
+                return dispatch(app.state.runtime, tool, arguments, identity=identity,
+                                correlation=correlation)
+
+            try:
+                if body.draft is not None:
+                    quota = budget_module.remaining(
+                        app.state.runtime.search, cfg.runs_collection,
+                        user_id=identity.user_id, quota=cfg.read_quota)
+                    outcome = loop_module.gate_submitted(
+                        answer_module.Draft(text=body.draft.text, claims=body.draft.claims,
+                                            pages=body.draft.pages, route="fetch"),
+                        question=body.question, call=call, reads_remaining=quota)
+                else:
+                    outcome = loop_module.run(
+                        body.question, call=call,
+                        reads_per_question=cfg.reads_per_question,
+                        scope=body.scope, exclude=body.exclude)
+            except BaseException as failure:  # noqa: BLE001 — every path out is typed
+                if isinstance(failure, (KeyboardInterrupt, SystemExit)):
+                    raise
+                refused = _failure_response(failure, tool="ask")
+                # §7.1 puts `reads_remaining` on every response, and a plausible-looking `0` here
+                # would be a lie about the caller's quota on the one path where the loop did not
+                # get far enough to read it. So it is asked for, and omitted if the store cannot
+                # answer either — an absent field a caller can see is better than a wrong number
+                # it would plan against.
+                try:
+                    left = {"reads_remaining": budget_module.remaining(
+                        app.state.runtime.search, cfg.runs_collection,
+                        user_id=identity.user_id, quota=cfg.read_quota)}
+                except BaseException:  # noqa: BLE001 — the refusal above is what matters
+                    left = {}
+                return refused.status, {**refused.payload, **left}
+
+            if outcome.refusal is not None:
+                return outcome.refusal.status, {
+                    **outcome.refusal.payload,
+                    "error": outcome.refusal.error,
+                    "detail": outcome.refusal.detail,
+                    "tool": "ask",
+                    "reads_remaining": outcome.reads_remaining,
+                }
+            response = AskResponse(
+                status="answered" if outcome.answered else "abstained",
+                answer=outcome.answer,
+                abstention=outcome.abstention,
+                trace=list(outcome.trace),
+                loops=list(outcome.loops),
+                checks=list(outcome.checks),
+                reads=outcome.reads,
+                reads_remaining=outcome.reads_remaining,
+                route=outcome.route,
+                triage=outcome.triage,
+                effective_scope=dict(outcome.effective_scope),
+                provenance=Provenance(release_id=cfg.release_id),
+            )
+            return 200, response.model_dump(mode="json")
+
+    @app.post("/ask", tags=["runner"], name="ask", operation_id="ask", response_model=None,
+              summary="ASK — the runner: narrow, look, draft, verify, answer",
+              description=(
+                  "The loop of §8.1, end to end, and **the only surface that may return prose**. "
+                  "It descends the three `skim_*` rungs (or asks the exact surface directly when "
+                  "the question names a printed code), triages every candidate `relevant` / "
+                  "`uncertain` / `irrelevant` for free, spends **one** `read` on the pages that "
+                  "survive, drafts from that read's own words, and then runs the answer gate of "
+                  "§8.4 over every code in the draft — one `verify` per `(claim, page)`. A code "
+                  "the check clears renders with a `verified` badge; one nobody could check "
+                  "renders badged *read from image, not text-verified*; a code that is **not** "
+                  "printed on the page it is cited on rejects the whole draft, and no part of it "
+                  "is returned. When there is nothing to answer, the abstention names the "
+                  "coverage numbers and cannot claim the corpus is exhausted while image-only "
+                  "pages are unexamined (§8.5). Pass `draft` instead of relying on the loop if "
+                  "you looked at the pages yourself: the identical gate runs on it, and nothing "
+                  "is spent."),
+              responses={
+                  200: {"model": AskResponse,
+                        "description": "an answer that cleared the gate, or an abstention that "
+                                       "names what was searched"},
+                  **errors.responses(400, 401, 429, 500, 502, 503),
+              },
+              openapi_extra={"requestBody": {
+                  "required": True,
+                  "content": {"application/json": {
+                      "schema": {"$ref": "#/components/schemas/AskRequest"}}},
+              }})
+    async def ask(request: Request) -> Response:
+        """The transport. Bearer-authenticated in middleware like every non-probe path (§7.4).
+
+        The body is validated **here** rather than by a typed parameter, for the reason
+        :func:`_serve_tool` gives: FastAPI's failure is a `422` with a JSON pointer, and §7.3's
+        contract is a typed code an agent can switch on. The loop itself runs in a worker thread
+        — it makes a series of sync Qdrant and model calls, and a blocking call on the event loop
+        is an outage for every other request in flight.
+        """
+        identity = auth_module.identity_of(request.scope)
+        if identity is None:                              # pragma: no cover — behind BearerAuth
+            refusal = auth_module.Unauthorized()
+            return JSONResponse(status_code=refusal.http_status, content=refusal.to_payload(),
+                                headers=refusal.headers)
+        try:
+            payload = await request.json() if await request.body() else {}
+        except ValueError as malformed:
+            outcome = _tool_refusal("invalid_json",
+                                    f"the request body is not JSON: {malformed}",
+                                    status=400, tool="ask")
+            return Response(content=outcome.body(), status_code=outcome.status,
+                            media_type="application/json")
+        try:
+            body = AskRequest.model_validate(payload if isinstance(payload, dict) else {})
+        except ValidationError as invalid:
+            outcome = _tool_refusal(
+                "invalid_request", "the arguments do not match `POST /ask`'s parameters (§8.4)",
+                status=400, tool="ask",
+                problems=[{"field": ".".join(str(part) for part in problem["loc"]),
+                           "error": problem["msg"]} for problem in invalid.errors()])
+            return Response(content=outcome.body(), status_code=outcome.status,
+                            media_type="application/json")
+
+        status, answered = await run_in_threadpool(
+            _ask, body, identity, dict(request.scope.get(SCOPE_CORRELATION) or {}))
+        return Response(content=wire(answered), status_code=status,
+                        media_type="application/json")
+
     # ── the page raster: `fetch`'s browser-renderable half (§7.2.5, §7.4) ────────────────────────
 
     def _rendered(page_id: str, dpi: int, region: Sequence[float] | None) -> Any:
@@ -1760,8 +2033,14 @@ def _described(app: FastAPI) -> Callable[[], dict[str, Any]]:
     def openapi() -> dict[str, Any]:
         if described:
             return described
+        # `tags=` is passed explicitly, because `get_openapi` builds the document from its
+        # arguments and **not** from the app: handing it `routes` and not `openapi_tags` produced
+        # a document with no `tags` section at all, so the eight group descriptions were written,
+        # accepted by `FastAPI(...)`, and silently absent from `/docs`. The same trap as the
+        # `#:` comments in `serve/inputs.py` — declared in the code, missing from the wire.
         schema = get_openapi(title=app.title, version=app.version,
-                             description=app.description, routes=app.routes)
+                             description=app.description, routes=app.routes,
+                             tags=app.openapi_tags)
 
         # The eight named tool routes publish their body by `$ref` rather than as a typed
         # parameter (see `_serve_tool` for why), and a `$ref` FastAPI never saw is a dangling
@@ -1770,7 +2049,11 @@ def _described(app: FastAPI) -> Callable[[], dict[str, Any]]:
         # `ref_template` the routes point at. Generated together in one call rather than one model
         # at a time, so a type shared by two bodies — `PART`, the annotated field aliases — lands
         # once and both bodies reference the same definition.
+        # `AskRequest` is here for the same reason and not as an afterthought: `POST /ask`
+        # publishes its body by `$ref` too, so the runner's own parameters — and the submitted
+        # draft the gate accepts — have to reach `components` from the same generation call.
         requested = [(spec.request, "validation") for spec in app.state.tools.values()]
+        requested.append((AskRequest, "validation"))
         if requested:
             _, generated = models_json_schema(
                 requested, ref_template="#/components/schemas/{model}")

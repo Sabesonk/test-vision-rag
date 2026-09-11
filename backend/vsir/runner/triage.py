@@ -371,6 +371,13 @@ TRANSITIONS: Mapping[tuple[str, str], str] = {
     (DRAIN_UNCERTAIN, CANDIDATES): LOOK,
     (DRAIN_UNCERTAIN, POOL_EMPTY): WIDEN,
     (WIDEN, WIDENED): DESCEND,
+    # §8.1's second empty branch, reachable from the **end** of the ladder as well as from a
+    # descent that found nothing (U022). The diagram's *"TRIAGE empty · pages have no text →
+    # `fetch` / `read` the image-only pages first"* is not only about a descent that returned no
+    # rows: a descent whose rows triage rejects wholesale arrives at the same place, and
+    # abstaining there while a page nobody can read sits unexamined is concluding absence from a
+    # corpus that was never searched (§8.5, F4). So the last widening looks before it gives up.
+    (WIDEN, EMPTY_NO_TEXT): VISION_FIRST,
     (WIDEN, EXHAUSTED): ABSTAIN,
     (VISION_FIRST, CANDIDATES): LOOK,
     (VISION_FIRST, NO_PAGES): ABSTAIN,

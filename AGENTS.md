@@ -12,7 +12,7 @@ in `development/cr1/progress/implementation-progress.md`.
 | `backend/tests/unit/` | L0/L1 — no Docker, no network, no paid API |
 | `backend/tests/api/` | L2/L3 — needs the Docker test stack |
 | `backend/tests/paid/` | L4 — real model calls, gated |
-| `frontend/` | React + TypeScript + Vite (M7; does not exist yet) |
+| `frontend/` | React + TypeScript + Vite — the operator console (M7, U023) |
 | `e2e/` | Playwright |
 | `data/fixtures/` | frozen extractions, checked in |
 | `data/fixtures/synthetic_pages/` | the §13 M1 corpus: hand-written page text + `expected.json` |
@@ -540,7 +540,7 @@ The tool descriptions and the input schemas an MCP client sees are generated fro
 own tool table: the schema is each tool's Pydantic request model, so `extra="forbid"` is
 advertised and a parameter cannot reach one surface without reaching the other.
 
-### The runner (U021)
+### The runner (U021, U022)
 
 `vsir ask --explain` runs the free half of §8 — the descent, the tri-state triage and the route —
 against whatever this release has published. It spends nothing on any path, and the last step is
@@ -572,10 +572,67 @@ Three things the output is worth reading for:
   past the route's cap is reported `deferred_over_cap`, which is a second call the runner may
   make, not a truncation.
 
-`vsir ask` **without** `--explain` is a named refusal (`answer_not_built`): composing prose is the
-answer gate's and lands with U022. An empty triage is not a refusal — it prints §8.1's coverage
-branch (`empty_no_text` → look at the image-only pages, `empty_searchable` → abstain naming what
-was searched) and exits 0.
+An empty triage is not a refusal — it prints §8.1's coverage branch (`empty_no_text` → look at
+the image-only pages, `empty_searchable` → abstain naming what was searched) and exits 0.
+
+#### `vsir ask` without `--explain` — the whole loop, and the one path in this CLI that spends
+
+```bash
+backend/.venv/bin/vsir ask "why won't the guard door interlock release when K119 is monitored"
+backend/.venv/bin/vsir ask --scope doc_id=TC1E-SF "…"      # narrow every rung
+backend/.venv/bin/vsir ask --exclude 'doc@1.0#p003' "…"     # pages you have already rejected
+```
+
+It prints the move-by-move trace — `descend → triage → look → draft → verify`, with `$` on the
+one move that bills — then the gated answer with a badge per code, or the abstention with its
+coverage numbers, then three assertions read off the outcome: every rendered code has a
+`(claim, page)` check behind it, no rejected code is anywhere in the output, and the read budget
+was respected. Exit 0 on an answer **or** an abstention; non-zero on a typed refusal.
+
+Two ceilings bound it, both the server's: `VSIR_READS_PER_QUESTION` (default 3) per question and
+`VSIR_READ_QUOTA` per caller per UTC day. A question that needs a second look when the first is
+exhausted is `429 budget_exhausted` — a refusal, never an answer from pages the model said did
+not answer.
+
+**`POST /ask` is the same loop over HTTP** (bearer, §7.4) and is the only route in the release
+that may return prose — asserted by scanning every route's published 200 schema. Its body is
+`{question, scope?, exclude?, draft?}`:
+
+```bash
+curl -s localhost:8055/ask -H "Authorization: Bearer $TOKEN" -H 'content-type: application/json' \
+  -d '{"question":"why won'"'"'t the guard door interlock release when K119 is monitored"}' | jq .
+```
+
+`draft` is the other half of §8.1a: a **vision-capable caller** that looked at the rasters itself
+(`fetch`, free) sends its draft — `{text, claims:[{code, page_ids}], pages}` — and the identical
+gate runs on it, per `(claim, page)`, before a word of it is rendered. Nothing is searched and
+nothing is spent on that path; the route comes back as `fetch`. The eight MCP tools are
+deliberately still eight (§7.5): an MCP client *is* the agent, so it drives the ladder itself with
+the system prompt `--prompt` shows and brings its draft back through `POST /ask` to be gated.
+
+Reading a trace: `route` is `read` on every loop-driven answer, because the party that drafts
+there is this process, which cannot look at a raster (§8.1a's *"or when the caller is not
+vision-capable"*). A rejected draft renders **nothing** — not the code, not the sentence — and
+the rejection discloses only the page and `present_instead`. `"not in these documents"` cannot
+appear while `pages_no_text_read < scope_stats.pages_no_text`, which the composer enforces on the
+string it just built (§8.5).
+
+The M6 demo, over the generated corpus in replay (no credential, no spend):
+
+```bash
+export VSIR_QDRANT_URL=http://localhost:6335 VSIR_COLLECTION=vsir_demo_m6 \
+       VSIR_RUNS_COLLECTION=vsir_demo_m6_runs VSIR_DOC_STORE=/tmp/vsir-m6-store \
+       VSIR_FIXTURE=data/fixtures/synthetic_3window VSIR_VLM=stub
+backend/.venv/bin/vsir ingest data/source/synthetic_3window.pdf --vlm stub
+backend/.venv/bin/vsir ask "why won't the guard door interlock release when K119 is monitored"
+backend/.venv/bin/vsir ask "which contactor does the interlock relay K120 switch"   # the gate rejects
+```
+
+**The questions are not arbitrary and must not be paraphrased.** Each one names a code the corpus
+prints, so the handle branch resolves the page set on the exact surface and the `read` that
+follows lands on a response frozen under exactly that `(pages, question)` key
+(`vsir.eval.synthetic_pdf.READ_CASES`). Reword the question and replay is a typed `fixture_miss`,
+which is D10 working: add a case to the generator and re-run `python -m vsir.eval.synthetic_pdf`.
 
 
 ## Test
@@ -595,6 +652,41 @@ CI runs the first two on every push and pull request (`.github/workflows/ci.yml`
 §12.4 abstention eval as its own step so a failure there is legible in the run summary rather than
 buried in 136 dots. It references no secret: L0–L3 are replay-mode only (D10), and L4 is not run
 there at all.
+
+## Frontend
+
+The console is a Vite app in `frontend/`, and it is **same-origin by proxy** rather than by CORS:
+the service has no CORS middleware and must not grow one, so `vite.config.ts` proxies the API
+paths to `VITE_API_URL` (default `http://localhost:8000`). That is a *proxy target*, not a base
+URL the browser sees — which is why `image.url` works exactly as the service sends it (relative),
+and why the container's `http://backend-test:8000` is correct inside the test network.
+
+```bash
+npm --prefix frontend install
+npm --prefix frontend run dev        # 5173, proxying to VITE_API_URL
+npm --prefix frontend run build      # tsc --noEmit, then the production bundle
+npm --prefix frontend test           # vitest, L0 — no Docker, no network
+npm --prefix frontend run typecheck
+```
+
+`scripts/test-unit.sh` runs `vitest` and `tsc --noEmit` after the backend suite, so the frontend is
+part of Layer 0/1 and not a separate thing to remember.
+
+**The token is typed into the page**, never built into the bundle: a `VITE_API_TOKEN` would be
+substituted at build time and shipped to every browser that loaded the app. It lives in
+`sessionStorage` for the tab. Every route is bearer-authenticated including the page rasters, so
+an `<img src>` cannot load one — `hooks/useRaster.ts` fetches with the header and mints an object
+URL instead.
+
+Two rules of §16 have no compiler behind them and are enforced by `src/conformance.test.ts`
+instead: **no written `any`**, and **no raw hex colour in a component** (`src/styles.css` is the
+one file allowed to name a colour; components ask for a `Tone`). It also refuses `inline: true`
+and any read of `bytes_b64` outside the type that declares `fetch` may carry one.
+
+`backend/tests/unit/test_frontend_client_contract.py` compares `frontend/src/api/types.ts` against
+the Pydantic models field for field, **in both directions**, plus `SCHEMA_VERSION` and the badge
+wording. Add a field to an envelope and not to its interface — or the reverse — and L0 fails on
+that commit.
 
 ## Docker
 
@@ -619,7 +711,7 @@ docker compose -f docker-compose.test.yml down -v               # always -v
 |---|---|---|
 | `test-qdrant` | `6335` → 6333 | **never 6334** — that is the dev instance's gRPC port |
 | `backend-test` | `8001` → 8000 | same image as production, `command: ["serve"]`, env and ports differ |
-| `frontend-test` | `5174` → 5173 | behind the `e2e` compose profile until M7 |
+| `frontend-test` | `5174` → 5173 | behind the `e2e` compose profile; the image is U024's |
 
 The test stack's bearer token is `${VSIR_TEST_API_TOKENS:-test-only-not-a-secret}` — deliberately
 **not** `VSIR_API_TOKENS`. Compose interpolates from `.env`, which is where a developer's real

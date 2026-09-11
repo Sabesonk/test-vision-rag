@@ -291,6 +291,12 @@ class GeminiBackend:
     #: part of the backend's identity, so it is excluded from `repr` and from comparison.
     _sdk_client: Any = field(default=None, repr=False, compare=False)
 
+    #: The same guard, for the same reason, on the same shape of code. The window fan-out is a
+    #: bounded pool too — the rate limiter's own docstring says so — so `_client()` here is
+    #: reached concurrently on any document with more than one window. This one had not fired
+    #: yet; it is the same defect waiting for a document big enough to expose it.
+    _client_lock: Any = field(default_factory=threading.Lock, repr=False, compare=False)
+
     @classmethod
     def from_config(cls, cfg: Config) -> "GeminiBackend":
         """Build the backend, refusing anything that would make its output untraceable."""
@@ -406,8 +412,12 @@ class GeminiBackend:
         Keeping it is also the correct thing on its own terms: the connection pool and TLS session
         are reused across a document's windows instead of being rebuilt per call.
         """
+        # Double-checked under the lock — see `_client_lock`, and `ingest/embed.py`, where this
+        # race was actually observed.
         if self._sdk_client is None:
-            self._sdk_client = genai.Client(api_key=self.key)
+            with self._client_lock:
+                if self._sdk_client is None:
+                    self._sdk_client = genai.Client(api_key=self.key)
         return self._sdk_client
 
     def _sdk(self, **call: Any) -> Any:

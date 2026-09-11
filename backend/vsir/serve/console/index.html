@@ -649,22 +649,47 @@ $("upload").addEventListener("click", async () => {
 });
 
 let polling = null;
+
+/* How long a `run_not_found` is treated as "not yet" rather than as a failure.
+   `POST /documents` mints the `run_id` in the route and answers `202` **before** the child
+   process has started, so the first poll routinely arrives before the run record exists — the
+   route's own docstring says the id is minted there rather than read out of the child's output.
+   Reporting that 404 as an error was wrong twice over: it is the expected state for the first
+   second or two, and giving up on it stopped the watch, so a run that went on to fail for a
+   real reason showed the operator the wrong cause. */
+const RUN_APPEARS_WITHIN_MS = 30000;
+
 async function watch(runId) {
   if (polling) clearInterval(polling);
   $("runIdle").hidden = true;
   $("runLive").hidden = false;
+  const startedAt = Date.now();
+  let seen = false;
+
+  const stop = () => { clearInterval(polling); polling = null; };
+
   const tick = async () => {
     try {
       const run = await api(`/runs/${encodeURIComponent(runId)}`);
+      seen = true;
       renderRun(run);
       /* Stop when the run has stopped. `gated` is terminal too — the run finished and the gates
          refused it — so polling on would be a spinner that never resolves. */
       if (["published", "failed", "stopped", "gated"].includes(run.state)) {
-        clearInterval(polling); polling = null;
+        stop();
         loadCorpus();
       }
     } catch (failure) {
-      clearInterval(polling); polling = null;
+      const starting = failure.code === "run_not_found" && !seen &&
+                       Date.now() - startedAt < RUN_APPEARS_WITHIN_MS;
+      if (starting) {
+        $("runFacts").innerHTML = `<dt>run</dt><dd class="mono">${esc(runId)}</dd>
+          <dt>state</dt><dd>${badge("starting", "acc")}</dd>
+          <dt></dt><dd class="kv">the ingest process is being spawned; its run record appears
+            in the control plane a moment later</dd>`;
+        return;
+      }
+      stop();
       showError($("uploadErr"), failure);
     }
   };
@@ -700,11 +725,13 @@ function renderRun(run) {
   $("gateTable").hidden = names.length === 0;
   $("gateTable").querySelector("tbody").innerHTML = names.map((name) => {
     const gate = gates[name];
-    /* `passed` — the field `GateResult` actually declares. The previous console read `pass`,
-       which is always undefined, so every gate rendered as a failure. */
-    const ok = gate.passed;
+    /* `pass`, and **not** `passed`. `GateResult` declares `passed` in Python and
+       `as_dict()` renames it to `pass` on the way into the run record, which is what this
+       endpoint returns — so the wire name is the one to read here. A skipped gate is reported as
+       skipped rather than as a pass it never earned. */
+    const ok = gate.pass;
     return `<tr><td class="mono">${esc(name)}</td>
-      <td>${badge(ok ? "pass" : "fail", ok ? "ok" : "bad")}</td>
+      <td>${gate.skipped ? badge("skipped", "dim") : badge(ok ? "pass" : "fail", ok ? "ok" : "bad")}</td>
       <td>${gate.metric ?? "—"}</td>
       <td class="kv">${esc((gate.detail || "").slice(0, 140))}</td></tr>`;
   }).join("");
@@ -818,13 +845,13 @@ function pickTool(name) {
         placeholder="${esc(spec.default ?? "")}">`;
     } else if (kind === "list") {
       control = `<textarea data-field="${esc(field)}" data-kind="list"
-        placeholder="one per line"></textarea>`;
+        placeholder="${esc(example(spec, "one per line"))}"></textarea>`;
     } else if (kind === "object") {
       control = `<textarea data-field="${esc(field)}" data-kind="object"
-        placeholder='{"doc_id": "…"}'></textarea>`;
+        placeholder="${esc(example(spec, "a JSON object"))}"></textarea>`;
     } else {
       control = `<input data-field="${esc(field)}" data-kind="string" spellcheck="false"
-        placeholder="${esc((spec.examples || [])[0] ?? "")}">`;
+        placeholder="${esc(example(spec, ""))}">`;
     }
     return `<label>${esc(field)}${req}</label>${control}<p class="help">${esc(help)}</p>`;
   }).join("");
@@ -832,6 +859,24 @@ function pickTool(name) {
   $("toolGo").hidden = false;
   $("toolGo").textContent = picked.spends ? "Execute — this spends" : "Execute";
   $("toolGo").className = picked.spends ? "spend" : "";
+}
+
+/* The placeholder comes from the field's **own** `examples`, like everything else about these
+   forms. Typing a specimen scope filter here would be small, and still
+   the beginning of the second copy of the contract: `serve/inputs.py` already publishes real
+   examples for every field, and an example that lives in two places is one that goes stale in
+   one of them. A list of ids is joined by newline, because that is how the
+   textarea is parsed back. */
+function example(spec, fallback) {
+  const branches = spec.anyOf || spec.oneOf || [spec];
+  for (const branch of [spec, ...branches]) {
+    const first = ((branch || {}).examples || [])[0];
+    if (first === undefined || first === null) continue;
+    if (Array.isArray(first)) return first.join("\n");
+    if (typeof first === "object") return JSON.stringify(first);
+    return String(first);
+  }
+  return fallback;
 }
 
 /* The JSON Schema a Pydantic model produces wraps an optional field in `anyOf`, so the *kind* of
