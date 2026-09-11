@@ -2660,7 +2660,7 @@ N/A — the console consumes the API and writes no state; reverting it removes a
 
 ## Unit: The Playwright replay suite and `scripts/test-e2e.sh` (ID: U024)
 
-**Status:** 🔵 Not Started
+**Status:** ✅ Complete (2026-09-11)
 **Milestone:** M7
 **Priority:** P1-High
 **Type:** harness

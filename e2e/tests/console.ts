@@ -65,45 +65,69 @@ export interface Corpus {
 }
 
 /**
- * The corpus as the service describes it: one document, and one page of each kind.
+ * The corpus as the service describes it: a document, and one page of each kind in it.
  *
  * Both kinds have to exist for M7's badges to mean anything — `verified` needs a page with text
- * to check against, and *read from image* needs one without — so their absence is a failure of
- * the corpus rather than something to work around.
+ * to check against, and *read from image* needs one without, because `unverifiable` is by
+ * definition the verdict on a page nothing could check (§5.7, R2).
+ *
+ * **Which document is chosen is a search, not `documents[0]`.** A release can legitimately hold
+ * a born-digital binder with no scan in it at all — `data/fixtures/TC1E-SF/expected.json`
+ * predicts exactly that for the pilot — and picking the first row would then fail here with
+ * *"no image-only page"* while another published document had one. So every document is asked,
+ * and the first that has both kinds is the one the suite drives. That is the difference between
+ * *"fixture-independent"* and *"independent of this fixture"*.
+ *
+ * If **no** document has both, the suite says so and stops. That is the honest outcome rather
+ * than a skip: on a corpus with no scanned page, *"an `unverifiable` code renders with its
+ * badge"* is not a UI assertion that has regressed, it is a state the corpus cannot produce.
  */
 export async function corpus(request: APIRequestContext): Promise<Corpus> {
   const listed = await request.get(`${API}/documents`, { headers: AUTH });
   expect(listed.ok(), await listed.text()).toBeTruthy();
   const documents = (await listed.json()).documents as { doc_id: string }[];
   expect(documents.length, 'the E2E stack published no document to ask about').toBeGreaterThan(0);
-  const docId = documents[0].doc_id;
 
-  // Paged, because the listing caps at 200 rows and answers a larger ask with a typed
-  // `listing_limit_exceeded` rather than silently truncating (§7.3's rule, one route over).
-  // A 55-page pilot fits in one page of this; a 1,440-page manual would not, and a suite that
-  // only ever saw the first 200 pages could miss the corpus's only scan.
+  const missing: string[] = [];
+  for (const { doc_id: docId } of documents) {
+    const pages = await pagesOf(request, docId);
+    const imageOnly = pages.find((page) => !page.has_text);
+    const searchable = pages.find((page) => page.has_text && page.text_trust === 'ok');
+    if (imageOnly && searchable) return { docId, pages, imageOnly, searchable };
+    missing.push(
+      `${docId}: ${imageOnly ? '' : 'no image-only page'}${!imageOnly && !searchable ? ', ' : ''}` +
+        `${searchable ? '' : 'no page with clean text'}`,
+    );
+  }
+
+  throw new Error(
+    'no published document has both a page with no text layer and a page whose text extracted ' +
+      'cleanly, so neither trust badge has a page to be about — ' +
+      missing.join(' · '),
+  );
+}
+
+/**
+ * Every page of one document, paged.
+ *
+ * The listing caps at 200 rows and answers a larger ask with a typed `listing_limit_exceeded`
+ * rather than silently truncating. A suite that only ever saw the first 200 pages of a long
+ * manual could miss the corpus's only scan, which is the page half of these tests need.
+ */
+async function pagesOf(request: APIRequestContext, docId: string): Promise<CorpusPage[]> {
   const pages: CorpusPage[] = [];
   let offset = 1;
   for (;;) {
-    const listedPages = await request.get(
+    const listed = await request.get(
       `${API}/documents/${encodeURIComponent(docId)}/pages?limit=200&offset=${offset}`,
       { headers: AUTH },
     );
-    expect(listedPages.ok(), await listedPages.text()).toBeTruthy();
-    const body = await listedPages.json();
+    expect(listed.ok(), await listed.text()).toBeTruthy();
+    const body = await listed.json();
     pages.push(...((body.pages ?? []) as CorpusPage[]));
-    if (!body.next_offset || body.next_offset === offset) break;
+    if (!body.next_offset || body.next_offset === offset) return pages;
     offset = body.next_offset as number;
   }
-
-  const imageOnly = pages.find((page) => !page.has_text);
-  const searchable = pages.find((page) => page.has_text && page.text_trust === 'ok');
-  expect(imageOnly, `${docId} has no image-only page — the blind spot M7 badges is not there`)
-    .toBeTruthy();
-  expect(searchable, `${docId} has no page with clean text — nothing can be verified`)
-    .toBeTruthy();
-
-  return { docId, pages, imageOnly: imageOnly!, searchable: searchable! };
 }
 
 interface ReadCase {

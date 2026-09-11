@@ -5029,3 +5029,25 @@ page number. Every input is derived, by one of three routes, and the invented on
 - **A badge inside a closed `<details>` is in the DOM and not on the screen.** The gate's call log
   is collapsed by default and rightly so; `openCallLog` opens it, so an assertion that means *"an
   operator can see this"* is about visibility rather than attachment.
+
+#### The M7 gate, and the one thing it changed
+
+The §13 M7 acceptance list and both units' plan criteria were verified by a subagent against the
+implementation: **PASS, no failing items.** It raised two carry-forward caveats, both now closed:
+
+- the plan file still said U024 was `🔵 Not Started` — fixed;
+- **`corpus()` picked `documents[0]`**, so a release whose first document happened to be
+  born-digital would have failed at the derivation step with *"no image-only page"* while another
+  published document had one. `data/fixtures/TC1E-SF/expected.json` predicts exactly that shape
+  for the pilot (born-digital, **0** image-only pages expected), so this was the concrete way the
+  fixture-independence criterion could still have broken on the second fixture. It now searches
+  every published document for one that has **both** page kinds, and when none does it says so and
+  stops rather than skipping — on a corpus with no scanned page, *"an `unverifiable` code renders
+  with its badge"* is not a UI regression, it is a state that corpus cannot produce. Re-ran green:
+  22 passed.
+
+One caveat stays open and belongs to OQ-1, not here: **the suite has never actually been run
+against `TC1E-SF`**, because that fixture is `expected.json` alone — no source PDF, no frozen
+`read` responses, nothing to ingest. `worked-trace.spec.ts` would refuse it by name
+(`read.cases` is absent, and `readCases()` says so), which is the right failure. The code carries
+no fixture literal; what is unverified is the second fixture's *shape*.
