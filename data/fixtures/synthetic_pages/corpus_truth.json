@@ -1,0 +1,61 @@
+{
+  "_note": "The Spec §12.6 ground-truth sets for the M1 corpus beside it, read off the page files the way a component register, an alarm catalogue and a cross-reference index are read off a real document: what the page PRINTS, never what a tool returns. `vsir eval corpus` measures against this file and holds no number of its own (C10) — a row that disagrees with the system is a finding about the system, and a row that disagrees with the page text is a defect in this file.",
+
+  "_authored": "2026-09-11, U026, from the text of data/fixtures/synthetic_pages/page-*.json. The superseded revision 0.9 page is excluded: a register is of the current revision, and the pages it lists are the ones `is_current` lets a tool reach (I7).",
+
+  "corpus": {
+    "doc_id": "SYN-M1",
+    "revision": "1.0",
+    "held_out": false,
+    "caveat": "The M1 corpus is NOT the held-out canary §12.2 L5 asks for — it is the corpus M1 was written against, so a green run here evidences the gate arithmetic and the exact surface, not generalisation. The §12.6 sets it stands in for are one and two orders of magnitude larger: 2,053 register rows, ~494 alarm records and 6,880 cross-reference tokens against 20, 0 and 4 here."
+  },
+
+  "component_register": {
+    "source": "every code printed on a current page of SYN-M1@1.0, with the page that prints it — the analogue of the real corpus's component register at E pp. 59-125 (2,053 rows · 748 tags · 484 codes). Codes are listed in their canonical spelling and `as_printed` records the spelling the page actually carries, so the rows exercise `variants()` exactly as §12.3's table does.",
+    "excluded": "`K999` on p004 and `SF 9.9` on p005 are CLAIMED by the model and printed nowhere — a register lists printed components, and a row for either would make the eval demand that `lookup` return a code no page carries (I2).",
+    "rows": [
+      {"code": "SF 1.1A", "page_ids": ["SYN-M1@1.0#p001"], "as_printed": "SF 1.1A"},
+      {"code": "SF 5.5c", "page_ids": ["SYN-M1@1.0#p001"], "as_printed": "SF 5.5c"},
+      {"code": "K158", "page_ids": ["SYN-M1@1.0#p001"], "as_printed": "K158",
+       "note": "also printed on the superseded 0.9 page, which is is_current=False and therefore not a register row"},
+      {"code": "K162", "page_ids": ["SYN-M1@1.0#p001"], "as_printed": "K162"},
+      {"code": "SF 121.1", "page_ids": ["SYN-M1@1.0#p003"], "as_printed": "SF121.1)"},
+      {"code": "X7", "page_ids": ["SYN-M1@1.0#p004"], "as_printed": "X7"},
+      {"code": "K78", "page_ids": ["SYN-M1@1.0#p006"], "as_printed": "K78"},
+      {"code": "W70", "page_ids": ["SYN-M1@1.0#p007"], "as_printed": "W70"},
+      {"code": "W78", "page_ids": ["SYN-M1@1.0#p007"], "as_printed": "W78"},
+      {"code": "W90", "page_ids": ["SYN-M1@1.0#p009"], "as_printed": "W90"},
+      {"code": "W98", "page_ids": ["SYN-M1@1.0#p009"], "as_printed": "W98"},
+      {"code": "K404", "page_ids": ["SYN-M1@1.0#p010"], "as_printed": "K404",
+       "note": "printed on the photocopied insert, whose text layer is `untrusted` (§5.7). It stays in the register because the page really does print it: a register the eval trims to what the index can search would measure the corpus's scan quality as recall."},
+      {"code": "X11", "page_ids": ["SYN-M1@1.0#p011"], "as_printed": "X11"},
+      {"code": "X12", "page_ids": ["SYN-M1@1.0#p012"], "as_printed": "X12"},
+      {"code": "SF 5.5b", "page_ids": ["SYN-M1@1.0#p014"], "as_printed": "SF5.5b"},
+      {"code": "K166", "page_ids": ["SYN-M1@1.0#p014"], "as_printed": "K166"},
+      {"code": "SI 3", "page_ids": ["SYN-M1@1.0#p017"], "as_printed": "SI3"},
+      {"code": "EAO 84-5140.0020", "page_ids": ["SYN-M1@1.0#p021"], "as_printed": "EAO 84-5140.0020"},
+      {"code": "Q25", "page_ids": ["SYN-M1@1.0#p023"], "as_printed": "Q 25"},
+      {"code": "X26", "page_ids": ["SYN-M1@1.0#p026"], "as_printed": "X26"}
+    ]
+  },
+
+  "alarm_catalogue": {
+    "unavailable": "SYN-M1 prints no alarm numbers at all — p024 is the alarm list and it says in so many words that the alarm texts are held in the HMI project and are not reproduced. There is no numbers 0-539 catalogue here to measure `alarm_label_hit` against, so the set is SKIPPED by name rather than scored over an empty denominator."
+  },
+
+  "cross_references": {
+    "source": "every citation one current page makes to another page of the same document, as the citing page prints it. The real corpus's set is 6,880 tokens at 99.97% resolvable; this one is four, which is stated beside the metric because four tokens can fail a 0.99 gate and cannot evidence it.",
+    "tokens": [
+      {"citation": "13", "seen_on": "SYN-M1@1.0#p003", "page_ids": ["SYN-M1@1.0#p013"],
+       "as_printed": "Sheet 13 continues the chain into the second door."},
+      {"citation": "3", "seen_on": "SYN-M1@1.0#p018", "page_ids": ["SYN-M1@1.0#p003"],
+       "as_printed": "The door switch chain is wired in series, sheet 3 to sheet 8."},
+      {"citation": "8", "seen_on": "SYN-M1@1.0#p018", "page_ids": ["SYN-M1@1.0#p008"],
+       "as_printed": "The door switch chain is wired in series, sheet 3 to sheet 8.",
+       "note": "p008 never prints its own number, so this token is only resolvable through §6.5's bracket — p007 and p009 print 7 and 9 two physical pages apart. It is in the set deliberately: it is the one citation whose answer has to arrive `interpolated`."},
+      {"citation": "21", "seen_on": "SYN-M1@1.0#p023", "page_ids": ["SYN-M1@1.0#p021"],
+       "as_printed": "Q 25   push button contact block, NC   quantity 4   fits the EAO body on sheet 21"}
+    ],
+    "excluded": "p026's \"sheet 3 of 6\" is genuinely ambiguous evidence for two pages, and F5's answer to ambiguity is every candidate rather than a right one — scoring it against a single page would ask `resolve` to make the silent pick F5 forbids."
+  }
+}

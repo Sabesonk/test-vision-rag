@@ -15,7 +15,7 @@ in `development/cr1/progress/implementation-progress.md`.
 | `frontend/` | React + TypeScript + Vite — the operator console (M7, U023) |
 | `e2e/` | Playwright |
 | `data/fixtures/` | frozen extractions, checked in |
-| `data/fixtures/synthetic_pages/` | the §13 M1 corpus: hand-written page text + `expected.json` |
+| `data/fixtures/synthetic_pages/` | the §13 M1 corpus: hand-written page text + `expected.json` (§12.3) + `corpus_truth.json` (§12.6) |
 | `data/fixtures/synthetic_3window/` | the M2a corpus's replay fixture: frozen S1 `facts/` + S2 `extract/` + `read/` (U020), keyed by §6.3 hash, + `expected.json` |
 | `data/fixtures/synthetic_large/` | the M8 corpus's replay fixture: frozen S1 `facts/` + five S2 `extract/` windows + `expected.json`. 150 pages, **no contents page**, so the ladder folds at the cap and plans at Level 2 (U025) |
 | `data/fixtures/legacy/` | the ported `impl` baseline of §12.1: 19 old-schema S2 responses + `labels.jsonl` / `withheld.jsonl` / `manifest.json` from `r-poc-5`, + `SOURCE.json` |
@@ -302,6 +302,8 @@ the serving collection is never written:
 backend/.venv/bin/vsir eval acceptance && backend/.venv/bin/vsir eval abstention
 backend/.venv/bin/vsir eval acceptance --only parity     # synthetic | parity | real | all
 backend/.venv/bin/vsir eval abstention --corpus indexed --doc-id TC1E-SF
+backend/.venv/bin/vsir eval corpus                       # §12.6 + the D11 gates
+backend/.venv/bin/vsir eval corpus --corpus indexed --doc-id TC1E-SF
 ```
 
 `eval acceptance` prints one row per §12.3 assertion — the assertion, what the table expects, what
@@ -327,11 +329,33 @@ Both are in CI on every commit (`.github/workflows/ci.yml`), named as their own 
 §12.4 assertions so a failure is legible in the run summary:
 
 ```bash
-bash scripts/test-api.sh -k "near_miss or eval_commands"
+bash scripts/test-api.sh -k "near_miss or eval_commands or eval_corpus"
 ```
 
-`vsir eval corpus` (§12.6) arrives at M8; asking for it now is refused by name listing the two
-that are served.
+`eval corpus` is §12.6's report and the **D11 gates**: `code_precision` (= 1.00), `code_recall`
+(≥ 0.95, blocked below 0.90), `abstention_correctness` (= 1.00), `alarm_label_hit` (≥ 0.99) and
+`xref_resolve` (≥ 0.99), one row each with the measurement beside the gate, non-zero on any
+failure. A `code_precision` or `abstention_correctness` shortfall prints a **P0 STOP** block
+naming every offending code and page; a `code_recall` under 0.90 prints **BLOCKED**. The two
+register ratios are counted over **(code, page) pairs** — the injury is the wrong page, not the
+wrong code — and each row prints `1/denominator` so a set too small to evidence its own gate is
+marked *underpowered* rather than read as a result.
+
+The ground truth is a checked-in `corpus_truth.json` beside the corpus it describes
+(`data/fixtures/synthetic_pages/corpus_truth.json` today), relocatable with `--truth` or
+`$VSIR_CORPUS_TRUTH`, and located for `--corpus indexed` by the `corpus.doc_id` it declares rather
+than by its directory name. A set the file marks `unavailable` **skips with that reason printed**
+and neither fails the run nor counts as measured; a report where *every* set skipped is red,
+because it produced no evidence. The command reads only — no ingest step, no model call on any
+path (`vsir.vlm` is not in its import graph) — and it also re-validates R4's `grounded_rate`
+publish bar against whatever is indexed and prints R7's `NO LEGACY COVERAGE` list beside the
+metrics.
+
+D11's numbers are pinned in `vsir/eval/corpus.py::D11` and may be re-baselined **once, from the
+M2b measurement, with a recorded rationale** (C10) — `REBASELINED` is empty in this release. A
+re-baseline missing its rationale, its measurement or the corpus it was measured on is refused, as
+is one that moves nothing, one that drops under D11's blocking floor, and any attempt to lower
+`code_precision`: §12.6 makes precision a safety property, not a measured target.
 
 Neither corpus is in the image — the build context is `backend/` — so a container running these
 commands mounts the fixtures and points `VSIR_SYNTHETIC_PAGES`, `VSIR_LEGACY_FIXTURE` and

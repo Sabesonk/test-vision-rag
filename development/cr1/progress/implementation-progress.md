@@ -7,11 +7,11 @@
 
 | | |
 |---|---|
-| **Complete** | 30 / 33 units (91%) — 23 of the planned 26, plus U027, U028, U029, U030, U031 and U032 added after the plan was written (plan §4b) |
-| **Current milestone** | **M8 — one unit left.** U025 closes revisions, resume and graceful shutdown; **U026** (`vsir eval corpus`, paid) is the last unit in the plan. **M0, M1, M2a, M3, M4, M5, M6 and M7 are closed.** Previously: U024 drove the console through a browser — 22 Playwright assertions against the same backend image production runs, in replay mode, spending nothing |
-| **Latest** | **U025 — `--resume` that buys nothing twice, a `SIGTERM` that loses at most one window, `found_only_in_superseded`, `series_id` across revisions and `vsir retire`.** The unit's real finding is a defect it introduced and then removed: **the `SIGTERM` handler raced the write it was making.** It called `run_module.stop()` from inside the handler, which runs between two bytecodes of whatever is executing — very often an in-flight `save()` to the same run point once the lease is renewed per window — so the interrupted write could land *on top of* the checkpoint and leave a cleanly-shut-down run `running` with a live lease, which is the exact failure this unit exists to remove. §15 Factor IX asks for a **cooperative** shutdown and now gets one: the handler sets a flag, and the checkpoint is written at a safe point where nothing else is writing. Second finding: the durable §6.3 cache (`vlm/cached.py`) is what makes a resume free, and it also closes plan §4c **P2** — a re-ingest no longer re-bills anything |
-| **Next unit** | **U026** (M8, paid) — `vsir eval corpus`, the §12.6 report and the D11 gates, with `code_precision` at 1.00 as a P0 stop |
-| **Then** | The **completion gate**: AC-001…AC-016 verified with evidence, every F-row closed by the milestone §10 assigns it, then `v0.1.0` |
+| **Complete** | **32 / 33 units (97%)** — 25 of the planned 26 (every one but **U013**), plus U027, U028, U029, U030, U031 and U032 added after the plan was written (plan §4b) and the `fixes/` bundle |
+| **Current milestone** | **M8 is closed, and so is the plan.** U025 closed revisions, resume and graceful shutdown; **U026** closes the last one — `vsir eval corpus`, §12.6's report and the D11 gates. **Every milestone M0-M8 is now closed.** The only unit that is not `[x]` is **U013**, whose paid re-bill waits on OQ-1 |
+| **Latest** | **U026 — the catalogue, measured rather than asserted.** `vsir eval corpus` prints §12.6's five metrics against D11's gates, exits non-zero on any failure, and stops with a named **P0 STOP** on a `code_precision` under 1.00. Three findings the build produced: **(1)** `0/0` is the one arithmetic accident that turns an absent corpus into a perfect safety score, so a zero denominator is `None` and a named skip, never `1.00`; **(2)** the document-wide `lookup` status explains a recall miss *wrongly* — a code printed on an untrusted page inside a searchable document answers `not_found`, and a report echoing that would send a reader hunting a tokenisation bug that is not there, so a miss is explained from the page's own record; **(3)** a ground-truth file is found by the `doc_id` it **declares**, not by its directory name — fixture directories are named after the corpus (`synthetic_pages` holds `SYN-M1`), so the obvious `data/fixtures/<doc_id>/` path finds nothing for most of them. The report also prints `1/denominator` and marks a set **underpowered** when one miss costs more than its gate's whole tolerance |
+| **Next unit** | None in the plan. What is left is the **completion gate**: AC-001…AC-016 verified with evidence, §10's "Closed at" column checked row by row, then `v0.1.0` |
+| **Then** | `git tag cr1-m8` on the milestone gate, and `v0.1.0` once the completion gate is signed off. **U013 stays `[!]`**, so the completion gate has to state what AC-014's M2b slice and §12.6's real-corpus numbers still rest on (OQ-1) rather than count them green |
 | **Read first** | **Plan §4c — six open defects found by running the system.** None breaks a build; all of them mislead somebody who trusts the output. P1 (a live run records no cost) and P2 (no VLM cache store, so a re-ingest re-bills) both land on U013 |
 | **Blocked** | **U013** — the paid re-bill only, and now on **OQ-1 alone**: `data/source/TC1E-SF.pdf` is still not present. **OQ-2 is closed** — a key is configured and was exercised live on 2026-09-10, ingesting a real 4-page datasheet to `published` through `POST /documents`. The ladder is no longer a blocker either: the shipped `plan()` refused the 55-page pilot at **step 05**, one step before the spend everyone thought it was waiting on a credential for, and `fixes/001` now folds it to `[[1, 30], [31, 55]]` — byte-for-byte what its own acceptance table declared. Nothing downstream is blocked (§17) |
 
@@ -132,7 +132,7 @@ Two things a later unit should not have to rediscover:
 
 ### M8 — revisions, resumable ingest, scale-out (spend: ingest)
 - [x] U025 Revisions, resumable ingest, and graceful shutdown — spend: none
-- [ ] U026 `vsir eval corpus` — the §12.6 report and the D11 gates — spend: paid
+- [x] U026 `vsir eval corpus` — the §12.6 report and the D11 gates — spend: none in the end (the report reads the index; no set it could measure needed a live call) — **M8 closes here, and so does the plan**
 
 ---
 
@@ -5336,4 +5336,249 @@ and that is correct — see the next note.
   against the OpenAPI document rather than by calling the verb, because a 405 on an unrouted path
   proves nothing about the surface.
 - Still open for M8: **U026** (`vsir eval corpus`, the §12.6 report and the D11 gates, paid), then
-  the completion gate — AC-001…AC-016 with evidence, and `v0.1.0`.
+  the completion gate — AC-001…AC-016 with evidence, and `v0.1.0`. *(U026 shipped on 2026-09-11;
+  see its entry below. M8 is closed.)*
+
+---
+
+### U026 — `vsir eval corpus`, the §12.6 report and the D11 gates
+
+**Milestone:** M8 · **Spend:** none in the end (see the notes) · **Status:** `[x]` Complete ·
+**Completed:** 2026-09-11
+
+The last unit in the plan, and the only one whose deliverable is a **number**. Everything before it
+asserts the catalogue; this measures it. §12.6 names four ground-truth sets and five metrics, D11
+fixes a gate for each, and one sentence of §12.6 decides the shape of the whole module —
+*"Precision is a safety property and must be perfect; recall is a measured target."* So two gates
+are **stops** and three are targets, and the difference shows in the output, in the exit code, and
+in what a re-baseline is allowed to touch.
+
+**Demo output** — `vsir eval corpus` (the plan's command, and M8's second §0 demo beside U025's
+`--resume`), against the §13 M1 corpus seeded into a collection of its own and dropped:
+
+```
+vsir eval corpus — release u026-dev, §12.6, corpus synthetic
+
+CORPUS — SYN-M1@1.0 in vsir_pages_u026_eval_corpus_synthetic_1536, 30 current page(s)
+  ground truth: /Users/sabesonk/Documents/DILMAH/dilmah-engineering-solutioning/poc/vision_segmentation_index_and_retrieval/data/fixtures/synthetic_pages/corpus_truth.json
+  held out: NO — §12.2 L5 asks for a document nobody tuned against
+  The M1 corpus is NOT the held-out canary §12.2 L5 asks for — it is the corpus M1 was written
+  against, so a green run here evidences the gate arithmetic and the exact surface, not
+  generalisation. The §12.6 sets it stands in for are one and two orders of magnitude larger:
+  2,053 register rows, ~494 alarm records and 6,880 cross-reference tokens against 20, 0 and 4
+  here.
+
+METRIC                   SET                  MEASURED             D11 GATE             VERDICT
+  component_register · every code printed on a current page of SYN-M1@1.0, with the page that
+  prints it — the analogue of the real corpus's component register at E pp. 59-125 (2,053 rows ·
+  748 tags · 484 codes). Codes are listed in their canonical spelling and `as_printed` records
+  the spelling the page actually carries, so the rows exercise `variants()` exactly as §12.3's
+  table does.
+code_precision           component_register   1.0000  19/19        = 1.00               PASS
+  one register row is one (code, page) pair: a code returned on the right page and a wrong one
+  is a precision miss, not a found code
+code_recall              component_register   0.9500  19/20        ≥ 0.95, block <0.90  PASS
+  - missed K404 → SYN-M1@1.0#p010
+             the page's text layer is untrusted (§5.7), so it is excluded from the exact surface. A
+             recall miss the corpus caused, not the index: the code is reachable through `vlm_codes`
+             (D3) or a `read`
+abstention_correctness   near_miss            1.0000  100/100      = 1.00               PASS
+  derived from the observed-token inventory of 55 token(s) (§6.8), so OQ-4's 8,414-pair list is
+  not required
+alarm_label_hit          alarm_catalogue      —                    ≥ 0.99               SKIP
+  SKIP · SYN-M1 prints no alarm numbers at all — p024 is the alarm list and it says in so many
+  words that the alarm texts are held in the HMI project and are not reproduced. There is no
+  numbers 0-539 catalogue here to measure `alarm_label_hit` against, so the set is SKIPPED by
+  name rather than scored over an empty denominator.
+  cross_references · every citation one current page makes to another page of the same document,
+  as the citing page prints it. The real corpus's set is 6,880 tokens at 99.97% resolvable; this
+  one is four, which is stated beside the metric because four tokens can fail a 0.99 gate and
+  cannot evidence it.
+xref_resolve             cross_references     1.0000  4/4          ≥ 0.99               PASS
+  underpowered · one miss costs 0.2500 against a tolerance of 0.0100: this set can FAIL the gate
+  and cannot evidence it
+
+R4 — the grounded_rate publish bar, re-validated against this corpus (pin: 0.8)
+  30 page(s), 29 with text, median 1.0000, searchable_ratio 0.9667
+  SYN-M1@1.0: median 1.0000, but the text layer behind it was not written by the pinned
+  extractor (probe_version: hand-written-m1). R4 asks for the distribution of a real ingest, and
+  a constructed corpus reports its own construction: the M1 pages are hand-written, and the
+  `impl` baseline's text is the projection of codes the old gate had already proved printed, so
+  every page rates 1.0 by definition. This sets no threshold — run the report over a `pymupdf-…`
+  ingest.
+  recommendation: no change — the pin stays where the release ships it
+
+RE-BASELINE — none in force. §12.6 permits one, from the M2b measurement, with a recorded rationale; M2b's re-bill is U013 and is blocked on OQ-1, so every gate above is D11's own number.
+
+NO LEGACY COVERAGE — 14 area(s) the ported baseline says nothing about (R7). A green report above is not sign-off on these
+  - §7.1 the six-value status enum — `impl` returned bare empty lists, so no absence is distinguished and `next.suggest` has no baseline at all
+  - §7.1 `weak` / `needs_scope` against the server constant, and `scope_stats` — neither exists in `impl`
+  … 12 more (the full list is U012's `NO_LEGACY_COVERAGE`, recorded there)
+
+corpus: 4 measured, 0 failed, 1 skipped — PASS
+exit=0
+```
+
+**What ships**
+
+- `backend/vsir/eval/corpus.py` — net new. `D11` (the spec's five bounds, transcribed), `gates()`
+  and the C10 re-baseline rule, `Truth`/`load()` over a checked-in ground-truth file, the four
+  set measurements, the R4 re-validation, and `print_report`.
+- `data/fixtures/synthetic_pages/corpus_truth.json` — net new. The §12.6 sets for the M1 corpus,
+  authored **from the page text**: 20 printed component-register rows, 4 cross-reference tokens,
+  and an `alarm_catalogue` marked `unavailable` with the reason. The same C10 direction
+  `expected.json` points in — no measurement is written in the module, and nothing in the file
+  can be edited to make a red row green without changing what the corpus is claimed to print.
+- `backend/vsir/cli.py` — `eval corpus`, with `--corpus synthetic|indexed`, `--collection`,
+  `--doc-id`, `--truth` and `--sample`.
+- `backend/vsir/eval/__init__.py` — `current_payloads()` split out of `searchable_payloads()`;
+  the R4 distribution needs the pages with no text layer, which the searchable reading drops.
+- `backend/tests/api/test_eval_corpus_gates.py` — 48 tests.
+- `.github/workflows/ci.yml` — `eval_corpus` joins the named §12.4 step: two of these five gates
+  are P0 stops, so the arithmetic between a measurement and that verdict runs on every commit.
+
+**Three findings the build produced**
+
+1. **`0/0` is the one arithmetic accident that turns an absent corpus into a perfect safety
+   score.** A metric with a zero denominator returns `None` and reports `SKIP`, never `1.00` —
+   and `code_precision` over *zero returned pairs* is a **named** skip rather than a bare one,
+   because "the surface answered nothing at all" and "everything it answered was right" must not
+   print the same. A report where every set skipped is red for the same reason (`Report.ok`
+   requires something measured).
+2. **The document-wide `lookup` status explains a recall miss wrongly.** `K404` is printed on
+   p010, whose text layer is `untrusted`. Scoped to the document, `lookup` answers `not_found` —
+   correctly, because 29 of the 30 pages *are* searchable — and the first draft echoed that
+   status into the miss line as *"the page is searchable and does not contain the phrase"*, which
+   would send a reader hunting a tokenisation bug that is not there. A miss is now explained from
+   the **page's own record** (`has_text`, `text_trust`) and the query's status second.
+3. **A ground-truth file is found by the `doc_id` it declares, not by its directory name.** The
+   first `--corpus indexed` run refused with *"no ground truth at data/fixtures/SYN-M1/"*: fixture
+   directories are named after the **corpus** (`synthetic_pages` holds `SYN-M1`, `legacy` holds
+   seven documents), so the obvious path finds nothing for most of them. Resolution now falls back
+   to matching `corpus.doc_id` across the checked-in fixtures, and two files claiming one document
+   is a refusal rather than a sort-order pick.
+
+**Two judgement calls, stated because they are readings of §12.6 rather than transcriptions**
+
+- **Both register ratios are counted over (code, page) pairs**, not per code. §12.6 words them per
+  code, but §1.1's injury is *the wrong page*: a code returned on its right page **and** a wrong
+  one would score as a found code under a per-code reading, and `code_precision = 1.00` would stop
+  meaning what §12.6 says it means.
+- **`xref_resolve` asks whether the right page is *among* the candidates**, not whether it is the
+  only one. F5 makes ambiguity return every candidate, so a metric demanding a single hit would
+  score the refusal-to-pick as a miss and reward exactly the silent pick F5 forbids.
+
+**The C10 re-baseline rule, as code**
+
+`REBASELINED` is empty in this release and the report says so. A `Rebaseline` carries the corpus it
+was measured on, the measurement, and a rationale, and `gates()` refuses five ways: a missing
+rationale / measurement / corpus, a record that lands on D11's own number and moves nothing, one
+that drops under D11's blocking floor, a metric §12.6 does not have, and **any lowering of a
+safety floor** — no rationale buys a `code_precision` under 1.00, because §12.6 calls precision a
+safety property and the permission to re-baseline is the permission to move a *target*. Each is a
+test.
+
+**Honesty the report prints about itself**
+
+- `held out: NO` — §12.2 L5 asks for a document nobody tuned against, and the M1 corpus is the
+  corpus M1 was written against. The line says so above every metric.
+- `1/denominator` per set, and **underpowered** where one miss costs more than the gate's whole
+  tolerance: four cross-reference tokens can fail a 0.99 gate and cannot evidence it.
+- The real-corpus scale beside the stand-in: 2,053 register rows / ~494 alarm records / 6,880
+  cross-reference tokens against 20 / 0 / 4.
+- R7's `NO LEGACY COVERAGE` list, printed beside the metrics so a green report is never read as
+  sign-off on the §7/§8 paths the ported baseline never exercised.
+
+**Test results**
+
+| Suite | Result |
+|---|---|
+| `bash scripts/test-unit.sh` | **1447 backend + 166 frontend passed**, conformance green |
+| `test-api.sh -k eval_corpus` | **48 passed** — the plan's automated command |
+| `bash scripts/test-api.sh` (the whole L2/L3 suite) | **1685 passed, 13 skipped, 0 failed**, and re-run green on the final tree |
+
+The 48 are the gate arithmetic at 1.00 / 0.95 / 0.90 / 0.99 and one step either side of each, the
+five re-baseline refusals, and a **negative control for every green row** — the ground-truth file
+is mutated the way a real disagreement would arrive (a register row moved to the wrong page, one
+unprinted code, four unprinted codes, a citation pointed at a page it does not open) and the
+command has to find it, print the P0 STOP or the BLOCKED block, and exit non-zero.
+
+**Invariants / failure rows closed**
+
+- **None newly, by design** — the plan says so. This unit is the *measured proof* that the
+  catalogue holds, not a new guard. What it does close is **D11**, the last of Spec §3's closed
+  decisions to have an owner (plan §"§3 decisions D1–D12": *D11 → U026*), and §12.6's row of the
+  traceability table.
+- Re-exercised end to end: **I2/I3** (only `text` answers a `lookup`; `include_unverified` stays
+  false, so no `vlm_codes` hit can enter a recall number), **I5** (every absence typed), **I7**
+  (`is_current` injected server-side — the superseded 0.9 page is not a register row and cannot
+  become one), **F1/F3** (the whole register measured through `MatchPhrase` over `variants()`),
+  **F4** (`K404`'s miss is disclosed as unsearchable, not as absent), **F5** (the bracketed
+  citation resolves `interpolated` and ambiguity is not scored as a miss).
+
+**Notes**
+
+- **The unit is classed `Spend: paid` in the plan and cost nothing.** The spend was for *"the
+  scale-out corpus the report measures"* — the real corpus of OQ-1. The report itself is a read:
+  §11.4 asks for a report over the gauges the pipeline already emits, `vsir.vlm` is not in
+  `corpus.py`'s import graph, and both halves are asserted (a spy on `vlm.backend` and both
+  backends' `generate`, plus a spy on `probe.page_texts` / `extract.extract` /
+  `embed.embed_document` / `index.upsert`). Nothing here can bill.
+- **Two of §12.6's four sets have no ground truth on any corpus that exists here, and they say
+  so.** The alarm catalogue skips by name; the component register and cross-reference sets are
+  stand-ins at 1% and 0.06% of the real sets' size. Those are OQ-1's, and the report's job is to
+  make the gap legible rather than to score around it.
+- **`code_recall` lands on exactly 0.95** — 19 of 20 printed codes, the twentieth on the
+  photocopied insert. That is the gate's own boundary, reached by measurement and not by
+  construction, and the report names the miss and why the exact surface cannot reach it.
+- The **R4 re-validation** is `grounded_rate.recommend`'s judgement, not a second one: on a
+  hand-written corpus it refuses to propose a threshold at all and says why. Pointed at a
+  `pymupdf-…` ingest it will do what R4 asks. That path is exercised by
+  `--corpus indexed`; the number it will produce is U013's.
+
+---
+
+## M8 milestone gate (2026-09-11)
+
+Every unit in M8 is `[x]`. The gate was run as §5 of the build prompt prescribes: both §0 demo
+commands, then an independent subagent verifying Spec §13's M8 Acceptance list against the
+implementation with file-and-line evidence.
+
+**Demo commands (Spec §0, M8):** `vsir ingest --resume <run_id>` — recorded in the U025 entry —
+and `vsir eval corpus`, recorded in the U026 entry above. Both green.
+
+**Acceptance, verified item by item**
+
+| # | §13 M8 acceptance item | Verdict | Evidence |
+|---|---|---|---|
+| 1 | F9 — a lookup only a superseded revision satisfies returns `found_only_in_superseded` | ✓ | `test_revision_lifecycle.py::test_lookup_only_in_superseded_returns_typed_status`; `serve/tools/lookup.py` `superseded_probe` / `superseded_in` / `published_revisions` |
+| 2 | F12's revision half — 1.4 retires 1.3 to `is_current=false` **without deleting** | ✓ | `ingest/run.py` uses `set_payload({"is_current": False})`, never a delete; `test_revision_lifecycle.py` asserts `count(revision=OLD)` unchanged, `count(revision=OLD, is_current=True) == 0`, `deleted_stale_points == 0` |
+| 3 | F8's `series_id` half — stable across revisions | ✓ | `test_series_id_revisions.py` (pure) and `test_revision_lifecycle.py::test_series_id_stable_across_revisions_in_the_index` |
+| 4 | A `SIGTERM` mid-window loses at most one window and publishes nothing partial | ✓ | `test_sigterm_checkpoint.py::test_the_run_publishes_nothing_partial` (`queryable == 0`, no `is_current` point for the run); `test_resume.py::test_sigterm_checkpoint_loses_at_most_one_window` |
+| 5 | A generated large PDF survives a kill and resumes without re-billing completed windows | ✓ **as amended by C15** | `test_resume.py::test_resume_completes_without_rebilling` — the windows already `done` are exactly the ones the resumed run never calls the backend for; `::test_the_corpus_forces_at_least_three_window_checkpoints` is the precondition. **The "≥ 700 windows / kill at window 700" figure was not met and was never buildable** — see below |
+| 6 | Attempting a Level-2 document fails with a typed `ladder_level_2_required` | ✓ **as amended by C14** | Superseded by §6.2 (rewritten by `fixes/001`): the code is retained in the `WindowError` family and never raised, and a Level-2 document **plans**. `ingest/window.py` keeps the code string; `test_ladder_level_2.py` asserts `raise LadderLevel2Required` appears nowhere under `backend/vsir/` |
+| 7 | The evaluation report states code exactness and abstention correctness per set | ✓ | `eval/corpus.py::D11` transcribes §12.6/D11 and is cross-checked against `abstention.CORRECTNESS_GATE` at import; `print_report` emits `METRIC / SET / MEASURED / D11 GATE / VERDICT` per metric; `test_eval_corpus_gates.py` asserts the printed table covers every D11 metric and every §12.6 set |
+
+**Two spec corrections the gate produced.** Both are stale §13 text, not implementation defects,
+and both were applied to the spec's own corrections table (§2.3) rather than worked around:
+
+- **C14** — §13 M8 gated the milestone on a refusal §6.2 forbids. `fixes/001` rewrote §6.2 after
+  measuring the old ladder against the real corpus (48% of pages refused, the pilot among them);
+  §13's sentence was left behind. Between two sections of one spec the later and more specific
+  one wins, and the implementation already followed §6.2.
+- **C15** — §13 M8 sized the resume proof by absolute scale (≥ 700 windows). 700 windows at the
+  30-page cap is ≈21,000 pages: a PDF nobody would commit, and a D10 replay fixture would need
+  700 frozen S2 responses. The figure is replaced by the **operational criterion the property
+  actually needs** — a corpus large enough to force at least three window checkpoints, so a kill
+  leaves completed windows behind it and uncompleted ones in front. **This reduces the evidenced
+  scale and C15 says so:** lease renewal over hours, Qdrant at ≈21,000 points and the cost line
+  are *not* evidenced, and stay with **OQ-5**, which C15 explicitly does not close.
+
+**What a green M8 does not evidence.** The `vsir eval corpus` report is honest about this in its
+own output and it belongs in the gate record too: `alarm_label_hit` is a named SKIP because the
+M1 corpus prints no alarm numbers; the component register is 20 rows against §12.6's 2,053 and
+the cross-reference set is 4 tokens against 6,880 (printed `underpowered`); and `held out: NO` —
+§12.2 L5 asks for a document nobody tuned against. §12.6's gates are therefore **exercised, not
+evidenced**, until OQ-1's corpus lands. That is U013's, and U013 stays `[!]`.
+
+**Tag:** `cr1-m8`.

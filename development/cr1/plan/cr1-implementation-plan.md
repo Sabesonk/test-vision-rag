@@ -2860,7 +2860,12 @@ reaching `published`, and a `lookup` that only the superseded revision satisfies
 
 ## Unit: `vsir eval corpus` — the §12.6 report and the D11 gates (ID: U026)
 
-**Status:** 🔵 Not Started
+**Status:** ✅ Complete (2026-09-11) — **the last unit in the plan.** Shipped at **zero spend**:
+the spend class covered the scale-out corpus the report was to measure (OQ-1's), and the report
+itself is a read — `vsir.vlm` is not in `eval/corpus.py`'s import graph, and both a VLM spy and
+an ingest-step spy assert zero calls. The two sets with no ground truth on any corpus that exists
+here (the alarm catalogue, and the real-scale register / cross-reference sets) **skip by name**
+and are counted as skipped, never passed
 **Milestone:** M8
 **Priority:** P1-High
 **Type:** eval

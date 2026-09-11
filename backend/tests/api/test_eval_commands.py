@@ -33,7 +33,7 @@ from qdrant_client import QdrantClient
 
 from vsir import cli
 from vsir.core.nearmiss import NearMiss
-from vsir.eval import abstention, acceptance, legacy, synthetic
+from vsir.eval import abstention, acceptance, corpus as corpus_eval, legacy, synthetic
 
 REPO = Path(__file__).resolve().parents[3]
 EMBED_DIM = 1536
@@ -486,7 +486,7 @@ def test_neither_command_makes_an_outbound_call_to_anything_but_the_store(run, c
     assert not ports & {80, 443}, seen
 
 
-@pytest.mark.parametrize("module", [acceptance, abstention])
+@pytest.mark.parametrize("module", [acceptance, abstention, corpus_eval])
 def test_no_eval_module_can_reach_a_model_at_all(module):
     """The structural half of the same guarantee: `vsir.vlm` is not in the import graph.
 
@@ -506,18 +506,23 @@ def test_no_eval_module_can_reach_a_model_at_all(module):
     assert not any("genai" in name or "google" in name for name in imports), imports
 
 
-def test_both_commands_are_the_names_4_4_publishes(run, capsys):
-    """§4.4's row is `vsir eval acceptance | abstention | corpus`; `corpus` is U026's, at M8.
+def test_the_commands_are_the_names_4_4_publishes(run, capsys):
+    """§4.4's row is `vsir eval acceptance | abstention | corpus`, and U026 served the third.
 
-    A name that is not served yet is a refusal listing what is — argparse's own, which is the CLI
-    analogue of the typed 404 `POST /tools/{name}` returns for a tool this release does not have.
+    All three parse; a name §4.4 does **not** publish is a refusal listing the ones it does —
+    argparse's own, which is the CLI analogue of the typed 404 `POST /tools/{name}` returns for a
+    tool this release does not have.
     """
+    parser = cli.build_parser()
+    for name in ("acceptance", "abstention", "corpus"):
+        assert parser.parse_args(["eval", name]).eval == name
+
     with pytest.raises(SystemExit) as refusal:
-        cli.build_parser().parse_args(["eval", "corpus"])
+        parser.parse_args(["eval", "similarity"])
 
     assert refusal.value.code == 2
     error = capsys.readouterr().err
-    assert "acceptance" in error and "abstention" in error
+    assert "acceptance" in error and "abstention" in error and "corpus" in error
 
 
 def test_the_abstention_eval_is_registered_in_ci():

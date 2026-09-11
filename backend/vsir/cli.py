@@ -49,7 +49,7 @@ from vsir.core.verify import page_checks, verify_claims
 from vsir.core.tok import tok, token_set
 from vsir.core.variants import preserves_characters, variants
 from vsir.doctor import BootRefused, doctor
-from vsir.eval import abstention, acceptance, synthetic
+from vsir.eval import abstention, acceptance, corpus as corpus_eval, synthetic
 from vsir.ingest import derive as derive_module
 from vsir.ingest import embed as embed_module
 from vsir.ingest import export as export_module
@@ -3484,7 +3484,7 @@ def _cmd_publish(args: argparse.Namespace, cfg: Any, client: Any) -> int:
     return EXIT_OK
 
 
-# ── `vsir eval` — the evaluations of §12.3 and §12.4 (M3; `corpus` is §12.6's, at M8) ────────────
+# ── `vsir eval` — the evaluations of §12.3, §12.4 and §12.6 ─────────────────────────────────────
 
 def _cmd_eval_acceptance(args: argparse.Namespace, cfg: Any, client: Any) -> int:
     """§12.3's acceptance table, printed row by row. Non-zero on any failing row (§12.3, C10).
@@ -3521,6 +3521,32 @@ def _cmd_eval_abstention(args: argparse.Namespace, cfg: Any, client: Any) -> int
         doc_id=report.doc_id, sample=report.sample, leaks=len(report.leaks),
         abstention_correctness=report.abstention_correctness,
         gate=abstention.CORRECTNESS_GATE, refusal=report.refusal, ok=report.ok)
+    return EXIT_OK if report.ok else EXIT_REFUSED
+
+
+def _cmd_eval_corpus(args: argparse.Namespace, cfg: Any, client: Any) -> int:
+    """§12.6's corpus evaluation and the D11 gates. **`code_precision` under 1.00 is a P0 stop.**
+
+    The L5 level of §12.2: a report over a published index, run by hand, that measures the
+    catalogue instead of asserting it. It reads — no ingest step, no model call on any path — so
+    the only thing it can cost is the time to scroll a collection.
+    """
+    print(f"vsir eval corpus — release {cfg.release_id}, §12.6, corpus {args.corpus}")
+    report = corpus_eval.run(client, base=cfg.collection, dim=cfg.embed_dim,
+                             release_id=cfg.release_id, corpus=args.corpus,
+                             collection=args.collection, doc_id=args.doc_id, sample=args.sample,
+                             truth_dir=args.truth or None,
+                             runs_collection=cfg.runs_collection)
+    corpus_eval.print_report(report)
+    log = _log.info if report.ok else _log.error
+    log("eval_corpus", corpus=args.corpus, collection=report.collection, doc_id=report.doc_id,
+        revision=report.revision, pages=report.pages,
+        metrics={metric.name: metric.value for metric in report.metrics},
+        outcomes={metric.name: metric.outcome for metric in report.metrics},
+        p0_stops=[metric.name for metric in report.p0_stops],
+        blocked=[metric.name for metric in report.blocked],
+        skipped=[metric.name for metric in report.skipped],
+        refusals=list(report.refusals), ok=report.ok)
     return EXIT_OK if report.ok else EXIT_REFUSED
 
 
@@ -3979,7 +4005,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     eval_parser = commands.add_parser(
         "eval",
-        help="the evaluations of §12.3 and §12.4; `corpus` (§12.6) arrives at M8",
+        help="the evaluations of §12.3 (acceptance), §12.4 (abstention) and §12.6 (corpus)",
     )
     evals = eval_parser.add_subparsers(dest="eval", metavar="<eval>", required=True)
     acceptance_eval = evals.add_parser(
@@ -4039,6 +4065,50 @@ def build_parser() -> argparse.ArgumentParser:
              f"{abstention.DEFAULT_SAMPLE})",
     )
     abstention_eval.set_defaults(handler=_with_store(_cmd_eval_abstention))
+
+    corpus_eval_parser = evals.add_parser(
+        "corpus",
+        help="the §12.6 corpus evaluation: code_precision, code_recall, abstention_correctness, "
+             "alarm_label_hit and xref_resolve against the D11 gates. Reads the index and "
+             "nothing else; a code_precision under 1.00 is a P0 stop",
+    )
+    corpus_eval_parser.add_argument(
+        "--corpus",
+        choices=list(corpus_eval.CORPORA),
+        default="synthetic",
+        help="`synthetic` seeds the §13 M1 pages into a collection of its own and drops it; "
+             "`indexed` reads the configured collection as it stands and writes nothing — the "
+             "L5 shape (default: synthetic)",
+    )
+    corpus_eval_parser.add_argument(
+        "--collection",
+        metavar="NAME",
+        default="",
+        help="the collection --corpus indexed reads; defaults to $VSIR_COLLECTION_$VSIR_EMBED_DIM",
+    )
+    corpus_eval_parser.add_argument(
+        "--doc-id",
+        dest="doc_id",
+        metavar="DOC",
+        default="",
+        help="which document's ground truth to measure; required when the collection holds more "
+             "than one",
+    )
+    corpus_eval_parser.add_argument(
+        "--truth",
+        metavar="PATH",
+        default="",
+        help=f"the §12.6 ground-truth file or the directory holding it; overrides "
+             f"${corpus_eval.TRUTH_ENV} and the corpus's own {corpus_eval.TRUTH_FILE}",
+    )
+    corpus_eval_parser.add_argument(
+        "--sample",
+        type=int,
+        default=corpus_eval.DEFAULT_SAMPLE,
+        help=f"how many fabricated codes the near-miss set uses (§12.4 asks for "
+             f"{corpus_eval.DEFAULT_SAMPLE})",
+    )
+    corpus_eval_parser.set_defaults(handler=_with_store(_cmd_eval_corpus))
 
     return parser
 
