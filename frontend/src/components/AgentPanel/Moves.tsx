@@ -80,7 +80,15 @@ export function Moves({ trace, loops, checks, reads, readsRemaining }: MovesProp
             </thead>
             <tbody>
               {checks.map((check, index) => (
-                <tr key={`${check.page_id}-${index}`} data-testid="check-row" data-status={check.status}>
+                // `data-page-id` beside `data-status`, as the triage rows carry it: the verdict
+                // and the page it is about are one fact, and a test that had to read them out of
+                // two cells could pass while they belonged to different rows.
+                <tr
+                  key={`${check.page_id}-${index}`}
+                  data-testid="check-row"
+                  data-status={check.status}
+                  data-page-id={check.page_id}
+                >
                   <td className="mono">
                     {check.claim !== '' ? (
                       check.claim

@@ -70,7 +70,7 @@ describe('binder cards', () => {
       },
     ])
 
-    renderWithQuery(<Viewer query="fuse" ladder={TOP} onLadder={vi.fn()} evidence={[]} />)
+    renderWithQuery(<Viewer query="fuse" draftQuestion="fuse" ladder={TOP} onLadder={vi.fn()} evidence={[]} onReadOff={vi.fn()} pending={false} />)
 
     await waitFor(() => expect(screen.getByTestId('binder-card')).toBeTruthy())
     await waitFor(() => expect(urls).toHaveLength(2))
@@ -94,7 +94,7 @@ describe('binder cards', () => {
       },
     ])
 
-    renderWithQuery(<Viewer query="fuse" ladder={TOP} onLadder={vi.fn()} evidence={[]} />)
+    renderWithQuery(<Viewer query="fuse" draftQuestion="fuse" ladder={TOP} onLadder={vi.fn()} evidence={[]} onReadOff={vi.fn()} pending={false} />)
 
     await waitFor(() => expect(screen.getByTestId('searchable-ratio')).toBeTruthy())
     expect(screen.getByTestId('status-not-searchable')).toBeTruthy()
@@ -120,9 +120,12 @@ describe('chapter cards', () => {
     renderWithQuery(
       <Viewer
         query="fuse"
+        draftQuestion="fuse"
         ladder={toBinder(TOP, 'TC1E-SF@1.3', 'Service manual')}
         onLadder={vi.fn()}
         evidence={[]}
+        onReadOff={vi.fn()}
+        pending={false}
       />,
     )
 
@@ -138,9 +141,12 @@ describe('the breadcrumb trail', () => {
     renderWithQuery(
       <Viewer
         query="fuse"
+        draftQuestion="fuse"
         ladder={toBinder(TOP, 'TC1E-SF@1.3', 'Service manual')}
         onLadder={vi.fn()}
         evidence={[]}
+        onReadOff={vi.fn()}
+        pending={false}
       />,
     )
     expect(screen.getByTestId('breadcrumbs').getAttribute('data-rung')).toBe('binder')

@@ -373,3 +373,20 @@ table.rows button.linkish {
 .numbers { display: flex; gap: var(--gap); flex-wrap: wrap; font-size: 12px; color: var(--fg-muted); }
 .numbers b { color: var(--fg); font-family: var(--mono); }
 .empty { color: var(--fg-faint); font-style: italic; }
+
+/* §8.1a's `fetch` route, on the left beside the pixels it is written from. Colours are the same
+   variables everything else uses — a component never names one (§16 Frontend). */
+.read-off { margin-top: 10px; }
+.read-off-text {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  font: inherit;
+  color: var(--fg);
+  background: var(--bg-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px;
+}
+.read-off-text:focus { outline: none; border-color: var(--tone-accent-edge); }
+.read-off-actions { display: flex; align-items: center; gap: var(--gap); flex-wrap: wrap; margin-top: 8px; }

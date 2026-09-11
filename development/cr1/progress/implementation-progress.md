@@ -7,11 +7,11 @@
 
 | | |
 |---|---|
-| **Complete** | 28 / 32 units (88%) — 23 of the planned 26, plus U027, U028, U029, U030 and U031 added after the plan was written (plan §4b) |
-| **Current milestone** | **M7 — open.** U023 shipped the console: a React + TypeScript + Vite app in two zones, driven entirely by replayed data, and the backend half the plan's §4c P7 called for — a typed `TriageTable` on `Outcome` and an additive `triage` field on `AskResponse`, so the triage panel reads a contract instead of regexing a sentence out of a trace `Move.detail`. **M0, M1, M2a, M3, M4, M5 and M6 are closed**; M7 closes at U024. Previously: **M6 — closed.** U021 shipped Loop 0 — §8.2's tri-state triage as a real state machine with all five safeguards binding — and U022 closed the loop: §8.1's machine executed, all six correction loops of §8.3 firing under their own named tests, and the **server-side answer gate** (I8) in front of `POST /ask`, the only surface in this release that may return prose. **M0, M1, M2a, M3, M4, M5 and M6 are closed**; all eight tools of §7.2 are served and the ninth surface — the runner — answers behind the gate. M2b's non-paid half shipped |
-| **Latest** | **U023 — the operator console.** Two zones: the zoom ladder on the left (corpus → binder → chapter → page, then a normalised crop at escalated dpi), the agent on the right (collapsible moves, the tri-state triage table, the badged draft, the gate's own call log). Every code in an answer carries `verified` or *read from image, not text-verified*; a rejected code cannot render, because `RenderedClaim`'s union has no `absent` in it. **Two defects found by running it, neither visible to a green suite:** `GET /documents`'s row type was declared in `client.ts` rather than `types.ts` — outside the contract test's reach — and every field of it was wrong; and `tsc --noEmit` had been failing on `vite.config.ts` since the scaffold landed. The first is why the contract test's ledger is now exhaustive |
-| **Next unit** | **U024** — the Playwright replay suite and `frontend/Dockerfile` (M7's acceptance, in a browser: an `unverifiable` code renders with its badge, a rejected code is absent from the rendered answer, and the abstention names the unread image-only pages). The `frontend-test` service already exists in `docker-compose.test.yml` behind the `e2e` profile and points at a `Dockerfile` U024 writes |
-| **Then** | **U025 / U026** (M8) — revisions, resume, graceful shutdown, and the measured NFRs |
+| **Complete** | 29 / 33 units (88%) — 23 of the planned 26, plus U027, U028, U029, U030, U031 and U032 added after the plan was written (plan §4b) |
+| **Current milestone** | **M7 — closed.** U024 drives the console through a browser: 22 Playwright assertions against the same backend image production runs, in replay mode, spending nothing. **M0, M1, M2a, M3, M4, M5, M6 and M7 are closed**; M8 is the last one. Previously: U023 shipped the console itself — a React + TypeScript + Vite app in two zones, plus the backend half plan §4c P7 called for (a typed `TriageTable` on `Outcome` and an additive `triage` field on `AskResponse`), so the triage panel reads a contract instead of regexing a sentence out of a trace `Move.detail` |
+| **Latest** | **U024 — the Playwright replay suite, `frontend/Dockerfile` and a rewritten `scripts/test-e2e.sh`.** M7's three acceptance assertions hold in a browser: an `unverifiable` code renders with its badge, a rejected code is absent from the rendered answer, and the abstention names the unread image-only pages without ever saying *"not in these documents"*. **None of the three was reachable from the shipped console**, which is the unit's real finding — the fix is §8.1a's `fetch` route given to the operator (*"what do you read on this page?"*, gated server-side, zero spend), the one route a console is the literal client of. Second finding, measured: **the stub embedding is platform-dependent** — Pillow's PNG bytes differ between the macOS and Linux wheels, so a dense near-tie ranks the other way in Docker and a replayed multi-page trace can reach a page set nobody froze. No answer depends on a ranking (I2/I3), but a replayed *trace* does |
+| **Next unit** | **U025** (M8) — revisions, `--resume` with per-window checkpoints, the `SIGTERM` handler, `series_id` across revisions and `found_only_in_superseded`. Spend: none — provable end to end with the stub VLM on a generated large PDF (§6.2) |
+| **Then** | **U026** (M8, paid) — `vsir eval corpus`, the §12.6 report and the D11 gates. Then the completion gate: AC-001…AC-016 verified with evidence, and `v0.1.0` |
 | **Read first** | **Plan §4c — six open defects found by running the system.** None breaks a build; all of them mislead somebody who trusts the output. P1 (a live run records no cost) and P2 (no VLM cache store, so a re-ingest re-bills) both land on U013 |
 | **Blocked** | **U013** — the paid re-bill only, and now on **OQ-1 alone**: `data/source/TC1E-SF.pdf` is still not present. **OQ-2 is closed** — a key is configured and was exercised live on 2026-09-10, ingesting a real 4-page datasheet to `published` through `POST /documents`. The ladder is no longer a blocker either: the shipped `plan()` refused the 55-page pilot at **step 05**, one step before the spend everyone thought it was waiting on a credential for, and `fixes/001` now folds it to `[[1, 30], [31, 55]]` — byte-for-byte what its own acceptance table declared. Nothing downstream is blocked (§17) |
 
@@ -105,6 +105,12 @@ Two things a later unit should not have to rediscover:
       `/documents/{doc_id}/pages` and `GET /runs`; `vsir://corpus` and two resource templates on
       MCP. **No new tool, no second dispatcher, and no second validator**
 
+- [x] **U032 The live path: the schema `title` bug, the client race, and the retry ladder** —
+      added after the plan (§4b). Three defects that only a **paid** run could expose, all found
+      by ingesting one real 56-page manual: a field named `title` deleted from every response
+      schema, a lazy SDK client raced by its own thread pool, and transient transport failures
+      refused at the first attempt. Prompt released as **s2-v2**
+
 ### M4 — `skim_pages`, `fetch`, `resolve` (spend: none)
 - [x] U017 `skim_pages`, deterministic fusion, image queries, and `resolve`
 - [x] **U029 The document store — `page_id` → bytes** — new (plan §4b); **U018's blocker, cleared**
@@ -122,7 +128,7 @@ Two things a later unit should not have to rediscover:
 
 ### M7 — operator console (spend: none, fixture-backed)
 - [x] U023 The operator console — viewer, agent panel, trust badges
-- [ ] U024 The Playwright replay suite and `scripts/test-e2e.sh`
+- [x] U024 The Playwright replay suite and `scripts/test-e2e.sh` — **M7 closes here**
 
 ### M8 — revisions, resumable ingest, scale-out (spend: ingest)
 - [ ] U025 Revisions, resumable ingest, and graceful shutdown — spend: none
@@ -4565,6 +4571,111 @@ written up in the U022 entry.
 
 ---
 
+### U032 — The live path: the schema `title` bug, the client race, and the retry ladder
+
+**Milestone:** post-plan (§4b) · **Spend:** paid (four ingests of one 56-page manual) · **Status:** `[x]` Complete · **Completed:** 2026-09-11
+
+Three defects, none of which a test could have found, all of which one real document found in an
+hour. They belong together because they share a cause: **the stub never builds a request, never
+opens a client and never crosses a network**, so everything between our types and the provider was
+unverified until a paid run went through it. That is U028's lesson, and this is its second half.
+
+**1. A field called `title` was deleted from every schema we send.** `response_schema()` strips
+`UNSUPPORTED_SCHEMA_KEYS` — which contains `title`, because a schema's own `title` keyword is a
+`400` from the API — and it stripped it at **every level of the tree, including inside
+`properties`**, where the keys are the model's own field names. `SectionRef.title` is named
+`title`. So the model was asked for
+
+```json
+"sections": {"items": {"properties": {"is_start": {"type": "boolean"}}}}
+```
+
+a list of objects with nowhere to put a section's name, and it correctly returned `[]` — on every
+page of every live document. Two ingests came back with sections on **0 of 58** pages while the
+frozen fixtures, recorded before, had them on 42/42. The whole of `next.expand` (§7.2.1 P4) is a
+`section_id` scope, so **the expand affordance was inert on everything really ingested**, and
+`skim_sections` had nothing to group. A keyword and a field name are different namespaces;
+`resolve()` now walks them separately.
+
+**The test required the bug.** `test_the_schema_that_is_sent_carries_nothing_the_api_has_no_field_for`
+walked every key at every depth and asserted none was a keyword — which is precisely the demand
+that `title` be stripped from `properties`. It was not blind to the defect, it enforced it.
+Corrected in place, so its provenance survives, and it now asserts both halves: keywords gone,
+field names kept.
+
+**2. The SDK client was raced by the pool that uses it.** `GeminiEmbedder._client()` was a plain
+`if self._sdk_client is None`, and `embed_pages` fans batches over a `ThreadPoolExecutor` of
+:data:`EMBED_CONCURRENCY` = 8. A 56-page document is 7 batches, so seven threads reached that check
+together, all saw `None`, all built a client, and the last assignment orphaned the rest — collected,
+`httpx` transport closed underneath the threads still using it:
+
+```
+embed_pages: RuntimeError: Cannot send a request, as the client has been closed.
+```
+
+Structurally invisible below `EMBED_BATCH_SIZE`: one batch is one worker, so the two-page datasheet
+that was ingested successfully an hour earlier could not have shown it. Double-checked lock, and the
+same fix on `GeminiBackend._client`, which is the identical shape reached by the identical window
+fan-out and had simply not met a document with enough windows yet.
+
+**The first regression test for it was worthless and passed either way** — a trivial `FakeClient.__init__`
+makes check-and-assign effectively atomic under the GIL. Only reverting the fix and re-running
+exposed that. With 20 ms in the constructor it fails honestly: **8 clients without the lock, 1 with.**
+
+**3. A connection that never answered was not worth retrying.** `RETRYABLE` was ported from `impl`
+as HTTP **statuses** — replies the server sent. An `httpx` transport error carries none of those
+words, so it raised at `attempts: 1`. Three live runs died that way in an hour:
+`RemoteProtocolError: Server disconnected` on an S2 window, then twice
+`ConnectError: [Errno -2] Name or service not known`. The second shape is the expensive one — S2
+was already paid for and the run threw that spend away over a DNS blip a single retry would have
+ridden out. The transport classes are now in the list, with a test on **both** sides so widening it
+cannot start retrying a genuine rejection.
+
+**Prompt s2-v2.** Released while chasing (1) on a hypothesis that turned out to be wrong: the
+s2-v1 text did contain a real contradiction — *"list a section on every page it merely continues
+on"* against *"do not add a section that is not on the page in front of you"* — and the
+clarification stands on its own, but it was **not** the cause and it did not fix anything on its
+own. Recorded here rather than quietly, because a version bump attributed to the wrong defect is
+how the next person concludes the prompt is the lever when it is not.
+
+The frozen fixtures are untouched and still key on `s2-v1`: :func:`prompt` is reached only on the
+**live** path, so replay never loads the text and never checks a digest. `docker-compose.yml` now
+interpolates `VSIR_PROMPT_VERSION` the way it already interpolated `VSIR_VLM`, and
+`scripts/stack.sh up --live` exports the released version — replay keeps the one its fixtures were
+frozen under, which is the honest arrangement and is now written down in `.env` beside the variable.
+
+**Verified on the document that exposed all three** — `data/source/SICK-DETECTOR-BOX.pdf`, 56 pages,
+ingested live:
+
+| | before | after |
+|---|---|---|
+| pages carrying a section | 0 / 56 | **53 / 56** |
+| distinct sections | 0 | **68** |
+| `next.expand` | `{}` | `{"section_id": [...]}` |
+
+And the affordance round-trips, which is the point of it: take `next.expand` off a `skim_pages`
+hit, hand it back **verbatim** as the next call's `scope`, and page 40 becomes pages **38–44** —
+its whole section, no string assembly. `skim_sections` now returns *"4.4 Response time"* and
+*"4.6 Testing plan"* instead of nothing.
+
+**Tests:** `bash scripts/test-unit.sh` → **1424 passed**; `bash scripts/test-api.sh` → **1513
+passed, 13 skipped**.
+
+**Invariants / failure rows closed:** none new. What changed is that three things the contracts
+already promised are now true on the paid path as well as the replayed one.
+
+**Notes**
+
+- **§4c P2 is not open.** `serve/tools/read.py` builds a `ControlPlaneStore` and both `get`s and
+  `put`s on it, and the live control plane holds 11 `vlm_cache` entries under namespace `read`.
+  The re-bill the plan describes does not happen. What does happen, and is by design, is that the
+  per-caller quota is charged **before** the call (`app.py`, *"Before the charge, never after"*),
+  so a cache hit still costs a quota unit while costing no money — worth a decision, not a defect.
+- **The remaining live-path unknown is `/ask`'s budget.** A question against this manual spent its
+  three-read per-question ceiling without answering. That is the runner's, and it is U022's.
+
+---
+
 ### U023 — The operator console: viewer, agent panel, trust badges
 
 **Milestone:** M7 · **Spend:** none (fixture-backed replay) · **Status:** `[x]` Complete ·
@@ -4748,3 +4859,173 @@ carries no page text and no image bytes.
   deliverables. `docker-compose.test.yml` already declares `frontend-test` (`5174 → 5173`) behind
   the `e2e` profile, pointing at the Dockerfile U024 writes, so `docker compose up -d` does not
   fail on a build context that does not exist yet.
+
+---
+
+### U024 — The Playwright replay suite, `frontend/Dockerfile`, and `scripts/test-e2e.sh`
+
+**Milestone:** M7 (closes it) · **Spend:** none · **Status:** `[x] Complete` · **Date:** 2026-09-11
+
+The console, driven by a browser, against the same backend image production runs — 22 assertions,
+zero model calls, `down -v` at the end whatever happens.
+
+**Demo command and its output**
+
+```
+$ bash scripts/test-e2e.sh
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  E2E tests (Playwright — full Docker stack, replayed)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+── Stack (backend 8001 · Qdrant 6335 · console 5174) ────
+ Image vsir:test Built · Image vsir-console:test Built
+── Collection and corpus (one-off admin, same image) ────
+   PASS  42 page(s) queryable after publish, one per PDF page (I1)
+  GET /ready → 200
+── Console ──────────────────────────────
+  GET http://localhost:5174 → 200
+
+── Playwright ───────────────────────────
+Running 22 tests using 1 worker
+  ✓   1 badges.spec.ts › a code read off an image-only page renders with the *read from image* badge
+  ✓   2 badges.spec.ts › a code the page really prints renders as `verified`, and carries no warning
+  ✓   3 badges.spec.ts › a code the gate rejected is absent from the rendered answer
+  ✓   4 badges.spec.ts › the abstention names the unread image-only pages and will not claim the corpus is exhausted
+  ✓   5 badges.spec.ts › an empty rung names which absence it is, never a bare "no results"
+  ✓   6 network.spec.ts › the console never reaches a paid endpoint, even across a whole question
+  ✓   7 network.spec.ts › nothing the console consumed carried image bytes
+  ✓   8 network.spec.ts › a binder card shows its thumbnail from the row, with no extra endpoint call
+  ✓   9 network.spec.ts › a raster is fetched with the bearer token, never with a token in the URL
+  ✓  10 network.spec.ts › an unauthenticated console says so rather than showing empty panels
+  ✓  11 outage.spec.ts  › the store going down mid-session renders a banner, never a blank page
+  ✓  12 outage.spec.ts  › liveness stays green while readiness goes red — a restart would not fix the store
+  ✓  13 outage.spec.ts  › the store comes back and the console answers again
+  ✓  14 outage.spec.ts  › a refusal from a tool reaches the operator as a typed banner
+  ✓  15 stack.spec.ts   › declares the three ports §4.2 pins, and not the dev instance's
+  ✓  16 stack.spec.ts   › runs tagged images and never `latest`
+  ✓  17 stack.spec.ts   › is in replay mode: the stub VLM, a fixture, and no credential
+  ✓  18 stack.spec.ts   › serves all eight tools of §7.2 and a corpus to ask about
+  ✓  19 worked-trace.spec.ts › answers with a badge on every code, and the gate checked each one
+  ✓  20 worked-trace.spec.ts › clicking a cited code takes the viewer to the page it was checked against
+  ✓  21 worked-trace.spec.ts › the triage panel renders the typed table, including the excluded set
+  ✓  22 worked-trace.spec.ts › the moves are collapsible and the spending one is marked as such
+
+  22 passed (12.0s)
+
+Tearing down test stack (wiping volumes)...
+```
+
+Non-zero on failure, proved rather than asserted: `bash scripts/test-e2e.sh --grep "a test name that
+does not exist"` → `exit=1`, stack still torn down.
+
+**Invariants / failure rows closed:** none — M7 asserts none. The suite *renders* I8's outcome and
+§8.5's constraint; it does not enforce them.
+
+---
+
+#### The blocker this unit hit, and what it cost
+
+**M7's three acceptance assertions were not reachable from the shipped console**, and finding that
+out took most of the unit. Written down so nobody re-derives it:
+
+1. **`unverifiable` cannot arise from the question box on this corpus.** A rendered claim is badged
+   *read from image* only when the gate's verdict is `unverifiable`, which needs a code cited on a
+   page with no text layer. The loop only drafts from a `sufficient: true` read, and the only frozen
+   case over the image-only pages (`scanned`) is `sufficient: false` — deliberately, because those
+   two sheets do not answer the question. So no sequence of clicks could produce the badge.
+2. **`exclude` is what leaves an image-only page unexamined**, and the console never sent one. The
+   L2 row that asserts `image_only_unexamined == 2` passes `exclude` explicitly.
+3. **The rejected-draft trace is platform-dependent** — see the finding below.
+
+The fix is **§8.1a's `fetch` route, given to the operator**: a *"what do you read on this page?"*
+form under the viewer, whose text goes to `POST /ask` as a `draft` and through the identical
+server-side gate. That is not a workaround, it is the route the console is the literal client of —
+§8.1a's default is *"the calling agent looks at the page"*, and here a person is looking at the
+raster on the left of the screen. On an image-only page every code in what they wrote comes back
+`unverifiable` and renders with the badge; on a page whose text extracted cleanly the same gesture
+comes back `verified`; a code the page does not print rejects the draft **whole**. Three of M7's
+badges, one gesture, **zero spend** (`reads: 0` on this route).
+
+Two smaller console additions came with it and are listed in the deliverables below: the page rung
+is addressable (`#/page/<page_id>`), so a test — or an operator sharing a link — can land on a
+chosen page without repeating the search that found it; and a check row carries `data-page-id`
+beside `data-status`, as the triage rows already did.
+
+#### The finding: the stub embedding is platform-dependent, so a replayed *ranking* is not
+
+`read_key` is over the dpi-**220** rasters and the question, and those renders are byte-identical
+on macOS and in the Linux container — every frozen `read` is reachable from both. The dpi-**150**
+raster that feeds the *embedding* is not: `ingest/embed.py::prepare_image` re-encodes it through
+Pillow, whose PNG bytes differ between the macOS wheel and the Linux one, so `image_sha256` differs,
+so `Composition.canonical` differs, so the stub vector differs. Measured on the same 42-page corpus,
+same `doc_id`, same collection contents:
+
+| | host (L2 suite) | container (E2E) |
+|---|---|---|
+| `embed_key` of page 1 | `5fc4428c6f366cf0` | `bad69e4ab2ed4902` |
+| `skim_pages(has_text=False)` | `[p002, p001]` | `[p001, p002]` |
+
+That near-tie is enough to send Loop 5's vision escalation at a page set nobody froze:
+`ASK_REJECTED_QUESTION` replays to an abstention on the host and refuses `fixture_miss` in Docker.
+**Nothing shipped is wrong** — a `fixture_miss` is D10 working, and no *answer* depends on a dense
+ranking (every path to one goes through the exact surface, I2/I3). What is affected is which frozen
+response a replayed trace reaches, so:
+
+- the E2E suite depends on **one** frozen page set, in `worked-trace.spec.ts`, and that read is a
+  single page;
+- everything else spends nothing: the gate-only route reads no page, and the abstention test asks a
+  question that is *nothing but a code no page prints*, which reaches Loop 5 with no prose to skim
+  and therefore no read at all;
+- **a future unit that wants a multi-page replayed trace in CI should freeze both page orders**, or
+  make `prepare_image` byte-reproducible across platforms. Recorded here rather than fixed: it is an
+  ingest change and U024 owns neither `embed.py` nor the fixture generator.
+
+#### How the assertions stay fixture-independent
+
+M7 requires that they hold on `TC1E-SF` too, so nothing in `e2e/tests/` names a page, a code or a
+page number. Every input is derived, by one of three routes, and the invented one is **checked**:
+
+| input | where it comes from |
+|---|---|
+| the document, an image-only page, a page with clean text | `GET /documents`, `GET /documents/{doc}/pages` (paged at the route's 200-row cap) |
+| a code the corpus prints | the page's own `fetch` text, then `verify` until one comes back `present` |
+| a code it does not print | invented (`ZQ7731`), then **`lookup` with `include_unverified` until one returns `total: 0`** |
+| the worked trace's question | the fixture's own `expected.json`, by the *shape* of the case (`sufficient`, every stamp `present`) rather than by its name |
+
+#### Deliverables
+
+| file | what |
+|---|---|
+| `frontend/Dockerfile`, `frontend/.dockerignore` | **written** — two stages on a digest-pinned `node:22-bookworm-slim`, `npm ci`, `tsc --noEmit && vite build`, then `vite preview` as `node` on 5173 |
+| `docker-compose.test.yml` | **extended** — `test-init` and `test-seed` behind the `e2e` profile, the data mount and document-store volume, `VSIR_FIXTURE` / `VSIR_DOC_STORE`, a node healthcheck for the console, `vsir-console:test` |
+| `scripts/test-e2e.sh` | **rewritten** — up → seed → wait for `/ready` → wait for the console → Playwright → `down -v`, with the status captured before teardown |
+| `e2e/package.json` | **written** — `@playwright/test` pinned |
+| `e2e/playwright.config.ts` | **extended** — no `webServer` (the container is the thing under test), `workers: 1`, CI reporter, pinned viewport |
+| `e2e/tests/console.ts` | **written** — the harness: corpus derivation, the fixture's table, `openConsole`, `readOff`, `openCallLog` |
+| `e2e/tests/{badges,worked-trace,network,outage,stack}.spec.ts` | **written** — 22 tests |
+| `frontend/src/components/Viewer/ReadOff.tsx` + its test | **written** — §8.1a's `fetch` route for the operator |
+| `frontend/src/lib/ladder.ts`, `App.tsx`, `Viewer.tsx`, `Moves.tsx`, `api/{requests,client}.ts`, `hooks/useAsk.ts`, `styles.css` | **extended** — the deep link, `draftQuestion`, `draft` on the ask body, `data-page-id` on a check row |
+| `backend/tests/unit/test_frontend_client_contract.py` | **extended** — `DraftBody` → `SubmittedDraft` and `ClaimBody` → `answer.Claim` in the ledger |
+| `AGENTS.md` | **extended** — the E2E section, the three env vars, and the platform finding |
+
+#### Notes, and things a later unit should not have to rediscover
+
+- **`VSIR_TEST_CONSOLE_PORT` exists because 5174 was taken on the development machine** by an
+  unrelated container. 5174 is still §4.2's pin and still the compose default; `stack.spec.ts`
+  asserts the *declared default*, and the script threads an override through the mapping, its own
+  readiness wait and `PLAYWRIGHT_BASE_URL`. The recorded run above used 5194 for that reason.
+- **`@playwright/test` is pinned to `1.62.0`, not the newest at time of writing.** 1.62.0 is the
+  version whose Chromium revision (1234) was already in the machine's browser cache; 1.58.2 wanted
+  revision 1208 and spent forty minutes not downloading it. Any version works — this one starts.
+- **`vite preview` needs `node_modules/.vite-temp` writable**, because Vite bundles a *TypeScript*
+  config before loading it. The image creates and chowns that one directory rather than the whole
+  of `/app`. Found by running the container, which exited `EACCES` on a path no test could name.
+- **The E2E stack seeds through compose services, not an ad-hoc `docker compose run`.** The first
+  attempt did both — `frontend-test` depends on `test-seed: service_completed_successfully`, so
+  compose ran the declared seed as well and the corpus went into the index twice under two doc ids.
+- **`/tools/__list__` answers `404`, and that is the contract.** The body carries `available`,
+  because *"a tool that is not here is absent, not empty"*. A `200` there would mean the release had
+  grown a `__list__` tool.
+- **A badge inside a closed `<details>` is in the DOM and not on the screen.** The gate's call log
+  is collapsed by default and rightly so; `openCallLog` opens it, so an assertion that means *"an
+  operator can see this"* is about visibility rather than attachment.

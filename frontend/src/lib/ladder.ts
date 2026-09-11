@@ -149,6 +149,49 @@ function printedHint(pageId: string): string {
   return hash > 0 ? pageId.slice(hash + 1) : pageId
 }
 
+// ── the deep link (§13 M7's left zone, addressable) ─────────────────────────────────────────────
+
+/**
+ * `#/page/<page_id>` — the one piece of this app's state that belongs in the address bar.
+ *
+ * A page is the thing an operator points a colleague at (*"look at this sheet"*), and until the
+ * viewer was addressable the only way to reach one was to repeat the search that found it. The
+ * hash carries it, so a reload keeps the reader where they were and a link lands them there.
+ *
+ * It is the **hash** rather than a path on purpose: the console is served as one static bundle
+ * and the service owns every other path on this origin (`vite.config.ts` proxies eight of them).
+ * A client-side path route would need a server rewrite and would shadow a route the API may add.
+ *
+ * This is client state, not a session: nothing about it reaches the service, and every request
+ * the page then makes still carries its own scope (C11).
+ */
+export const PAGE_HASH = '#/page/'
+
+/** The page a hash addresses, or `null` when it addresses nothing. Never throws on junk. */
+export function pageIdFromHash(hash: string): string | null {
+  if (!hash.startsWith(PAGE_HASH)) return null
+  const raw = hash.slice(PAGE_HASH.length)
+  if (raw === '') return null
+  try {
+    return decodeURIComponent(raw)
+  } catch {
+    // A half-written percent escape in a pasted link. Addressing nothing is the right reading
+    // of an address nobody can parse — better than throwing inside a render.
+    return null
+  }
+}
+
+/** The hash a ladder should be wearing. Empty above the page rung: there is nothing to address. */
+export function hashForPage(pageId: string | null): string {
+  return pageId === null ? '' : `${PAGE_HASH}${encodeURIComponent(pageId)}`
+}
+
+/** The ladder a hash names, or `null` to leave the current one alone. */
+export function ladderFromHash(hash: string): Ladder | null {
+  const pageId = pageIdFromHash(hash)
+  return pageId === null ? null : jumpToPage(pageId)
+}
+
 /** Escalating past 220 without a crop is a request §7.3 refuses — so the UI asks for one first. */
 export function needsRegion(ladder: Ladder): boolean {
   return requiresRegion(ladder.dpi) && ladder.region === null

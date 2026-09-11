@@ -85,8 +85,13 @@ RESPONSE_MODELS: dict[str, type[BaseModel]] = {
 
 #: The request bodies. Checked as a **subset**: `ToolRequest` forbids extras, so a field the
 #: console sends that the model does not declare is a `400` in production — but a field the model
-#: declares and the console never sends is simply one it does not use (`AskRequest.draft` is the
-#: standing example; the console asks questions and does not submit drafts to the gate).
+#: declares and the console never sends is simply one it does not use.
+#:
+#: ``AskRequest.draft`` used to be the standing example of that second case. It is not any more:
+#: U024's console submits §8.1a's `fetch`-route draft — the operator reads the raster on the left
+#: and the server-side gate checks every code in what they wrote — so ``DraftBody`` and
+#: ``ClaimBody`` are in the ledger and drift in either of them is a failure here rather than an
+#: `invalid_request` in a browser.
 REQUEST_MODELS: dict[str, type[BaseModel]] = {
     "LookupBody": inputs.LookupRequest,
     "VerifyBody": inputs.VerifyRequest,
@@ -96,6 +101,8 @@ REQUEST_MODELS: dict[str, type[BaseModel]] = {
     "FetchBody": inputs.FetchRequest,
     "ReadBody": inputs.ReadRequest,
     "AskBody": app_module.AskRequest,
+    "DraftBody": app_module.SubmittedDraft,
+    "ClaimBody": answer_module.Claim,
 }
 
 _INTERFACE = re.compile(r"^export interface (\w+)(?:<[^>]*>)?\s*\{$", re.MULTILINE)

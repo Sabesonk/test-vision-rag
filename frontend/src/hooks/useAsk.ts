@@ -11,19 +11,25 @@ import { useMutation } from '@tanstack/react-query'
 
 import { ApiError, ask } from '../api/client.ts'
 import type { AskResponse } from '../api/types.ts'
-import type { Scope } from '../api/requests.ts'
+import type { DraftBody, Scope } from '../api/requests.ts'
 
 export interface AskInput {
   question: string
   scope?: Scope
   exclude?: string[]
+  /**
+   * §8.1a's `fetch` route: the operator looked at the raster themselves and wrote this. It is
+   * still a mutation — nothing is spent, but the gate runs and its verdict is the answer.
+   */
+  draft?: DraftBody
 }
 
 export function useAsk() {
   return useMutation<AskResponse, ApiError, AskInput>({
     mutationKey: ['ask'],
     mutationFn: (input) =>
-      ask({ question: input.question, scope: input.scope ?? {}, exclude: input.exclude ?? [] }),
+      ask({ question: input.question, scope: input.scope ?? {}, exclude: input.exclude ?? [],
+            draft: input.draft ?? null }),
     retry: false,
   })
 }

@@ -653,6 +653,46 @@ CI runs the first two on every push and pull request (`.github/workflows/ci.yml`
 buried in 136 dots. It references no secret: L0–L3 are replay-mode only (D10), and L4 is not run
 there at all.
 
+### E2E (U024)
+
+`bash scripts/test-e2e.sh` brings up the whole stack behind the compose `e2e` profile — Qdrant on
+`6335`, the backend on `8001`, one-off `test-init` and `test-seed` admin runs of the **same
+image**, then the console on `5174` — waits for `GET /ready`, runs Playwright headless and tears
+down with `down -v`. `--up` leaves it running; any other argument reaches `playwright test`
+(`--headed`, `--debug`, a file name).
+
+```bash
+bash scripts/test-e2e.sh                      # up → seed → test → down -v
+bash scripts/test-e2e.sh --up                 # leave it running, then: cd e2e && npx playwright test
+bash scripts/test-e2e.sh badges.spec.ts       # one file
+npm --prefix e2e install && npx --prefix e2e playwright install chromium
+```
+
+Four operational things worth not rediscovering:
+
+- **`VSIR_TEST_CONSOLE_PORT` exists for a port collision.** 5174 is §4.2's pin and the default; if
+  another project on the machine already publishes it, set this and the script threads the value
+  through the compose mapping, its own readiness wait and `PLAYWRIGHT_BASE_URL`. The suite asserts
+  the *declared default* is still 5174.
+- **`VSIR_TEST_FIXTURE` moves the whole run to another corpus** (`/srv/data/fixtures/TC1E-SF` when
+  OQ-1 is answered). The script derives the host-side `E2E_FIXTURE` from it, and no assertion in
+  `e2e/tests/` names a page, a code or a question: they are read from `GET /documents`,
+  `GET /documents/{doc}/pages` and the fixture's own `expected.json`.
+- **`VSIR_TEST_READ_QUOTA` is raised to 500 for E2E** and stays 10 for L2/L3. A browser run asks
+  several whole questions and each may spend three reads; the ceiling itself is exercised on its
+  own instance in `tests/api/test_read_caps.py`.
+- **`tests/outage.spec.ts` really stops the Qdrant container** and restarts it in an `afterAll`.
+  That is why `playwright.config.ts` pins `workers: 1`.
+
+**A `fixture_miss` in an E2E run is usually a page *order*, not a missing response.** `read_key` is
+over the rasters and the question, and the dpi-220 renders are byte-identical everywhere — but the
+dpi-150 raster that feeds the *embedding* goes through Pillow, whose PNG bytes differ between the
+macOS wheel and the Linux one. Different bytes, different stub vector, and a near-tie in a dense
+ranking can come out in the other order: `skim_pages(has_text=False)` returns `[p001, p002]` in the
+container and `[p002, p001]` in the host-run L2 suite, so the loop asks for a page set nobody
+froze. Nothing in `e2e/tests/` depends on that ordering — the paid-route test reads a single page,
+and the abstention test spends nothing at all.
+
 ## Frontend
 
 The console is a Vite app in `frontend/`, and it is **same-origin by proxy** rather than by CORS:

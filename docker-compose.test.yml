@@ -49,7 +49,7 @@ services:
     # boot self-check runs inside `vsir serve` before anything binds, so a misconfigured test
     # stack fails to start instead of serving (§4.3).
     command: ["serve"]
-    environment:
+    environment: &env
       # The twelve of §15 Factor III. Boot refuses a missing one, so this list is exhaustive by
       # construction — if it drifts, the container will not start.
       VSIR_PORT: "8000"
@@ -66,15 +66,38 @@ services:
       # was asserting about a string the container had never been given. The suites resolve this
       # name the same way (`tests/api/conftest.py::CONTAINER_TOKEN`).
       VSIR_API_TOKENS: "${VSIR_TEST_API_TOKENS:-test-only-not-a-secret}"
-      VSIR_READ_QUOTA: "10"
+      # Ten is a deliberately tight ceiling for L2/L3, where a suite that leaks reads should
+      # notice. E2E asks several whole questions through a browser and each one may spend three,
+      # so `scripts/test-e2e.sh` raises it — the bound under test is exercised on an instance of
+      # its own (`tests/api/test_read_caps.py`, `VSIR_READ_QUOTA=0`), never here.
+      VSIR_READ_QUOTA: "${VSIR_TEST_READ_QUOTA:-10}"
       # Belt and braces: L0-L3 must never reach a paid API even if a fixture is missing.
       VSIR_ALLOW_PAID: "0"
       VSIR_LOG_LEVEL: "INFO"
       VSIR_RELEASE_ID: "test"
+      # Replay is the default and it is what makes E2E free (D10): `read` and S2 are served from
+      # frozen responses keyed by `read_key` / `extract_key`, and a miss is a typed `fixture_miss`
+      # rather than a live call. Absolute, because the path is resolved inside the container and a
+      # relative one would resolve against `/srv`. The suites under `tests/api/` build their own
+      # apps and pass their own fixture directory, so this value is the *container's* default and
+      # changes nothing they assert.
+      VSIR_FIXTURE: "${VSIR_TEST_FIXTURE:-/srv/data/fixtures/synthetic_3window}"
+      # The document store (§4.2, U029): where the source PDF a page raster is re-rendered from
+      # lives. Rasters are still never persisted — without this there is simply nothing to
+      # re-render them *from*, and every `image.url` the console dereferences would answer
+      # `document_not_stored`.
+      VSIR_DOC_STORE: "/srv/documents"
     ports:
       - "8001:8000"        # 8001 on the host — dev keeps 8000
     networks:
       - test-net
+    volumes: &data
+      # Read-only: the corpus and the frozen fixtures are inputs, and nothing in the pipeline
+      # writes here.
+      - ./data:/srv/data:ro
+      # Writable, and the only writable path outside the tmpfs. Wiped by `down -v` with the
+      # index, so an E2E run starts from an empty store or it is not a test.
+      - test-document-store:/srv/documents
     # Production runs read-only with a writable tmpfs for rasters, so the test stack does too:
     # a container that only passes with a writable root filesystem is not the one being shipped.
     read_only: true
@@ -95,6 +118,54 @@ services:
       retries: 12
       start_period: 5s
 
+  # ── One-off: the collection, then a document to ask about (§15 Factor XII, E2E only) ──────────
+  #
+  # `tests/api/` creates its own collections from `core.indexed.create_collection` and seeds its
+  # own pages, so L2/L3 needs neither of these. A browser cannot: the console asks the *container*
+  # a question, so the container's own collection has to exist and hold a document. Both are the
+  # same image and the same release as `backend-test` — one-off admin process types, never a
+  # branch inside the server (§15 Factor XII) — and both stay behind the `e2e` profile so
+  # `scripts/test-api.sh` is unchanged by them.
+  test-init:
+    profiles: ["e2e"]
+    build: &image
+      context: ./backend
+      dockerfile: Dockerfile
+    image: vsir:test
+    command: ["doctor", "--create-collection"]
+    environment: *env
+    volumes: *data
+    networks:
+      - test-net
+    depends_on:
+      test-qdrant:
+        condition: service_healthy
+    restart: "no"
+
+  test-seed:
+    profiles: ["e2e"]
+    build: *image
+    image: vsir:test
+    # The generated 42-page corpus, replayed from its frozen fixture: three windows, two scanned
+    # pages, a section straddling each fold, and the off-by-one, crop and reattribution traps.
+    # `VSIR_TEST_FIXTURE` moves both this and the server to `TC1E-SF` in one variable when that
+    # fixture exists — the suite reads its questions out of the fixture's own `expected.json`, so
+    # nothing in `e2e/tests/` has to change with it.
+    command: ["ingest", "${VSIR_TEST_SOURCE:-/srv/data/source/synthetic_3window.pdf}",
+              "--vlm", "stub",
+              "--fixture", "${VSIR_TEST_FIXTURE:-/srv/data/fixtures/synthetic_3window}"]
+    environment: *env
+    volumes: *data
+    networks:
+      - test-net
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=1g
+    depends_on:
+      test-init:
+        condition: service_completed_successfully
+    restart: "no"
+
   # ── Frontend (M7) ─────────────────────────────────────────────────────────────────────────────
   frontend-test:
     # Behind a profile until M7 builds `frontend/`: `docker compose up -d` must not fail on a
@@ -103,17 +174,36 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    # Never `latest` (§15.2), and the same convention as the backend: the tag is the release, and
+    # here the release is the test run.
+    image: vsir-console:test
     environment:
+      # A **proxy target**, not a base URL the browser sees: `vite.config.ts` forwards the API
+      # paths so the console is same-origin with the service. `backend-test` resolves only on
+      # `test-net`, which is exactly right for a proxy and would be unreachable from a browser
+      # on the host (§15 Factor III).
       VITE_API_URL: http://backend-test:8000
     ports:
-      - "5174:5173"        # 5174 on the host — dev keeps 5173
+      # 5174 is the pin (§4.2) and it is the default here. The variable exists for one reason:
+      # a developer machine can already have something on 5174, and a stack that cannot start
+      # is a suite nobody runs. Override it and pass the same value as `PLAYWRIGHT_BASE_URL`;
+      # `e2e/tests/stack.spec.ts` asserts the **default** is still the pinned port.
+      - "${VSIR_TEST_CONSOLE_PORT:-5174}:5173"   # dev keeps 5173
     networks:
       - test-net
     depends_on:
       backend-test:
         condition: service_healthy
+      # Not `service_healthy`: a one-off ingest exits. The console is only useful once there is
+      # a document to ask about, and Playwright starting against an empty index would fail with
+      # an abstention that looks like a product defect.
+      test-seed:
+        condition: service_completed_successfully
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:5173 || exit 1"]
+      # node, not curl: the base image ships no shell utilities it does not need, exactly as the
+      # backend's probe uses python rather than curl.
+      test: ["CMD", "node", "-e",
+             "require('http').get('http://127.0.0.1:5173/',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
       interval: 10s
       timeout: 5s
       retries: 12
@@ -129,3 +219,7 @@ volumes:
   test-qdrant-storage:
     # Named volume so the collection survives a container restart within one test session, and is
     # always wiped by `down -v` at teardown.
+  test-document-store:
+    # The source PDFs a page raster is re-rendered from (§4.2, U029). Named for the same reason
+    # and wiped by the same `down -v`: a store that outlived the index it describes would serve
+    # page images for documents nothing can find.

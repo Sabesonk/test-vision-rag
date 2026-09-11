@@ -1,2 +1,7 @@
+# The build context is `frontend/`, and these are the two directories that make it slow and
+# non-reproducible: `node_modules` is reinstalled from the lockfile inside the image, and `dist`
+# is rebuilt there. A host-built artefact copied into an image is the parity failure §15 X names.
 node_modules
 dist
+.vite
+*.log

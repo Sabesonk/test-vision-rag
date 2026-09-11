@@ -32,24 +32,51 @@ import { Banner } from '../Banner.tsx'
 import { Thumb } from '../Thumb.tsx'
 import { Breadcrumbs } from './Breadcrumbs.tsx'
 import { PageImage } from './PageImage.tsx'
+import { ReadOff } from './ReadOff.tsx'
 import { type StripPage, stripPageOf } from '../../lib/strip.ts'
 import { PageStrip } from './PageStrip.tsx'
 
 export interface ViewerProps {
-  /** The narrowing query the ladder skims with — the operator's question, reused. */
+  /** The narrowing query the ladder skims with — the operator's question, **as asked**. */
   query: string
+  /**
+   * The question as currently *typed*, which is what a draft answers.
+   *
+   * Two fields rather than one because they are two different moments. The skims above re-run
+   * when a question is **asked**, or every keystroke would spend a rung; a draft is written
+   * about the page on screen and answers the question the operator has in front of them, which
+   * may be one they have not pressed *ask* on — and on an image-only page they never will,
+   * because there is nothing there for a text search to find.
+   */
+  draftQuestion: string
   ladder: Ladder
   onLadder: (ladder: Ladder) => void
   /** The pages the current answer cites. Empty when there is no answer yet. */
   evidence: StripPage[]
+  /** §8.1a's `fetch` route: what the operator reads off the page on screen, sent to the gate. */
+  onReadOff: (pageId: string, text: string) => void
+  /** An `/ask` already in flight — the same mutation both routes go through. */
+  pending: boolean
 }
 
 function asError(error: unknown): ApiError | null {
   return error instanceof ApiError ? error : null
 }
 
-export function Viewer({ query, ladder, onLadder, evidence }: ViewerProps) {
+export function Viewer({
+  query,
+  draftQuestion,
+  ladder,
+  onLadder,
+  evidence,
+  onReadOff,
+  pending,
+}: ViewerProps) {
   const rung = rungOf(ladder)
+  // Hoisted so the `page` rung's callbacks close over a `string` rather than a cast: TypeScript
+  // cannot carry the `!== null` narrowing of a field into a callback, and `as string` would be
+  // an assertion where a binding does the job.
+  const pageId = ladder.pageId
 
   const binders = useBinders(query, rung === 'corpus')
   const chapters = useChapters(query, rung === 'binder' ? ladder.docId : null)
@@ -99,14 +126,23 @@ export function Viewer({ query, ladder, onLadder, evidence }: ViewerProps) {
           />
         ) : null}
 
-        {rung === 'page' && ladder.pageId !== null ? (
+        {rung === 'page' && pageId !== null ? (
           <PageImage
-            pageId={ladder.pageId}
+            pageId={pageId}
             baseUrl={strip.find((page) => page.pageId === ladder.pageId)?.imageUrl ?? null}
             dpi={ladder.dpi}
             region={ladder.region}
             onDpi={(dpi) => onLadder({ ...ladder, dpi: dpi as Ladder['dpi'] })}
             onRegion={(region) => onLadder({ ...ladder, region })}
+          />
+        ) : null}
+
+        {rung === 'page' && pageId !== null ? (
+          <ReadOff
+            pageId={pageId}
+            question={draftQuestion}
+            pending={pending}
+            onSubmit={(text) => onReadOff(pageId, text)}
           />
         ) : null}
 

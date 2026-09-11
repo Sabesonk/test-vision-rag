@@ -70,10 +70,37 @@ export interface ReadBody {
   question: string
 }
 
+export interface ClaimBody {
+  code: string
+  page_ids: string[]
+}
+
+/**
+ * A draft the **operator** wrote, submitted to be gated — §8.1a's `fetch` route.
+ *
+ * The console is the one client of this service for which that route is literal: the page raster
+ * is on the left of the screen and a person is looking at it. Nothing stamped what they read, so
+ * the draft goes to the same server-side gate a `read` draft goes through, per `(claim, page)`,
+ * before one word of it renders (§8.4, I8).
+ *
+ * `claims` is sent **empty on purpose**. The gate re-derives the claim set from the prose and
+ * checks the union — a caller that listed two of the three codes in its own sentence would
+ * otherwise have the third rendered with nothing having checked it. Declaring none is the
+ * honest version of that: everything the operator typed is checked.
+ */
+export interface DraftBody {
+  text: string
+  claims: ClaimBody[]
+  /** The pages it was written from — its citations, and what each code is checked against. */
+  pages: string[]
+}
+
 export interface AskBody {
   question: string
   scope: Scope
   exclude: string[]
+  /** Present only on the `fetch` route: nothing is searched and nothing is spent (§8.1a). */
+  draft: DraftBody | null
 }
 
 /** `caps.MAX_SKIM_LIMIT` / `skim.SKIM_LIMIT`. Mirrored so a slider cannot ask for a `400`. */

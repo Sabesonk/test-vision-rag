@@ -11,7 +11,20 @@
 import { describe, expect, it } from 'vitest'
 
 import { DPI_INDEX } from './dpi.ts'
-import { TOP, climbTo, crumbs, docIdOf, jumpToPage, rungOf, toBinder, toChapter, toPage } from './ladder.ts'
+import {
+  TOP,
+  climbTo,
+  crumbs,
+  docIdOf,
+  hashForPage,
+  jumpToPage,
+  ladderFromHash,
+  pageIdFromHash,
+  rungOf,
+  toBinder,
+  toChapter,
+  toPage,
+} from './ladder.ts'
 
 const deep = toPage(
   toChapter(toBinder(TOP, 'TC1E-SF@1.3', 'Service manual'), 'sec-4', 'Safety'),
@@ -89,5 +102,35 @@ describe('jumpToPage', () => {
   it('survives an id that is not shaped like one, rather than guessing', () => {
     expect(docIdOf('not-a-page-id')).toBeNull()
     expect(jumpToPage('not-a-page-id').docId).toBeNull()
+  })
+})
+
+// ── the deep link (U024) ────────────────────────────────────────────────────────────────────────
+
+describe('the page deep link', () => {
+  const PAGE = 'TC1E-SF@1.3#p012'
+
+  it('round-trips a page id through the hash, escapes and all', () => {
+    const hash = hashForPage(PAGE)
+    // `#` and `@` both occur in a page id (§5.1) and one of them is the hash delimiter, so the
+    // escaping is the whole of this assertion rather than a formality.
+    expect(hash).toBe('#/page/TC1E-SF%401.3%23p012')
+    expect(pageIdFromHash(hash)).toBe(PAGE)
+  })
+
+  it('addresses nothing above the page rung, and reads nothing out of an unrelated hash', () => {
+    expect(hashForPage(null)).toBe('')
+    expect(pageIdFromHash('')).toBeNull()
+    expect(pageIdFromHash('#/page/')).toBeNull()
+    expect(pageIdFromHash('#something-else')).toBeNull()
+  })
+
+  it('reads a half-written escape as addressing nothing rather than throwing in a render', () => {
+    expect(pageIdFromHash('#/page/%E0%A4%A')).toBeNull()
+  })
+
+  it('lands on the page with the binder recovered, exactly as a citation click does', () => {
+    expect(ladderFromHash(hashForPage(PAGE))).toEqual(jumpToPage(PAGE))
+    expect(ladderFromHash('#/page/')).toBeNull()
   })
 })

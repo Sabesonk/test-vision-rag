@@ -166,6 +166,10 @@ export function ask(body: Partial<AskBody> & { question: string }): Promise<AskR
     question: body.question,
     scope: body.scope ?? {},
     exclude: body.exclude ?? [],
+    // `null` rather than omitted: the field is declared on `AskRequest`, and sending it
+    // explicitly keeps the two branches of this surface — run the loop, or gate a draft — one
+    // request shape rather than two.
+    draft: body.draft ?? null,
   })
 }
 
