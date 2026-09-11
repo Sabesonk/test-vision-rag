@@ -386,9 +386,17 @@ class ControlPlaneStore:
         ``vlm_model`` and ``prompt_version`` are recorded and are **not** part of the address:
         they are already inputs to the key (§6.3), so this is the provenance sidecar of register
         B1 — enough to identify an orphaned entry — and never a second place the key is decided.
+
+        The collection is ensured **only when it is missing**. :func:`_ensure` reads the live
+        payload schema and creates whatever index is absent, which is the right thing to do once
+        and the wrong thing to do per response: a run of 700 windows would pay 700 schema reads,
+        and two puts arriving together on a collection that does not exist yet would each see it
+        as new and each create the same four indexes. Since U025 wired this store into step 06
+        (`vlm/cached.py`) that is the common path rather than a rare one.
         """
         try:
-            _ensure(self.client, self.collection)
+            if not self.client.collection_exists(self.collection):
+                _ensure(self.client, self.collection)
             self.client.upsert(
                 collection_name=self.collection,
                 points=[qm.PointStruct(

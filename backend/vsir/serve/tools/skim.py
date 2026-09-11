@@ -98,6 +98,7 @@ from vsir.serve.envelope import (
     SearchResponse,
     SectionHit,
     Status,
+    SupersededIn,
     weakness,
 )
 from vsir.serve.tools.lookup import (
@@ -108,6 +109,7 @@ from vsir.serve.tools.lookup import (
     no_text,
     scope_filter,
     scope_stats,
+    superseded_in,
 )
 
 #: The dense branch is named ``page`` in :data:`~vsir.config.SURFACE_WEIGHTS` (§7.2.1 ordering rule
@@ -283,7 +285,8 @@ def decompose(query: str) -> Decomposed:
 # ── the branches ────────────────────────────────────────────────────────────────────────────────
 
 def branch_filter(scope: Mapping[str, Any], identifiers: Sequence[str],
-                  exclude: Sequence[str]) -> qm.Filter:
+                  exclude: Sequence[str], extra_must: Sequence[qm.Condition] = (),
+                  extra_must_not: Sequence[qm.Condition] = ()) -> qm.Filter:
     """The filter every branch runs inside: the scope, the identifiers, minus ``exclude``.
 
     The identifiers are **nested `exact_filter` calls**, not phrase conditions built here. There is
@@ -307,10 +310,11 @@ def branch_filter(scope: Mapping[str, Any], identifiers: Sequence[str],
     what the agent means — *"I have already looked at this page"*.
     """
     must: list[qm.Condition] = [*scope_conditions(scope),
-                                *(exact_filter(identifier) for identifier in identifiers)]
+                                *(exact_filter(identifier) for identifier in identifiers),
+                                *extra_must]
     must_not = [qm.HasIdCondition(has_id=[ids.point_id(page_id) for page_id in exclude])] \
         if exclude else []
-    return qm.Filter(must=must, must_not=must_not)
+    return qm.Filter(must=must, must_not=[*must_not, *extra_must_not])
 
 
 def _points(client: Any, collection: str, *, query: Any, using: str,
@@ -358,6 +362,9 @@ class Candidates:
     stats: ScopeStats
     #: Pages of the scope with a text layer that may be believed — what chooses the absence (§5.7).
     searchable_pages: int
+    #: Published revisions the scope would have matched had they still been current (F9). Empty
+    #: unless :attr:`stats` reports a scope with no current page at all.
+    superseded: list[SupersededIn]
     #: ``count(exact=True)`` over the narrowed filter: the size of the set the branches were
     #: allowed to rank. Pages, on every rung — `weak` means the same thing on all three.
     total: int
@@ -372,7 +379,13 @@ class Candidates:
 
 def _candidates(client: Any, collection: str, *, rung: str, query: str, image: bytes | None,
                 scope: Mapping[str, Any] | None, exclude: Sequence[str],
-                embedder: Any) -> Candidates:
+                embedder: Any, weights: Mapping[str, float] | None = None,
+                k: int = RRF_K, runs_collection: str = "",
+                images: Sequence[bytes] = (),
+                extra_must: Sequence[qm.Condition] = (),
+                extra_must_not: Sequence[qm.Condition] = (),
+                branch_must: Sequence[qm.Condition] = (),
+                branch_must_not: Sequence[qm.Condition] = ()) -> Candidates:
     """Run the three branches inside the scope and fuse them. The whole of §7.2.1's ordering.
 
     Every refusal is a typed :class:`~vsir.serve.caps.ToolError` naming its bound and it happens
@@ -380,21 +393,57 @@ def _candidates(client: Any, collection: str, *, rung: str, query: str, image: b
     filter key absent from `INDEXED` — ``filter_unknown_key``, a `400` rather than an unindexed
     scan (I6, F10). ``rung`` names the tool in the refusal, because an agent that asked
     `skim_sections` for nothing should be told about `skim_sections`.
+
+    ``weights`` and ``k`` default to :data:`~vsir.config.SURFACE_WEIGHTS` and
+    :data:`~vsir.config.RRF_K`, which is what the three `skim_*` rungs pass — **the tools' own
+    behaviour is unchanged, and this parameter is not on their signatures** (§7.2.1). They exist
+    for `serve/retrieval.py`, the diagnostic surface, where isolating a branch (`{"lexical": 1}`,
+    everything else 0) is how an operator finds out *why* a page ranked where it did. Threading
+    them here rather than giving that surface its own search is the same rule the aggregate rungs
+    follow: one retrieval, rendered differently, or the answers drift.
+
+    ``extra_must`` / ``extra_must_not`` are conditions the scope vocabulary cannot spell — a
+    `page_no` range, a negated facet — and they are threaded here for the same reason and by the
+    same rule as ``weights``: `serve/retrieval.py` needs them, the eight tools must not grow a
+    knob for them, and they go into **both** `scoped` and `narrowed` so `pages_searched` counts
+    the pages the branches were actually allowed to reach.
+
+    ``branch_must`` / ``branch_must_not`` go into the **branch filter only**, and the difference
+    between the two pairs decides which absence a caller is told about. `scoped` is the
+    denominator `absence()` reads to separate `out_of_scope` — *"no page matched your filters, so
+    the corpus was never really asked"* — from `not_found` — *"it was asked and the answer is
+    no"*. A **content** filter that matched nothing has not emptied the scope; it has searched it.
+    Putting a required phrase into `scoped` would report a scope of forty readable pages as
+    unasked, and send the caller off to widen a scope that was never the problem. So content
+    conditions come here, exactly where :func:`decompose`'s identifiers already go, and scope
+    conditions go above. All four default to nothing, so the three rungs build the filter they
+    always built.
+
+    ``runs_collection`` is the control plane, and it decides one thing: whether a scope that
+    selects **no current page at all** is `out_of_scope` or `found_only_in_superseded` (F9,
+    U025). That is the whole of F9 on this rung, and deliberately not more — a fused search that
+    ranked nothing has not established that the answer is in a retired revision, only that it is
+    not here, so the probe fires where the *scope itself* is empty and nowhere else.
     """
     has_query = bool((query or "").strip())
-    if not has_query and image is None:
+    # `images` is the general form and `image` the one-photograph case the three rungs pass;
+    # everything below asks "is there a photograph at all", so they collapse here, once.
+    pictures = list(images) if images else ([image] if image is not None else [])
+    if not has_query and not pictures:
         raise ToolError(
             "query_required",
             f"{rung} takes a query, an image, or both (§7.2.1) — neither is not a search, and "
             "an empty query embedded as the empty string still returns ten confident-looking rows",
-            requested={"query": bool(has_query), "image": image is not None},
+            requested={"query": bool(has_query), "images": len(pictures)},
         )
 
     scope_in_force = effective_scope(scope)
     split = decompose(query or "")
     try:
-        scoped = scope_filter(scope_in_force)
-        narrowed = branch_filter(scope_in_force, split.identifiers, exclude)
+        scoped = scope_filter(scope_in_force, extra_must, extra_must_not)
+        narrowed = branch_filter(scope_in_force, split.identifiers, exclude,
+                                 [*extra_must, *branch_must],
+                                 [*extra_must_not, *branch_must_not])
     except UnknownScopeKey as refusal:
         raise as_tool_error(refusal) from None
 
@@ -409,14 +458,28 @@ def _candidates(client: Any, collection: str, *, rung: str, query: str, image: b
     # spelling: embedding the code anyway would be the blurring rule 1 exists to prevent, and
     # inventing a query for it would be worse. Every query reaches at least one branch, because
     # the two conditions are exhaustive over "words, a photograph, or both".
+    #
+    # **A branch weighted 0 is not run at all**, rather than run and discarded by the fusion.
+    # `rrf()` already ignores it, so this changes no ranking — what it changes is that a
+    # dense-only search stops paying for two sparse round trips whose results are thrown away,
+    # and `branches` then means *what actually ran*, which is what the diagnostic surface
+    # reports. The three `skim_*` rungs pass the release defaults, where nothing is 0, so their
+    # behaviour is untouched.
+    in_play = dict(SURFACE_WEIGHTS if weights is None else weights)
+
+    def enabled(surface: str) -> bool:
+        return in_play.get(surface, 1.0) != 0
+
     branches: dict[str, list[Any]] = {}
-    if split.embedded.strip() or image is not None:
+    if enabled("page") and (split.embedded.strip() or pictures):
         branches["page"] = _points(client, collection, query=query_vector(
-            embedder, text=split.embedded, image=image),
+            embedder, text=split.embedded, images=pictures),
             using=DENSE_VECTOR, query_filter=narrowed, limit=BRANCH_DEPTH)
     sparse_query = _sparse_query(split.text) if has_query else None
     if sparse_query is not None:
         for surface in SPARSE_VECTORS:
+            if not enabled(surface):
+                continue
             branches[surface] = _points(client, collection, query=sparse_query, using=surface,
                                         query_filter=narrowed, limit=BRANCH_DEPTH)
 
@@ -424,11 +487,16 @@ def _candidates(client: Any, collection: str, *, rung: str, query: str, image: b
         scope=scope_in_force,
         scoped=scoped,
         split=split,
-        fused=tuple(rrf(branches)),
+        fused=tuple(rrf(branches, weights, k)),
         payloads={point.id: (point.payload or {})
                   for points in branches.values() for point in points},
         stats=stats,
         searchable_pages=searchable_pages,
+        # Only where the scope holds no current page — see the docstring. One facet, on the path
+        # that is about to say `out_of_scope`, and none at all on any other.
+        superseded=(superseded_in(client, collection, runs_collection,
+                                  scope_filter({**scope_in_force, "is_current": False}))
+                    if stats.pages == 0 else []),
         total=total,
         branches=tuple(sorted(branches)),
     )
@@ -550,6 +618,7 @@ def skim_pages(client: Any, collection: str, *,
                limit: int = SKIM_LIMIT,
                embedder: Any,
                provenance: Provenance,
+               runs_collection: str = "",
                reads_remaining: int = 0) -> SearchResponse[PageHit]:
     """The page rung of the narrowing ladder: ≤ ``limit`` triage rows, score-free and repeatable.
 
@@ -566,7 +635,8 @@ def skim_pages(client: Any, collection: str, *,
     """
     validate_skim_limit(limit)
     found = _candidates(client, collection, rung="skim_pages", query=query, image=image,
-                        scope=scope, exclude=exclude, embedder=embedder)
+                        scope=scope, exclude=exclude, embedder=embedder,
+                        runs_collection=runs_collection)
 
     rows = found.fused[:limit]
     counts = _page_counts(client, collection,
@@ -581,7 +651,8 @@ def skim_pages(client: Any, collection: str, *,
         hits.append(hit_from(row, payload, scope=found.scope, pages=counts.get(doc_key, 0)))
 
     is_weak = weakness(found.total, found.stats.pages)
-    status = Status.OK if hits else absence(found.stats.pages, found.searchable_pages)
+    status = Status.OK if hits else absence(found.stats.pages, found.searchable_pages,
+                                            superseded=found.superseded)
     response = SearchResponse[PageHit](
         status=status,
         hits=hits,
@@ -592,6 +663,7 @@ def skim_pages(client: Any, collection: str, *,
         next=_absence_moves(bool(hits), found.split),
         effective_scope=found.scope,
         scope_stats=found.stats,
+        superseded=found.superseded,
         reads_remaining=reads_remaining,
         provenance=provenance,
     )
@@ -784,6 +856,7 @@ def skim_documents(client: Any, collection: str, *,
                    exclude: Sequence[str] = (),
                    embedder: Any,
                    provenance: Provenance,
+                   runs_collection: str = "",
                    reads_remaining: int = 0) -> SearchResponse[DocHit]:
     """*"Which binder?"* — the same fused candidates as `skim_pages`, grouped by ``doc_id``.
 
@@ -799,7 +872,8 @@ def skim_documents(client: Any, collection: str, *,
     was disclosed would turn the disclosure into the answer.
     """
     found = _candidates(client, collection, rung="skim_documents", query=query, image=image,
-                        scope=scope, exclude=exclude, embedder=embedder)
+                        scope=scope, exclude=exclude, embedder=embedder,
+                        runs_collection=runs_collection)
 
     every = group_by(found, lambda payload: (payload.get("doc_id"),))
     groups = every[:SKIM_LIMIT]
@@ -826,7 +900,8 @@ def skim_documents(client: Any, collection: str, *,
 
     is_weak = weakness(found.total, found.stats.pages)
     response = SearchResponse[DocHit](
-        status=Status.OK if groups else absence(found.stats.pages, found.searchable_pages),
+        status=Status.OK if groups else absence(found.stats.pages, found.searchable_pages,
+                                                superseded=found.superseded),
         hits=hits,
         total=found.total,
         # `capped` is about the **rows**, and on an aggregate rung a row is a group: `total`
@@ -839,6 +914,7 @@ def skim_documents(client: Any, collection: str, *,
         next=_absence_moves(bool(groups), found.split),
         effective_scope=found.scope,
         scope_stats=found.stats,
+        superseded=found.superseded,
         reads_remaining=reads_remaining,
         provenance=provenance,
     )
@@ -869,6 +945,7 @@ def skim_sections(client: Any, collection: str, *,
                   exclude: Sequence[str] = (),
                   embedder: Any,
                   provenance: Provenance,
+                  runs_collection: str = "",
                   reads_remaining: int = 0) -> SearchResponse[SectionHit]:
     """*"Which chapter?"* — the same fused candidates, grouped by ``section_id``.
 
@@ -883,7 +960,8 @@ def skim_sections(client: Any, collection: str, *,
     up, by `skim_documents`, where the ratio is on the row.
     """
     found = _candidates(client, collection, rung="skim_sections", query=query, image=image,
-                        scope=scope, exclude=exclude, embedder=embedder)
+                        scope=scope, exclude=exclude, embedder=embedder,
+                        runs_collection=runs_collection)
 
     every = group_by(found, lambda payload: payload.get("section_id") or ())
     groups = every[:SKIM_LIMIT]
@@ -904,7 +982,8 @@ def skim_sections(client: Any, collection: str, *,
 
     is_weak = weakness(found.total, found.stats.pages)
     response = SearchResponse[SectionHit](
-        status=Status.OK if hits else absence(found.stats.pages, found.searchable_pages),
+        status=Status.OK if hits else absence(found.stats.pages, found.searchable_pages,
+                                              superseded=found.superseded),
         hits=hits,
         total=found.total,
         capped=len(every) > len(hits),
@@ -913,6 +992,7 @@ def skim_sections(client: Any, collection: str, *,
         next=_absence_moves(bool(hits), found.split),
         effective_scope=found.scope,
         scope_stats=found.stats,
+        superseded=found.superseded,
         reads_remaining=reads_remaining,
         provenance=provenance,
     )

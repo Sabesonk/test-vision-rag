@@ -1,0 +1,47 @@
+{
+  "codes_per_page": 4,
+  "content_hash": "4d5236bce7bdc5d99f508396d15951b24cf8fb53cbde6bf419276e6cbf2a7d59",
+  "doc_id": "synthetic-large",
+  "doc_type": "manual",
+  "extract_keys": {
+    "1-30": "6a62aff3e9ff8408cfaf2f2338f3c4dcce4fb637e961d4ba797ab31ddb0dc7fc",
+    "121-150": "d36980956a1bdbe1e1954eb0705c41fd04b412078f6753c675ea3d4eb766e6fd",
+    "31-60": "cd3e949ae22e18c50f9595336a4b17d9e0c165dbdc16681d942aba940c969abb",
+    "61-90": "aff9843892ad713205325e90d1a396a46e9ee8943fff23fc0cee625ee0133b7f",
+    "91-120": "84a1de9a1d26d71b3038a7875915b0245a555dc17d00df108905ef5de0114845"
+  },
+  "facts_key": "59945df6e025970b0b468f9e2bc00672cb9502886b53557c72bbdea1cdf9f23e",
+  "grounded_median": 1.0,
+  "ladder_level": 2,
+  "page_count": 150,
+  "pages_with_text": 150,
+  "pages_without_text": [],
+  "printed_revision": "1.3",
+  "revision": "1.0",
+  "searchable_ratio": 1.0,
+  "toc_entries": 0,
+  "unique_code": "M1075",
+  "unique_code_page": 75,
+  "windows": [
+    [
+      1,
+      30
+    ],
+    [
+      31,
+      60
+    ],
+    [
+      61,
+      90
+    ],
+    [
+      91,
+      120
+    ],
+    [
+      121,
+      150
+    ]
+  ]
+}

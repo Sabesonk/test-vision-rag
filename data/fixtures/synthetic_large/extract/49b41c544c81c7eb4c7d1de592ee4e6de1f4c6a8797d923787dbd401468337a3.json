@@ -1,0 +1,904 @@
+{
+  "pages": [
+    {
+      "codes": [
+        "M1121",
+        "HZ-121",
+        "P7363",
+        "T2"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 1,
+      "page_kind": "prose",
+      "printed_page_no": "121",
+      "sections": [
+        {
+          "is_start": true,
+          "title": "Chip conveyor and coolant"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 121 carries procedure M1121 for the chip conveyor and coolant. It requires hazard notice HZ-121 at the access panel and seal set P7363 whenever the housing is opened, tightened to torque class T2."
+        }
+      ],
+      "topics": [
+        "chip conveyor and coolant",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1122",
+        "HZ-122",
+        "P7366",
+        "T3"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 2,
+      "page_kind": "prose",
+      "printed_page_no": "122",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Chip conveyor and coolant"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 122 carries procedure M1122 for the chip conveyor and coolant. It requires hazard notice HZ-122 at the access panel and seal set P7366 whenever the housing is opened, tightened to torque class T3."
+        }
+      ],
+      "topics": [
+        "chip conveyor and coolant",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1123",
+        "HZ-123",
+        "P7369",
+        "T4"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 3,
+      "page_kind": "prose",
+      "printed_page_no": "123",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Chip conveyor and coolant"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 123 carries procedure M1123 for the chip conveyor and coolant. It requires hazard notice HZ-123 at the access panel and seal set P7369 whenever the housing is opened, tightened to torque class T4."
+        }
+      ],
+      "topics": [
+        "chip conveyor and coolant",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1124",
+        "HZ-124",
+        "P7372",
+        "T5"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 4,
+      "page_kind": "prose",
+      "printed_page_no": "124",
+      "sections": [
+        {
+          "is_start": true,
+          "title": "Axis lubrication"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 124 carries procedure M1124 for the axis lubrication. It requires hazard notice HZ-124 at the access panel and seal set P7372 whenever the housing is opened, tightened to torque class T5."
+        }
+      ],
+      "topics": [
+        "axis lubrication",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1125",
+        "HZ-125",
+        "P7375",
+        "T6"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 5,
+      "page_kind": "table",
+      "printed_page_no": "125",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Axis lubrication"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 125 is the spare-parts table for the axis lubrication. It lists M1125 as the complete assembly and P7375 as the seal kit, under torque class T6."
+        }
+      ],
+      "topics": [
+        "axis lubrication",
+        "parts"
+      ]
+    },
+    {
+      "codes": [
+        "M1126",
+        "HZ-126",
+        "P7378",
+        "T7"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 6,
+      "page_kind": "prose",
+      "printed_page_no": "126",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Axis lubrication"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 126 carries procedure M1126 for the axis lubrication. It requires hazard notice HZ-126 at the access panel and seal set P7378 whenever the housing is opened, tightened to torque class T7."
+        }
+      ],
+      "topics": [
+        "axis lubrication",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1127",
+        "HZ-127",
+        "P7381",
+        "T8"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 7,
+      "page_kind": "prose",
+      "printed_page_no": "127",
+      "sections": [
+        {
+          "is_start": true,
+          "title": "Enclosure interlocks"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 127 carries procedure M1127 for the enclosure interlocks. It requires hazard notice HZ-127 at the access panel and seal set P7381 whenever the housing is opened, tightened to torque class T8."
+        }
+      ],
+      "topics": [
+        "enclosure interlocks",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1128",
+        "HZ-128",
+        "P7384",
+        "T9"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 8,
+      "page_kind": "prose",
+      "printed_page_no": "128",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Enclosure interlocks"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 128 carries procedure M1128 for the enclosure interlocks. It requires hazard notice HZ-128 at the access panel and seal set P7384 whenever the housing is opened, tightened to torque class T9."
+        }
+      ],
+      "topics": [
+        "enclosure interlocks",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1129",
+        "HZ-129",
+        "P7387",
+        "T10"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 9,
+      "page_kind": "prose",
+      "printed_page_no": "129",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Enclosure interlocks"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 129 carries procedure M1129 for the enclosure interlocks. It requires hazard notice HZ-129 at the access panel and seal set P7387 whenever the housing is opened, tightened to torque class T10."
+        }
+      ],
+      "topics": [
+        "enclosure interlocks",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1130",
+        "HZ-130",
+        "P7390",
+        "T11"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 10,
+      "page_kind": "prose",
+      "printed_page_no": "130",
+      "sections": [
+        {
+          "is_start": true,
+          "title": "Pallet shuttle"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 130 carries procedure M1130 for the pallet shuttle. It requires hazard notice HZ-130 at the access panel and seal set P7390 whenever the housing is opened, tightened to torque class T11."
+        }
+      ],
+      "topics": [
+        "pallet shuttle",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1131",
+        "HZ-131",
+        "P7393",
+        "T12"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 11,
+      "page_kind": "prose",
+      "printed_page_no": "131",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Pallet shuttle"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 131 carries procedure M1131 for the pallet shuttle. It requires hazard notice HZ-131 at the access panel and seal set P7393 whenever the housing is opened, tightened to torque class T12."
+        }
+      ],
+      "topics": [
+        "pallet shuttle",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1132",
+        "HZ-132",
+        "P7396",
+        "T1"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 12,
+      "page_kind": "prose",
+      "printed_page_no": "132",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Pallet shuttle"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 132 carries procedure M1132 for the pallet shuttle. It requires hazard notice HZ-132 at the access panel and seal set P7396 whenever the housing is opened, tightened to torque class T1."
+        }
+      ],
+      "topics": [
+        "pallet shuttle",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1133",
+        "HZ-133",
+        "P7399",
+        "T2"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 13,
+      "page_kind": "prose",
+      "printed_page_no": "133",
+      "sections": [
+        {
+          "is_start": true,
+          "title": "Control cabinet cooling"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 133 carries procedure M1133 for the control cabinet cooling. It requires hazard notice HZ-133 at the access panel and seal set P7399 whenever the housing is opened, tightened to torque class T2."
+        }
+      ],
+      "topics": [
+        "control cabinet cooling",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1134",
+        "HZ-134",
+        "P7402",
+        "T3"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 14,
+      "page_kind": "prose",
+      "printed_page_no": "134",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Control cabinet cooling"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 134 carries procedure M1134 for the control cabinet cooling. It requires hazard notice HZ-134 at the access panel and seal set P7402 whenever the housing is opened, tightened to torque class T3."
+        }
+      ],
+      "topics": [
+        "control cabinet cooling",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1135",
+        "HZ-135",
+        "P7405",
+        "T4"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 15,
+      "page_kind": "prose",
+      "printed_page_no": "135",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Control cabinet cooling"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 135 carries procedure M1135 for the control cabinet cooling. It requires hazard notice HZ-135 at the access panel and seal set P7405 whenever the housing is opened, tightened to torque class T4."
+        }
+      ],
+      "topics": [
+        "control cabinet cooling",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1136",
+        "HZ-136",
+        "P7408",
+        "T5"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 16,
+      "page_kind": "prose",
+      "printed_page_no": "136",
+      "sections": [
+        {
+          "is_start": true,
+          "title": "Hydraulic power unit"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 136 carries procedure M1136 for the hydraulic power unit. It requires hazard notice HZ-136 at the access panel and seal set P7408 whenever the housing is opened, tightened to torque class T5."
+        }
+      ],
+      "topics": [
+        "hydraulic power unit",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1137",
+        "HZ-137",
+        "P7411",
+        "T6"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 17,
+      "page_kind": "prose",
+      "printed_page_no": "137",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Hydraulic power unit"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 137 carries procedure M1137 for the hydraulic power unit. It requires hazard notice HZ-137 at the access panel and seal set P7411 whenever the housing is opened, tightened to torque class T6."
+        }
+      ],
+      "topics": [
+        "hydraulic power unit",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1138",
+        "HZ-138",
+        "P7414",
+        "T7"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 18,
+      "page_kind": "prose",
+      "printed_page_no": "138",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Hydraulic power unit"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 138 carries procedure M1138 for the hydraulic power unit. It requires hazard notice HZ-138 at the access panel and seal set P7414 whenever the housing is opened, tightened to torque class T7."
+        }
+      ],
+      "topics": [
+        "hydraulic power unit",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1139",
+        "HZ-139",
+        "P7417",
+        "T8"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 19,
+      "page_kind": "prose",
+      "printed_page_no": "139",
+      "sections": [
+        {
+          "is_start": true,
+          "title": "Pneumatic supply and lockout"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 139 carries procedure M1139 for the pneumatic supply and lockout. It requires hazard notice HZ-139 at the access panel and seal set P7417 whenever the housing is opened, tightened to torque class T8."
+        }
+      ],
+      "topics": [
+        "pneumatic supply and lockout",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1140",
+        "HZ-140",
+        "P7420",
+        "T9"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 20,
+      "page_kind": "prose",
+      "printed_page_no": "140",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Pneumatic supply and lockout"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 140 carries procedure M1140 for the pneumatic supply and lockout. It requires hazard notice HZ-140 at the access panel and seal set P7420 whenever the housing is opened, tightened to torque class T9."
+        }
+      ],
+      "topics": [
+        "pneumatic supply and lockout",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1141",
+        "HZ-141",
+        "P7423",
+        "T10"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 21,
+      "page_kind": "prose",
+      "printed_page_no": "141",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Pneumatic supply and lockout"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 141 carries procedure M1141 for the pneumatic supply and lockout. It requires hazard notice HZ-141 at the access panel and seal set P7423 whenever the housing is opened, tightened to torque class T10."
+        }
+      ],
+      "topics": [
+        "pneumatic supply and lockout",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1142",
+        "HZ-142",
+        "P7426",
+        "T11"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 22,
+      "page_kind": "prose",
+      "printed_page_no": "142",
+      "sections": [
+        {
+          "is_start": true,
+          "title": "Spindle drive and encoder"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 142 carries procedure M1142 for the spindle drive and encoder. It requires hazard notice HZ-142 at the access panel and seal set P7426 whenever the housing is opened, tightened to torque class T11."
+        }
+      ],
+      "topics": [
+        "spindle drive and encoder",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1143",
+        "HZ-143",
+        "P7429",
+        "T12"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 23,
+      "page_kind": "prose",
+      "printed_page_no": "143",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Spindle drive and encoder"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 143 carries procedure M1143 for the spindle drive and encoder. It requires hazard notice HZ-143 at the access panel and seal set P7429 whenever the housing is opened, tightened to torque class T12."
+        }
+      ],
+      "topics": [
+        "spindle drive and encoder",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1144",
+        "HZ-144",
+        "P7432",
+        "T1"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 24,
+      "page_kind": "prose",
+      "printed_page_no": "144",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Spindle drive and encoder"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 144 carries procedure M1144 for the spindle drive and encoder. It requires hazard notice HZ-144 at the access panel and seal set P7432 whenever the housing is opened, tightened to torque class T1."
+        }
+      ],
+      "topics": [
+        "spindle drive and encoder",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1145",
+        "HZ-145",
+        "P7435",
+        "T2"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 25,
+      "page_kind": "prose",
+      "printed_page_no": "145",
+      "sections": [
+        {
+          "is_start": true,
+          "title": "Tool changer carousel"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 145 carries procedure M1145 for the tool changer carousel. It requires hazard notice HZ-145 at the access panel and seal set P7435 whenever the housing is opened, tightened to torque class T2."
+        }
+      ],
+      "topics": [
+        "tool changer carousel",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1146",
+        "HZ-146",
+        "P7438",
+        "T3"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 26,
+      "page_kind": "prose",
+      "printed_page_no": "146",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Tool changer carousel"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 146 carries procedure M1146 for the tool changer carousel. It requires hazard notice HZ-146 at the access panel and seal set P7438 whenever the housing is opened, tightened to torque class T3."
+        }
+      ],
+      "topics": [
+        "tool changer carousel",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1147",
+        "HZ-147",
+        "P7441",
+        "T4"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 27,
+      "page_kind": "prose",
+      "printed_page_no": "147",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Tool changer carousel"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 147 carries procedure M1147 for the tool changer carousel. It requires hazard notice HZ-147 at the access panel and seal set P7441 whenever the housing is opened, tightened to torque class T4."
+        }
+      ],
+      "topics": [
+        "tool changer carousel",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1148",
+        "HZ-148",
+        "P7444",
+        "T5"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 28,
+      "page_kind": "prose",
+      "printed_page_no": "148",
+      "sections": [
+        {
+          "is_start": true,
+          "title": "Chip conveyor and coolant"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 148 carries procedure M1148 for the chip conveyor and coolant. It requires hazard notice HZ-148 at the access panel and seal set P7444 whenever the housing is opened, tightened to torque class T5."
+        }
+      ],
+      "topics": [
+        "chip conveyor and coolant",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1149",
+        "HZ-149",
+        "P7447",
+        "T6"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 29,
+      "page_kind": "prose",
+      "printed_page_no": "149",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Chip conveyor and coolant"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 149 carries procedure M1149 for the chip conveyor and coolant. It requires hazard notice HZ-149 at the access panel and seal set P7447 whenever the housing is opened, tightened to torque class T6."
+        }
+      ],
+      "topics": [
+        "chip conveyor and coolant",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1150",
+        "HZ-150",
+        "P7450",
+        "T7"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 30,
+      "page_kind": "table",
+      "printed_page_no": "150",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Chip conveyor and coolant"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 150 is the spare-parts table for the chip conveyor and coolant. It lists M1150 as the complete assembly and P7450 as the seal kit, under torque class T7."
+        }
+      ],
+      "topics": [
+        "chip conveyor and coolant",
+        "parts"
+      ]
+    }
+  ]
+}

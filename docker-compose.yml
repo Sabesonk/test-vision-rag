@@ -60,7 +60,11 @@ services:
       VSIR_VLM: "${VSIR_VLM:-stub}"
       VSIR_VLM_MODEL: "${VSIR_VLM_MODEL:-gemini-3.8-flash}"
       VSIR_EMBED_MODEL: "${VSIR_EMBED_MODEL:-gemini-embedding-2}"
-      VSIR_PROMPT_VERSION: "s2-v1"
+      # Interpolated like VSIR_VLM above, and for the same reason: replay must key on the
+      # version the checked-in fixtures were frozen under (s2-v1), while a live run needs
+      # the version this release actually ships. `scripts/stack.sh up --live` exports the
+      # latter; the default here keeps the free stack replaying.
+      VSIR_PROMPT_VERSION: "${VSIR_PROMPT_VERSION:-s2-v1}"
       # The **same** variable the CLI and a direct `vsir serve` read, so there is one token for one
       # machine. `docker-compose.test.yml` deliberately reads a *different* name
       # (`VSIR_TEST_API_TOKENS`) because its suites assert about the credential the container was
@@ -96,7 +100,17 @@ services:
       # Writable, and the only writable path outside the tmpfs: the source documents. `init` gets
       # it too because the anchor is shared and a `doctor` run that never writes there is harmless
       # — one mount list for every process type is worth more than trimming one of them.
-      - document-store:/srv/documents
+      #
+      # **A host directory rather than a named volume**, so the ingested PDFs are visible and
+      # manageable where the operator actually works. A named volume is outside the image either
+      # way, but on macOS and Windows it lives inside the Docker VM — so "where did my document
+      # go?" had no answer a person could `ls`, and putting a corrected PDF in place meant a
+      # round trip through `docker cp`. Override the location with `VSIR_DOCUMENTS_DIR`.
+      #
+      # On Linux the container's uid (10001) must be able to write it: the image `chown`s
+      # `/srv/documents` at build, but a bind mount shadows that, so run
+      # `sudo chown -R 10001:10001 var/documents` once. Docker Desktop maps the writes for you.
+      - ${VSIR_DOCUMENTS_DIR:-./var/documents}:/srv/documents
     networks: [vsir-net]
     depends_on:
       qdrant:
@@ -123,7 +137,7 @@ services:
       # Rasters are re-rendered on demand and are never a source of truth (§4.2) — and this is
       # also where `POST /documents` spools an upload for the life of one run, which is why it is
       # larger than the test stack's 512m. The spool dying with the container costs nothing now:
-      # step 02 deposits the document on the `document-store` volume above, so
+      # step 02 deposits the document in the host document directory mounted above, so
       # `vsir ingest --resume <run_id>` continues an uploaded run with no path at all (U029).
       - /tmp:rw,noexec,nosuid,size=2g
     depends_on:
@@ -163,6 +177,51 @@ services:
         condition: service_completed_successfully
     restart: "no"
 
+  # ── Console: the React app of U023, same-origin with the API through vite's proxy ────────────
+  console:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    # Never `latest` (§15.2) — the tag is the release, and this stack's release is `dev`.
+    image: vsir-console:dev
+    environment:
+      # A **proxy target**, not a base URL a browser ever sees. `vite.config.ts` forwards the API
+      # paths so the console is same-origin with the service: no CORS boundary, and a relative
+      # `image.url` resolves against the origin that served the page. `api` resolves only on
+      # `vsir-net`, which is correct for a proxy and unreachable from the host (§15 Factor III).
+      VITE_API_URL: http://api:8000
+    ports:
+      # 5173 is dev's, as `docker-compose.test.yml` says in its own comment — the test stack takes
+      # 5174 so both can be up at once. The variable is for the developer machine that already has
+      # something on this port; a stack that cannot start is a stack nobody runs.
+      - "127.0.0.1:${VSIR_CONSOLE_PORT:-5173}:5173"
+    networks: [vsir-net]
+    read_only: true
+    tmpfs:
+      # Vite bundles its **TypeScript** config to `node_modules/.vite-temp/` before reading it, so
+      # `vite preview` needs that one path writable and nothing else — which keeps the rest of the
+      # bundle read-only to the process serving it (§15 Factor V).
+      #
+      # `uid`/`gid` are not decoration. A tmpfs mounts **root-owned**, which silently replaces the
+      # `chown node:node` the Dockerfile does on this very path, and `vite preview` then exits
+      # `EACCES` on a file no test names. 1000 is the base image's `node` user. The test stack
+      # does not hit this because it does not run the console read-only.
+      - /app/node_modules/.vite-temp:rw,size=64m,uid=1000,gid=1000
+    healthcheck:
+      # node, not curl: this base image ships no shell utilities it does not need, the same
+      # reason the backend probe uses python.
+      test: ["CMD", "node", "-e",
+             "require('http').get('http://127.0.0.1:5173/',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    depends_on:
+      api:
+        # The proxy target has to answer, or the first page load is a 502 the operator has to
+        # guess at. `api`'s healthcheck is liveness, which is the right bar here.
+        condition: service_healthy
+
 networks:
   vsir-net:
     driver: bridge
@@ -171,8 +230,10 @@ volumes:
   qdrant-storage:
     # Named, so the index survives `stack.sh down` and a machine restart. `down --wipe` is the
     # only thing that drops it, and it says so before it does.
-  document-store:
-    # The source PDFs (§4.2, U029). Named for the same reason and dropped by the same command: a
-    # `down --wipe` that took the index and left the documents would leave a store describing a
-    # corpus that is no longer indexed. Losing it costs page images, never an answer — the index
-    # is the source of truth for retrieval, and a missing document is a typed `document_not_stored`.
+  # The source PDFs (§4.2, U029) are **not** here any more: they live in the host directory
+  # `VSIR_DOCUMENTS_DIR` names, mounted above. The invariant that moved with them is the one
+  # `down --wipe` keeps — dropping the index and leaving the documents would leave a store
+  # describing a corpus that is no longer indexed — so `scripts/stack.sh` now empties that
+  # directory in the same breath as it drops this volume. Losing the documents costs page images,
+  # never an answer: the index is the source of truth for retrieval, and a missing document is a
+  # typed `document_not_stored` rather than a wrong result.

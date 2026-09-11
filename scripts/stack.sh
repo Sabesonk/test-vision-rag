@@ -79,6 +79,11 @@ cmd_up() {
     # override rather than an edit.
     export VSIR_VLM=gemini
     export VSIR_ALLOW_PAID=1
+    # The **released** prompt set. `.env` stays on the version the checked-in fixtures were
+    # frozen under, because replay is the default mode and its keys have to match them; a live
+    # run has no fixtures to match and must use the text this release actually ships, or
+    # `prompt()` refuses it by name. See PROMPT_DIGESTS in `vlm/client.py`.
+    export VSIR_PROMPT_VERSION="${VSIR_PROMPT_VERSION_LIVE:-s2-v2}"
     [[ -n "${VSIR_VLM_KEY:-}" ]] || {
       echo "VSIR_VLM_KEY is not set — a live stack with no credential fails per call, after"  >&2
       echo "billing whatever it managed to send. Load it first:"                              >&2
@@ -201,8 +206,20 @@ for (doc, rev), pages in sorted(live.items()):
 cmd_down() {
   require_docker
   if [[ "${1:-}" == "--wipe" ]]; then
-    bold "Stopping and dropping the index and the stored documents (both named volumes go)"
+    bold "Stopping and dropping the index and the stored documents"
     "${COMPOSE[@]}" down -v
+    # The documents are a host directory now, not a named volume, so `down -v` no longer takes
+    # them. Emptying it here is what keeps §6.7's invariant: a wipe that dropped the index and
+    # left the documents would leave a store describing a corpus that is no longer indexed —
+    # every `page_id` in it unresolvable, and nothing saying why.
+    local documents="${VSIR_DOCUMENTS_DIR:-$ROOT/var/documents}"
+    if [[ -d "$documents" ]]; then
+      # The directory itself survives: the compose mount expects it to exist, and recreating it
+      # empty is the state a fresh stack starts in. `-mindepth 1` is what keeps `rm` off the
+      # mount point, and the quoted path is what keeps it off everything else.
+      find "$documents" -mindepth 1 -delete
+      bold "Emptied $documents"
+    fi
   else
     bold "Stopping; the index survives — `down --wipe` drops it"
     "${COMPOSE[@]}" down

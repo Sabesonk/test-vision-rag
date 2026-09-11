@@ -72,6 +72,12 @@ MAX_LADDER_LEVEL = 2
 #: its own window and Level 1 keeps meaning what it says.
 MIN_WINDOW_PAGES = CAP_PAGES_PER_WINDOW // 3
 
+#: What each rung of §6.2's ladder cut on, indexed by level. The rungs differ **only** in where
+#: the boundaries come from — the document, its chapters, or the cap — which is what the level
+#: number reports in the run record, so the words a demo prints come from here rather than from a
+#: conditional at the print site that only knew about two of the three.
+LEVEL_NAMES: tuple[str, ...] = ("whole document", "chapter-aligned", "folded at the cap")
+
 #: Why a window was split. Each is a §6.2 trigger, and each re-bills — none of them pads or guesses.
 BisectReason = Literal["max_tokens", "truncated", "schema_invalid", "offset"]
 BISECT_REASONS: tuple[str, ...] = ("max_tokens", "truncated", "schema_invalid", "offset")

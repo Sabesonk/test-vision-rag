@@ -81,9 +81,13 @@ RUN_STATES: tuple[str, ...] = (QUEUED, RUNNING, STOPPED, GATED, PUBLISHED, FAILE
 #: work is `done` and can be skipped (U025) or has to be re-billed.
 DONE = "done"
 WINDOW_STATES: tuple[str, ...] = (QUEUED, RUNNING, DONE, FAILED)
-#: The states ``vsir ingest --resume`` will take over without ``--steal``. A live lease on a run in
-#: any other state means a worker is probably still on it.
-RESUMABLE: tuple[str, ...] = (STOPPED, GATED, FAILED, QUEUED)
+#: The states ``vsir ingest --resume`` will take over without ``--steal`` — §6.9 names exactly one:
+#: *"`stopped` is what a `SIGTERM` leaves behind and is the only state `--resume` accepts without
+#: `--steal`."* Everything else is either somebody's live work (`running`, `queued`), a judgement
+#: that a resume would silently re-litigate (`gated`), a run that failed for a reason nobody has
+#: read yet (`failed`), or a document already serving (`published`). `--steal` takes any of them,
+#: which is what makes taking one a decision rather than an accident.
+RESUMABLE: tuple[str, ...] = (STOPPED,)
 
 #: How long a claimed lease is believed for. Renewed as the run makes progress, so a worker that
 #: dies stops renewing and the lease expires rather than having to be cleaned up by anything.
@@ -141,6 +145,19 @@ class RunNotFound(RunRefused):
     """No run point with that id. A typed 404, never an empty run record."""
 
     code = "run_not_found"
+
+
+class RunNotResumable(RunRefused):
+    """The run is not in a state a resume may take over (§6.9). ``--steal`` is the override.
+
+    Separate from :class:`LeaseHeld` because the two say different things and want different
+    answers. A live lease means *another worker is probably on this*; a wrong state means *this
+    run is not waiting to be continued* — resuming a `published` run would re-run every step
+    against a document that is already serving, and resuming a `running` one whose lease merely
+    expired is the duplicate-worker case the lease is there to make deliberate.
+    """
+
+    code = "run_not_resumable"
 
 
 class GateBlocked(RunRefused):
@@ -452,6 +469,12 @@ def claim(client: Any, runs_collection: str, run_id: str, *, owner: str, steal: 
     is advisory, so this is a guard against a second worker being started by accident, not a
     mutual-exclusion primitive. What makes the accident harmless if it happens anyway is I1 and
     I7, not this function.
+
+    Then it refuses a run whose **state** is not :data:`RESUMABLE` — §6.9's *"`stopped` … is the
+    only state `--resume` accepts without `--steal`"*. The two checks are in this order because
+    they answer different questions and the lease's is the more urgent: *"somebody else is on
+    this"* has to be said before *"and it is not in the right state anyway"*, or an operator
+    racing a live worker is told about a state machine instead of about the worker.
     """
     record = require(client, runs_collection, run_id)
     if record.lease.live() and record.lease.owner != owner and not steal:
@@ -462,8 +485,20 @@ def claim(client: Any, runs_collection: str, run_id: str, *, owner: str, steal: 
             f"idempotent (I1) and nothing is queryable until the gates flip is_current (I7)",
             run_id=run_id, owner=record.lease.owner, expires_at=record.lease.expires_at,
             state=record.state)
+    if record.state not in RESUMABLE and not steal:
+        raise RunNotResumable(
+            f"run {run_id} is {record.state!r} and --resume takes over {list(RESUMABLE)} "
+            f"(§6.9): a resume re-runs every step under this run's id, which for a "
+            f"{record.state!r} run is either work somebody else is doing or a judgement already "
+            f"recorded. Pass --steal to take it anyway",
+            run_id=run_id, state=record.state, resumable=list(RESUMABLE))
     taken = record.model_copy(update={
         "state": RUNNING,
+        # The previous stop is **cleared**, not carried. A run that is running again has not
+        # failed, and a `published` record still reporting `failed: sigterm` is the run record
+        # telling an operator two contradictory things about the same run — the stop is in the
+        # event stream (`run_stopped`), which is where the history belongs (§11.4).
+        "failed": None,
         "lease": Lease(owner=owner, expires_at=_stamp(now() + timedelta(seconds=lease_seconds))),
     })
     _log.info("run_lease_claimed", run_id=run_id, owner=owner, stolen=bool(
@@ -730,6 +765,42 @@ def retire(client: Any, collection: str, *, doc_id: str, revision: str,
               "other_revision_points_kept": kept}
     _log.info("retirement", collection=collection, doc_id=doc_id, revision=revision,
               run_id=run_id, **report)
+    return report
+
+
+def retire_document(client: Any, collection: str, *, doc_id: str,
+                    revision: str | None = None) -> dict[str, Any]:
+    """`vsir retire <doc_id> [--revision]` — withdraw a document from service (§4.4, U025).
+
+    **Demotion, never deletion.** Every page of the document (or of the one revision named) is set
+    ``is_current=False`` and kept, exactly as §6.7 clause 2 keeps a superseded revision: the pages
+    stop answering, and what is still recorded about them is what a `found_only_in_superseded`
+    can surface and what an audit of a past answer can be checked against. A retirement that
+    deleted would make every citation a reader already holds unverifiable.
+
+    It replaces `impl`'s ``DELETE /api/v1/documents/{doc_id}`` (§2.5 A), and the move from a route
+    to a subcommand is the point: withdrawing a document is an **operator** action, not a
+    caller's, so it is a one-off admin process run from the same image as `web` and
+    `ingest-worker` (§15 Factor XII) rather than a verb any bearer token can reach.
+
+    Idempotent — it is a filtered write of a constant, so running it twice sets the same value on
+    the same set and the second call reports ``retired: 0`` because there was nothing current left
+    to demote. Scoped, on the same terms as :func:`retire`: :func:`_page_filter` cannot be built
+    without a ``doc_id``, so clause 3 — *points of any other document are never touched* — is
+    structural here too rather than a check somebody could forget.
+    """
+    current = _page_filter(doc_id, revision, is_current=True)
+    retired = _count(client, collection, current)
+    if retired:
+        _retry(lambda: client.set_payload(collection_name=collection,
+                                          payload={"is_current": False},
+                                          points=current, wait=True),
+               what="retire_document")
+    kept = _count(client, collection, _page_filter(doc_id, revision))
+    still_current = _count(client, collection, _page_filter(doc_id, is_current=True))
+    report = {"doc_id": doc_id, "revision": revision or "", "retired": retired, "kept": kept,
+              "still_current": still_current}
+    _log.info("document_retired", collection=collection, **report)
     return report
 
 

@@ -166,6 +166,21 @@ export interface ResolveHit {
 
 export type Hit = DocHit | SectionHit | PageHit | LookupHit | ResolveHit
 
+/**
+ * One revision, no longer current, that does carry what was asked for (F9, §6.7 clause 2).
+ *
+ * The evidence behind `found_only_in_superseded`, and why that status is not an abstention:
+ * *not in the corpus* and *in revision 1.3, which 1.4 replaced* are different facts. It carries
+ * no hits — a superseded page is not current, so the caller is told which revision to ask for
+ * rather than shown its contents.
+ */
+export interface SupersededIn {
+  doc_id: string
+  revision: string
+  /** How many pages of that revision match. A count, never a page id. */
+  pages: number
+}
+
 /** Family A. An empty `ok` is impossible — the service raises rather than sending one. */
 export interface SearchResponse<H extends Hit> {
   status: Status
@@ -180,6 +195,8 @@ export interface SearchResponse<H extends Hit> {
   next: NextMoves | null
   effective_scope: Record<string, unknown>
   scope_stats: ScopeStats
+  /** The revisions behind a `found_only_in_superseded`, and empty under every other status. */
+  superseded: SupersededIn[]
   reads_remaining: number
   provenance: Provenance
 }

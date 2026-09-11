@@ -7,11 +7,11 @@
 
 | | |
 |---|---|
-| **Complete** | 29 / 33 units (88%) — 23 of the planned 26, plus U027, U028, U029, U030, U031 and U032 added after the plan was written (plan §4b) |
-| **Current milestone** | **M7 — closed.** U024 drives the console through a browser: 22 Playwright assertions against the same backend image production runs, in replay mode, spending nothing. **M0, M1, M2a, M3, M4, M5, M6 and M7 are closed**; M8 is the last one. Previously: U023 shipped the console itself — a React + TypeScript + Vite app in two zones, plus the backend half plan §4c P7 called for (a typed `TriageTable` on `Outcome` and an additive `triage` field on `AskResponse`), so the triage panel reads a contract instead of regexing a sentence out of a trace `Move.detail` |
-| **Latest** | **U024 — the Playwright replay suite, `frontend/Dockerfile` and a rewritten `scripts/test-e2e.sh`.** M7's three acceptance assertions hold in a browser: an `unverifiable` code renders with its badge, a rejected code is absent from the rendered answer, and the abstention names the unread image-only pages without ever saying *"not in these documents"*. **None of the three was reachable from the shipped console**, which is the unit's real finding — the fix is §8.1a's `fetch` route given to the operator (*"what do you read on this page?"*, gated server-side, zero spend), the one route a console is the literal client of. Second finding, measured: **the stub embedding is platform-dependent** — Pillow's PNG bytes differ between the macOS and Linux wheels, so a dense near-tie ranks the other way in Docker and a replayed multi-page trace can reach a page set nobody froze. No answer depends on a ranking (I2/I3), but a replayed *trace* does |
-| **Next unit** | **U025** (M8) — revisions, `--resume` with per-window checkpoints, the `SIGTERM` handler, `series_id` across revisions and `found_only_in_superseded`. Spend: none — provable end to end with the stub VLM on a generated large PDF (§6.2) |
-| **Then** | **U026** (M8, paid) — `vsir eval corpus`, the §12.6 report and the D11 gates. Then the completion gate: AC-001…AC-016 verified with evidence, and `v0.1.0` |
+| **Complete** | 30 / 33 units (91%) — 23 of the planned 26, plus U027, U028, U029, U030, U031 and U032 added after the plan was written (plan §4b) |
+| **Current milestone** | **M8 — one unit left.** U025 closes revisions, resume and graceful shutdown; **U026** (`vsir eval corpus`, paid) is the last unit in the plan. **M0, M1, M2a, M3, M4, M5, M6 and M7 are closed.** Previously: U024 drove the console through a browser — 22 Playwright assertions against the same backend image production runs, in replay mode, spending nothing |
+| **Latest** | **U025 — `--resume` that buys nothing twice, a `SIGTERM` that loses at most one window, `found_only_in_superseded`, `series_id` across revisions and `vsir retire`.** The unit's real finding is a defect it introduced and then removed: **the `SIGTERM` handler raced the write it was making.** It called `run_module.stop()` from inside the handler, which runs between two bytecodes of whatever is executing — very often an in-flight `save()` to the same run point once the lease is renewed per window — so the interrupted write could land *on top of* the checkpoint and leave a cleanly-shut-down run `running` with a live lease, which is the exact failure this unit exists to remove. §15 Factor IX asks for a **cooperative** shutdown and now gets one: the handler sets a flag, and the checkpoint is written at a safe point where nothing else is writing. Second finding: the durable §6.3 cache (`vlm/cached.py`) is what makes a resume free, and it also closes plan §4c **P2** — a re-ingest no longer re-bills anything |
+| **Next unit** | **U026** (M8, paid) — `vsir eval corpus`, the §12.6 report and the D11 gates, with `code_precision` at 1.00 as a P0 stop |
+| **Then** | The **completion gate**: AC-001…AC-016 verified with evidence, every F-row closed by the milestone §10 assigns it, then `v0.1.0` |
 | **Read first** | **Plan §4c — six open defects found by running the system.** None breaks a build; all of them mislead somebody who trusts the output. P1 (a live run records no cost) and P2 (no VLM cache store, so a re-ingest re-bills) both land on U013 |
 | **Blocked** | **U013** — the paid re-bill only, and now on **OQ-1 alone**: `data/source/TC1E-SF.pdf` is still not present. **OQ-2 is closed** — a key is configured and was exercised live on 2026-09-10, ingesting a real 4-page datasheet to `published` through `POST /documents`. The ladder is no longer a blocker either: the shipped `plan()` refused the 55-page pilot at **step 05**, one step before the spend everyone thought it was waiting on a credential for, and `fixes/001` now folds it to `[[1, 30], [31, 55]]` — byte-for-byte what its own acceptance table declared. Nothing downstream is blocked (§17) |
 
@@ -131,7 +131,7 @@ Two things a later unit should not have to rediscover:
 - [x] U024 The Playwright replay suite and `scripts/test-e2e.sh` — **M7 closes here**
 
 ### M8 — revisions, resumable ingest, scale-out (spend: ingest)
-- [ ] U025 Revisions, resumable ingest, and graceful shutdown — spend: none
+- [x] U025 Revisions, resumable ingest, and graceful shutdown — spend: none
 - [ ] U026 `vsir eval corpus` — the §12.6 report and the D11 gates — spend: paid
 
 ---
@@ -5051,3 +5051,280 @@ against `TC1E-SF`**, because that fixture is `expected.json` alone — no source
 `read` responses, nothing to ingest. `worked-trace.spec.ts` would refuse it by name
 (`read.cases` is absent, and `readCases()` says so), which is the right failure. The code carries
 no fixture literal; what is unverified is the second fixture's *shape*.
+
+---
+
+### U025 — Revisions, resumable ingest, and graceful shutdown
+
+**Milestone:** M8 · **Spend:** none · **Status:** `[x]` Complete · **Completed:** 2026-09-11
+
+Four things ship together because they are one property seen from four sides: **a run can be
+interrupted, and the index can be told what is true now.** `--resume` finishes a killed run
+without buying it twice, step 06 checkpoints per window so a kill loses at most one,
+`found_only_in_superseded` finally answers F9, and `vsir retire` lets an operator withdraw a
+document without deleting the evidence.
+
+**Demo output** — the plan's command, on the corpus this unit generates
+(`VSIR_FIXTURE=data/fixtures/synthetic_large`, `VSIR_VLM=stub`, kill after the second window):
+
+```
+=========== 1. ingest, killed with SIGTERM mid-extraction ===========
+run_id = 01M27VCHX3CBEA0N6VA0FZ40T8
+{"event": "s2_window", "origin": "replay", "page_forms": 30, "window": [1, 30], ...}
+{"event": "s2_window", "origin": "replay", "page_forms": 30, "window": [31, 60], ...}
+{"event": "sigterm", "action": "checkpoint_and_exit", "signal": 15, "run_id": "01M27VC..."}
+{"event": "run_stopped", "published": false, "reason": "sigterm", "step": "extract"}
+
+   STOPPED  sigterm: SIGTERM: the run is checkpointed as `stopped` and nothing was published
+   (I7, F17). Continue it with `vsir ingest --resume <run_id>` - the windows it finished are in
+   the 6.3 cache and will not be bought again
+
+=========== 2. runs show - stopped, and where it got to ===========
+state        stopped · step extract · windows 3/5 · pages_indexed 0 of 150
+lease        - until - (not live)
+published_at - · flags -
+failed       step extract: sigterm - stopped in flight; nothing was published
+--- window checkpoints in vsir_runs ---
+     1-30   done     checkpoint=extract   pages=30  extract_key=6a62aff3e9ff8408
+    31-60   done     checkpoint=extract   pages=30  extract_key=cd3e949ae22e18c5
+    61-90   done     checkpoint=extract   pages=30  extract_key=aff9843892ad7132
+    91-120  queued   checkpoint=window    pages=0   extract_key=84a1de9a1d26d71b
+   121-150  queued   checkpoint=window    pages=0   extract_key=d36980956a1bdbe1
+  queryable pages: 0
+
+=========== 3. --resume: finishes, and buys nothing twice ===========
+exit=0
+windows served from the durable cache (no model call):  3   <- 1-30, 31-60, 61-90
+windows the backend was actually asked for:             2   <- 91-120, 121-150
+ALL ASSERTIONS PASSED
+
+=========== 4. runs show - published ===========
+state        published · step publish · windows 5/5 · pages_indexed 150 of 150
+published_at 2026-09-11T09:05:24.241082+00:00 · flags -
+retired      {'deleted_stale_points': 0, 'superseded_demoted': 0, 'other_revision_points_kept': 0}
+window_coverage  PASS              1  150/150 page(s) carry an S2 record
+(no `failed` line: `claim` cleared the stop when the resume took the run over)
+
+=========== 5. the document answers ===========
+status ok · hits [75] · total 1
+```
+
+The kill landed after the **third** window: three are `done` with the `extract_key` each was
+billed under, two are still `queued`, and the resume calls the backend for exactly the two it had
+not bought. `windows 3/5` on a stopped run and the absent `failed` line on the published one are
+both fixes this demo produced — findings 4 and 5 below.
+
+`found_only_in_superseded`, the other half of the demo command, over two real published
+revisions (`test_revision_lifecycle.py`):
+
+```
+lookup("K913")  -> status found_only_in_superseded · hits [] · superseded [("REV-DOC","1.3",1)]
+lookup("K102")  -> status ok · hits from REV-DOC@1.4 only · superseded []
+count(REV-DOC@1.3)              = 6   (unchanged after 1.4 published)
+count(REV-DOC@1.3, is_current)  = 0
+```
+
+**Test results**
+
+| Suite | Result |
+|---|---|
+| `test-unit.sh -k "series_id or ladder_level_2"` | 22 passed (12 ladder + 10 series_id) |
+| `test-api.sh -k "revision_lifecycle"` | 15 passed |
+| `test-api.sh -k "retire"` | 11 passed |
+| `test-api.sh -k "sigterm_checkpoint"` | 7 passed |
+| `test-api.sh -k "resume"` | 12 passed |
+| `test-api.sh` (whole L2/L3 suite, clean stack) | 1620 passed, 13 skipped |
+
+**Invariants / failure rows closed**
+
+- **F9** — `is_current` injected by default plus the `found_only_in_superseded` status, with the
+  revision surfaced (`test_lookup_only_in_superseded_returns_typed_status`).
+- **F12 (revision half)** — publishing 1.4 retires 1.3's points to `is_current=false` **without
+  deleting them** (`test_publishing_new_revision_keeps_prior_points`), beside clause 1's delete
+  and clause 3's payload-hash isolation, all three in one file so no one of them can pass alone.
+- **F8 (`series_id` half)** — stable across revisions, pure (`test_series_id_stable_across_revisions`)
+  and in an index (`test_series_id_stable_across_revisions_in_the_index`).
+- **AC-016** re-exercised: `test_sigterm_checkpoint_loses_at_most_one_window`,
+  `test_resume_completes_without_rebilling`.
+- I1 and I7 re-exercised under interruption and across revisions; register **E2** (run state on a
+  daemon thread) and **E7** (a resumed run leaving duplicates) both asserted; **E9** re-verified
+  at 150 pages by call spy.
+
+**What was built**
+
+- **`backend/vsir/vlm/cached.py` — net new.** The read/write cache in front of the boundary, and
+  the reason a resume is free. `ControlPlaneStore` has existed since U020 and only
+  `serve/tools/read.py` used it; step 06 needed the identical three lines, so it is a
+  `Backend` wrapper rather than a second copy. **It wraps the stub too**, deliberately: a cache
+  that is only in the path when the expensive backend is selected is a code path the free levels
+  never exercise, and the resume it exists for would then be provable only by a run nobody can
+  afford. `origin` tells them apart — `replay` the first time, `cache` the second, exactly as
+  `read` has always reported. This also closes plan §4c **P2** (*no VLM cache store, so a
+  re-ingest re-bills*), which was filed against U013.
+- **`ingest/extract.py` — `WindowProgress`.** `extract()` reports each window twice, as it goes
+  out and as it comes back. Before this the window points were written **in bulk after step 06
+  returned**, so a kill during extraction left five `queued` points and no record of what had
+  been bought — a checkpoint written after the loop is one that never survives the event it
+  exists for. The bulk write at the end of step 06 is gone; steps 05 and 07 keep theirs.
+- **`ingest/run.py`** — `RunNotResumable` and the state check in `claim()`; `retire_document()`;
+  `claim()` clears a stale `failed`. `RESUMABLE` was `(STOPPED, GATED, FAILED, QUEUED)` and is
+  now `(STOPPED,)`, which is what §6.9 says in one sentence: *"`stopped` … is the only state
+  `--resume` accepts without `--steal`."* It was a declared constant nothing read.
+- **`cli.py`** — `vsir retire <doc_id> [--revision]`; `_window_progress`; `_backend(client=…)`
+  wiring the cache; **`--resume` now always opens the control plane**; `_assertions` made
+  tolerant of a corpus that declares no M2a trap.
+- **`serve/tools/lookup.py`** — `published_revisions`, `superseded_in`, `superseded_probe`, and
+  `absence(..., superseded=…)`. **`serve/tools/skim.py`** — the same status where the *scope*
+  holds no current page. **`serve/envelope.py`** — `SupersededIn` and `SearchResponse.superseded`.
+- **`vsir/eval/synthetic_large.py` + `data/source/synthetic_large.pdf` (200 KB, committed) +
+  `data/fixtures/synthetic_large/` (128 KB).** 150 pages, **no contents page**, so the ladder has
+  nothing to cut on and folds at the cap: Level 2, five windows of thirty. Areas run in
+  contiguous blocks of **17** pages, coprime with the 30-page cap, so four of the nine sections
+  straddle a window fold and F8 is exercised at the rung that needs it.
+- Tests: `tests/unit/test_ladder_level_2.py`, `tests/unit/test_series_id_revisions.py`,
+  `tests/api/test_revision_lifecycle.py`, `test_resume.py`, `test_sigterm_checkpoint.py`,
+  `test_retire.py`.
+
+**How `found_only_in_superseded` avoids becoming a disclosure — the one real design decision**
+
+In the pages collection, `is_current: False` means **two different things**: a revision that was
+published and has since been superseded (§6.7 clause 2 — F9's evidence), *or* a run that wrote its
+points and never passed its gates. They are indistinguishable there, and §5.4's `INDEXED` is
+sixteen keys with no seventeenth to spare.
+
+Answering `found_only_in_superseded` off `is_current: False` alone would therefore surface a
+**half-ingested revision** through the one status that is supposed to be about the past — and it
+would do so while a document is mid-ingest, which is precisely when an operator is least able to
+tell the report is wrong. That is I7 with the sign flipped.
+
+So `lookup` reads the control plane: `published_revisions()` scrolls `vsir_runs` for runs in state
+`published`, and only those `(doc_id, revision)` pairs can ever be named. It runs **on the absence
+path only** — one facet plus one count per naming revision, and nothing at all on an `ok`.
+`test_an_unpublished_revision_is_never_surfaced_as_superseded` and
+`test_a_gated_run_is_not_superseded_either` are the two that would catch the leak.
+
+The cost is that `lookup` takes a `runs_collection`, and without one it answers `not_found` as it
+always did. Every production caller passes it (`app.py` from `ToolContext.cfg`, so HTTP, MCP, the
+CLI one-shot and the runner all inherit it). `eval/acceptance.py` and `eval/abstention.py` do not,
+and that is correct — see the next note.
+
+**Deviations and findings**
+
+1. **Spec §13 M8's `ladder_level_2_required` clause is superseded, by Spec §6.2.** §13 still reads
+   *"attempting a Level-2 document fails with a typed `ladder_level_2_required`"*; §6.2, rewritten
+   by `fixes/001`, says *"`ladder_level_2_required` is **retained as a code and no longer
+   raised**"* — because the exclusion refused 14 documents and 2,719 pages, 48 % of the real
+   corpus, including the pilot. The spec wins over the plan and the more specific, later section
+   wins within the spec, so `test_ladder_level_2.py` asserts §6.2's behaviour: the document
+   **plans**, at Level 2, five windows, covering 150 pages once; the class is still in the
+   taxonomy with its code; and nothing in `backend/vsir/**` raises it (asserted by source scan).
+   **§13 M8's sentence should be amended to match §6.2** — flagged, not edited here.
+2. **Spec §13 M8 asks for "≥ 700 windows"; this corpus has five.** 700 windows at a 30-page cap is
+   ~21,000 pages and a PDF nobody would commit. The plan's own acceptance criterion is the
+   operational one — *"large enough to force at least three window checkpoints in a single
+   run"* — and five gives a kill somewhere with finished windows behind it and unstarted ones in
+   front, which is the shape the measurement needs. OQ-5's real scale-out stays with U026.
+3. **The M1 corpus's `superseded` row still answers `not_found`, and that is the correct
+   outcome.** `data/fixtures/synthetic_pages/expected.json` predicted *"F9's
+   `found_only_in_superseded` upgrade is closed at M8"*. It is closed — but that corpus is seeded
+   by `vsir.eval.synthetic.seed`, which `ingest/run.py` already calls *"a fixture loader, not a
+   run"*: there is **no `vsir_runs` record** behind `SYN-M1@0.9`, so there is no fact that it was
+   ever published, and writing one would be inventing the fact the probe exists to check. The row's
+   `why` now says so and `test_status_enum_end_to_end.py`'s docstring explains it. F9's positive
+   case is proved in `test_revision_lifecycle.py`, over two revisions that really published —
+   which is what Spec §13 M8's acceptance actually asks for.
+4. **Two defects the demo found, both fixed.** Neither breaks a build; both mislead somebody
+   reading the output.
+   - `runs show` on a killed run printed **`windows 0/5`** while `vsir_runs` held two `done`
+     window points. `windows_done` was only written at step 07, so the number an operator reads
+     when deciding whether to resume was the one number that had not been updated. The per-window
+     checkpoint now advances it — which also renews the lease per window, so a document whose
+     windows take longer than `LEASE_SECONDS` can no longer let its own lease expire under it.
+   - A **published** run still reported `failed: step window: sigterm` after a successful resume:
+     the record told an operator two contradictory things about one run. `claim()` now clears
+     `failed` when it takes over; the stop stays on the event stream as `run_stopped`, which is
+     where history belongs (§11.4).
+5. **The `SIGTERM` handler raced the write it was trying to make — the unit's most important
+   finding, and it was invisible until the per-window lease renewal made it likely.** The handler
+   called `run_module.stop()` itself and then raised `SystemExit`. A signal handler runs *between
+   two bytecodes of whatever is executing*, and in a run that now renews its lease after every
+   window that is very often an in-flight `save()` to the same run point. Both writes target
+   `run_point_id(run_id)`; if the handler's `stopped` landed first and the interrupted `renew`
+   then completed on top of it, the run was left **`running` with a live lease** — so `--resume`
+   refused `lease_held`, and an operator was told a dead worker held a run that had shut down
+   cleanly. That is precisely the failure U025 exists to remove, reintroduced by U025.
+
+   It reproduced roughly one run in three across the suite, and only when a full ingest followed
+   a killed one. **The fix is the shape §15 Factor IX actually asks for** — *"stop accepting
+   work, drain in flight, checkpoint"* is a cooperative shutdown, and a handler that writes is
+   not one. `_on_sigterm` now sets `handle.stopping` and logs, and nothing else;
+   `_RunHandle.drain()` does the write and raises `IngestStopped` at a **safe point**, where no
+   other write is in flight. There are two: inside the per-window checkpoint (before the next
+   call goes out, and after the window in flight is recorded) and inside `_progress`, which every
+   step calls as it finishes. *"At most one window"* is therefore a property of where those calls
+   are rather than of when the signal happens to arrive. `IngestStopped` exits **0** — an
+   orchestrator that sent the signal is not owed a non-zero status for having been obeyed.
+
+   Two smaller things fell out of chasing it. `ControlPlaneStore.put` called `_ensure()` on
+   **every** response — a live payload-schema read plus four index creations per cached entry,
+   which on a 700-window run is 700 schema reads and, on a collection that does not exist yet,
+   two concurrent puts each creating the same four indexes. It now ensures only when the
+   collection is missing. And `test_resume.py`'s `drain()` ignored the subprocess exit code, so
+   *"the run refused at step 01"* surfaced three assertions later as *"the index has 0 of 150
+   pages"* — every full-ingest drain now asserts `expect=0`, and the `killed` fixture asserts the
+   kill really left `stopped` before the test built anything on top of it.
+
+6. **`--resume` silently did nothing without a store-backed `--until`.** `vsir ingest other.pdf
+   --resume <run_id> --until manifest` exited 0 having ignored the flag entirely: the control
+   plane was only opened for `STORE_BACKED_STEPS` or for a resume with no path, so there was no
+   lease to claim, no checkpoint to read, and — the reason the test caught it — **no
+   `run_document_mismatch` check**. A resume now always opens the control plane.
+7. **`_assertions` asserted M2a's traps against every corpus.** The crop trap, the label offset,
+   the mixed-document sample and the raster hashes are properties of
+   `data/fixtures/synthetic_3window/`, and a `KeyError` was what a second corpus got for not
+   having them. Each block is now conditional on its key being present — a missing key is *this
+   corpus does not make that claim*, and every key a table does declare is still checked, so the
+   M2a table is asserted exactly as before.
+8. **`window.LEVEL_NAMES`.** `vsir ingest` printed *"level 2 · chapter-aligned"* — a two-branch
+   conditional (`'chapter-aligned' if plan.level else 'whole document'`) that had never seen a
+   Level 2 document. One table, indexed by level.
+9. **The new corpus's `revision` is `1.0`, not the `1.3` its footers print.** §6.1 step 01 takes
+   facets from the filename, the file's metadata and the uploader — never from content — and this
+   corpus declares none in its filename. `expected.json` records both (`printed_revision` and
+   `revision`) so the gap is visible rather than surprising.
+
+10. **This unit makes the L2 suite heavy, and that exposed a pre-existing fragility in
+   `tests/api/conftest.py` — flagged, not fixed here.** `test_resume.py` and
+   `test_sigterm_checkpoint.py` drive **real `vsir` subprocesses over a 150-page document**: each
+   run renders 150 rasters at dpi 220 and writes 150 points across three surfaces. Under that
+   sustained churn the test Qdrant intermittently fails a `create_payload_index`, and because
+   `served_collection` / `skim_collection` are **session-scoped**, one transient failure in
+   `create_collection(recreate=True)` poisons **every** test that wants that fixture for the rest
+   of the run. Observed across four full-suite runs on this tree: 0, 39, 91 and 313 failures,
+   every one of them `Not found: Collection vsir_pages_u014_1536 / vsir_pages_u017_1536 doesn't
+   exist`, and each individual file green when run on its own.
+
+   What was done here: the ingest count in `test_resume.py` was cut roughly in half. A test that
+   asserts numbers from `expected.json` no longer ingests to read a file; the two `claim()` tests
+   seed a `stopped` run record instead of killing a real one (a real kill is proved next door);
+   and the read-only tests share one module-scoped `published` corpus. 441 s → 360 s for the file.
+
+   What is left for somebody: the session fixtures have **no retry around collection creation**,
+   so a single transient Qdrant error is unrecoverable for the session. A `_retry` around
+   `create_collection` — the ingest path already has one (`run._retry`) — would make the suite
+   tolerant of exactly this. It is conftest-wide and touches every suite, so it does not belong
+   in U025's diff.
+
+**Notes**
+
+- **No new dependency.** `vlm/cached.py` is 85 lines over `ControlPlaneStore`, which shipped at
+  U020.
+- **The durable cache changes what a second ingest costs, everywhere.** Any store-backed run of an
+  already-ingested document now reports `vlm_cache_hit` instead of calling the backend, including
+  `POST /documents`. `test_a_second_clean_ingest_of_the_same_document_buys_nothing` is the
+  statement of that property.
+- **`vsir retire` demotes and never deletes**, and no route anywhere offers a delete — asserted
+  against the OpenAPI document rather than by calling the verb, because a 405 on an unrouted path
+  proves nothing about the surface.
+- Still open for M8: **U026** (`vsir eval corpus`, the §12.6 report and the D11 gates, paid), then
+  the completion gate — AC-001…AC-016 with evidence, and `v0.1.0`.

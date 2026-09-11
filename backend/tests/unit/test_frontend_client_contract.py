@@ -51,6 +51,7 @@ RESPONSE_MODELS: dict[str, type[BaseModel]] = {
     "NextMoves": envelope.NextMoves,
     "DocScopeStat": envelope.DocScopeStat,
     "ScopeStats": envelope.ScopeStats,
+    "SupersededIn": envelope.SupersededIn,
     "DocHit": envelope.DocHit,
     "SectionHit": envelope.SectionHit,
     "PageHit": envelope.PageHit,

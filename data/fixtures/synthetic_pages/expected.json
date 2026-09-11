@@ -106,7 +106,7 @@
 
   "superseded": [
     {"label": "SF 7.7A", "status": "not_found", "hits": 0,
-     "why": "printed only on the is_current:false revision 0.9 page; every tool injects is_current:true (I7). F9's found_only_in_superseded upgrade is closed at M8"},
+     "why": "printed only on the is_current:false revision 0.9 page; every tool injects is_current:true (I7). F9 shipped at M8 and still reports not_found HERE: found_only_in_superseded names only revisions a run PUBLISHED, read from vsir_runs, and this corpus is seeded by a fixture loader with no run behind it. Naming 0.9 anyway would be the leak the control-plane check exists to prevent (U025)"},
     {"label": "K 158", "hits": 1, "page_id": "SYN-M1@1.0#p001",
      "why": "printed on both revisions; only the current one can answer"}
   ],

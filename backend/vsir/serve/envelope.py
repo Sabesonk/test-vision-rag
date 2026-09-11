@@ -144,6 +144,28 @@ class NextMoves(BaseModel):
     tokens_observed: list[str] = Field(default_factory=list)
 
 
+class SupersededIn(BaseModel):
+    """One revision, no longer current, that does carry what was asked for (F9, §6.7 clause 2).
+
+    The evidence behind `found_only_in_superseded`, and the reason §7.1 spells that status as
+    *"surface the revision and let the caller decide"* rather than as an abstention: *"not in the
+    corpus"* and *"in revision 1.3, which 1.4 replaced"* are different facts, and an agent that
+    cannot tell them apart will abstain about a page somebody is holding in their hands.
+
+    It carries **no hits**. A superseded page is not current, and returning its content here
+    would be the half-published-document disclosure I7 exists to prevent — the caller is told
+    which revision to ask for, and asks for it by scope (`revision`, or `series_id` for a section
+    that survived the boundary).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    doc_id: str
+    revision: str
+    #: How many pages of that revision match. A count, never a page id: the pages are not current.
+    pages: int = 0
+
+
 class DocScopeStat(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -294,6 +316,9 @@ class SearchResponse(BaseModel, Generic[HitT]):
     #: about what was searched (F8, C11, §15 Factor VI).
     effective_scope: dict = Field(default_factory=dict)
     scope_stats: ScopeStats = Field(default_factory=ScopeStats)
+    #: The revisions behind a `found_only_in_superseded`, and empty under every other status —
+    #: the evidence for the one absence that is not an abstention (F9, §6.7 clause 2).
+    superseded: list[SupersededIn] = Field(default_factory=list)
     reads_remaining: int = 0
     provenance: Provenance
 

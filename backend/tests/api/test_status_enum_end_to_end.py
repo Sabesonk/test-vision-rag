@@ -126,10 +126,22 @@ def test_out_of_scope_is_never_not_found(served, token_header):
 def test_found_only_in_superseded_is_declared_and_is_f9s_row_at_m8(served, token_header):
     """The sixth value exists; **F9 owns it and §10 closes F9 at M8** (U025).
 
-    Today `is_current` is injected server-side on every query (I7), so a label printed only on
-    revision 0.9 is not *found in a superseded revision* — it is not found at all, which is what
-    the current corpus honestly says. Asserting the corpus's own statement here means the day
-    U025 upgrades this answer, this test goes red and is updated deliberately.
+    U025 shipped the status, and this row still answers `not_found` — deliberately, and for the
+    reason the status needs one. A page with `is_current: False` is either a revision that was
+    published and has since been superseded (§6.7 clause 2) **or** a run that never passed its
+    gates, and §5.4's `INDEXED` has no field that tells them apart. So `lookup` asks the control
+    plane which revisions a run actually published (`published_revisions`), and only those are
+    ever named.
+
+    The M1 corpus is seeded by `vsir.eval.synthetic.seed`, which `ingest/run.py` calls *"a
+    fixture loader, not a run"*: there is no `vsir_runs` record behind `SYN-M1@0.9`, so there is
+    no fact that it was ever published, and inventing one here would be the leak — a
+    half-ingested revision surfaced through the status that is supposed to be about the past.
+    `not_found` is what the current corpus can honestly say about it.
+
+    F9's positive case is proved where the fact exists: `test_revision_lifecycle.py` publishes
+    1.3, publishes 1.4 over it, and asserts a label only 1.3 carries comes back
+    `found_only_in_superseded` with the revision named.
     """
     row = EXPECTED["superseded"][0]
     assert Status.FOUND_ONLY_IN_SUPERSEDED in ABSENCES
@@ -138,6 +150,7 @@ def test_found_only_in_superseded_is_declared_and_is_f9s_row_at_m8(served, token
 
     assert payload["status"] == row["status"] == Status.NOT_FOUND.value
     assert payload["hits"] == []
+    assert payload["superseded"] == []
 
 
 def test_error_is_a_5xx_and_never_an_empty_ok(qdrant, corpus):

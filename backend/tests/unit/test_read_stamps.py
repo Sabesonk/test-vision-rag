@@ -43,7 +43,7 @@ from vsir.serve.tools.read import (
     parse,
     precheck,
 )
-from vsir.vlm import Entry, VlmSchemaInvalid, prompt, read_key
+from vsir.vlm import PROMPT_DIGESTS, Entry, VlmSchemaInvalid, prompt, read_key
 
 COLLECTION = "fake_pages"
 SOURCE = Path(read_module.__file__)
@@ -377,7 +377,9 @@ def test_the_read_prompt_is_the_text_released_under_the_configured_version():
     unchecked, an edited prompt would serve every cached and frozen response under the old
     version as though the new instructions had produced it (F11).
     """
-    released = prompt("read", "s2-v1")
+    # The released version, read from the release. A literal here goes stale on the next
+    # prompt version — which is exactly when this assertion is worth having.
+    released = prompt("read", next(iter(PROMPT_DIGESTS)))
 
     assert released.stage == "read"
     assert "sufficient" in released.text

@@ -320,6 +320,20 @@ class Embedder(Protocol):
     def embed_query_image(self, image: bytes, text: str | None = None) -> list[float]:
         """A photographed panel as the **query** side of a search (D12, §7.2.1)."""
 
+    def embed_query_images(self, images: Sequence[bytes],
+                           text: str | None = None) -> list[float]:
+        """Several photographs, optionally with words, fused into **one** query vector.
+
+        The general form of :meth:`embed_query_image`, and the same mechanism: every part goes
+        into a single ``types.Content``, so the model returns one combined embedding rather than
+        one per image. *"This panel, this nameplate, and the words 'wiring detail'"* is one query
+        about one thing, which is what a technician standing in front of a machine actually has.
+
+        Averaging separate per-image vectors would be the alternative and it is worse: the mean of
+        two embeddings is a point that describes neither photograph, and §5.5's note on
+        aggregation between pages is the same argument. One Content, one vector.
+        """
+
 
 def _pinned(model: str) -> str:
     """Re-verify the embedding pin at the point of spend (F11, register B6).
@@ -410,7 +424,14 @@ class StubEmbedder:
                                        separators=(",", ":"), ensure_ascii=False))
 
     def embed_query_image(self, image: bytes, text: str | None = None) -> list[float]:
-        payload = {"image_sha256": hashlib.sha256(image).hexdigest(),
+        return self.embed_query_images([image], text=text)
+
+    def embed_query_images(self, images: Sequence[bytes],
+                           text: str | None = None) -> list[float]:
+        # Keyed on the ordered digests, so two images in the other order are a different query —
+        # which is what the live model does too, and a stub that collapsed them would hide an
+        # ordering bug rather than reproduce it.
+        payload = {"image_sha256": [hashlib.sha256(image).hexdigest() for image in images],
                    "text": (text or "").strip()}
         return self._vector(json.dumps(payload, sort_keys=True, separators=(",", ":"),
                                        ensure_ascii=False))
@@ -600,11 +621,25 @@ class GeminiEmbedder:
         **No instruction prefix** when the query is multimodal — Google advises against it, which
         is also why :data:`vsir.config.EMBED_QUERY_INSTRUCTION` is empty by default (D12, §7.2.1).
         """
+        return self.embed_query_images([image], text=text)
+
+    def embed_query_images(self, images: Sequence[bytes],
+                           text: str | None = None) -> list[float]:
+        """Several photographs and optional words → **one** Content → one combined vector.
+
+        The multi-image form of the call above, and the reason it is one call rather than N: the
+        model fuses the parts of a single ``Content``, so the vector describes the whole query.
+        Embedding each image separately and averaging would put the query at a point that
+        describes none of them.
+
+        Order is preserved and is part of the query, because it is part of the request we send.
+        """
         parts: list[types.Part] = []
         if text and text.strip():
             parts.append(types.Part(text=text.strip()))
-        parts.append(types.Part.from_bytes(data=prepare_image(image), mime_type=IMAGE_MIME))
-        return self._embed_contents([types.Content(parts=parts)], "embed_query_image")[0]
+        for image in images:
+            parts.append(types.Part.from_bytes(data=prepare_image(image), mime_type=IMAGE_MIME))
+        return self._embed_contents([types.Content(parts=parts)], "embed_query_images")[0]
 
 
 #: ``VSIR_VLM`` → the embedding backend that value selects, built unconditionally into the image
@@ -730,7 +765,8 @@ def embed_document(backend: Embedder, records: Sequence[PageRecord], *, source: 
 
 # ── the query side of a search (D12, §7.2.1) ─────────────────────────────────────────────────────
 
-def query_vector(backend: Embedder, *, text: str = "", image: bytes | None = None) -> list[float]:
+def query_vector(backend: Embedder, *, text: str = "", image: bytes | None = None,
+                 images: Sequence[bytes] = ()) -> list[float]:
     """One query → one dense vector, with D12's three rules applied in **one** place.
 
     `skim_pages` is the only caller today and `read`'s routing may be the next, so the choice
@@ -750,8 +786,11 @@ def query_vector(backend: Embedder, *, text: str = "", image: bytes | None = Non
     branches run. That is the caller's, and §7.2.1 requires it to be visible where the branches
     are: an image-only query runs the dense branch alone and every row says so in ``why``.
     """
-    if image is not None:
-        return backend.embed_query_image(image, text=text or None)
+    wanted = list(images) if images else ([image] if image is not None else [])
+    if wanted:
+        # One call whether it is one photograph or four — `embed_query_images` fuses the parts of
+        # a single Content, so the query is one vector describing the whole of what was asked.
+        return backend.embed_query_images(wanted, text=text or None)
     if not text.strip():
         raise EmbedError("a query is a photograph, words, or both — this is neither")
     return backend.embed_query(text)

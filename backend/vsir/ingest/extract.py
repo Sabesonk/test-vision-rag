@@ -42,7 +42,7 @@ import hashlib
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
@@ -170,6 +170,16 @@ def schema_hash(schema: Mapping[str, Any] | type[BaseModel]) -> str:
 
 #: The value that goes into ``extract_key`` (§6.3). Computed, never written down by hand.
 S2_SCHEMA_HASH = schema_hash(WindowOut)
+
+#: What :func:`extract` reports as it goes, so an interrupted run leaves a record of where it got
+#: to (§6.7's window points, §15 Factor IX). Called **twice per planned window**: once with ``()``
+#: as the call is about to be made, and once with the extractions it produced.
+#:
+#: The second argument is a tuple rather than a single extraction because §6.2's bisection replaces
+#: one planned window with its halves, each billed under its own key — and a checkpoint that
+#: recorded the parent would name a call that was never made. What the run record ends up holding
+#: is what was actually billed.
+WindowProgress = Callable[[Window, tuple["WindowExtraction", ...]], None]
 
 
 @dataclass(frozen=True)
@@ -350,19 +360,30 @@ def extract_window(backend: Backend, window: Window, *, source: str | Path, cont
 
 
 def extract(backend: Backend, *, source: str | Path, plan: Plan, probed: Probe, vlm_model: str,
-            prompt_version: str, dpi: int = DPI_ANSWER) -> Extraction:
+            prompt_version: str, dpi: int = DPI_ANSWER,
+            progress: WindowProgress | None = None) -> Extraction:
     """Step 06 over a whole plan. The windows are independent, so nothing is carried between them.
 
     Level 0 and Level 1 cut on the document's own structure, which is what makes them
     parallelisable (§6.2); the fan-out itself arrives with the run control plane (U011), and this
     function stays a plain in-order loop so that a bisection amends the plan deterministically.
+
+    ``progress`` is :data:`WindowProgress` — how a kill mid-extraction leaves a record of where it
+    got to. It is reported **as each window finishes** rather than after the loop, because a
+    checkpoint written at the end is a checkpoint that never survives the event it exists for
+    (§15 Factor IX, F17, U025).
     """
     extractions: tuple[WindowExtraction, ...] = ()
     for window in plan.windows:
-        extractions += extract_window(backend, window, source=source,
-                                      content_hash=probed.content_hash,
-                                      page_count=probed.page_count, vlm_model=vlm_model,
-                                      prompt_version=prompt_version, dpi=dpi)
+        if progress is not None:
+            progress(window, ())
+        billed = extract_window(backend, window, source=source,
+                                content_hash=probed.content_hash,
+                                page_count=probed.page_count, vlm_model=vlm_model,
+                                prompt_version=prompt_version, dpi=dpi)
+        if progress is not None:
+            progress(window, billed)
+        extractions += billed
     final = Plan(plan.level, tuple(e.window for e in extractions))
     if not final.covers(probed.page_count):
         # Unreachable through `bisect_window`, which preserves the page set by construction. It is

@@ -89,6 +89,7 @@ from vsir.runner import triage as triage_module
 from vsir.serve.envelope import PageHit, Provenance, ToolEnvelope, VerifyResult, wire
 from vsir.vlm import VlmError, backend as vlm_backend
 from vsir.vlm import cache as vlm_cache
+from vsir.vlm import cached as vlm_cached
 from vsir.vlm import record as vlm_record
 from vsir.serve.tools import fetch as fetch_module
 from vsir.serve.tools import lookup as lookup_module
@@ -643,26 +644,60 @@ class IngestRefused(Exception):
         self.details = details
 
 
+class IngestStopped(Exception):
+    """A `SIGTERM`, taken at a safe point. Not a failure — the run is `stopped` and resumable."""
+
+
 @dataclasses.dataclass
 class _RunHandle:
     """A handle on the in-flight run, so ``SIGTERM`` can checkpoint it (§15 Factor IX, F17).
 
     Deliberately **not** state. The run's truth is its point in `vsir_runs` (D9) and every step
-    writes there as it finishes; this holds the client and the last record written so the signal
-    handler can mark the run ``stopped`` without having to find it again. Nothing reads it to make
-    a decision, and a process that dies without unwinding leaves a run whose lease simply expires.
+    writes there as it finishes; this holds the client and the last record written so the stop
+    can mark the run ``stopped`` without having to find it again. Nothing reads it to make a
+    decision, and a process that dies without unwinding leaves a run whose lease simply expires.
+
+    **The signal handler writes nothing**, and that is the whole of :attr:`stopping`. Factor IX
+    asks for *"stop accepting work, drain in flight, checkpoint"* — a cooperative shutdown — and
+    a handler that wrote the checkpoint itself was not one. It ran between two bytecodes of
+    whatever was executing, which in a run that renews its lease per window is very often an
+    in-flight `save()` to the same run point: the handler's `stopped` write could land **first**
+    and the interrupted write could then complete on top of it, leaving the run `running` with a
+    live lease. An operator would be told a dead worker held the run and `--resume` would refuse
+    without `--steal` — the exact failure this unit exists to remove. So the handler sets a flag,
+    and :meth:`drain` does the writing at a point where nothing else is writing.
     """
 
     client: Any = None
     runs_collection: str = ""
     record: Any = None
+    #: Set by the `SIGTERM` handler and read at every safe point. Never read to make a decision
+    #: about the *document* — only about whether to stop.
+    stopping: bool = False
 
     def stopped(self, reason: str = "sigterm") -> None:
-        """What the signal handler calls: checkpoint the run, publish nothing (I7)."""
+        """Checkpoint the run as ``stopped``. Publishes nothing (I7)."""
         if self.client is None or self.record is None:
             return
-        run_module.stop(self.client, self.runs_collection, self.record, reason=reason,
-                        step=self.record.step)
+        self.record = run_module.stop(self.client, self.runs_collection, self.record,
+                                      reason=reason, step=self.record.step)
+
+    def drain(self, step: str = "") -> None:
+        """A safe point: if a `SIGTERM` arrived, checkpoint here and stop.
+
+        Called where no control-plane write is in flight — after a window's checkpoint, and at
+        each step boundary. Everything before this point is recorded and everything after it has
+        not started, so *"at most one window"* is a property of where these calls are.
+        """
+        if not self.stopping:
+            return
+        if self.record is not None and step:
+            self.record = self.record.model_copy(update={"step": step})
+        self.stopped()
+        raise IngestStopped(
+            "SIGTERM: the run is checkpointed as `stopped` and nothing was published (I7, F17). "
+            "Continue it with `vsir ingest --resume <run_id>` — the windows it finished are in "
+            "the §6.3 cache and will not be bought again")
 
 
 def _owner() -> str:
@@ -680,10 +715,20 @@ def _progress(handle: _RunHandle, cfg: Any, **fields: Any) -> Any:
 
     Returns the record so the caller can keep the handle current: a step that finished and did not
     renew is a step whose lease can expire under it, and an expired lease is what `--steal` is for.
+
+    It is also the **step-level safe point** for §15 Factor IX. Every step calls it as it
+    finishes, so checking here means a `SIGTERM` during a long render or a long embed is taken
+    at the end of that step rather than at the end of the run — and taken where no write is in
+    flight. The check is **after** the renew: the progress this step made is recorded before the
+    run is stopped, which is the difference between resuming from here and resuming from the
+    step before.
     """
     if handle.client is None or handle.record is None:
+        handle.drain()
         return handle.record
-    return run_module.renew(handle.client, cfg.runs_collection, handle.record, **fields)
+    handle.record = run_module.renew(handle.client, cfg.runs_collection, handle.record, **fields)
+    handle.drain(step=str(fields.get("step") or handle.record.step))
+    return handle.record
 
 
 def _note_windows(handle: _RunHandle, cfg: Any, *, doc: Any, plan: Any, keys: Sequence[str],
@@ -716,6 +761,61 @@ def _note_windows(handle: _RunHandle, cfg: Any, *, doc: Any, plan: Any, keys: Se
             offset_ok=True, bisected=span in bisected))
 
 
+def _window_progress(handle: _RunHandle, cfg: Any, *, doc: Any) -> Any:
+    """Step 06's per-window checkpoint: :data:`~vsir.ingest.extract.WindowProgress` (U025).
+
+    `_note_windows` writes the whole plan at once, as each *step* finishes. That is the right
+    granularity for steps 05 and 07 and the wrong one for 06, which is where the money and the
+    time are: a run killed at window 4 of 6 would leave six `queued` points and nothing to say
+    that four of them were bought. So step 06 checkpoints **per window** — ``running`` as the call
+    goes out, ``done`` with its `extract_key` when it comes back — and a `SIGTERM` therefore loses
+    at most the one window that was in flight (§15 Factor IX, F17).
+
+    The checkpoint is keyed on the **planned** window's span, which is what `window_point_id`
+    addresses and what steps 05 and 07 write, so the three steps amend one point per window rather
+    than accumulating three. A bisection is recorded as a property of that window (``bisected``)
+    rather than as two extra points: the halves are separate calls under separate keys and the
+    event stream says so per call, but the run record's unit is the window the plan cut.
+
+    Returns ``None`` for a store-free run, which is what `extract` takes to mean *no checkpoints*
+    — an inspection run has no control plane to write them to and nothing to resume.
+    """
+    if handle.client is None or handle.record is None:
+        return None
+
+    def checkpoint(window: Any, billed: Sequence[Any]) -> None:
+        # **The stop is taken here and only here during step 06**, which is what makes "at most
+        # one window" a property of the code rather than of the timing: on the way in it stops
+        # before the next call goes out, and on the way out it stops after the window that was
+        # in flight has been recorded. Either way the boundary is a window.
+        if not billed:
+            handle.drain(step="extract")
+        # `billed` is empty on the way in and carries what the call produced on the way out; the
+        # first extraction's key is the planned window's own unless it bisected, in which case it
+        # is the first half's — and `bisected` is what says to read it that way (§6.2).
+        done = bool(billed)
+        run_module.note_window(handle.client, cfg.runs_collection, run_module.WindowState(
+            run_id=handle.record.run_id, doc_id=doc.doc_id,
+            start=window.start, end=window.end,
+            state=run_module.DONE if done else run_module.RUNNING,
+            attempts=1, checkpoint="extract" if done else "window",
+            extract_key=billed[0].key if done else "",
+            pages_returned=sum(one.page_forms for one in billed),
+            offset_ok=True, bisected=len(billed) > 1))
+        if done:
+            # The **run** record has to agree with the window points, or `runs show` reports
+            # `windows 0/5` about a run that has finished two of them and an operator deciding
+            # whether to resume reads the wrong number. It also renews the lease, which matters
+            # more the longer a window takes: a document whose windows take longer than
+            # `LEASE_SECONDS` would otherwise let its own lease expire under it.
+            _progress(handle, cfg, step="extract",
+                       windows_done=sum(1 for state in run_module.windows(
+                           handle.client, cfg.runs_collection, handle.record.run_id)
+                           if state.state == run_module.DONE))
+
+    return checkpoint
+
+
 def _open_store(cfg: Any) -> Any:
     """The one Qdrant connection a store-backed run uses, or a typed `qdrant_unavailable`."""
     try:
@@ -726,7 +826,7 @@ def _open_store(cfg: Any) -> Any:
                             qdrant_url=scrub_url(cfg.qdrant_url)) from failure
 
 
-def _backend(cfg: Any, record: str = "") -> Any:
+def _backend(cfg: Any, record: str = "", client: Any = None) -> Any:
     """The VLM backend `VSIR_VLM` names — one configuration lookup, no branch (§15 Factor X).
 
     The refusal is re-raised as an :class:`IngestRefused` so the command's exit path is the same
@@ -737,12 +837,27 @@ def _backend(cfg: Any, record: str = "") -> Any:
     fixture instead of a one-off answer (`vlm/record.py`). Recording is a **flag on one run**, not
     configuration: an ambient record mode would let a fixture accumulate responses from runs
     nobody meant to freeze, and nothing about which responses are in a fixture may be accidental.
+
+    ``client`` wraps the result in §6.3's durable cache (`vlm/cached.py`), which is what makes
+    `--resume` free: the killed run's finished windows come back out of `vsir_runs` under the keys
+    they were billed under, so the resume pays for at most the window that was in flight (U025).
+    It is passed only by a store-backed run, because a cache with nowhere to read or write is not
+    one — an inspection run (`--until extract` with no Qdrant) has no control plane to consult.
+
+    **The order is cache outside recorder**, and it is not arbitrary. A cache hit must not reach
+    the recorder: `--record` freezes the §12.1 fixture, and a fixture entry that is a copy of an
+    earlier entry rather than a response the provider gave is a receipt for a call nobody made.
     """
     try:
         chosen = vlm_backend(cfg)
     except VlmError as refusal:
         raise IngestRefused(refusal.code, str(refusal), **refusal.details) from refusal
-    return vlm_record.recording(chosen, record) if record else chosen
+    if record:
+        chosen = vlm_record.recording(chosen, record)
+    if client is not None:
+        chosen = vlm_cached.caching(chosen, client, cfg.runs_collection,
+                                    vlm_model=cfg.vlm_model, prompt_version=cfg.prompt_version)
+    return chosen
 
 
 def _ingest(args: argparse.Namespace, cfg: Any, handle: _RunHandle) -> bool:
@@ -864,11 +979,14 @@ def _ingest(args: argparse.Namespace, cfg: Any, handle: _RunHandle) -> bool:
 
     # ── 04 S1 document facts ─────────────────────────────────────────────────────────────────
     _step("04", "S1 document facts — cached per document, because the ladder rides on them")
-    backend = _backend(cfg, record=args.record)
+    backend = _backend(cfg, record=args.record, client=handle.client)
     key = vlm_cache.facts_key(probed.content_hash, vlm_model=cfg.vlm_model,
                               prompt_version=cfg.prompt_version)
     print(f"   backend      {backend.name}  "
           f"(VSIR_VLM={cfg.vlm}, chosen by configuration — never by a code branch)")
+    if handle.client is not None:
+        print(f"   cache        {cfg.runs_collection} (§6.3): every response read and written "
+              f"under its key, so a --resume re-bills nothing it already bought (U025)")
     if args.record:
         print(f"   recording    {args.record}  "
               f"(every verbatim body frozen under its §6.3 key — §12.1)")
@@ -905,7 +1023,7 @@ def _ingest(args: argparse.Namespace, cfg: Any, handle: _RunHandle) -> bool:
     _log.info("ingest_step", step="window", level=plan.level, windows=len(plan.windows),
               parallel=plan.parallel,
               ranges=[[w.start, w.end] for w in plan.windows], extract_keys=list(keys))
-    print(f"   level {plan.level} · {'chapter-aligned' if plan.level else 'whole document'} · "
+    print(f"   level {plan.level} · {window_module.LEVEL_NAMES[plan.level]} · "
           f"parallel={plan.parallel}")
     print(f"   v1 climbs to level {window_module.MAX_LADDER_LEVEL} and refuses the blind cut by "
           f"name (§6.2, §2.5 B); bisection re-bills, it never pads")
@@ -929,7 +1047,8 @@ def _ingest(args: argparse.Namespace, cfg: Any, handle: _RunHandle) -> bool:
     try:
         extraction = extract_module.extract(
             backend, source=source, plan=plan, probed=probed, vlm_model=cfg.vlm_model,
-            prompt_version=cfg.prompt_version, dpi=DPI_ANSWER)
+            prompt_version=cfg.prompt_version, dpi=DPI_ANSWER,
+            progress=_window_progress(handle, cfg, doc=doc))
     except VlmError as refusal:
         raise IngestRefused(refusal.code, str(refusal), **refusal.details) from refusal
     _log.info("ingest_step", step="extract", windows=len(extraction.windows),
@@ -955,9 +1074,11 @@ def _ingest(args: argparse.Namespace, cfg: Any, handle: _RunHandle) -> bool:
         for path in backend.recorded:
             print(f"                {path}")
     _print_window_out(extraction, raw=args.raw)
-    _note_windows(handle, cfg, doc=doc, plan=plan, keys=keys, checkpoint="extract",
-                  state=run_module.RUNNING, extraction=extraction)
-    handle.record = _progress(handle, cfg, step="extract")
+    # No bulk `_note_windows` here: `_window_progress` has already checkpointed each of these
+    # windows as it finished, which is the whole point — a record written after the loop is a
+    # record that never survives the kill it exists for (U025).
+    handle.record = _progress(handle, cfg, step="extract",
+                              windows_done=len(plan.windows))
     if until == "extract":
         return _assertions(args, source, doc, probed, plan, keys, extraction=extraction)
 
@@ -1445,48 +1566,58 @@ def _assertions(args: argparse.Namespace, source: Path, doc: Any, probed: Any,
                     f"pages {without} have no text layer",
                     without == table["pages_without_text"]
                     and all(probed.page(n).text_trust == "no_text" for n in without))
-    sample = probed.sample_chars_per_page
-    passed &= _check("the mixed-document trap is armed (register A1)",
-                    f"the front sample averages {sample} chars/page, under "
-                    f"{table['mixed_document']['born_digital_min_chars']} — and all "
-                    f"{probed.pages_with_text} text pages were still extracted",
-                    sample < table["mixed_document"]["born_digital_min_chars"]
-                    and probed.pages_with_text == probed.page_count - len(without))
+    # The six rows below are **M2a's traps**, and a corpus asserts the traps it was built with.
+    # `data/fixtures/synthetic_large/` declares none of them: it is 150 born-digital pages with
+    # no contents page, built to be long rather than tricky (U025), and asserting a crop trap
+    # against it would be asserting about a page nobody drew. A missing key is therefore *this
+    # corpus does not make that claim*, not a silent pass — every key a table **does** declare is
+    # still checked, and the M2a table declares all of them.
+    if "mixed_document" in table:
+        sample = probed.sample_chars_per_page
+        passed &= _check("the mixed-document trap is armed (register A1)",
+                        f"the front sample averages {sample} chars/page, under "
+                        f"{table['mixed_document']['born_digital_min_chars']} — and all "
+                        f"{probed.pages_with_text} text pages were still extracted",
+                        sample < table["mixed_document"]["born_digital_min_chars"]
+                        and probed.pages_with_text == probed.page_count - len(without))
 
-    labels = {str(page.page_no): page.label for page in probed.pages}
-    passed &= _check("the printed labels are the fixture's, offset and all (I4, F7)",
-                    f"PDF page {table['first_labelled_page']} prints "
-                    f"\"{table['printed_labels'][str(table['first_labelled_page'])]}\" — "
-                    f"label = index {table['label_offset']:+d}",
-                    labels == table["printed_labels"])
+    if "printed_labels" in table:
+        labels = {str(page.page_no): page.label for page in probed.pages}
+        passed &= _check("the printed labels are the fixture's, offset and all (I4, F7)",
+                        f"PDF page {table['first_labelled_page']} prints "
+                        f"\"{table['printed_labels'][str(table['first_labelled_page'])]}\" — "
+                        f"label = index {table['label_offset']:+d}",
+                        labels == table["printed_labels"])
 
-    trap = table["crop_trap"]
-    cropped = render.render_page(source, trap["page"], dpi=DPI_ANSWER, region=trap["region"],
-                                 content_hash=probed.content_hash)
-    full = render.render_page(source, trap["page"], dpi=DPI_ANSWER,
-                              content_hash=probed.content_hash)
-    text = probed.page(trap["page"]).text
-    passed &= _check("the crop trap: text comes from the FULL page, never a crop (F15)",
-                    f"page {trap['page']}'s raster region {trap['region']} keeps "
-                    f"{cropped.height}/{full.height} px of the sheet and cuts off at "
-                    f"{trap['region'][3]:.2f}; \"{trap['label']}\" sits at "
-                    f"{trap['bbox_top_fraction']:.3f} — outside it, and in the extracted text",
-                    trap["label"] in text
-                    and trap["bbox_top_fraction"] > trap["region"][3]
-                    and cropped.height < full.height)
+    if "crop_trap" in table:
+        trap = table["crop_trap"]
+        cropped = render.render_page(source, trap["page"], dpi=DPI_ANSWER, region=trap["region"],
+                                     content_hash=probed.content_hash)
+        full = render.render_page(source, trap["page"], dpi=DPI_ANSWER,
+                                  content_hash=probed.content_hash)
+        text = probed.page(trap["page"]).text
+        passed &= _check("the crop trap: text comes from the FULL page, never a crop (F15)",
+                        f"page {trap['page']}'s raster region {trap['region']} keeps "
+                        f"{cropped.height}/{full.height} px of the sheet and cuts off at "
+                        f"{trap['region'][3]:.2f}; \"{trap['label']}\" sits at "
+                        f"{trap['bbox_top_fraction']:.3f} — outside it, and in the extracted text",
+                        trap["label"] in text
+                        and trap["bbox_top_fraction"] > trap["region"][3]
+                        and cropped.height < full.height)
 
-    hashes = [render.render_page(source, n, dpi=DPI_ANSWER,
-                                 content_hash=probed.content_hash).sha256
-              for n in range(1, probed.page_count + 1)]
-    passed &= _check(f"the dpi {DPI_ANSWER} rasters are byte-identical to the fixture's",
-                    f"{sum(a == b for a, b in zip(hashes, table['render']['page_sha256']))}"
-                    f"/{probed.page_count} page hashes match",
-                    hashes == table["render"]["page_sha256"])
-    if extraction is not None:
+    if "render" in table:
+        hashes = [render.render_page(source, n, dpi=DPI_ANSWER,
+                                     content_hash=probed.content_hash).sha256
+                  for n in range(1, probed.page_count + 1)]
+        passed &= _check(f"the dpi {DPI_ANSWER} rasters are byte-identical to the fixture's",
+                        f"{sum(a == b for a, b in zip(hashes, table['render']['page_sha256']))}"
+                        f"/{probed.page_count} page hashes match",
+                        hashes == table["render"]["page_sha256"])
+    if extraction is not None and "extraction" in table:
         passed &= _extraction_assertions(table["extraction"], probed, extraction)
-    if derivation is not None:
+    if derivation is not None and "extraction" in table:
         passed &= _derivation_assertions(table, probed, extraction, derivation)
-    if stitched is not None:
+    if stitched is not None and "sections" in table:
         passed &= _stitch_assertions(table, plan, stitched)
     if embedding is not None:
         passed &= _embed_assertions(table, embedding, load_config())
@@ -1830,10 +1961,15 @@ def _cmd_ingest(args: argparse.Namespace) -> int:
         _log.info("ingest_started", pdf=str(args.pdf or ""), until=args.until, vlm=cfg.vlm,
                   vlm_model=cfg.vlm_model, prompt_version=cfg.prompt_version, dpi=DPI_ANSWER,
                   resume=bool(args.resume), steal=bool(args.steal))
-        # A resume with no path resolves its source out of the document store, so it needs the
-        # control plane whatever `--until` says: the run record is where the document's identity
-        # and its `content_hash` are (§6.9, U029).
-        if args.until in STORE_BACKED_STEPS or (args.resume and not args.pdf):
+        # **A `--resume` always needs the control plane**, whatever `--until` says. The run it
+        # continues is a point in `vsir_runs`: without it there is no lease to claim, no window
+        # checkpoint to skip past, no `content_hash` to check the bytes against and no record to
+        # advance — so the flag would be silently ignored and the invocation would be a fresh run
+        # wearing an old id. Worse, nothing would check that the PDF on the command line is the
+        # document that run is about (`run_document_mismatch`, below). A resume with no path
+        # additionally *resolves* its source out of the document store (§6.9, U029), which is the
+        # narrower case this condition used to name.
+        if args.until in STORE_BACKED_STEPS or args.resume:
             try:
                 handle.client = _open_store(cfg)
             except IngestRefused as refusal:
@@ -1846,6 +1982,14 @@ def _cmd_ingest(args: argparse.Namespace) -> int:
             if not args.pdf:
                 args.pdf = _resumed_source(args, cfg, handle)
             passed = _ingest(args, cfg, handle)
+        except IngestStopped as stop:
+            # A `SIGTERM` is not a failure: the run is `stopped`, nothing was published, and the
+            # windows it bought are in the §6.3 cache. Exit 0 — an orchestrator that sent the
+            # signal is not owed a non-zero status for having been obeyed (§15 Factor IX).
+            _log.info("ingest_stopped", reason="sigterm", detail=str(stop),
+                      run_id=getattr(handle.record, "run_id", ""))
+            print(f"\n   STOPPED  sigterm: {stop}")
+            return EXIT_OK
         except (IngestRefused, window_module.WindowError, render.RenderError,
                 embed_module.EmbedError, fingerprint_module.FingerprintMismatch,
                 index_module.IndexRefused, run_module.RunRefused,
@@ -1912,20 +2056,24 @@ def _resumed_source(args: argparse.Namespace, cfg: Any, handle: _RunHandle) -> s
 
 
 def _install_drain(handle: _RunHandle) -> Any:
-    """Replace the process-wide SIGTERM handler with one that checkpoints this run (§15 IX).
+    """Replace the process-wide SIGTERM handler with one that asks this run to stop (§15 IX).
 
     A closure over the handle rather than anything module-level, and the previous handler is
     returned so the caller restores it: an ingest that has finished must not leave a handler
-    holding a closed client. What the handler does is small on purpose — mark the run `stopped`
-    and exit. It publishes nothing, so a kill loses at most the windows since the last checkpoint
-    and **never** leaves a queryable half-document (I7, F17).
+    holding a closed client.
+
+    What the handler does is **smaller** than it looks like it should be, and
+    :class:`_RunHandle` says why at length: it sets a flag. It does not write the checkpoint and
+    it does not raise. `_RunHandle.drain` does both, at the next safe point — which is after the
+    current window is recorded, so a kill still loses at most one window and still publishes
+    nothing (I7, F17), and the checkpoint cannot be overwritten by a write the signal
+    interrupted.
     """
 
     def _on_sigterm(signum: int, _frame: FrameType | None) -> None:
+        handle.stopping = True
         _log.info("sigterm", signal=signum, action="checkpoint_and_exit",
                   run_id=getattr(handle.record, "run_id", ""))
-        handle.stopped()
-        raise SystemExit(EXIT_OK)
 
     return signal.signal(signal.SIGTERM, _on_sigterm)
 
@@ -2030,6 +2178,34 @@ def _reevaluate(client: Any, cfg: Any, record: Any) -> Any:
 
 def _cmd_runs_show(args: argparse.Namespace, cfg: Any, client: Any) -> int:
     _print_run(run_module.require(client, cfg.runs_collection, args.run_id))
+    return EXIT_OK
+
+
+def _cmd_retire(args: argparse.Namespace, cfg: Any, client: Any) -> int:
+    """`vsir retire <doc_id> [--revision]` — withdraw a document from service (§4.4, U025).
+
+    Prints what it demoted and what survives, because both are the point: the pages stop
+    answering and **none of them is deleted**, so an answer somebody already holds stays
+    checkable and `found_only_in_superseded` still has something to read (§6.7 clause 2, F9).
+    """
+    before = index_module.count(client, cfg.pages_collection,
+                                {"doc_id": args.doc_id, "is_current": True})
+    if before == 0 and index_module.count(client, cfg.pages_collection,
+                                          {"doc_id": args.doc_id}) == 0:
+        raise run_module.RunNotFound(
+            f"no page of {args.doc_id!r} is in {cfg.pages_collection}: retiring a document the "
+            f"index has never held would report a demotion that did not happen",
+            doc_id=args.doc_id, collection=cfg.pages_collection)
+    report = run_module.retire_document(client, cfg.pages_collection, doc_id=args.doc_id,
+                                        revision=args.revision)
+    scope = f"{args.doc_id}@{args.revision}" if args.revision else args.doc_id
+    print(f"retired      {scope}")
+    print(f"demoted      {report['retired']} page(s) from is_current=True to False")
+    print(f"kept         {report['kept']} page(s) — retirement demotes, it never deletes: an "
+          f"answer already cited stays checkable (§6.7 clause 2, F9)")
+    print(f"still current {report['still_current']} page(s) of {args.doc_id} "
+          f"{'(other revisions)' if args.revision else '— none, the document is withdrawn'}")
+    print("idempotent   a filtered write of a constant: running this again demotes 0 more")
     return EXIT_OK
 
 
@@ -3458,6 +3634,20 @@ def build_parser() -> argparse.ArgumentParser:
     )
     runs_show.add_argument("run_id", help="the run id (a ULID, so id order is time order)")
     runs_show.set_defaults(handler=_with_store(_cmd_runs_show))
+
+    retire_parser = commands.add_parser(
+        "retire",
+        help="withdraw a document from service (§4.4): every page is set is_current=False and "
+             "KEPT. Deletion is not offered — a retired page is what found_only_in_superseded "
+             "reads and what an audit of an answer already given checks against (§6.7, F9)",
+    )
+    retire_parser.add_argument("doc_id", help="the revision-stable document id (§5.1)")
+    retire_parser.add_argument(
+        "--revision", default=None,
+        help="narrow the retirement to one revision. Without it every revision of the document "
+             "is withdrawn, which is what 'retire this document' means",
+    )
+    retire_parser.set_defaults(handler=_with_store(_cmd_retire))
 
     gates_parser = commands.add_parser("gates", help="the publish gates of §11.1")
     gates_commands = gates_parser.add_subparsers(dest="gates_command", metavar="<subcommand>",

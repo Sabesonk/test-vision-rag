@@ -72,18 +72,58 @@ PROMPT_STAGES: tuple[str, ...] = ("s1", "s2", "read")
 #: extraction digests under it are unchanged, and `read` had no cached response in existence to
 #: invalidate. Opening ``s2-v2`` for a file no extraction call reads would have re-keyed every
 #: frozen S2 response in the repository and re-billed a full corpus to publish a new document.
+#: **One released version at a time**, and that is what the shape of this map enforces: there is
+#: one `s2.md` on disk, and `test_release_artefacts.py` asserts *every* declared version matches
+#: it. Two versions cannot coexist, so releasing one replaces the last.
+#:
+#: ``s2-v2`` — released 2026-09-11 — changes `s2.md` only; `s1.md` and `read.md` are byte-identical
+#: and carry their digests forward. It fixes a **contradiction in the s2-v1 text** that made the
+#: model report no sections at all on live documents: the "presence, never extent" rule said to
+#: list a section *"on every page it appears on, including pages where it merely continues"*, and
+#: the "only what is printed" rule said not to *"add a code, a section or a label that is not on
+#: the page in front of you"*. A continuation page does not reprint its chapter title, so the two
+#: rules disagree about it, and the model resolved the disagreement the conservative way: `[]`
+#: everywhere. Two live documents came back with **zero** sections on every page (0/56 and 0/2)
+#: while the frozen fixtures, recorded before, had them on 42/42 — so `next.expand` (§7.2.1 P4),
+#: whose whole content is a `section_id` scope, was silently inert on anything really ingested.
+#:
+#: The frozen fixtures stay keyed under ``s2-v1`` and keep working: :func:`prompt` is reached only
+#: on the **live** path, so replay never loads this text and never checks a digest — the version
+#: is in its cache key and nowhere else. What those fixtures are is a regression baseline for the
+#: pipeline, not for prompt quality; re-recording them under ``s2-v2`` is a paid run and is
+#: deliberately not part of this change.
 PROMPT_DIGESTS = MappingProxyType({
-    "s2-v1": MappingProxyType({
+    "s2-v2": MappingProxyType({
         "s1": "1aa9320abc7ef034c6291f826bf728a4b40b48482368cd727c2650a37f6793a7",
-        "s2": "85f5b47fd4aaee08103b24c65cdc8534a7156b3b924f48f5b94ed885399c4f5c",
+        "s2": "ff1ff29c8455831410f79d107f3eb36d9513ea2e414c95cd1a139c6aa5a279a3",
         "read": "0f0acdba0ef1ecf61baea84b3b34e70918ca5c1ac1450d4a6e640c8c82db04a5",
     }),
 })
 
 #: Ported verbatim from `impl`: the substrings that mark a failure worth trying again. Everything
-#: else raises on the first attempt — a bad request is not worth four of them.
+#: else raises on the first attempt — a bad request is not worth four of them. Matched
+#: case-insensitively against ``"{type name} {message}"``, and our own typed refusals are
+#: re-raised *before* this test, so a code of ours containing one of these words is not retried
+#: on the strength of its name.
+#:
+#: **The transport row was missing, and it cost money.** `impl`'s list is entirely HTTP *statuses*
+#: — a reply the server sent. A connection that never produced a reply raises an `httpx` transport
+#: error whose text contains none of those words, so it failed at ``attempts: 1``. Three live runs
+#: died that way on 2026-09-11 — `RemoteProtocolError: Server disconnected without sending a
+#: response` on an S2 window, then `ConnectError: [Errno -2] Name or service not known` on the
+#: embedding step — and the second one is the expensive shape: S2 had already been paid for, and
+#: the run threw that spend away over a DNS blip that a single retry would have ridden out.
+#:
+#: These are the transient-transport class names and the two messages that do not carry one. A
+#: transport error is *definitionally* worth retrying: nothing was delivered, so nothing can have
+#: been rejected on its merits.
 RETRYABLE: tuple[str, ...] = ("429", "500", "502", "503", "504", "resource_exhausted",
-                              "unavailable", "deadline")
+                              "unavailable", "deadline",
+                              # httpx transport failures — no reply was ever produced
+                              "remoteprotocolerror", "connecterror", "connecttimeout",
+                              "readtimeout", "writetimeout", "pooltimeout", "readerror",
+                              "server disconnected", "connection reset",
+                              "name or service not known", "temporary failure in name resolution")
 
 #: Ported from `impl`: four attempts, `min(2**attempt, 8)` seconds plus jitter between them.
 MAX_ATTEMPTS = 4
@@ -455,9 +495,25 @@ def response_schema(model: type[BaseModel]) -> dict[str, Any]:
     raw = model.model_json_schema()
     defs = raw.pop("$defs", {})
 
-    def resolve(node: Any) -> Any:
+    def resolve(node: Any, *, names: bool = False) -> Any:
+        """``names=True`` when this dict's keys are **field names** — the value of a `properties`
+        node — rather than schema keywords.
+
+        That distinction is the whole of this function's second transformation, and dropping it
+        cost a real capability. :data:`UNSUPPORTED_SCHEMA_KEYS` contains ``"title"``, because a
+        schema's own `title` keyword is a `400` from the API. It was applied at **every** level,
+        so a model field *called* `title` was deleted from `properties` along with it —
+        `SectionRef.title` is exactly that, and the model was therefore asked for
+        ``sections: [{is_start: bool}]``: a list of objects with nowhere to put a section's name.
+        It sensibly returned ``[]`` every time. Two live documents came back with sections on
+        **0 of 58** pages, and `next.expand` (§7.2.1 P4), whose entire content is a `section_id`
+        scope, was inert on everything really ingested.
+
+        A keyword and a field name are different namespaces. Filtering only the former is the
+        difference between describing the model and quietly editing it.
+        """
         if isinstance(node, dict):
-            if "$ref" in node:
+            if "$ref" in node and not names:
                 name = node["$ref"].rsplit("/", 1)[-1]
                 if name not in defs:
                     raise PromptUnavailable(
@@ -468,8 +524,11 @@ def response_schema(model: type[BaseModel]) -> dict[str, Any]:
                 # definition, described here.
                 merged = {**defs[name], **{k: v for k, v in node.items() if k != "$ref"}}
                 return resolve(merged)
-            return {key: resolve(value) for key, value in node.items()
-                    if key not in UNSUPPORTED_SCHEMA_KEYS}
+            return {
+                key: resolve(value, names=(not names and key == "properties"))
+                for key, value in node.items()
+                if names or key not in UNSUPPORTED_SCHEMA_KEYS
+            }
         if isinstance(node, list):
             return [resolve(item) for item in node]
         return node

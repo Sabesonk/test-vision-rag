@@ -58,6 +58,7 @@ from vsir.vlm.client import (
     hint,
     prompt,
 )
+from vsir.vlm.cached import CachingBackend, caching
 from vsir.vlm.stub import StubBackend
 
 #: ``VSIR_VLM`` → the backend that value selects. Both are imported unconditionally above, so the
@@ -74,11 +75,12 @@ BACKENDS = MappingProxyType({
 
 __all__ = [
     "BACKENDS", "EXTRACT", "FACTS", "KIND_VLM_CACHE", "MAX_ATTEMPTS", "NAMESPACES",
-    "PROMPT_DIGESTS", "PROMPT_DIR", "PROMPT_STAGES", "READ", "Backend", "ControlPlaneStore",
-    "Entry", "FixtureMiss", "FixtureStore", "GeminiBackend", "Prompt", "PromptUnavailable",
-    "Request", "StubBackend", "TokenBucket", "VlmCallFailed", "VlmError", "VlmSchemaInvalid",
-    "VlmTierUnsupported", "VlmTruncated", "VlmUnavailable", "backend", "cache_point_id",
-    "embed_key", "extract_key", "facts_key", "hint", "prompt", "read_key", "write",
+    "PROMPT_DIGESTS", "PROMPT_DIR", "PROMPT_STAGES", "READ", "Backend", "CachingBackend",
+    "ControlPlaneStore", "Entry", "FixtureMiss", "FixtureStore", "GeminiBackend", "Prompt",
+    "PromptUnavailable", "Request", "StubBackend", "TokenBucket", "VlmCallFailed", "VlmError",
+    "VlmSchemaInvalid", "VlmTierUnsupported", "VlmTruncated", "VlmUnavailable", "backend",
+    "cache_point_id", "caching", "embed_key", "extract_key", "facts_key", "hint", "prompt",
+    "read_key", "write",
 ]
 
 

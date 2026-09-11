@@ -93,6 +93,7 @@ from vsir.serve.auth import BearerAuth, Identity
 from vsir.serve.caps import ALLOWED_DPI, ToolError, validate_fetch_megapixels
 from vsir.serve import errors
 from vsir.serve import manage
+from vsir.serve import retrieval
 from vsir.serve.envelope import (DocHit, FetchResult, LookupHit, PageHit, Provenance,
                                  ReadResult, ResolveHit, SearchResponse, SectionHit,
                                  ToolEnvelope, VerifyResult, wire)
@@ -578,7 +579,8 @@ def _call_lookup(context: ToolContext, body: LookupRequest) -> tuple[BaseModel, 
     response = lookup_tool(
         context.client, context.cfg.pages_collection, body.label,
         scope=body.scope, include_unverified=body.include_unverified, cap=body.cap,
-        provenance=context.provenance, reads_remaining=context.reads_remaining,
+        provenance=context.provenance, runs_collection=context.cfg.runs_collection,
+        reads_remaining=context.reads_remaining,
     )
     return response, Usage.free()
 
@@ -604,13 +606,26 @@ def _call_skim_pages(context: ToolContext, body: SkimPagesRequest) -> tuple[Base
     response = skim_pages_tool(
         context.client, context.cfg.pages_collection,
         query=body.query, image=image, scope=body.scope, exclude=body.exclude, limit=body.limit,
-        embedder=context.embedder(),
+        embedder=context.embedder(), runs_collection=context.cfg.runs_collection,
         provenance=context.provenance, reads_remaining=context.reads_remaining,
     )
     return response, Usage.free()
 
 
-def _skim_image(body: SkimPagesRequest | SkimAggregateRequest) -> bytes | None:
+@dataclass(frozen=True)
+class _OneImage:
+    """One base64 string, shaped like a body with an ``image`` field.
+
+    `_skim_image` takes a *body* because that is what the three rungs have, and `/search` has a
+    list. Wrapping each element is three lines; giving `/search` its own decoder would be a second
+    place a photograph can be refused differently, which is exactly what that function's docstring
+    exists to prevent.
+    """
+
+    image: str
+
+
+def _skim_image(body: SkimPagesRequest | SkimAggregateRequest | _OneImage | Any) -> bytes | None:
     """The base64 of a photographed panel → bytes, or a typed refusal naming the field.
 
     Decoded **here** rather than in the tool, because it is a property of the transport:
@@ -639,7 +654,7 @@ def _call_skim_documents(context: ToolContext,
     response = skim_documents_tool(
         context.client, context.cfg.pages_collection,
         query=body.query, image=_skim_image(body), scope=body.scope, exclude=body.exclude,
-        embedder=context.embedder(),
+        embedder=context.embedder(), runs_collection=context.cfg.runs_collection,
         provenance=context.provenance, reads_remaining=context.reads_remaining,
     )
     return response, Usage.free()
@@ -651,7 +666,7 @@ def _call_skim_sections(context: ToolContext,
     response = skim_sections_tool(
         context.client, context.cfg.pages_collection,
         query=body.query, image=_skim_image(body), scope=body.scope, exclude=body.exclude,
-        embedder=context.embedder(),
+        embedder=context.embedder(), runs_collection=context.cfg.runs_collection,
         provenance=context.provenance, reads_remaining=context.reads_remaining,
     )
     return response, Usage.free()
@@ -862,6 +877,15 @@ OPENAPI_TAGS: list[dict[str, Any]] = [
         "corpus was exhausted while image-only pages are unexamined (§8.5).\n\nIt reaches the "
         "paid step exactly once, and only after the free moves have narrowed and triaged. Pass a "
         "`draft` of your own to run the identical gate over it and spend nothing."},
+    {"name": "retrieval", "description":
+        "**`POST /search` — data out, never an answer.** The same "
+        "retrieval the three `skim_*` rungs run, with the fusion's knobs exposed: per-branch "
+        "weights over `dense`, `lexical` and `captions` (**0 switches a branch off**, so a "
+        "lexical-only or dense-only search is one weight map away) and RRF's `k`. Every row "
+        "carries `surface_ranks` — each branch's own ordinal — which is the honest answer to "
+        "*why is this here*.\n\nDeliberately **not** a ninth tool: §7.2's eight are an agent's "
+        "**moves**, and a knob is not a move. And still **no score** (§7.6) — a magnitude "
+        "invites a threshold, and a threshold is how 'ranked ninth' becomes 'no results'."},
     {"name": "pages", "description":
         "The page raster, rendered on demand and **never persisted** (§4.2) — the "
         "browser-renderable half of `fetch`. Same dpi tiers and same typed refusals as §7.3: "
@@ -1291,6 +1315,8 @@ def create_app(env: Mapping[str, str] | None = None) -> FastAPI:
             "GET /console": "the operator console",
             "POST /ask": "the runner — narrow, look once, draft, and answer only what the gate "
                          "cleared (§8.4, I8). The only surface that may return prose",
+            "POST /search": "the flat surface — ranked pages and their content, no answer and "
+                            "no score (§7.6). Free, and absent from the tool table",
             "POST /documents": "ingest a PDF — 202 and a run_id, never a result (§6.1)",
             "GET /documents": "the corpus — every document, its revisions, its searchable ratio",
             "GET /documents/{doc_id}": "one document and every revision of it",
@@ -1836,6 +1862,78 @@ def create_app(env: Mapping[str, str] | None = None) -> FastAPI:
         outcome = _failure_response(failure, tool=route)
         return JSONResponse(status_code=outcome.status, content=outcome.payload)
 
+    # ── the flat retrieval surface: tuning, not answering (§7.6) ─────────────────────────────────
+    @app.post("/search", response_model=retrieval.SearchResult, tags=["retrieval"],
+              summary="flat search — ranked pages, their content, every knob, and no answer",
+              response_model_exclude_none=False,
+              responses=errors.responses(400, 401, 500, 503),
+              # Published by `$ref` for the reason the eight tool routes are: this handler
+              # validates the body itself so §7.3's bounds keep their own codes, which means
+              # FastAPI never sees a typed parameter to describe. A consuming system generates
+              # its client from this document, so the body has to be *in* it — `SearchRequest` is
+              # added to `components.schemas` beside the tool bodies below.
+              openapi_extra={"requestBody": {
+                  "required": True,
+                  "content": {"application/json": {
+                      "schema": {"$ref": "#/components/schemas/SearchRequest"},
+                      # Named, so `/docs` offers a labelled dropdown — "Every parameter, in
+                      # context" as the default rather than a one-field body that makes a
+                      # fourteen-control surface look like it takes only a query.
+                      "examples": retrieval.REQUEST_EXAMPLES}},
+              }})
+    async def flat_search(request: Request) -> Any:
+        """The same retrieval the three `skim_*` rungs run — ranked pages and their content.
+
+        **Not a ninth tool** — see `serve/retrieval.py` for why. It serves an operator tuning the
+        fusion (*why did page 40 come third?*) and a caller consuming this service as a search
+        engine, and neither is choosing a move, so it is off the tool table and absent from MCP,
+        and §7.2 stays at eight.
+
+        `include` returns each row's summary, extraction, topics, codes, labels and sections, so
+        a consumer doing its own reasoning gets in one call what the ladder would charge it
+        several inference turns for. It still bills nothing and calls no model: `POST /ask` is the
+        only surface in this service that may answer.
+
+        The body is validated here rather than by FastAPI, for the same reason the named tool
+        routes do it: §7.3's bounds carry their own codes — `unknown_branch`, `no_branch_enabled`,
+        `rrf_k_out_of_range`, `skim_limit_exceeded`, `unknown_content_part`, `offset_out_of_range`,
+        `page_range_inverted`, `filter_unknown_key` — and a `422` with a JSON pointer is not one.
+        """
+        identity = auth_module.identity_of(request.scope)
+        if identity is None:                               # unreachable behind `BearerAuth`
+            refusal = auth_module.Unauthorized()
+            return JSONResponse(status_code=refusal.http_status, content=refusal.to_payload(),
+                                headers=refusal.headers)
+        try:
+            payload = await request.json() if await request.body() else {}
+        except ValueError as malformed:
+            return JSONResponse(status_code=400, content={
+                "error": "invalid_json", "detail": f"the request body is not JSON: {malformed}"})
+        try:
+            body = retrieval.SearchRequest.model_validate(payload)
+        except ValidationError as invalid:
+            return JSONResponse(status_code=400, content={
+                "error": "invalid_request",
+                "detail": "the arguments do not match /search's parameters",
+                "problems": [{"field": ".".join(str(part) for part in problem["loc"]),
+                              "error": problem["msg"]} for problem in invalid.errors()]})
+
+        try:
+            # One decoder for every photograph on every surface — `_skim_image`'s own docstring is
+            # the reason: a malformed encoding is the caller's request being wrong rather than the
+            # search being empty, and it must be refused identically wherever it arrives. Applied
+            # per photograph here, so a bad one in a set of four names `image` and not the set.
+            encoded = retrieval.resolve_images(body)
+            images = [_skim_image(_OneImage(value)) for value in encoded]
+            result = await run_in_threadpool(
+                retrieval.search, app.state.search, cfg.pages_collection, body,
+                embedder=app.state.runtime.embedder(), images=images,
+                runs_collection=cfg.runs_collection)
+        except Exception as failure:  # noqa: BLE001 — mapped to §11.3's typed refusals
+            outcome = _failure_response(failure, tool="search")
+            return JSONResponse(status_code=outcome.status, content=outcome.payload)
+        return result
+
     @app.get("/documents", response_model=manage.DocumentList, tags=["corpus"],
              summary="the corpus — every document in the index",
              responses=errors.responses(400, 401, 500, 503))
@@ -2054,6 +2152,10 @@ def _described(app: FastAPI) -> Callable[[], dict[str, Any]]:
         # draft the gate accepts — have to reach `components` from the same generation call.
         requested = [(spec.request, "validation") for spec in app.state.tools.values()]
         requested.append((AskRequest, "validation"))
+        # And `POST /search`'s body, for the same reason: it is `$ref`-published too, and this
+        # surface's whole point is being consumed by a system that reads the schema rather than
+        # the prose.
+        requested.append((retrieval.SearchRequest, "validation"))
         if requested:
             _, generated = models_json_schema(
                 requested, ref_template="#/components/schemas/{model}")

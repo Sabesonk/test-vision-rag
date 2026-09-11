@@ -2746,7 +2746,7 @@ N/A — a test harness; no product surface, tool contract or index state is affe
 
 ## Unit: Revisions, resumable ingest, and graceful shutdown (ID: U025)
 
-**Status:** 🔵 Not Started
+**Status:** ✅ Complete (2026-09-11)
 **Milestone:** M8
 **Priority:** P0-Critical
 **Type:** ingest

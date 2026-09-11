@@ -1,0 +1,904 @@
+{
+  "pages": [
+    {
+      "codes": [
+        "M1001",
+        "HZ-001",
+        "P7003",
+        "T2"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 1,
+      "page_kind": "prose",
+      "printed_page_no": "1",
+      "sections": [
+        {
+          "is_start": true,
+          "title": "Hydraulic power unit"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 1 carries procedure M1001 for the hydraulic power unit. It requires hazard notice HZ-001 at the access panel and seal set P7003 whenever the housing is opened, tightened to torque class T2."
+        }
+      ],
+      "topics": [
+        "hydraulic power unit",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1002",
+        "HZ-002",
+        "P7006",
+        "T3"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 2,
+      "page_kind": "prose",
+      "printed_page_no": "2",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Hydraulic power unit"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 2 carries procedure M1002 for the hydraulic power unit. It requires hazard notice HZ-002 at the access panel and seal set P7006 whenever the housing is opened, tightened to torque class T3."
+        }
+      ],
+      "topics": [
+        "hydraulic power unit",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1003",
+        "HZ-003",
+        "P7009",
+        "T4"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 3,
+      "page_kind": "prose",
+      "printed_page_no": "3",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Hydraulic power unit"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 3 carries procedure M1003 for the hydraulic power unit. It requires hazard notice HZ-003 at the access panel and seal set P7009 whenever the housing is opened, tightened to torque class T4."
+        }
+      ],
+      "topics": [
+        "hydraulic power unit",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1004",
+        "HZ-004",
+        "P7012",
+        "T5"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 4,
+      "page_kind": "prose",
+      "printed_page_no": "4",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Hydraulic power unit"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 4 carries procedure M1004 for the hydraulic power unit. It requires hazard notice HZ-004 at the access panel and seal set P7012 whenever the housing is opened, tightened to torque class T5."
+        }
+      ],
+      "topics": [
+        "hydraulic power unit",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1005",
+        "HZ-005",
+        "P7015",
+        "T6"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 5,
+      "page_kind": "prose",
+      "printed_page_no": "5",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Hydraulic power unit"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 5 carries procedure M1005 for the hydraulic power unit. It requires hazard notice HZ-005 at the access panel and seal set P7015 whenever the housing is opened, tightened to torque class T6."
+        }
+      ],
+      "topics": [
+        "hydraulic power unit",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1006",
+        "HZ-006",
+        "P7018",
+        "T7"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 6,
+      "page_kind": "prose",
+      "printed_page_no": "6",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Hydraulic power unit"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 6 carries procedure M1006 for the hydraulic power unit. It requires hazard notice HZ-006 at the access panel and seal set P7018 whenever the housing is opened, tightened to torque class T7."
+        }
+      ],
+      "topics": [
+        "hydraulic power unit",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1007",
+        "HZ-007",
+        "P7021",
+        "T8"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 7,
+      "page_kind": "prose",
+      "printed_page_no": "7",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Hydraulic power unit"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 7 carries procedure M1007 for the hydraulic power unit. It requires hazard notice HZ-007 at the access panel and seal set P7021 whenever the housing is opened, tightened to torque class T8."
+        }
+      ],
+      "topics": [
+        "hydraulic power unit",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1008",
+        "HZ-008",
+        "P7024",
+        "T9"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 8,
+      "page_kind": "prose",
+      "printed_page_no": "8",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Hydraulic power unit"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 8 carries procedure M1008 for the hydraulic power unit. It requires hazard notice HZ-008 at the access panel and seal set P7024 whenever the housing is opened, tightened to torque class T9."
+        }
+      ],
+      "topics": [
+        "hydraulic power unit",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1009",
+        "HZ-009",
+        "P7027",
+        "T10"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 9,
+      "page_kind": "prose",
+      "printed_page_no": "9",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Hydraulic power unit"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 9 carries procedure M1009 for the hydraulic power unit. It requires hazard notice HZ-009 at the access panel and seal set P7027 whenever the housing is opened, tightened to torque class T10."
+        }
+      ],
+      "topics": [
+        "hydraulic power unit",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1010",
+        "HZ-010",
+        "P7030",
+        "T11"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 10,
+      "page_kind": "prose",
+      "printed_page_no": "10",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Hydraulic power unit"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 10 carries procedure M1010 for the hydraulic power unit. It requires hazard notice HZ-010 at the access panel and seal set P7030 whenever the housing is opened, tightened to torque class T11."
+        }
+      ],
+      "topics": [
+        "hydraulic power unit",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1011",
+        "HZ-011",
+        "P7033",
+        "T12"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 11,
+      "page_kind": "prose",
+      "printed_page_no": "11",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Hydraulic power unit"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 11 carries procedure M1011 for the hydraulic power unit. It requires hazard notice HZ-011 at the access panel and seal set P7033 whenever the housing is opened, tightened to torque class T12."
+        }
+      ],
+      "topics": [
+        "hydraulic power unit",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1012",
+        "HZ-012",
+        "P7036",
+        "T1"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 12,
+      "page_kind": "prose",
+      "printed_page_no": "12",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Hydraulic power unit"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 12 carries procedure M1012 for the hydraulic power unit. It requires hazard notice HZ-012 at the access panel and seal set P7036 whenever the housing is opened, tightened to torque class T1."
+        }
+      ],
+      "topics": [
+        "hydraulic power unit",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1013",
+        "HZ-013",
+        "P7039",
+        "T2"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 13,
+      "page_kind": "prose",
+      "printed_page_no": "13",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Hydraulic power unit"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 13 carries procedure M1013 for the hydraulic power unit. It requires hazard notice HZ-013 at the access panel and seal set P7039 whenever the housing is opened, tightened to torque class T2."
+        }
+      ],
+      "topics": [
+        "hydraulic power unit",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1014",
+        "HZ-014",
+        "P7042",
+        "T3"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 14,
+      "page_kind": "prose",
+      "printed_page_no": "14",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Hydraulic power unit"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 14 carries procedure M1014 for the hydraulic power unit. It requires hazard notice HZ-014 at the access panel and seal set P7042 whenever the housing is opened, tightened to torque class T3."
+        }
+      ],
+      "topics": [
+        "hydraulic power unit",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1015",
+        "HZ-015",
+        "P7045",
+        "T4"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 15,
+      "page_kind": "prose",
+      "printed_page_no": "15",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Hydraulic power unit"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 15 carries procedure M1015 for the hydraulic power unit. It requires hazard notice HZ-015 at the access panel and seal set P7045 whenever the housing is opened, tightened to torque class T4."
+        }
+      ],
+      "topics": [
+        "hydraulic power unit",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1016",
+        "HZ-016",
+        "P7048",
+        "T5"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 16,
+      "page_kind": "prose",
+      "printed_page_no": "16",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Hydraulic power unit"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 16 carries procedure M1016 for the hydraulic power unit. It requires hazard notice HZ-016 at the access panel and seal set P7048 whenever the housing is opened, tightened to torque class T5."
+        }
+      ],
+      "topics": [
+        "hydraulic power unit",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1017",
+        "HZ-017",
+        "P7051",
+        "T6"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 17,
+      "page_kind": "prose",
+      "printed_page_no": "17",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Hydraulic power unit"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 17 carries procedure M1017 for the hydraulic power unit. It requires hazard notice HZ-017 at the access panel and seal set P7051 whenever the housing is opened, tightened to torque class T6."
+        }
+      ],
+      "topics": [
+        "hydraulic power unit",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1018",
+        "HZ-018",
+        "P7054",
+        "T7"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 18,
+      "page_kind": "prose",
+      "printed_page_no": "18",
+      "sections": [
+        {
+          "is_start": true,
+          "title": "Pneumatic supply and lockout"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 18 carries procedure M1018 for the pneumatic supply and lockout. It requires hazard notice HZ-018 at the access panel and seal set P7054 whenever the housing is opened, tightened to torque class T7."
+        }
+      ],
+      "topics": [
+        "pneumatic supply and lockout",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1019",
+        "HZ-019",
+        "P7057",
+        "T8"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 19,
+      "page_kind": "prose",
+      "printed_page_no": "19",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Pneumatic supply and lockout"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 19 carries procedure M1019 for the pneumatic supply and lockout. It requires hazard notice HZ-019 at the access panel and seal set P7057 whenever the housing is opened, tightened to torque class T8."
+        }
+      ],
+      "topics": [
+        "pneumatic supply and lockout",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1020",
+        "HZ-020",
+        "P7060",
+        "T9"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 20,
+      "page_kind": "prose",
+      "printed_page_no": "20",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Pneumatic supply and lockout"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 20 carries procedure M1020 for the pneumatic supply and lockout. It requires hazard notice HZ-020 at the access panel and seal set P7060 whenever the housing is opened, tightened to torque class T9."
+        }
+      ],
+      "topics": [
+        "pneumatic supply and lockout",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1021",
+        "HZ-021",
+        "P7063",
+        "T10"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 21,
+      "page_kind": "prose",
+      "printed_page_no": "21",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Pneumatic supply and lockout"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 21 carries procedure M1021 for the pneumatic supply and lockout. It requires hazard notice HZ-021 at the access panel and seal set P7063 whenever the housing is opened, tightened to torque class T10."
+        }
+      ],
+      "topics": [
+        "pneumatic supply and lockout",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1022",
+        "HZ-022",
+        "P7066",
+        "T11"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 22,
+      "page_kind": "prose",
+      "printed_page_no": "22",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Pneumatic supply and lockout"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 22 carries procedure M1022 for the pneumatic supply and lockout. It requires hazard notice HZ-022 at the access panel and seal set P7066 whenever the housing is opened, tightened to torque class T11."
+        }
+      ],
+      "topics": [
+        "pneumatic supply and lockout",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1023",
+        "HZ-023",
+        "P7069",
+        "T12"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 23,
+      "page_kind": "prose",
+      "printed_page_no": "23",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Pneumatic supply and lockout"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 23 carries procedure M1023 for the pneumatic supply and lockout. It requires hazard notice HZ-023 at the access panel and seal set P7069 whenever the housing is opened, tightened to torque class T12."
+        }
+      ],
+      "topics": [
+        "pneumatic supply and lockout",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1024",
+        "HZ-024",
+        "P7072",
+        "T1"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 24,
+      "page_kind": "prose",
+      "printed_page_no": "24",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Pneumatic supply and lockout"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 24 carries procedure M1024 for the pneumatic supply and lockout. It requires hazard notice HZ-024 at the access panel and seal set P7072 whenever the housing is opened, tightened to torque class T1."
+        }
+      ],
+      "topics": [
+        "pneumatic supply and lockout",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1025",
+        "HZ-025",
+        "P7075",
+        "T2"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 25,
+      "page_kind": "table",
+      "printed_page_no": "25",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Pneumatic supply and lockout"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 25 is the spare-parts table for the pneumatic supply and lockout. It lists M1025 as the complete assembly and P7075 as the seal kit, under torque class T2."
+        }
+      ],
+      "topics": [
+        "pneumatic supply and lockout",
+        "parts"
+      ]
+    },
+    {
+      "codes": [
+        "M1026",
+        "HZ-026",
+        "P7078",
+        "T3"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 26,
+      "page_kind": "prose",
+      "printed_page_no": "26",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Pneumatic supply and lockout"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 26 carries procedure M1026 for the pneumatic supply and lockout. It requires hazard notice HZ-026 at the access panel and seal set P7078 whenever the housing is opened, tightened to torque class T3."
+        }
+      ],
+      "topics": [
+        "pneumatic supply and lockout",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1027",
+        "HZ-027",
+        "P7081",
+        "T4"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 27,
+      "page_kind": "prose",
+      "printed_page_no": "27",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Pneumatic supply and lockout"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 27 carries procedure M1027 for the pneumatic supply and lockout. It requires hazard notice HZ-027 at the access panel and seal set P7081 whenever the housing is opened, tightened to torque class T4."
+        }
+      ],
+      "topics": [
+        "pneumatic supply and lockout",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1028",
+        "HZ-028",
+        "P7084",
+        "T5"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 28,
+      "page_kind": "prose",
+      "printed_page_no": "28",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Pneumatic supply and lockout"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 28 carries procedure M1028 for the pneumatic supply and lockout. It requires hazard notice HZ-028 at the access panel and seal set P7084 whenever the housing is opened, tightened to torque class T5."
+        }
+      ],
+      "topics": [
+        "pneumatic supply and lockout",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1029",
+        "HZ-029",
+        "P7087",
+        "T6"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 29,
+      "page_kind": "prose",
+      "printed_page_no": "29",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Pneumatic supply and lockout"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 29 carries procedure M1029 for the pneumatic supply and lockout. It requires hazard notice HZ-029 at the access panel and seal set P7087 whenever the housing is opened, tightened to torque class T6."
+        }
+      ],
+      "topics": [
+        "pneumatic supply and lockout",
+        "procedure"
+      ]
+    },
+    {
+      "codes": [
+        "M1030",
+        "HZ-030",
+        "P7090",
+        "T7"
+      ],
+      "lang": [
+        "en"
+      ],
+      "page_index": 30,
+      "page_kind": "prose",
+      "printed_page_no": "30",
+      "sections": [
+        {
+          "is_start": false,
+          "title": "Pneumatic supply and lockout"
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Page 30 carries procedure M1030 for the pneumatic supply and lockout. It requires hazard notice HZ-030 at the access panel and seal set P7090 whenever the housing is opened, tightened to torque class T7."
+        }
+      ],
+      "topics": [
+        "pneumatic supply and lockout",
+        "procedure"
+      ]
+    }
+  ]
+}

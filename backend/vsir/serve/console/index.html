@@ -1,7 +1,7 @@
 <!doctype html>
 <!--
-  The operator console: the corpus, an ingest, the run history, and all eight tools of §7.2 —
-  one static file the serving app hands out.
+  The operator console: the corpus, an ingest, the run history, all eight tools of §7.2 and the
+  flat search surface — one static file the serving app hands out.
 
   It replaces a page that covered four operations of fourteen (`POST /documents`,
   `GET /runs/{run_id}`, `POST /tools/lookup`, `POST /tools/verify`) and could not show what the
@@ -14,6 +14,15 @@
   of those is a line in the unauthenticated surface. Inlined CSS and JS keep that surface at one
   path and cost no dependency outside §4.2 — no npm, no build, no second container, no CORS
   boundary, every call below same-origin.
+
+  **The Search tab is the exception to that, and deliberately.** `POST /search` is not a tool —
+  it is off the tool table and absent from MCP — so it is not choosing a move and it gets a
+  purpose-built form instead of a generated one: content toggles, a page-range pair and the
+  fusion's weights, laid out for an operator turning a knob. Its parameter names are therefore
+  written in this file, and `test_console.py` pins the one list that could silently fall behind
+  (`const PARTS` against `retrieval.PARTS`). The block that draws it sits **below** the API
+  section for a reason its own comment gives: the scan that keeps the promise below must not have
+  honest literals inside it.
 
   **The tool forms are generated from `/openapi.json` and never written out here.** That is the
   load-bearing decision in this file. The eight tools have nothing in common in their parameters,
@@ -182,6 +191,26 @@
   .hit.verified { border-left-color: var(--ok); }
   .hit.unverified { border-left-color: var(--warn); }
   .kv { font-size: 12px; color: var(--dim); }
+  /* A search row: a thumbnail beside the metadata, and a detail panel that opens under it. */
+  .srow { display: grid; grid-template-columns: 78px 1fr; gap: 11px; align-items: start; }
+  .srow > img {
+    width: 78px; height: 100px; object-fit: cover; border: 1px solid var(--line);
+    border-radius: 5px; background: var(--code); cursor: zoom-in;
+  }
+  .srow > img:hover { border-color: var(--accent); }
+  .shead { cursor: pointer; }
+  .shead:hover .stitle { color: var(--accent); }
+  .stitle { font-weight: 600; font-size: 13px; }
+  .chev { color: var(--dim); font-size: 11px; margin-left: 4px; }
+  .sdetail { margin-top: 9px; border-top: 1px solid var(--line); padding-top: 9px; }
+  .acts { display: grid; gap: 5px; margin-top: 6px; }
+  .act {
+    border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; font-size: 11.5px;
+    background: var(--code);
+  }
+  .act.spends { border-color: var(--spend); }
+  .act code { font-size: 11px; }
+  .scopeRow { display: grid; grid-template-columns: 1fr 1fr auto; gap: 6px; margin-top: 6px; }
   [hidden] { display: none !important; }
 </style>
 </head>
@@ -201,6 +230,7 @@
   <button role="tab" data-view="ingest" aria-selected="false">Ingest</button>
   <button role="tab" data-view="runs" aria-selected="false">Runs</button>
   <button role="tab" data-view="tools" aria-selected="false">Tools</button>
+  <button role="tab" data-view="search" aria-selected="false">Search</button>
   <button role="tab" data-view="api" aria-selected="false">API</button>
 </nav>
 
@@ -367,6 +397,111 @@
     </div>
   </div>
 
+  <!-- ── Search: the flat surface — data out, never an answer (§7.6, serve/retrieval.py) ─── -->
+  <div id="view-search" hidden>
+    <div class="row side">
+      <section>
+        <h2>Query</h2>
+        <form id="searchForm" autocomplete="off" onsubmit="return false">
+          <label for="sQuery">query</label>
+          <textarea id="sQuery" placeholder="emergency stop reset"></textarea>
+          <p class="help">A printed code in the query is split out and matched as an exact
+            <strong>phrase</strong> rather than embedded, so <code>reset K158</code> means pages
+            about reset that print <code>K158</code>.</p>
+
+          <label>scope — build it, or type it</label>
+          <div class="scopeRow">
+            <select id="sScopeKey"></select>
+            <input id="sScopeVal" placeholder="value, or a,b for any-of">
+            <button type="button" id="sScopeAdd">add</button>
+          </div>
+          <div class="scopeRow">
+            <select id="sNotKey"></select>
+            <input id="sNotVal" placeholder="value to exclude">
+            <button type="button" id="sNotAdd">not</button>
+          </div>
+          <label for="sScope">scope</label>
+          <input id="sScope" class="mono" placeholder='{"doc_id": "SYN-M1"}'>
+          <label for="sExcludeScope">exclude_scope — the negation of it</label>
+          <input id="sExcludeScope" class="mono" placeholder='{"page_kind": ["cover", "toc"]}'>
+          <p class="help">The key lists above are the filterable facets, read from
+            <code>/openapi.json</code> — so this page cannot offer a key the server would refuse.
+            An unknown key in either box is <code>filter_unknown_key</code>, never a filter that
+            quietly did not apply: in a negation that would return a <em>larger</em> set that
+            looks like a filtered one. <code>is_current: true</code> is injected unless you
+            override it.</p>
+
+          <div class="row two" style="gap:10px">
+            <div><label for="sFrom">page_from</label><input id="sFrom" type="number" min="1"></div>
+            <div><label for="sTo">page_to</label><input id="sTo" type="number" min="1"></div>
+          </div>
+          <p class="help">A <code>page_no</code> interval — the one filter shape
+            <code>scope</code> cannot spell: it matches a value or any-of a list, never a range.</p>
+
+          <label for="sRequire">require_phrases — must be printed on the page</label>
+          <input id="sRequire" placeholder="safety output, SF 1.1A">
+          <label for="sForbid">exclude_phrases — drop pages printing these</label>
+          <input id="sForbid" placeholder="draft, superseded">
+          <p class="help">Comma-separated, at most 10 each. A <strong>filter</strong>, not a query
+            term: a page that does not print the phrase cannot appear at any rank. Phrase
+            matching, so <code>safety output</code> needs those words adjacent and in order — and
+            each term also matches its whitespace variants, so <code>SF 1.1A</code> finds
+            <code>SF1.1A</code>. <strong>A required phrase can never match a page whose text
+            could not be read</strong>, so watch the usable-pages count below before reading an
+            empty result as "the corpus does not have this".</p>
+
+          <label>include — content per row</label>
+          <div id="sInclude" class="steps"></div>
+          <p class="help">All six are on by default, which is what omitting <code>include</code>
+            does on the API. Turn them all off for metadata only — the tuning call.</p>
+          <div class="row two" style="gap:10px">
+            <div><label for="sTextChars">text_chars</label>
+              <input id="sTextChars" type="number" min="1" max="20000" value="600"></div>
+            <div><label for="sLimit">limit</label>
+              <input id="sLimit" type="number" min="1" max="25" value="10"></div>
+          </div>
+
+          <label>weights — a branch at 0 is switched off</label>
+          <div class="row two" style="gap:10px">
+            <div><label for="sDense" class="kv">dense</label>
+              <input id="sDense" type="number" step="0.1" min="0" value="1"></div>
+            <div><label for="sLexical" class="kv">lexical</label>
+              <input id="sLexical" type="number" step="0.1" min="0" value="1"></div>
+          </div>
+          <div class="row two" style="gap:10px">
+            <div><label for="sCaptions" class="kv">captions</label>
+              <input id="sCaptions" type="number" step="0.1" min="0" value="0.4"></div>
+            <div><label for="sK" class="kv">rrf k</label>
+              <input id="sK" type="number" min="0" max="1000" value="60"></div>
+          </div>
+          <p class="help">Isolating one branch is how an operator finds out <em>why</em> a page
+            ranked where it did. This is the same <code>_candidates</code> the three
+            <code>skim_*</code> rungs run — what you tune here is what runs there.</p>
+        </form>
+        <button id="sGo" style="margin-top:12px">Search</button>
+        <p class="help">Free. No model is called, nothing is billed, and this surface never
+          answers — <code>POST /ask</code> is the only one that may.</p>
+      </section>
+      <section>
+        <h2>Rows</h2>
+        <div class="err" id="sErr" hidden></div>
+        <div id="sOut" hidden>
+          <div id="sStatus"></div>
+          <div id="sInterp" class="help" style="margin-top:8px"></div>
+          <div class="hits" id="sRows" style="margin-top:10px"></div>
+          <div class="row two" style="margin-top:12px; gap:10px">
+            <button id="sPrev" disabled>← previous</button>
+            <button id="sNext" disabled>next →</button>
+          </div>
+          <pre id="sJson" style="margin-top:12px"></pre>
+        </div>
+        <p class="note" id="sHint">Enter a query and press <strong>Search</strong>. Rows come back
+          ranked by an <strong>ordinal</strong> — there is no score in the response, under any
+          name (§7.6). A position is not a confidence.</p>
+      </section>
+    </div>
+  </div>
+
   <!-- ── API: the interface describing itself (§7.4) ─────────────────────────────────────── -->
   <div id="view-api" hidden>
     <section>
@@ -462,7 +597,7 @@ const STATUS = {
 const STEPS = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11"];
 
 // ── the shell ──────────────────────────────────────────────────────────────────────────────────
-const VIEWS = ["corpus", "ingest", "runs", "tools", "api"];
+const VIEWS = ["corpus", "ingest", "runs", "tools", "search", "api"];
 $("nav").addEventListener("click", (event) => {
   const button = event.target.closest("button[data-view]");
   if (!button) return;
@@ -472,6 +607,7 @@ $("nav").addEventListener("click", (event) => {
     b.setAttribute("aria-selected", String(b.dataset.view === wanted)));
   if (wanted === "runs") loadRuns();
   if (wanted === "tools") loadTools();
+  if (wanted === "search") initSearch();   // async: it reads the schema for the scope keys
   if (wanted === "api") loadIndex();
 });
 
@@ -976,6 +1112,412 @@ async function loadIndex() {
   $("pathTable").innerHTML = Object.entries(index.paths).map(([route, purpose]) =>
     `<tr><td class="mono" style="white-space:nowrap">${esc(route)}</td>
       <td class="kv">${esc(purpose)}</td></tr>`).join("");
+}
+
+/* ── Search: the flat surface ─────────────────────────────────────────────────────────────────
+   **Placed after the API section deliberately, and it must stay there.** `test_console.py` scans
+   the source between `pickTool` and the API marker to assert the *tool* forms hard-code no tool
+   parameter — they are generated from `/openapi.json`, and that is what makes this page's
+   "self-documenting" claim true rather than asserted. The block below legitimately writes
+   `/search`'s own parameters by hand: that surface is not a tool, its form is not generated, and
+   its fields are checkboxes an operator ticks. Moving this above that marker would put honest
+   literals inside a scan that exists to catch dishonest ones. */
+/* The content parts `POST /search` serves. Typed here rather than read from `/openapi.json`
+   because these are checkboxes an operator ticks, not a generated form — the Tools tab is the one
+   that must never write a signature into this page, and it does not. */
+const PARTS = ["summary", "text", "topics", "codes", "labels", "sections"];
+
+/* `text_trust` is the field that qualifies every other field on a row (§5.7). It is rendered as a
+   badge, in the tab's own colours, because an empty `text` on a scanned page is **not** a blank
+   page — and an operator scanning twenty-five rows must be able to see which is which without
+   reading the JSON. */
+const TRUST = {
+  ok:        ["ok", "ok"],
+  degraded:  ["degraded — extraction is partly unreliable", "warn"],
+  untrusted: ["untrusted — a phrase match here is not evidence", "bad"],
+  no_text:   ["no text layer — nobody could read this page", "bad"],
+};
+
+let searchOffset = 0;
+let searchReady = false;
+
+/* The filterable facets, read from the published schema rather than written here — `scope`
+   carries `propertyNames.enum`, which is the server's own vocabulary. A list typed into this page
+   could offer a key the server refuses, and the operator would read the refusal as a bug in the
+   corpus rather than in the console. */
+async function scopeKeys() {
+  try {
+    const schema = await (await fetch("/openapi.json")).json();
+    const props = schema.components.schemas.SearchRequest.properties;
+    return props.scope.propertyNames.enum;
+  } catch (e) { return []; }
+}
+
+async function initSearch() {
+  if (searchReady) return;
+  searchReady = true;
+  $("sInclude").innerHTML = PARTS.map((part) =>
+    `<button type="button" class="step" data-part="${part}"
+       aria-pressed="false">${part}</button>`).join("");
+
+  const keys = await scopeKeys();
+  const options = keys.map((key) => `<option value="${key}">${key}</option>`).join("");
+  $("sScopeKey").innerHTML = options;
+  $("sNotKey").innerHTML = options;
+  /* Typing stays authoritative: the builder merges into whatever is in the box, so an operator
+     can hand-write a filter the two dropdowns cannot express and still add to it. */
+  const merge = (box, key, raw) => {
+    if (!raw.trim()) return;
+    let current = {};
+    try { current = JSON.parse($(box).value || "{}"); } catch (e) { current = {}; }
+    const parts = raw.split(",").map((one) => one.trim()).filter(Boolean);
+    let value = parts.length > 1 ? parts : parts[0];
+    if (value === "true") value = true; else if (value === "false") value = false;
+    else if (Array.isArray(value)) value = value.map((one) =>
+      one === "true" ? true : one === "false" ? false : /^\d+$/.test(one) ? Number(one) : one);
+    else if (/^\d+$/.test(value)) value = Number(value);
+    current[key] = value;
+    $(box).value = JSON.stringify(current);
+  };
+  $("sScopeAdd").addEventListener("click", () =>
+    merge("sScope", $("sScopeKey").value, $("sScopeVal").value));
+  $("sNotAdd").addEventListener("click", () =>
+    merge("sExcludeScope", $("sNotKey").value, $("sNotVal").value));
+  $("sInclude").addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-part]");
+    if (!button) return;
+    const on = button.getAttribute("aria-pressed") === "true";
+    button.setAttribute("aria-pressed", String(!on));
+    button.classList.toggle("now", !on);
+  });
+  /* All six on, mirroring the API: omitting `include` returns every part. A tab that defaulted
+     to fewer would show an operator a thinner row than a consuming system gets. */
+  PARTS.forEach((part) => {
+    const button = $("sInclude").querySelector(`[data-part="${part}"]`);
+    button.setAttribute("aria-pressed", "true"); button.classList.add("now");
+  });
+  $("sGo").addEventListener("click", () => { searchOffset = 0; runSearch(); });
+  $("sPrev").addEventListener("click", () => {
+    searchOffset = Math.max(0, searchOffset - Number($("sLimit").value || 10)); runSearch();
+  });
+  $("sNext").addEventListener("click", () => {
+    searchOffset += Number($("sLimit").value || 10); runSearch();
+  });
+  /* One listener for every row, on the container: the rows are replaced on each search, and a
+     listener per row would leak one per result page. */
+  $("sRows").addEventListener("click", (event) => {
+    /* `next.expand` is a **scope**, handed back exactly as it came — no string assembly here, so
+       "the rest of this section" cannot be spelled wrong. */
+    const descend = event.target.closest("[data-scope]");
+    if (descend) {
+      $("sScope").value = descend.dataset.scope;
+      searchOffset = 0;
+      runSearch();
+      return;
+    }
+    const head = event.target.closest(".shead");
+    if (!head) return;
+    const panel = head.parentElement.querySelector(".sdetail");
+    if (!panel) return;
+    panel.hidden = !panel.hidden;
+    const chev = head.querySelector(".chev");
+    if (chev) chev.textContent = panel.hidden ? "▸ details" : "▾ details";
+  });
+}
+
+/* A page raster is behind the bearer token, and an `<img src>` cannot carry a header — so every
+   thumbnail is fetched and handed to the tag as a blob. `thumb_url` already carries its own dpi
+   (72), unlike the corpus grid's loader which appends one. */
+async function loadThumb(img) {
+  const source = img.dataset.thumb;
+  if (!source) return;
+  try {
+    const response = await fetch(source, { headers: { Authorization: "Bearer " + token() } });
+    if (!response.ok) return;
+    img.src = URL.createObjectURL(await response.blob());
+  } catch (e) { /* a thumbnail that will not load is not worth an error banner */ }
+}
+
+const included = () => Array.from($("sInclude").querySelectorAll('[aria-pressed="true"]'))
+  .map((button) => button.dataset.part);
+
+/* A scope box that does not parse is the operator's typo, and it is named as such here rather
+   than sent as `{}` — a filter silently dropped returns a bigger answer that looks scoped. */
+function parseFilter(id, label) {
+  const raw = $(id).value.trim();
+  if (!raw) return {};
+  try { return JSON.parse(raw); }
+  catch (e) { throw Object.assign(new Error(`${label} is not JSON: ${e.message}`),
+                                 { code: "invalid_json" }); }
+}
+
+/* The bounds the server refuses on, checked here first so an operator sees the named refusal
+   without a round trip. These mirror `serve/retrieval.py`'s constants and the numbers the
+   published schema carries; the **server** is still the authority, and its typed code is what
+   `showError` renders when one gets through. */
+const BOUNDS = { limit: [1, 25], offset: [0, 200], text_chars: [1, 20000], k: [0, 1000] };
+
+function checkBounds(body) {
+  for (const [field, [low, high]] of Object.entries(BOUNDS)) {
+    const value = body[field];
+    if (!Number.isFinite(value) || value < low || value > high) {
+      return { code: field + "_out_of_range",
+               message: `${field} is between ${low} and ${high}, got ${value}` };
+    }
+  }
+  if (body.page_from !== undefined && body.page_to !== undefined
+      && body.page_from > body.page_to) {
+    return { code: "page_range_inverted",
+             message: `page_from ${body.page_from} is above page_to ${body.page_to} — that range `
+                    + `selects no page, and an empty answer would report it as a fact about the `
+                    + `corpus` };
+  }
+  if (!body.query && !body.images.length) {
+    return { code: "query_required",
+             message: "a query, an image, or both — neither is not a search" };
+  }
+  return null;
+}
+
+async function runSearch() {
+  clearError($("sErr"));
+  /* Comma-separated in the box, a list on the wire. An empty term is a typed refusal on the
+     server (`phrase_empty`), so the trailing comma an operator leaves behind is filtered here
+     rather than sent — the refusal is for a caller that meant it. */
+  const phrases = (id) => $(id).value.split(",").map((one) => one.trim()).filter(Boolean);
+
+  const body = {
+    query: $("sQuery").value.trim(),
+    require_phrases: phrases("sRequire"),
+    exclude_phrases: phrases("sForbid"),
+    limit: Number($("sLimit").value || 10),
+    offset: searchOffset,
+    include: included(),
+    text_chars: Number($("sTextChars").value || 600),
+    k: Number($("sK").value || 60),
+    weights: { dense: Number($("sDense").value), lexical: Number($("sLexical").value),
+               captions: Number($("sCaptions").value) },
+  };
+  try {
+    body.scope = parseFilter("sScope", "scope");
+    body.exclude_scope = parseFilter("sExcludeScope", "exclude_scope");
+  } catch (failure) { showError($("sErr"), failure); return; }
+  if ($("sFrom").value) body.page_from = Number($("sFrom").value);
+  if ($("sTo").value) body.page_to = Number($("sTo").value);
+  body.images = [];
+
+  const refusal = checkBounds(body);
+  if (refusal) { showError($("sErr"), refusal); return; }
+  delete body.images;
+
+  $("sGo").disabled = true;
+  try {
+    const result = await api("/search", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    renderSearch(result);
+  } catch (failure) {
+    $("sOut").hidden = true;
+    showError($("sErr"), failure);
+  } finally { $("sGo").disabled = false; }
+}
+
+function renderSearch(result) {
+  $("sHint").hidden = true;
+  $("sOut").hidden = false;
+
+  /* **The status first**, with the next move it implies — the same `STATUS` table the Tools tab
+     renders, because these are the same six values from the same rule (§7.1). An empty `rows`
+     under `not_searchable` and one under `not_found` are different instructions, and a console
+     that showed "0 results" for both would undo the reason they are typed. */
+  const [meaning, kind] = STATUS[result.status] || ["", "dim"];
+  const shown = result.rows.length
+    ? `${result.offset + 1}–${result.offset + result.returned} of ${result.available} ranked`
+    : "no rows on this page";
+  $("sStatus").innerHTML =
+    badge(result.status, kind) + `<span class="kv"> ${esc(meaning)}</span>` +
+    `<div class="kv" style="margin-top:4px">${esc(shown)} · ${result.total} page(s) in scope · ` +
+    `searched ${result.pages_searched}, ${result.searchable_pages} with usable text, ` +
+    `${result.pages_without_text} with none</div>` +
+    `<div class="kv" style="margin-top:4px">branches run: ` +
+    result.branches_run.map((name) => badge(name, "acc")).join(" ") +
+    ` · k ${result.k}</div>` +
+    (result.pages_without_text
+      ? `<p class="help">${result.pages_without_text} page(s) in this scope have no text layer. ` +
+        `The <code>lexical</code> and <code>captions</code> branches cannot reach them at all — ` +
+        `which is the first thing to check when a lexical-only search looks empty.</p>` : "") +
+    /* F9 — "it exists, in a revision that is no longer current" is a different fact from "not in
+       the corpus", and the revision is the whole answer. */
+    (result.superseded && result.superseded.length
+      ? `<p class="help">Nothing current matched, but a retired revision does. Re-ask with ` +
+        result.superseded.map((one) =>
+          `<code>{"doc_id": "${esc(one.doc_id)}", "revision": "${esc(one.revision)}"}</code>`
+        ).join(" or ") + ` — superseded content is never returned here.</p>` : "");
+
+  /* The interpretation: what was matched exactly, what was embedded, and why a branch sat out.
+     This is the panel that answers "why these rows" without reading the JSON. */
+  const interp = result.query_interpretation || {};
+  const parts = [];
+  if ((interp.identifiers || []).length) {
+    parts.push(`<strong>Exact phrase filter:</strong> ` +
+      interp.identifiers.map((one) => `<code>${esc(one)}</code>`).join(" AND ") +
+      ` — a page that does not print these cannot appear at any rank, however close.`);
+  }
+  if ((interp.required_phrases || []).length) {
+    parts.push(`<strong>Keyword filter — every one required:</strong> ` +
+      interp.required_phrases.map((one) => `<code>${esc(one)}</code>`).join(" AND ") +
+      `. A page not printing these cannot appear at any rank, and a page whose text could not be ` +
+      `read never could.`);
+  }
+  if ((interp.excluded_phrases || []).length) {
+    parts.push(`<strong>Dropped for printing:</strong> ` +
+      interp.excluded_phrases.map((one) => `<code>${esc(one)}</code>`).join(" or "));
+  }
+  parts.push(`<strong>Embedded:</strong> ` + (interp.embedded_text
+    ? `<code>${esc(interp.embedded_text)}</code>` : "<em>nothing</em>") +
+    (interp.query_images ? ` · ${interp.query_images} photograph(s) fused into one vector` : ""));
+  (interp.branches_skipped || []).forEach((one) => {
+    parts.push(`<strong>${esc(one.branch)} skipped</strong> (<code>${esc(one.reason)}</code>) — ` +
+      esc(one.detail));
+  });
+  $("sInterp").innerHTML = parts.join("<br>");
+
+  $("sRows").innerHTML = result.rows.map(searchRow).join("") ||
+    '<p class="note">The fused list ended before this offset. That is the candidate pool running ' +
+    'out, not the corpus — step back a page.</p>';
+  $("sJson").textContent = JSON.stringify(result, null, 2);
+  /* The rasters are fetched after the rows are in the DOM, each with the token the tag cannot
+     carry itself. A click opens the full page through the same authenticated path. */
+  $("sRows").querySelectorAll("img[data-thumb]").forEach((img) => {
+    loadThumb(img);
+    img.addEventListener("click", async (event) => {
+      event.stopPropagation();
+      const full = img.dataset.full;
+      if (!full) return;
+      try {
+        const response = await fetch(full, { headers: { Authorization: "Bearer " + token() } });
+        if (response.ok) window.open(URL.createObjectURL(await response.blob()), "_blank");
+      } catch (e) { /* nothing to show is better than a banner over a click on a picture */ }
+    });
+  });
+  $("sPrev").disabled = result.offset === 0;
+  $("sNext").disabled = result.offset + result.returned >= result.available;
+}
+
+function searchRow(row) {
+  const [meaning, kind] = TRUST[row.text_trust] || ["", "dim"];
+  const content = row.content || {};
+
+  /* `surface_ranks` is the honest form of "why is this here": dense put it 1st, lexical 7th,
+     captions never found it. A branch absent from the map did not return the page at all, which
+     is a different fact from returning it last — so absence is a dash, never a 0. */
+  const ranks = ["dense", "lexical", "captions"].map((name) =>
+    `${name} ${row.surface_ranks[name] !== undefined ? row.surface_ranks[name] : "—"}`).join(" · ");
+
+  const head =
+    `<div class="shead">` +
+      `<span class="stitle">rank ${row.rank}` +
+      (row.printed_page_no ? ` · page ${esc(row.printed_page_no)}` : "") +
+      `</span><span class="chev">▸ details</span>` +
+      `<div class="kv" style="margin-top:3px">${esc(row.doc_id)}` +
+        (row.revision ? ` <span class="kv">rev ${esc(row.revision)}</span>` : "") +
+        (row.page_kind ? ` · ${esc(row.page_kind)}` : "") +
+        ` · pdf p${row.page_no}</div>` +
+      `<div class="kv" style="margin-top:3px">${badge(row.text_trust, kind)} ` +
+        `<span class="kv">${esc(meaning)}</span>` +
+        (row.has_text && !row.text_usable
+          ? ` ${badge("has text, not usable", "bad")}` : "") + `</div>` +
+      `<div class="kv" style="margin-top:3px">why ${esc(ranks)}` +
+        (row.grounded_rate !== null && row.grounded_rate !== undefined
+          ? ` · grounded ${row.grounded_rate.toFixed(2)}` : "") + `</div>` +
+      (content.summary ? `<div class="kv" style="margin-top:5px">${esc(content.summary)}` +
+        (content.summary_lang ? ` ${badge(content.summary_lang, "dim")}` : "") + `</div>` : "") +
+    `</div>`;
+
+  // ── the detail panel, closed until the head is clicked ──────────────────────────────────────
+  const detail = [];
+  detail.push(`<div class="kv"><code>${esc(row.page_id)}</code> — address by this, cite the ` +
+    `printed label</div>`);
+
+  /* `null` = you did not ask; `""` = requested and the page's extraction is empty, which on a
+     page with no text layer means nobody could read it. Never conflate the two. */
+  if (content.text !== null && content.text !== undefined) {
+    detail.push(content.text
+      ? `<pre style="margin-top:6px; max-height:280px">${esc(content.text)}</pre>` +
+        (content.text_truncated
+          ? `<p class="help">truncated at your <code>text_chars</code> — ` +
+            `${content.text_chars_total} character(s) on the page</p>` : "")
+      : `<p class="help">Requested, and the page's extraction is <strong>empty</strong> — which ` +
+        `on a page with no text layer means nobody could read it, not that it is blank.</p>`);
+  } else {
+    detail.push(`<p class="help">Page text not requested — turn on <code>text</code> above.</p>`);
+  }
+
+  if (content.codes && content.codes.length) {
+    /* `codes` is verbatim (§5.2) and `codes_in_text` is lowercased and whitespace-collapsed
+       (§6.8), so the comparison is case-insensitive — matching them exactly would render every
+       backed code as unbacked, which reads as "the page supports none of this". */
+    const backed = new Set(content.codes_in_text || []);
+    detail.push(`<div class="kv" style="margin-top:8px">codes: ` + content.codes.map((code) =>
+      badge(code, backed.has(code.replace(/\s+/g, " ").toLowerCase()) ? "ok" : "warn")
+    ).join(" ") + `</div><p class="help">Claims, not verdicts (D3). Green is backed by this ` +
+      `page's own extraction, amber is not. <code>verify</code> settles a code, and it is free.</p>`);
+  }
+  if (content.topics && content.topics.length) {
+    detail.push(`<div class="kv" style="margin-top:6px">topics: ${esc(content.topics.join(", "))}</div>`);
+  }
+  if (content.sections && content.sections.length) {
+    detail.push(`<div class="kv" style="margin-top:6px">sections: ` + content.sections.map((one) =>
+      esc(one.title || one.section_id) +
+      (one.page_range ? ` <span class="kv">pp. ${one.page_range[0]}–${one.page_range[1]}</span>`
+                      : "")).join(" · ") + `</div>`);
+  }
+  if (content.label_candidates && content.label_candidates.length) {
+    detail.push(`<p class="help">Ambiguous printed label — every reading is returned, never a ` +
+      `silent pick (F5): ` + content.label_candidates.map((one) =>
+      `<code>${esc(one)}</code>`).join(" ") + `</p>`);
+  }
+  if (content.interpolated) {
+    detail.push(`<p class="help">${badge("interpolated", "warn")} the label was inferred from ` +
+      `the pages either side, not read off this one (§6.5) — weaker evidence when citing.</p>`);
+  }
+
+  /* The affordances: a scope to descend into and the pages either side, both handed back rather
+     than assembled by the reader. */
+  const moves = row.next || {};
+  const expand = moves.expand && Object.keys(moves.expand).length
+    ? `<button type="button" class="act" data-scope='${esc(JSON.stringify(moves.expand))}'>` +
+      `search this section →</button>` : "";
+  if (expand || (moves.neighbours || []).length) {
+    detail.push(`<div class="kv" style="margin-top:8px">next</div>` + expand +
+      ((moves.neighbours || []).length
+        ? `<div class="kv">neighbours: ` + moves.neighbours.map((one) =>
+            `<code>${esc(one)}</code>`).join(" ") + `</div>` : ""));
+  }
+
+  /* Every operation with its body already assembled — the same thing the API hands a consuming
+     system, shown so an operator can copy it. `spends` is marked, because exactly one bills. */
+  if ((row.actions || []).length) {
+    detail.push(`<div class="kv" style="margin-top:8px">operations on this page</div>` +
+      `<div class="acts">` + row.actions.map((one) =>
+        `<div class="act${one.spends ? " spends" : ""}">` +
+        `<strong>${esc(one.action)}</strong> ` +
+        (one.spends ? badge("bills", "spend") : badge("free", "ok")) +
+        ` <code>${esc(one.method)} ${esc(one.target)}</code>` +
+        (Object.keys(one.arguments || {}).length
+          ? `<pre style="margin:4px 0 0">${esc(JSON.stringify(one.arguments))}</pre>` : "") +
+        `<div class="kv" style="margin-top:3px">${esc(one.detail)}</div></div>`
+      ).join("") + `</div>`);
+  }
+
+  return `<div class="hit ${row.text_usable ? "verified" : "unverified"}">` +
+    `<div class="srow">` +
+      `<img alt="page ${row.page_no}" loading="lazy" ` +
+        `data-thumb="${esc((row.image || {}).thumb_url || "")}" ` +
+        `data-full="${esc(row.image_url || "")}" title="open the full raster">` +
+      `<div>${head}<div class="sdetail" hidden>${detail.join("")}</div></div>` +
+    `</div></div>`;
 }
 
 boot();

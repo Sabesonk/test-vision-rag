@@ -32,7 +32,12 @@ from vsir.vlm import (EXTRACT, MAX_ATTEMPTS, PROMPT_DIGESTS, PROMPT_DIR, PROMPT_
 from vsir.vlm import client
 
 MODEL = "gemini-3.8-flash"
-PROMPT = "s2-v1"
+#: The version this release actually ships, read from the release rather than typed here.
+#: `PROMPT_DIGESTS` holds one version at a time by design — there is one `s2.md` on disk
+#: and `test_release_artefacts` asserts every declared version matches it — so a literal
+#: here is a line that goes stale on the next prompt release, which is precisely when
+#: these assertions matter most.
+PROMPT = next(iter(PROMPT_DIGESTS))
 BODY = '{"pages": []}'
 
 
@@ -333,19 +338,27 @@ def test_the_call_is_structured_output_at_temperature_zero_in_one_content():
 
 
 def test_the_schema_that_is_sent_carries_nothing_the_api_has_no_field_for():
-    """The property, not the shape: no unsupported keyword survives anywhere in the tree.
+    """The property, not the shape: no unsupported **keyword** survives anywhere in the tree.
 
     Recursive because the failure was nested — the 400 named both the root and
     `properties[6].value.items`, which is `DocumentFacts.toc`'s item model.
+
+    **A field name is not a keyword, and this test used to say otherwise.** It walked every key
+    at every depth, which includes the keys inside a `properties` node — those are the model's
+    own field names. So it demanded that `SectionRef.title` be stripped from the schema, and the
+    code obliged: the model was asked for `sections: [{is_start: bool}]` and returned `[]` on
+    every page of every live document. The test was not just blind to the defect, it required it.
+    Walking the two namespaces separately is the fix on both sides.
     """
-    def walk(node):
+    def walk(node, in_properties=False, path="$"):
         if isinstance(node, dict):
             for key, value in node.items():
-                assert key not in client.UNSUPPORTED_SCHEMA_KEYS, f"{key} would be a 400"
-                walk(value)
+                if not in_properties:
+                    assert key not in client.UNSUPPORTED_SCHEMA_KEYS, f"{path}.{key} would be a 400"
+                walk(value, not in_properties and key == "properties", f"{path}.{key}")
         elif isinstance(node, list):
-            for item in node:
-                walk(item)
+            for index, item in enumerate(node):
+                walk(item, path=f"{path}[{index}]")
 
     for model in (WindowOut, DocumentFacts):
         walk(client.response_schema(model))
@@ -406,3 +419,58 @@ def test_the_credential_never_appears_in_a_repr():
 
     assert "not-a-real-credential" not in repr(backend)
     assert backend.key == "not-a-real-credential"
+
+
+# ── a transport failure is retried; a rejection is not ──────────────────────────────────────────
+
+@pytest.mark.parametrize("failure", [
+    "RemoteProtocolError Server disconnected without sending a response.",
+    "ConnectError [Errno -2] Name or service not known",
+    "ConnectTimeout timed out",
+    "ReadTimeout The read operation timed out",
+    "ConnectError Temporary failure in name resolution",
+])
+def test_a_transport_failure_is_worth_another_attempt(failure: str):
+    """Nothing was delivered, so nothing can have been rejected on its merits.
+
+    `impl`'s list was HTTP **statuses** only — replies the server sent. A connection that never
+    produced a reply carries none of those words and failed at the first attempt. Three live runs
+    died that way on 2026-09-11, and the expensive one was on the embedding step: S2 was already
+    paid for and the run threw that spend away over a DNS blip.
+    """
+    assert any(marker in failure.lower() for marker in client.RETRYABLE), (
+        f"{failure!r} is transient and would not be retried")
+
+
+@pytest.mark.parametrize("rejection", [
+    "InvalidArgument 400 the request was malformed",
+    "PermissionDenied 403 the caller has no access",
+    "NotFound 404 no such model",
+])
+def test_a_rejection_is_not_retried_however_many_times_it_would_fail(rejection: str):
+    """The other half, and the one that keeps the list honest: a bad request is not worth four of
+    them, and widening the transport row must not quietly widen this one."""
+    assert not any(marker in rejection.lower() for marker in client.RETRYABLE), (
+        f"{rejection!r} would be retried, and retrying it only spends the budget again")
+
+
+# ── a field name is not a schema keyword ────────────────────────────────────────────────────────
+
+def test_a_field_named_like_a_schema_keyword_survives_into_the_request():
+    """`SectionRef.title` was deleted from the schema sent to the model.
+
+    `UNSUPPORTED_SCHEMA_KEYS` contains `title`, because a schema's own `title` keyword is a `400`
+    from the API — and the filter ran at **every** level, so a *field* called `title` went with
+    it. The model was asked for `sections: [{is_start: bool}]`, objects with nowhere to put a
+    section's name, and returned `[]` every time. Two live documents came back with sections on
+    **0 of 58** pages and `next.expand` was inert on everything really ingested.
+    """
+    from vsir.ingest.extract import WindowOut
+
+    page = client.response_schema(WindowOut)["properties"]["pages"]["items"]
+    section = page["properties"]["sections"]["items"]["properties"]
+
+    assert set(section) == {"title", "is_start"}, \
+        "a section the model cannot name is a section it will not report"
+    assert section["title"]["type"] == "string"
+

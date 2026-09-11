@@ -17,8 +17,9 @@ in `development/cr1/progress/implementation-progress.md`.
 | `data/fixtures/` | frozen extractions, checked in |
 | `data/fixtures/synthetic_pages/` | the §13 M1 corpus: hand-written page text + `expected.json` |
 | `data/fixtures/synthetic_3window/` | the M2a corpus's replay fixture: frozen S1 `facts/` + S2 `extract/` + `read/` (U020), keyed by §6.3 hash, + `expected.json` |
+| `data/fixtures/synthetic_large/` | the M8 corpus's replay fixture: frozen S1 `facts/` + five S2 `extract/` windows + `expected.json`. 150 pages, **no contents page**, so the ladder folds at the cap and plans at Level 2 (U025) |
 | `data/fixtures/legacy/` | the ported `impl` baseline of §12.1: 19 old-schema S2 responses + `labels.jsonl` / `withheld.jsonl` / `manifest.json` from `r-poc-5`, + `SOURCE.json` |
-| `data/source/` | input PDFs, gitignored — except the generated `synthetic_3window.pdf` |
+| `data/source/` | input PDFs, gitignored — except the generated `synthetic_3window.pdf` and `synthetic_large.pdf` |
 
 ## Setup
 
@@ -193,6 +194,39 @@ because `point_id` is idempotent (I1) and nothing is queryable until the gates p
 `SIGTERM` checkpoints the run as `state: stopped` and releases the lease, which is the one state a
 resume takes without `--steal`. A `SIGKILL` leaves it `running` with a lease that expires — and, in
 both cases, **zero queryable pages** (F17).
+
+A resume **buys nothing twice**. Every S2 and S1 response is read from and written to the §6.3
+cache in `vsir_runs` (`vlm/cached.py`, D9), so the windows a killed run had finished come back out
+of the control plane under the keys they were billed under and only the window that was in flight
+can be re-billed. Step 06 checkpoints **per window** as each one returns — `running` on the way
+out, `done` with its `extract_key` on the way back — which is what makes *"at most one window
+lost"* a fact rather than a hope. The event stream distinguishes the two: `vlm_replay` is a call,
+`vlm_cache_hit` is a call that did not happen.
+
+```bash
+export VSIR_FIXTURE=data/fixtures/synthetic_large
+backend/.venv/bin/vsir ingest data/source/synthetic_large.pdf --vlm stub &   # 150 pages, 5 windows
+kill -TERM %1                                            # -> state: stopped, 0 queryable pages
+backend/.venv/bin/vsir runs show <run_id>                # which windows are `done`, with their keys
+backend/.venv/bin/vsir ingest --resume <run_id>          # finishes; re-bills only the interrupted one
+```
+
+Regenerate that corpus with `python -m vsir.eval.synthetic_large` — the same contract as
+`synthetic_pdf`: deterministic bytes, and the keys move when the model id, the prompt version, the
+dpi or the S2 schema moves.
+
+### Retiring a document (U025)
+
+```bash
+backend/.venv/bin/vsir retire <doc_id>                   # every revision stops answering
+backend/.venv/bin/vsir retire <doc_id> --revision 1.3    # one revision
+```
+
+It sets `is_current=False` and **keeps every page** — deletion is not offered anywhere, over HTTP
+or otherwise (§2.5 A). A retired page is what `found_only_in_superseded` reads and what an audit of
+an answer already given is checked against. Idempotent (a filtered write of a constant), scoped by
+construction (no filter this path builds can omit the `doc_id`), and a `doc_id` the index has never
+held is a typed `run_not_found` with a non-zero exit.
 
 `VSIR_VLM_TIER=batch` refuses `vlm_tier_unsupported` — the tier is not a cache-key input, so
 switching it later re-bills nothing. `VSIR_VLM_RPM` is the client's token bucket, in calls a
