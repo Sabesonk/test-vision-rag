@@ -11,6 +11,7 @@ import json
 import subprocess
 import sys
 import time
+from types import SimpleNamespace
 
 import pytest
 
@@ -22,6 +23,7 @@ from vsir.doctor import (
     OK,
     QDRANT_UNAVAILABLE,
     UNAVAILABLE,
+    check_collection_fingerprint,
     check_collection_schema,
     doctor,
     report,
@@ -79,11 +81,14 @@ def test_an_unreachable_qdrant_does_not_refuse_the_boot(captured_log):
     """
     assert doctor(COMPLETE_ENV) == 0
 
-    schema = _statuses(COMPLETE_ENV)["collection_schema"]
-    assert schema == UNAVAILABLE
+    statuses = _statuses(COMPLETE_ENV)
+    assert statuses["collection_schema"] == UNAVAILABLE
+    # Both of the checks that read the store, in the order `BOOT_CHECKS` runs them: the fingerprint
+    # lives in the control plane, which is the same unreachable Qdrant.
+    assert statuses["collection_fingerprint"] == UNAVAILABLE
     summary = next(line for line in _lines(captured_log)
                    if line["event"] == "doctor_inconclusive")
-    assert summary["unavailable_checks"] == ["collection_schema"]
+    assert summary["unavailable_checks"] == ["collection_schema", "collection_fingerprint"]
     assert summary["level"] == "warning"
 
 
@@ -99,10 +104,11 @@ def test_a_run_that_never_reached_the_collection_is_not_greppable_as_a_pass(capt
 def test_doctor_ok_is_emitted_when_every_check_concluded(captured_log, monkeypatch):
     from vsir import doctor as doctor_module
 
+    store_backed = (doctor_module.check_collection_schema,
+                    doctor_module.check_collection_fingerprint)
     monkeypatch.setattr(
         doctor_module, "BOOT_CHECKS",
-        tuple(check for check in doctor_module.BOOT_CHECKS
-              if check is not doctor_module.check_collection_schema),
+        tuple(check for check in doctor_module.BOOT_CHECKS if check not in store_backed),
     )
 
     assert doctor(COMPLETE_ENV) == 0
@@ -414,6 +420,136 @@ def test_a_refused_configuration_leaves_the_schema_unchecked(monkeypatch):
 
     assert result.status == UNAVAILABLE
     assert result.reason == INDEX_NOT_READY
+
+
+# ── the fingerprint check (Spec §4.3 refusal 3, §6.6, F11) ──────────────────────────────────────
+
+#: What `vsir_runs` holds for a collection this release embedded: §6.6's four fields, plus the
+#: discriminator every control-plane point carries (D9).
+def _stored(**overrides: object) -> dict[str, object]:
+    recipe = dict(load_config(COMPLETE_ENV).fingerprint)
+    recipe.update(overrides)
+    return {"kind": "fingerprint", "collection": "vsir_pages_1536", **recipe}
+
+
+class FakeControlPlane:
+    """`vsir_runs` with at most one fingerprint point in it. No I/O: the logic is what is tested."""
+
+    def __init__(self, payload: dict[str, object] | None = None, *,
+                 exists: bool = True, raises: Exception | None = None) -> None:
+        self._payload = payload
+        self._exists = exists
+        self._raises = raises
+        self.calls: list[str] = []
+
+    def collection_exists(self, _name: str) -> bool:
+        self.calls.append("collection_exists")
+        if self._raises is not None:
+            raise self._raises
+        return self._exists
+
+    def retrieve(self, _name: str, ids: list[str], with_payload: bool = True) -> list[object]:
+        self.calls.append("retrieve")
+        if self._payload is None:
+            return []
+        return [SimpleNamespace(id=ids[0], payload=dict(self._payload))]
+
+    def search(self, *_args: object, **_kwargs: object) -> None:
+        raise AssertionError("a boot check never searches")
+
+    def close(self) -> None:
+        self.calls.append("close")
+
+
+def test_a_collection_embedded_under_this_release_recipe_passes():
+    result = check_collection_fingerprint(COMPLETE_ENV, FakeControlPlane(_stored()))
+
+    assert result.status == OK
+    assert result.facts["stored_digest"] == result.facts["configured_digest"]
+
+
+def test_a_collection_embedded_by_another_model_refuses_the_boot():
+    """§4.3's third refusal, and the one a write-time guard cannot make.
+
+    `fingerprint.require` protects the *collection* from being mixed. It says nothing about a
+    process that only ever reads: that one embeds the query with this release's model and compares
+    it against vectors made by another, and the symptom is worse neighbours — no error at all.
+    """
+    client = FakeControlPlane(_stored(embed_model="gemini-embedding-1"))
+
+    result = check_collection_fingerprint(COMPLETE_ENV, client)
+
+    assert result.status == FAIL
+    assert result.reason is None, "a wrong recipe is a refusal, not an unready instance"
+    assert "gemini-embedding-1" in result.detail and "gemini-embedding-2" in result.detail
+    assert result.facts["differences"]["embed_model"] == ["gemini-embedding-1",
+                                                          "gemini-embedding-2"]
+
+
+def test_a_composition_change_refuses_although_every_model_id_still_matches():
+    """The field that is easy to leave out. Reordering the parts of §5.3 changes every vector
+    without changing a model id, so a fingerprint without it agrees with a collection it no longer
+    describes."""
+    result = check_collection_fingerprint(COMPLETE_ENV,
+                                          FakeControlPlane(_stored(composition_version="d4-v0")))
+
+    assert result.status == FAIL
+    assert "composition_version" in result.detail
+
+
+def test_a_collection_nobody_has_embedded_into_yet_is_not_a_refusal():
+    """§6.6 — the first ingest writes the record, so absence is the pre-ingest state, not drift.
+    Refusing here would mean a fresh deployment could never boot far enough to run that ingest."""
+    result = check_collection_fingerprint(COMPLETE_ENV, FakeControlPlane(None))
+
+    assert result.status == OK
+    assert "first ingest writes it" in result.detail
+
+
+def test_a_stored_record_that_cannot_say_whether_it_matches_is_drift():
+    """A control point missing one of §6.6's four fields is wrong, not absent — it names a recipe
+    that cannot be compared, and serving from it would be a guess."""
+    incomplete = _stored()
+    del incomplete["composition_version"]
+
+    result = check_collection_fingerprint(COMPLETE_ENV, FakeControlPlane(incomplete))
+
+    assert result.status == FAIL
+    assert "composition_version" in result.detail
+
+
+def test_an_unreachable_control_plane_is_inconclusive_rather_than_a_refusal():
+    """§15.1 — the same policy as the schema check: an outage is not a fleet-wide restart loop."""
+    result = check_collection_fingerprint(COMPLETE_ENV,
+                                          FakeControlPlane(raises=ConnectionError("refused")))
+
+    assert result.status == UNAVAILABLE
+    assert result.reason == QDRANT_UNAVAILABLE
+
+
+def test_a_refused_configuration_leaves_the_fingerprint_check_inconclusive():
+    """`config_valid` owns that refusal; there is no recipe to compare against a refused config."""
+    env = {key: value for key, value in COMPLETE_ENV.items() if key != "VSIR_EMBED_MODEL"}
+
+    result = check_collection_fingerprint(env, FakeControlPlane(_stored()))
+
+    assert result.status == UNAVAILABLE
+    assert result.reason == INDEX_NOT_READY
+
+
+def test_the_fingerprint_check_never_closes_a_client_it_was_handed():
+    client = FakeControlPlane(_stored())
+
+    check_collection_fingerprint(COMPLETE_ENV, client)
+
+    assert "close" not in client.calls
+
+
+def test_the_fingerprint_check_runs_in_the_boot_list():
+    """A check nothing calls is not a refusal. This is the wiring, asserted rather than assumed."""
+    from vsir import doctor as doctor_module
+
+    assert doctor_module.check_collection_fingerprint in doctor_module.BOOT_CHECKS
 
 
 # ── the process (Spec §15 Factor IX) ─────────────────────────────────────────────────────────────

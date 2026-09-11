@@ -12,8 +12,11 @@ Two of the five refusals are local to the process and live here:
 
 The other three read the **live collection**: the payload schema against ``INDEXED``,
 ``phrase_matching`` on ``text``/``vlm_codes``, and the embedding fingerprint. The first two are
-here, in :func:`check_collection_schema`; the model-identity half of the fingerprint needs a record
-written beside the collection and arrives with U010.
+here, in :func:`check_collection_schema`; the third is :func:`check_collection_fingerprint`,
+which reads §6.6's control-plane record, because ``embed_model`` and ``composition_version`` are
+not observable from a Qdrant collection at all. A serving process configured for a recipe the
+collection was not embedded under is wrong in a way no write ever reveals: it embeds the query
+with one model and compares it against vectors made by another.
 
 **Three statuses, two policies.** A check that could not reach Qdrant did not *conclude* — it did
 not find the schema wrong. Refusing to boot on unreachability would turn a backing-service outage
@@ -50,6 +53,7 @@ from vsir.config import (
     scrub_url,
 )
 from vsir.core import indexed
+from vsir.ingest import fingerprint as fingerprint_module
 
 OK = "ok"
 FAIL = "fail"
@@ -247,6 +251,88 @@ def check_collection_schema(env: Mapping[str, str],
                        facts)
 
 
+def check_collection_fingerprint(env: Mapping[str, str],
+                                 client: QdrantClient | None) -> CheckResult:
+    """Refusal 3 — the collection fingerprint against this release's recipe (§4.3, §6.6, F11).
+
+    The other half of the schema check, and the half Qdrant cannot answer on its own. ``dim`` and
+    ``distance`` are readable off the live collection and :func:`check_collection_schema` already
+    reads them; ``embed_model`` and ``composition_version`` are not observable from a collection at
+    all, so §6.6 records all four on a ``kind: fingerprint`` point in the control plane and this
+    check compares them with what the process is configured to produce.
+
+    Why it refuses the **boot** and not only the write. :func:`vsir.ingest.fingerprint.require`
+    guards the upsert, which protects the collection from being mixed — but a *serving* process
+    configured for a different recipe is wrong in a way no write ever reveals: it embeds the query
+    with one model and compares it against vectors made by another, and the only symptom is worse
+    neighbours. No error, no log line, and a caller cannot tell a thin result from a wrong one.
+    §4.3 is explicit that this is one of the five conditions that must refuse to start.
+
+    Three outcomes are *not* failures, on the same policy as the schema check:
+
+    * an unreachable Qdrant — inconclusive, never a restart loop over a backing-service outage;
+    * a configuration that does not parse — ``config_valid`` owns that refusal;
+    * **no fingerprint recorded yet** — the first ingest writes it (§6.6), so a collection that has
+      never been embedded into has nothing to disagree with. §15.1 makes the pinned *schema* a
+      readiness condition; it does not make a never-ingested collection an unready one.
+
+    A stored record that exists but cannot say whether it matches — the wrong ``kind``, or one of
+    §6.6's four fields missing — **is** a failure. That is drift, not absence.
+    """
+    try:
+        cfg = load_config(env)
+    except ConfigError as exc:
+        # `config_valid` already reports this; a refused configuration has no recipe to compare.
+        return CheckResult("collection_fingerprint", UNAVAILABLE,
+                           f"configuration refused: {exc}", reason=INDEX_NOT_READY)
+
+    configured = fingerprint_module.Fingerprint.of(cfg)
+    facts: dict[str, object] = {"collection": cfg.pages_collection,
+                                "configured_digest": configured.digest}
+    owned = client is None
+    connection = client or QdrantClient(url=cfg.qdrant_url, timeout=QDRANT_TIMEOUT_S,
+                                        check_compatibility=False)
+    try:
+        stored = fingerprint_module.read(connection, cfg.runs_collection, cfg.pages_collection)
+    except fingerprint_module.FingerprintMismatch as exc:
+        return CheckResult("collection_fingerprint", FAIL, str(exc), {**facts, **exc.details})
+    except Exception as exc:  # noqa: BLE001 - any failure here is "could not reach Qdrant"
+        return CheckResult(
+            "collection_fingerprint", UNAVAILABLE,
+            f"qdrant unreachable at {scrub_url(cfg.qdrant_url)}: {type(exc).__name__}: {exc}",
+            facts, reason=QDRANT_UNAVAILABLE,
+        )
+    finally:
+        if owned:
+            connection.close()
+
+    if stored is None:
+        return CheckResult(
+            "collection_fingerprint", OK,
+            f"no fingerprint recorded for {cfg.pages_collection} yet — the first ingest writes "
+            f"it (§6.6)", facts,
+        )
+
+    differences = configured.differences(stored)
+    if differences:
+        detail = ", ".join(f"{field}: stored {was!r} != configured {now!r}"
+                           for field, (was, now) in sorted(differences.items()))
+        return CheckResult(
+            "collection_fingerprint", FAIL,
+            f"{cfg.pages_collection} was embedded under a different recipe ({detail}). Refusing "
+            f"to serve: a query embedded by this release cannot be compared with vectors made by "
+            f"another, and the only symptom would be worse neighbours. The remedy is a NEW "
+            f"collection, a full re-embed and an alias swap — never an in-place mix (§6.6)",
+            {**facts, "differences": {field: list(pair) for field, pair in differences.items()},
+             "stored_digest": stored.digest},
+        )
+    return CheckResult(
+        "collection_fingerprint", OK,
+        f"{cfg.pages_collection} was embedded under this release's recipe "
+        f"({configured.digest})", {**facts, "stored_digest": stored.digest},
+    )
+
+
 #: The one check list. `vsir doctor` and server start run exactly this, in this order.
 BOOT_CHECKS: tuple[Callable[[Mapping[str, str], QdrantClient | None], CheckResult], ...] = (
     check_required_env,
@@ -255,6 +341,7 @@ BOOT_CHECKS: tuple[Callable[[Mapping[str, str], QdrantClient | None], CheckResul
     check_python_runtime,
     check_dependencies,
     check_collection_schema,
+    check_collection_fingerprint,
 )
 
 

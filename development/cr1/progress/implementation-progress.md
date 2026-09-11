@@ -9,9 +9,10 @@
 |---|---|
 | **Complete** | **32 / 33 units (97%)** — 25 of the planned 26 (every one but **U013**), plus U027, U028, U029, U030, U031 and U032 added after the plan was written (plan §4b) and the `fixes/` bundle |
 | **Current milestone** | **M8 is closed, and so is the plan.** U025 closed revisions, resume and graceful shutdown; **U026** closes the last one — `vsir eval corpus`, §12.6's report and the D11 gates. **Every milestone M0-M8 is now closed.** The only unit that is not `[x]` is **U013**, whose paid re-bill waits on OQ-1 |
-| **Latest** | **U026 — the catalogue, measured rather than asserted.** `vsir eval corpus` prints §12.6's five metrics against D11's gates, exits non-zero on any failure, and stops with a named **P0 STOP** on a `code_precision` under 1.00. Three findings the build produced: **(1)** `0/0` is the one arithmetic accident that turns an absent corpus into a perfect safety score, so a zero denominator is `None` and a named skip, never `1.00`; **(2)** the document-wide `lookup` status explains a recall miss *wrongly* — a code printed on an untrusted page inside a searchable document answers `not_found`, and a report echoing that would send a reader hunting a tokenisation bug that is not there, so a miss is explained from the page's own record; **(3)** a ground-truth file is found by the `doc_id` it **declares**, not by its directory name — fixture directories are named after the corpus (`synthetic_pages` holds `SYN-M1`), so the obvious `data/fixtures/<doc_id>/` path finds nothing for most of them. The report also prints `1/denominator` and marks a set **underpowered** when one miss costs more than its gate's whole tolerance |
-| **Next unit** | None in the plan. What is left is the **completion gate**: AC-001…AC-016 verified with evidence, §10's "Closed at" column checked row by row, then `v0.1.0` |
-| **Then** | `git tag cr1-m8` on the milestone gate, and `v0.1.0` once the completion gate is signed off. **U013 stays `[!]`**, so the completion gate has to state what AC-014's M2b slice and §12.6's real-corpus numbers still rest on (OQ-1) rather than count them green |
+| **Latest** | **The completion gate ran — 15 of 16 ACs closed with evidence, all 19 §10 rows closed by the milestone that owns them, and `v0.1.0` deliberately NOT tagged.** It closed two criteria that were open and found three bad pointers in this file. **AC-012** was missing §4.3's third refusal: `fingerprint.require` guards the *write*, but a process that only ever **reads** embeds the query with one model and compares it against vectors made by another — no guard fires and the only symptom is worse neighbours, which is indistinguishable from a thin corpus. `doctor.check_collection_fingerprint` now refuses that boot. **AC-013**'s `summaries[]` was on Part A's wire and off the test: the field set was asserted against the export module's **own constant**, so deleting the field from both left the suite green. **AC-014 is 8 of 9** — M2b's demo cannot run without OQ-1's PDF, so the tag waits on a decision that is the project owner's. See **Completion gate** at the foot of this file |
+| **Previously** | **U026 — the catalogue, measured rather than asserted.** `vsir eval corpus` prints §12.6's five metrics against D11's gates, exits non-zero on any failure, and stops with a named **P0 STOP** on a `code_precision` under 1.00. Three findings the build produced: **(1)** `0/0` is the one arithmetic accident that turns an absent corpus into a perfect safety score, so a zero denominator is `None` and a named skip, never `1.00`; **(2)** the document-wide `lookup` status explains a recall miss *wrongly* — a code printed on an untrusted page inside a searchable document answers `not_found`, and a report echoing that would send a reader hunting a tokenisation bug that is not there, so a miss is explained from the page's own record; **(3)** a ground-truth file is found by the `doc_id` it **declares**, not by its directory name — fixture directories are named after the corpus (`synthetic_pages` holds `SYN-M1`), so the obvious `data/fixtures/<doc_id>/` path finds nothing for most of them. The report also prints `1/denominator` and marks a set **underpowered** when one miss costs more than its gate's whole tolerance |
+| **Next unit** | **None — the plan and the completion gate are both done.** The only work left is not a unit: it is the **`v0.1.0` decision**, which needs an input this build cannot produce |
+| **Then** | **`v0.1.0` is blocked on one thing, twice.** **U013** is `[!]` and **AC-014** is ⚠ for the same reason — OQ-1's `data/source/TC1E-SF.pdf` was never delivered, so M2b's paid ingest and M2b's demo command have both never run. Either the pilot PDF lands (and one paid run closes both), or the owner decides to ship v0.1.0 with the M2b slice **explicitly waived**. Tagging while a top-level criterion is knowingly unmet would put the untrue claim in the one place nobody re-reads |
 | **Read first** | **Plan §4c — six open defects found by running the system.** None breaks a build; all of them mislead somebody who trusts the output. P1 (a live run records no cost) and P2 (no VLM cache store, so a re-ingest re-bills) both land on U013 |
 | **Blocked** | **U013** — the paid re-bill only, and now on **OQ-1 alone**: `data/source/TC1E-SF.pdf` is still not present. **OQ-2 is closed** — a key is configured and was exercised live on 2026-09-10, ingesting a real 4-page datasheet to `published` through `POST /documents`. The ladder is no longer a blocker either: the shipped `plan()` refused the 55-page pilot at **step 05**, one step before the spend everyone thought it was waiting on a credential for, and `fixes/001` now folds it to `[[1, 30], [31, 55]]` — byte-for-byte what its own acceptance table declared. Nothing downstream is blocked (§17) |
 
@@ -428,13 +429,13 @@ closed. F10 stays open until U004's filter gate consumes the dict, as the plan s
 | M0 | `vsir doctor && bash scripts/test-unit.sh` | ✅ | see below |
 | M1 | `vsir demo exact --synthetic` | ✅ | see the M1 milestone gate below |
 | M2a | `vsir ingest data/source/synthetic_3window.pdf --vlm stub` | ✅ | see the M2a milestone gate below |
-| M2b | `VSIR_ALLOW_PAID=1 vsir ingest data/source/TC1E-SF.pdf` | ⬜ | |
+| M2b | `VSIR_ALLOW_PAID=1 vsir ingest data/source/TC1E-SF.pdf` | ⬜ **blocked, OQ-1** | never run, and it cannot be: `data/source/TC1E-SF.pdf` does not exist. The pilot PDF was never delivered (OQ-1) and `data/source/*` is gitignored, so this demo is unrunnable on a clean checkout by anyone. **This is the one reason AC-014 is not green** — see the completion gate |
 | M3 | `vsir serve & vsir lookup "SF 1.1A" && vsir eval acceptance` | ✅ | see the M3 milestone gate below |
 | M4 | `vsir demo narrow` | ✅ | exit 0; see the M4 milestone gate below |
 | M5 | `VSIR_ALLOW_PAID=1 vsir read --pages … --question …` | ✅ | ran live against Gemini; see the M5 milestone gate below |
-| M6 | `VSIR_ALLOW_PAID=1 vsir ask "carton discharge won't restart after an E-stop reset"` | ✅ | run in replay on the OQ-1 fallback corpus, **both branches**; see the M6 milestone gate below |
-| M7 | `bash scripts/test-e2e.sh` then browse `http://localhost:5174` | ⬜ | |
-| M8 | `vsir ingest --resume <run_id>` and `vsir eval corpus` | ⬜ | |
+| M6 | `VSIR_ALLOW_PAID=1 vsir ask "carton discharge won't restart after an E-stop reset"` | ✅ *(substituted question)* | run in replay on the OQ-1 fallback corpus, **both branches**; see the M6 milestone gate below. **§0's literal question is about `TC1E-SF`**, which OQ-1 never delivered, so it was asked of the fallback corpus as *"why won't the guard door interlock release when K119 is monitored"*. The command shape, the loop, the answer gate and the abstention branch are all exercised; the *wording* is not §0's |
+| M7 | `bash scripts/test-e2e.sh` then browse `http://localhost:5174` | ✅ | 22 Playwright assertions green against the shipped image, `GET http://localhost:5174 → 200`; see the U024 entry and the M7 milestone gate below |
+| M8 | `vsir ingest --resume <run_id>` and `vsir eval corpus` | ✅ | `--resume` after a SIGTERM kill → `exit=0`, 3 windows cached / 2 bought; `vsir eval corpus` prints §12.6's five metrics against D11's gates. See the U025 and U026 entries and the M8 milestone gate below |
 
 ### U004 — Tokenisation, variants, the exact filter, and both envelopes
 
@@ -2177,7 +2178,7 @@ vacuously.
 | a missing required env var | **ships** (U001) |
 | `text`/`vlm_codes` not text indexes with `phrase_matching=True` | **ships** (U003) |
 | the live payload schema lacks any `INDEXED` key | **ships, narrowed** — see below |
-| the collection fingerprint ≠ the configured embedding model | **not implemented — U010 owns it.** `dim` and `distance` are read back from the live collection; `embed_model` and `composition_version` are not observable from Qdrant, so the model half of §6.6 needs a record written beside the collection |
+| the collection fingerprint ≠ the configured embedding model | **not implemented at M0 — U010 owns it.** `dim` and `distance` are read back from the live collection; `embed_model` and `composition_version` are not observable from Qdrant, so the model half of §6.6 needs a record written beside the collection. **Now ships** — `doctor.check_collection_fingerprint` reads U010's control-plane record and refuses the boot on a disagreement; closed at the completion gate, 2026-09-11, where AC-012's audit found it was the one §4.3 refusal still missing |
 
 **The narrowing, stated plainly.** A collection that *exists and disagrees* with `INDEXED` refuses
 the boot, by name — that is the M0 acceptance item and it is closed. A collection that is **absent**
@@ -3493,8 +3494,15 @@ re-bill on OQ-1, unchanged). New: `tests/api/test_page_image.py` (39), `test_fet
 | `vsir demo narrow` exits 0 with the narrowing, the crop and the typed 400s | the demo above, exit 0 |
 
 **Invariants / failure rows closed** — **F18 (`fetch` half)**: the §7.3 caps, each a typed 400
-naming its bound, held by `test_fetch_budget_exceeded`-family and `test_dpi_requires_region`. F18's
+naming its bound, held by `test_six_pages_is_refused_and_there_is_no_partial_five_page_result`,
+`test_two_pages_at_300_dpi_exceed_the_megapixel_bound_and_name_it`,
+`test_the_megapixel_bound_is_decided_before_a_single_render`,
+`test_a_dpi_off_the_list_is_dpi_not_allowed` and
+`test_above_the_answer_dpi_a_region_is_required` (all `tests/api/test_fetch_caps.py`). F18's
 `read` half stays with U020 (§10 *Closed at*). No invariant is newly asserted here.
+*(Citations corrected at the completion gate: this read "`test_fetch_budget_exceeded`-family and
+`test_dpi_requires_region`" — both are **error codes**, not tests, and neither name exists in the
+suite. The guards were real; the pointers to them were not.)*
 
 **Decisions worth keeping**
 
@@ -3825,8 +3833,12 @@ extract      'Q69 is the contactor on the first sheet and Q70 on the second, bot
 ```
 
 **Invariants / failure rows closed:** **F18 (read half)** — the ≤ 3-page cap as a typed 400 naming
-its bound, checked *before* the quota is charged (`test_read_page_cap_exceeded`,
-`test_the_page_cap_does_not_cost_the_caller_a_read`). **F19** — `read_key` includes the question, so
+its bound, checked *before* the quota is charged
+(`test_a_fourth_page_is_a_typed_400_naming_its_bound`,
+`test_the_page_cap_does_not_cost_the_caller_a_read`).
+*(Citation corrected at the completion gate: this read `test_read_page_cap_exceeded`, which is the
+**error code** the test asserts on, not a test that exists. A closing citation nobody can grep is
+the defect this file treated as one at the M1 gate.)* **F19** — `read_key` includes the question, so
 a new question is a miss (`test_a_new_question_about_the_same_pages_makes_a_second_call`). §11.3's
 two `read` rows: `429 budget_exhausted` and `503 vlm_unavailable` **while all seven free tools still
 return 200**. No invariant is newly asserted here — I8 is U022's, and this unit provides one of its
@@ -5140,9 +5152,14 @@ count(REV-DOC@1.3, is_current)  = 0
 
 - **F9** — `is_current` injected by default plus the `found_only_in_superseded` status, with the
   revision surfaced (`test_lookup_only_in_superseded_returns_typed_status`).
-- **F12 (revision half)** — publishing 1.4 retires 1.3's points to `is_current=false` **without
-  deleting them** (`test_publishing_new_revision_keeps_prior_points`), beside clause 1's delete
-  and clause 3's payload-hash isolation, all three in one file so no one of them can pass alone.
+- **F9, continued — §6.7 clause 2** — publishing 1.4 retires 1.3's points to `is_current=false`
+  **without deleting them** (`test_publishing_new_revision_keeps_prior_points`), beside clause 1's
+  delete and clause 3's payload-hash isolation, all three in one file so no one of them can pass
+  alone. *(Corrected at the completion gate: this bullet read **"F12 (revision half)"**. §10 gives
+  F12 exactly one closing milestone — **M2a** — and no halves; keeping the prior revision's points
+  is what makes `found_only_in_superseded` answerable at all, so it is **F9's** guard, and F9 is
+  the row §10 closes here. Claiming it as F12 would have let a row look closed twice and let M2a's
+  genuine F12 evidence hide behind an M8 label.)*
 - **F8 (`series_id` half)** — stable across revisions, pure (`test_series_id_stable_across_revisions`)
   and in an index (`test_series_id_stable_across_revisions_in_the_index`).
 - **AC-016** re-exercised: `test_sigterm_checkpoint_loses_at_most_one_window`,
@@ -5582,3 +5599,174 @@ the cross-reference set is 4 tokens against 6,880 (printed `underpowered`); and 
 evidenced**, until OQ-1's corpus lands. That is U013's, and U013 stays `[!]`.
 
 **Tag:** `cr1-m8`.
+
+---
+
+## Completion gate — AC-001…AC-016 and §10's "Closed at" column (2026-09-11)
+
+The gate the build prompt §5 defines: every acceptance criterion of Spec §14 verified **with
+evidence**, every failure row of §10 checked against the milestone that owns it, and only then the
+release tag. Four read-only audits ran it — three over the AC list, one over F1…F19 — and each was
+told a docstring or a markdown claim is not evidence: a criterion counts as closed only if a
+deterministic check **fails when the guard is removed**.
+
+### The suite, on today's HEAD
+
+| Layer | Command | Result |
+|---|---|---|
+| L0/L1 + conformance | `bash scripts/test-unit.sh` | **1459 passed** (backend) · **166 passed** (frontend, 17 files) · TypeScript clean |
+| L2/L3 | `bash scripts/test-api.sh` | **1688 passed, 13 skipped, 0 failed** (22m47s) |
+| E2E | `VSIR_TEST_CONSOLE_PORT=5199 bash scripts/test-e2e.sh` | **22 passed**, exit 0 |
+| L4 (paid) | not run | no `Spend: paid` unit ran; U013 stays blocked |
+
+**A red run that was not the build's fault, recorded so nobody re-debugs it.** The first L2/L3 run
+of this gate came back **182 failed, 1506 passed** — 1688 collected either way, and every failure
+in the *tail* of the run. The cause was contention, not code: four audit subagents were running
+against the same machine while `scripts/test-api.sh` owned the Docker test stack, and that stack is
+a singleton (fixed ports 8001/6335, `down -v` on teardown). Re-run alone, the identical tree is
+green. **The L2/L3 suite owns the test stack exclusively — never run anything that can touch Docker
+beside it.**
+
+### AC-001…AC-016
+
+| AC | Verdict | The check that fails if the property breaks |
+|---|---|---|
+| **AC-001** hallucinated code unfindable via `lookup` | ✓ | `test_lookup_pure.py::test_a_hallucinated_code_is_only_ever_an_unverified_hit`; `test_i2_text_provenance.py::test_derivation_assigns_text_from_the_probe_and_from_nothing_else` (AST walk — a literal assigned to `text=` fails) |
+| **AC-002** phrase-only; variants re-space only | ✓ | `test_variants.py::test_a_variant_only_ever_re_spaces_the_label`; `test_exact.py::test_exact_filter_is_the_only_call_site_of_match_phrase` (AST scan over the package) |
+| **AC-003** six statuses, no empty `ok` in Family A | ✓ | `test_envelope.py::test_an_empty_ok_is_impossible` + `::test_the_validator_survives_optimisation` (a `raise`, not an `assert`, so `python -O` cannot strip it) |
+| **AC-004** scanned → `not_searchable`, never `not_found` | ✓ | `test_status_enum_end_to_end.py::test_not_searchable_is_never_not_found`; `::test_an_untrusted_text_layer_is_also_not_searchable` |
+| **AC-005** `present`/`absent`/`unverifiable` per `(claim, page)` | ✓ | `test_verify_tool.py::test_a_verdict_is_per_claim_and_page_not_per_claim`; `::test_the_three_states_never_collapse_into_two` |
+| **AC-006** two page-number checks; offset bisects and re-bills | ✓ | `test_derive_offset.py::test_an_offset_failure_bisects_the_window_and_re_derives_the_halves`; `test_offset_repair.py::test_no_page_is_derived_from_the_response_that_failed_the_check` |
+| **AC-007** ungated run → zero queryable pages | ✓ | `test_publish_and_retire.py::test_unpublished_run_zero_queryable_pages`; `test_index_upsert.py::test_a_record_that_arrives_already_current_is_refused` |
+| **AC-008** every §7.3 cap a typed 400 naming its bound | ✓ | all eight caps carry their own test; the two that matter most are `test_fetch_caps.py::test_the_megapixel_bound_is_decided_before_a_single_render` and `test_read_caps.py::test_the_page_cap_does_not_cost_the_caller_a_read` — the bound is decided **before** the work, so no clamp can hide |
+| **AC-009** worked trace = one paid `read`, with citations | ✓ | `test_ask_replay.py::test_the_worked_trace_answers_in_exactly_one_paid_read`, corroborated independently by `::test_the_read_call_count_is_one_in_the_audit_log_too` |
+| **AC-010** abstains with coverage numbers | ✓ | `test_abstention_wording.py::test_the_composer_cannot_emit_a_sentence_the_rule_forbids`; `test_ask_replay.py::test_the_abstention_cannot_claim_the_corpus_is_exhausted_while_a_page_is_unexamined` |
+| **AC-011** L3 abstention eval, 100 near-misses, in CI | ✓ | `test_near_miss_codes_never_answer.py` (`assert len(sample) == 100`), with the anti-vacuity control `::test_the_real_codes_the_fakes_came_from_are_all_findable`; `.github/workflows/ci.yml` runs it `on: push` |
+| **AC-012** boot refuses on drift, fingerprint, `-latest` | ✓ | **closed at this gate** — see below |
+| **AC-013** `labels.jsonl` delivers the five Part A fields | ✓ | **closed at this gate** — see below |
+| **AC-014** every §0 demo runs green on a clean checkout | ⚠ **8 of 9** | **M2b cannot run: OQ-1** — see below |
+| **AC-015** one image, env config, no local state | ✓ | `test_conformance.py::test_one_image_runs_every_process_type`; `::test_no_module_level_mutable_session_store` with the planted-violation control `::test_the_ast_scan_catches_a_planted_session_store` |
+| **AC-016** SIGTERM leaves no half-document; probes per §15.1 | ✓ | `test_resume.py::test_resume_completes_without_rebilling`; `test_probes.py::test_health_stays_green_and_ready_goes_red_when_qdrant_is_unreachable` |
+
+### The two the gate closed, and the one it could not
+
+**AC-012 — the fingerprint refusal was the one §4.3 refusal still missing.** §4.3 names five
+conditions that must refuse to start. Four shipped at M0; the third — *the collection fingerprint ≠
+the configured recipe* — was deferred to U010 because `embed_model` and `composition_version` are
+not observable from a Qdrant collection, and then never came back. `ingest/fingerprint.require`
+guarded the **write**, which is what keeps two families of vector out of one cosine space. It says
+nothing about a process that only ever **reads**: that one embeds the query with this release's
+model and compares it against vectors made by another, no guard fires, and *the only symptom is
+worse neighbours* — indistinguishable from a thin corpus. `doctor.check_collection_fingerprint`
+now reads U010's control-plane record and refuses the boot, and `/ready` goes 503 if the recipe
+starts disagreeing under a running instance. Demonstrated, not merely asserted:
+
+```
+$ vsir doctor
+{"check": "collection_fingerprint", "collection": "vsir_pages_1536",
+ "detail": "vsir_pages_1536 was embedded under this release's recipe (45a09c588c25422c)",
+ "event": "boot_check_ok", "stored_digest": "45a09c588c25422c"}
+{"event": "doctor_ok", "failed_checks": [], "fingerprint_id": "45a09c588c25422c"}
+exit=0
+
+$ VSIR_EMBED_MODEL=some-other-embed-model vsir doctor
+{"check": "collection_fingerprint",
+ "detail": "vsir_pages_1536 was embedded under a different recipe (embed_model: stored
+   'gemini-embedding-2' != configured 'some-other-embed-model'). Refusing to serve: a query
+   embedded by this release cannot be compared with vectors made by another … The remedy is a NEW
+   collection, a full re-embed and an alias swap — never an in-place mix (§6.6)",
+ "differences": {"embed_model": ["gemini-embedding-2", "some-other-embed-model"]},
+ "event": "boot_check_failed"}
+{"event": "doctor_refused", "failed_checks": ["collection_fingerprint"]}
+exit=1
+```
+
+Three outcomes are deliberately **not** refusals, on the same policy as the schema check: an
+unreachable Qdrant is inconclusive (an outage must not become a fleet-wide restart loop, §15.1); a
+configuration that does not parse belongs to `config_valid`; and **a collection nobody has ingested
+into yet has no record to disagree with** — refusing there would mean a fresh deployment could
+never boot far enough to run the ingest that writes one. A stored record that exists but *cannot
+say* whether it matches — wrong `kind`, or one of §6.6's four fields missing — **is** a failure.
+That is drift, not absence.
+
+**AC-013 — `summaries[]` was on the wire and off the test.** Four of the five fields AC-013 names
+were pinned by a test that indexes them literally. `summaries` was pinned only by
+`sorted(row) == sorted(LABEL_FIELDS)` — a comparison against *the export module's own constant*.
+Deleting `"summaries"` from `LABEL_FIELDS` and from `label_row` left the entire suite green, and
+Part A would have lost the field in silence. The test file's own docstring claimed the field set was
+"asserted as an equality against §6.8's list"; it was not. §6.8's fourteen keys are now transcribed
+into the test as an independent literal, `summaries[]` is read by key the way `page_range` already
+was, and the mutation is caught: **deleting the field from both the constant and the row now fails
+3 tests** (it failed 0 before).
+
+**AC-014 — eight of nine, and the ninth is OQ-1.** M0, M1, M2a, M3, M4, M5, M6, M7 and M8 all have
+recorded green demo output; M0, M1, M8's `eval corpus` and M7's E2E were re-run at this gate and are
+green on today's HEAD. **M2b's demo has never run and cannot:** it is
+`VSIR_ALLOW_PAID=1 vsir ingest data/source/TC1E-SF.pdf`, the pilot PDF was never delivered, and
+`data/source/*` is gitignored — so it is unrunnable on a clean checkout by anyone, not just here.
+Two further honesty corrections the gate made to this file's own ledger, which read *worse* than the
+build actually is in one direction and *better* in another:
+
+- the ledger still showed **M7 and M8 as ⬜** although both record green demo output — corrected to ✅;
+- **M6 is marked ✅ *(substituted question)***: §0's literal question is about `TC1E-SF`, so it was
+  asked of the OQ-1 fallback corpus instead. The loop, the answer gate and the abstention branch are
+  all exercised; §0's *wording* is not.
+
+**AC-014 is therefore not ticked.** One milestone's demo has never been executed, and a criterion
+that reads "every milestone's demo command runs green" cannot be signed off on eight of nine.
+
+### Spec §10 — F1…F19 against the "Closed at" column
+
+**All nineteen rows are closed, each by the milestone §10 names, each by a test that inverts when
+its guard is deleted.** The rows with two closing milestones (F2, F4, F5, F8, F11, F18) were checked
+as two halves and both hold. The four rows singled out as easy-to-claim turned out to be the
+best-evidenced in the build: F7 has both §6.4 checks in one function plus an end-to-end
+bisect-and-re-bill through a real replay backend; F13's `MAX_TOKENS` path is exercised as an actual
+`finish_reason`, not a string handed to `bisect_window`; F9's retirement is filter-scoped to
+`(doc_id, revision)` in both clause 1 and `retire_document`, and **a blanket delete-by-`run_id`
+appears nowhere in the tree** — which is what keeps F12's guard from destroying F9's evidence.
+
+Three defects, all in *this file* rather than in the code — a pointer that does not resolve is how a
+future reader concludes a guard is missing and rewrites one that already exists:
+
+1. **F12 was claimed twice.** The U025 entry read "**F12 (revision half)**". §10 gives F12 exactly
+   one closing milestone (M2a) and no halves; what M8 evidences there — keeping the prior revision's
+   points while demoting them — is §6.7 clause 2, which is **F9's** guard. Relabelled.
+2. **Three closing citations for F18 were error codes, not tests.**
+   `test_read_page_cap_exceeded`, `test_fetch_budget_exceeded` and `test_dpi_requires_region` return
+   zero hits across `backend/tests/`. The guards are real and so are the tests; the pointers to them
+   were not. Replaced with the names that exist.
+3. **F8's "carry-in" is narrower than §10's guard text.** `stitch.py` merges sightings on the
+   canonical section key but never *carries* a section into a page that reported none — the gap is
+   disclosed as `noncontiguous_section` rather than smoothed over. The M2a gate recorded this as a
+   deliberate reading, so it is disclosed rather than hidden, but **§10's wording and the code no
+   longer say the same thing** and one of them should be changed. Left as found: narrowing a
+   disclosed guard at the completion gate would be the wrong moment, and widening it is a spec edit.
+
+### Hardening the gate found but did not apply
+
+Neither is a failing criterion; both are one regression away from becoming one, and both are
+recorded rather than silently fixed because they sit outside the ACs' wording.
+
+- **`POST /search`'s `SearchResult` carries no `empty_is_never_ok` validator.** The five Family A
+  tools each get the invariant from a model validator that raises; the flat surface added after the
+  plan holds it with a conditional plus one test
+  (`test_search_surface.py::test_a_scope_matching_nothing_is_out_of_scope_and_not_an_empty_ok`).
+  Lifting the same `model_validator` onto `SearchResult` would make it structural. AC-003 is about
+  Family A and passes as written.
+- **`preserves_characters()` is never asserted at a call site.** `exact_filter` builds variants
+  without checking them; the I3 property is table-driven over 29 labels rather than generated. One
+  `if not preserves_characters(label): raise` in `core/exact.py` would close the gap by construction.
+
+### Verdict
+
+**15 of 16 acceptance criteria are closed with evidence. AC-014 is 8 of 9.** All 19 failure rows of
+§10 are closed by the milestone that owns them. Every test layer that can run without spending money
+is green.
+
+**`v0.1.0` is not tagged.** Two things block it and they are the same thing: **U013** is `[!]` and
+**AC-014** is ⚠, both because OQ-1's pilot PDF (`data/source/TC1E-SF.pdf`) was never delivered.
+Tagging a release while a top-level criterion is knowingly unmet would put the untrue claim in the
+one place nobody re-reads. The tag needs either the pilot PDF — after which U013's paid ingest and
+M2b's demo close both rows together — or an explicit decision to ship v0.1.0 with the M2b slice
+excluded and AC-014 recorded as waived. **That is a call for the project owner, not for the build.**

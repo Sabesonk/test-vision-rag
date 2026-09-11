@@ -58,13 +58,47 @@ def lines(store) -> list[dict]:
 
 # ── the §6.8 field set, exactly ──────────────────────────────────────────────────────────────────
 
+#: §6.8's JSON example, transcribed key by key. **The literal is the point.** Asserting a row
+#: against `LABEL_FIELDS` alone only proves the export agrees with its own constant: deleting a key
+#: from both leaves that check green and takes the field off Part A's wire in silence. This tuple
+#: is the independent copy, so the two have to be edited together and the spec is what the suite
+#: compares against.
+SPEC_6_8_FIELDS: tuple[str, ...] = (
+    "page_id", "doc_id", "revision", "page_no", "printed_page_no", "label_verified", "sections",
+    "summaries", "codes_in_text", "grounded_rate", "safety_flag", "vlm_model", "prompt_version",
+    "dpi",
+)
+
+
+def test_the_exported_field_set_is_the_one_6_8_declares():
+    """AC-013 — the constant `label_row` is built from, against §6.8 rather than against itself."""
+    assert LABEL_FIELDS == SPEC_6_8_FIELDS
+
+
 def test_every_line_carries_exactly_the_fields_of_6_8(lines):
     """AC: `page_id`, `doc_id`, `revision`, `page_no`, `printed_page_no`, `label_verified`,
     `sections[]`, `summaries[]`, `codes_in_text[]`, `grounded_rate`, `safety_flag`, `vlm_model`,
     `prompt_version`, `dpi` — an equality, so an extra field fails too."""
     assert lines
     for row in lines:
-        assert sorted(row) == sorted(LABEL_FIELDS)
+        assert sorted(row) == sorted(SPEC_6_8_FIELDS)
+
+
+def test_a_summary_row_carries_the_two_fields_part_a_renders(lines):
+    """`summaries[]` read by the literal key, the way the section test reads `page_range`.
+
+    The other four fields AC-013 names are each pinned by a test that indexes them directly;
+    `summaries` was pinned only by the field-set comparison, which was self-referential. A page
+    that summarised nothing is fine — `summaries` is `[]` on a page with no S2 summary — so the
+    assertion is over the pages that have one.
+    """
+    summarised = [row for row in lines if row["summaries"]]
+
+    assert summarised, "the M2a corpus must carry at least one summary, or this proves nothing"
+    for row in summarised:
+        for summary in row["summaries"]:
+            assert sorted(summary) == ["lang", "text"]
+            assert summary["text"]
 
 
 def test_a_section_row_carries_the_four_fields_the_graph_build_joins_on(lines):

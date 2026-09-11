@@ -162,10 +162,14 @@ def test_the_readiness_probe_is_free(live_client):
 
     live_client.get("/ready")
 
-    # Metadata only. A probe that scrolled the collection would still be fast on an empty one and
-    # catastrophic on 5,505 pages, so the assertion is on the call shape, not on a latency number.
+    # Metadata only, plus one point fetched by a derived id. A probe that scrolled the collection
+    # would still be fast on an empty one and catastrophic on 5,505 pages, so the assertion is on
+    # the call shape, not on a latency number. `retrieve` is on the list because §6.6's fingerprint
+    # is a control-plane point (D9) and its id is computed from the collection name — one key
+    # lookup, bounded whatever the corpus grows to. The unbounded shapes stay banned.
     assert calls, "the readiness probe must actually ask Qdrant something"
-    assert set(calls) <= {"collection_exists", "get_collection"}
+    assert set(calls) <= {"collection_exists", "get_collection", "retrieve"}
+    assert not {"scroll", "search", "query_points", "count"} & set(calls)
 
 
 def test_every_probe_response_carries_the_release(live_client):

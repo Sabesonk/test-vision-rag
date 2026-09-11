@@ -254,6 +254,42 @@ def test_no_container_image_is_tagged_latest():
     assert not offenders
 
 
+def test_one_image_runs_every_process_type():
+    """§15 Factor XII, AC-015 — `web`, `ingest-worker` and one-off admin are one image.
+
+    The property is easy to hold by hand and easy to break by hand: a service that grows its own
+    `build:` context, or a `console`-style sidecar that quietly starts running `vsir`, is a second
+    release answering as the first. Compose is read as text rather than with a YAML parser because
+    §15 Factor III took PyYAML out of this project's dependencies, and a test-only dependency is
+    still a dependency.
+    """
+    service = re.compile(r"^  ([a-z][a-z0-9_-]*):\s*$")
+    for compose in sorted(REPO.glob("docker-compose*.yml")):
+        images: dict[str, str] = {}
+        commands: dict[str, str] = {}
+        current = ""
+        for line in compose.read_text(encoding="utf-8").splitlines():
+            header = service.match(line)
+            if header:
+                current = header.group(1)
+                continue
+            if not current:
+                continue
+            image = re.match(r"^    image:\s*(\S+)", line)
+            if image:
+                images[current] = image.group(1)
+            command = re.match(r"""^    command:\s*\[\s*["']([a-z-]+)["']""", line)
+            if command:
+                commands[current] = command.group(1)
+
+        app = {name: image for name, image in images.items() if image.startswith("vsir:")}
+        assert len(set(app.values())) == 1, (
+            f"{compose.name}: the vsir services do not share one image: {app}")
+        process_types = {commands[name] for name in app if name in commands}
+        assert {"serve", "ingest", "doctor"} <= process_types, (
+            f"{compose.name}: one image must run all three process types, found {process_types}")
+
+
 def test_no_credential_literal():
     """§15.1 — a token or a key never appears in code, a log line, a response or an image.
 

@@ -116,6 +116,17 @@ VSIR_QDRANT_URL=http://localhost:6335 VSIR_EMBED_MODEL=some-other-embed-model \
   backend/.venv/bin/vsir ingest data/source/synthetic_3window.pdf --vlm stub --until index
 ```
 
+The same disagreement **refuses the boot**, which is where an operator meets it first: `vsir
+doctor` and `vsir serve` run `collection_fingerprint` against that record and exit non-zero with
+`failed_checks: ["collection_fingerprint"]` before a socket is bound, and `GET /ready` goes 503 if
+it starts disagreeing under a running instance. A serving process writes nothing, so the ingest
+guard above never fires for it — it would embed the query with one model and compare it against
+vectors made by another. A collection nobody has ingested into yet has no record and boots fine:
+
+```bash
+VSIR_EMBED_MODEL=some-other-embed-model backend/.venv/bin/vsir doctor   # exit 1, named refusal
+```
+
 `--vlm gemini` is a live call and needs `VSIR_VLM_KEY` (from the platform secret store, never the
 image); without it the run refuses `vlm_backend_unavailable`. **`VSIR_VLM` selects the embedding
 backend too** — one switch for "does this release make live model calls", so a run that replays S2

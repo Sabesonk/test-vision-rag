@@ -65,6 +65,55 @@ Part B's retrieval is **within-document service**, called by Part A's agent; it 
 
 Fidelity is chosen per segment class (schematic sheets and plates render high-fidelity; prose pages flat), and repeated reads of the same segment at the same fidelity are cache hits.
 
+### 4a. As built: the tool ladder, and a flat search surface for a non-agentic consumer
+
+Implementation note, recorded here because it diverges from §4 above in two ways a reader of this
+document would otherwise get wrong.
+
+**The service exposes eight tools, not two.** §4's `search` and `read` became a narrowing ladder,
+because an agent chooses far more reliably between named *moves* than between values of a
+parameter: `skim_documents` → `skim_sections` → `skim_pages` (which binder / chapter / page),
+`lookup` (exact printed code), `resolve` (a printed cross-reference → an addressable page),
+`verify` (is this code actually on this page), `fetch` (the page's pixels and text, free), and
+`read` — **the only one that bills a vision call**. Seven of the eight are free, so an agent
+arrives at the paid step already knowing which pages it wants.
+
+**`search` returns no scores.** §4 says *"segment candidates with scores"*; the built surface
+returns an **ordinal** `rank` and nothing else, and a build-time check fails on a response field
+named `score`. The reason is the failure mode: a magnitude invites a threshold, a threshold turns
+*"ranked ninth"* into *"no results"*, and a fabricated absence is the one outcome this corpus
+cannot afford. What a caller gets instead is `why` — which of the three retrieval branches found
+the row (`dense` = the page's image+text vector, `lexical` = its extracted text, `captions` = its
+generated summary) — plus each branch's own position, so a ranking is explicable without being
+scored.
+
+**`POST /search` — a flat surface for a system that is not the Part A agent.** The ladder costs
+the caller one inference turn per rung, which is the right trade for an agent that is *deciding*
+and pure waste for a consumer that will do its own reasoning. So one free call returns ranked
+pages **with their content** — summary, extracted text, topics, model-claimed codes, printed
+labels, sections — plus the page raster as a reference and, per row, the next operations with
+their arguments already assembled. It calls no model and never composes an answer; `POST /ask` is
+the only surface that may.
+
+Three properties of that surface matter to the contract in §5:
+
+- **An empty result is typed, never an empty list.** `status` is one of `ok`, `not_found`,
+  `not_searchable` (pages were in scope but none had readable text — escalate to vision, do *not*
+  conclude the content is absent), `out_of_scope` (the filters matched nothing, so the corpus was
+  never really asked) or `found_only_in_superseded` (a retired revision has it). Four different
+  next actions that an empty list collapses into one wrong one.
+- **Every row states how far its text may be believed.** `text_trust` is `ok` / `degraded` /
+  `untrusted` / `no_text`, and `text_usable` is the single flag to gate on — not the same as
+  `has_text`, because an `untrusted` page *has* text that may not be trusted. An empty extraction
+  on a scanned page means nobody could read the page, not that the page is blank.
+- **Codes are claims, not verdicts.** A model-reported code arrives beside the subset the page's
+  own text layer backs. `verify` is what settles one, and it is free.
+
+Keyword filters (`require_phrases` / `exclude_phrases`) require or forbid a phrase being printed
+on the page, through the same exact-match path as `lookup`. They can only ever match a page whose
+text could be read, so the response reports how many pages in scope that excluded — the same
+disclosure §6's evaluation depends on.
+
 ## 5. Standalone operation & integration contract
 
 **Standalone:** Part B demos `search` and `read` with direct scripted calls over the ingested corpus — no agent required.

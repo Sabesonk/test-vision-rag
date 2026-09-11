@@ -1,9 +1,10 @@
 """L2 — the server refuses to start rather than serve a partial service (Spec §4.3, §11.3).
 
-*"Never degrade to a partial service."* Four conditions make a process wrong rather than merely
+*"Never degrade to a partial service."* Five conditions make a process wrong rather than merely
 unlucky, and each exits non-zero **before a socket is bound**: a model id that floats, a live
-payload schema that disagrees with `INDEXED`, a missing required variable, and a configuration
-value that does not parse.
+payload schema that disagrees with `INDEXED`, a collection embedded under a recipe this release
+does not produce (§6.6), a missing required variable, and a configuration value that does not
+parse.
 
 **Before the port is bound** is the load-bearing half, and it is why the schema test spawns a real
 `vsir serve` rather than only calling the factory. A process that binds and *then* discovers it
@@ -21,14 +22,17 @@ import socket
 import subprocess
 import sys
 import time
+from dataclasses import replace
 
 import pytest
 
+from vsir.config import load_config
 from vsir.core.indexed import TEXT_INDEX_PARAMS
 from vsir.doctor import BootRefused
+from vsir.ingest import fingerprint
 from vsir.serve.app import app_factory, create_app
 
-from conftest import QDRANT_URL, SERVED_COLLECTION, serve_env
+from conftest import QDRANT_URL, SERVED_COLLECTION, SERVED_RUNS, serve_env
 
 #: A port nothing else in the test stack uses. The point of the subprocess test is that after the
 #: refusal, nothing is listening on it.
@@ -61,6 +65,59 @@ def test_boot_refuses_on_schema_drift(qdrant, served_collection):
 
     assert refused.value.failed_checks == ["collection_schema"]
     assert "text" in str(refused.value)
+
+
+@pytest.fixture
+def isolated_runs(qdrant):
+    """A control plane of this test's own, so a fingerprint it writes cannot reach another suite.
+
+    §6.6's record is one point per *pages* collection, and the pages collection here is the shared
+    served one — so the isolation has to be the `vsir_runs` side.
+    """
+    name = f"{SERVED_RUNS}_fingerprint_check"
+    if qdrant.collection_exists(name):
+        qdrant.delete_collection(name)
+    yield name
+    if qdrant.collection_exists(name):
+        qdrant.delete_collection(name)
+
+
+def test_boot_refuses_when_the_collection_was_embedded_under_another_recipe(
+        qdrant, served_collection, isolated_runs):
+    """§4.3's third refusal (§6.6, F11) — and the one the write-time guard cannot make.
+
+    `fingerprint.require` refuses an *upsert*, which keeps two families of vector out of one cosine
+    space. A serving process is the other half: it embeds the query with the model it is configured
+    for and compares it against whatever is already stored. Nothing is written, so no guard fires,
+    and the only symptom is worse neighbours — which is indistinguishable from a thin corpus.
+    """
+    env = serve_env(VSIR_RUNS_COLLECTION=isolated_runs)
+    stored = replace(fingerprint.Fingerprint.of(load_config(env)),
+                     embed_model="gemini-embedding-1")
+    fingerprint.write(qdrant, isolated_runs, served_collection, stored)
+
+    with pytest.raises(BootRefused) as refused:
+        create_app(env)
+
+    assert refused.value.failed_checks == ["collection_fingerprint"]
+    assert "gemini-embedding-1" in str(refused.value)
+    assert "gemini-embedding-2" in str(refused.value)
+
+
+def test_the_same_collection_boots_when_the_recipe_agrees(qdrant, served_collection,
+                                                          isolated_runs):
+    """The control. A refusal that fires on the agreeing case too would only look like rigour."""
+    env = serve_env(VSIR_RUNS_COLLECTION=isolated_runs)
+    fingerprint.write(qdrant, isolated_runs, served_collection,
+                      fingerprint.Fingerprint.of(load_config(env)))
+
+    create_app(env)  # no refusal
+
+
+def test_a_collection_with_no_fingerprint_yet_still_boots(served_collection, isolated_runs):
+    """A fresh deployment has not ingested yet, so there is no record to disagree with — and
+    refusing here would mean it could never boot far enough to run the ingest that writes one."""
+    create_app(serve_env(VSIR_RUNS_COLLECTION=isolated_runs))  # no refusal
 
 
 def test_boot_refuses_on_a_floating_model_alias(served_collection):
