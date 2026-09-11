@@ -1,0 +1,84 @@
+{
+  "pages": [
+    {
+      "page_index": 1,
+      "printed_page_no": "1 / 2",
+      "page_kind": "table",
+      "lang": [
+        "en"
+      ],
+      "sections": [
+        {
+          "title": "Inductive Sensors BES M12MI-PSC40B-S04G Order Code: BES0068",
+          "is_start": true
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Datasheet providing dimensional schematics, general features, and electrical data for the Balluff BES M12MI-PSC40B-S04G inductive sensor. Details operating voltage, switching frequency, IP rating, ambient temperature limits, and functional safety parameters."
+        }
+      ],
+      "codes": [
+        "BES M12MI-PSC40B-S04G",
+        "BES0068",
+        "M12x1",
+        "81U2",
+        "Class 2 Type 1",
+        "IEC 60947-5-2",
+        "M12x1-Male, 3-pin, A-coded",
+        "DC -13",
+        "EN 60068-2-27",
+        "EN 60068-2-6",
+        "IP68",
+        "265936",
+        "27-27-01-01",
+        "EC002714",
+        "BES0068_0.46_2021-03-18"
+      ],
+      "topics": [
+        "inductive sensors",
+        "electrical data",
+        "environmental conditions",
+        "dimensions",
+        "certifications"
+      ]
+    },
+    {
+      "page_index": 2,
+      "printed_page_no": "2 / 2",
+      "page_kind": "table",
+      "lang": [
+        "en"
+      ],
+      "sections": [
+        {
+          "title": "Inductive Sensors BES M12MI-PSC40B-S04G Order Code: BES0068",
+          "is_start": false
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Continuation of the datasheet specifying material composition, mechanical dimensions, and sensing range parameters. Includes pinout connector drawings, wiring diagrams for PNP normally open operation, and remarks regarding overload behavior."
+        }
+      ],
+      "codes": [
+        "BES M12MI-PSC40B-S04G",
+        "BES0068",
+        "M12x1",
+        "265936",
+        "27-27-01-01",
+        "EC002714",
+        "BES0068_0.46_2021-03-18"
+      ],
+      "topics": [
+        "material data",
+        "mechanical data",
+        "range and distance",
+        "connector drawings",
+        "wiring diagrams"
+      ]
+    }
+  ]
+}

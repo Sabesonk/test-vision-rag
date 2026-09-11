@@ -18,6 +18,14 @@ sent and in what order (§5.3, D4). Reordering the parts or dropping the raster 
 without changing the model id, so a fingerprint without it would agree with a collection whose
 contents it no longer describes.
 
+**Why a fifth field.** The same argument, one surface over. The two sparse vectors are scored by a
+recipe that is now half client-side (:mod:`vsir.ingest.sparse` writes BM25's tf component; Qdrant
+supplies the idf factor). A BM25 collection and a raw-term-frequency collection are byte-identical
+in shape, declare the same ``Modifier.IDF``, pass every schema check in
+:mod:`vsir.core.indexed` — and differ only in what the stored floats *mean*. A process configured
+for one and serving the other returns worse neighbours and no error, which is precisely the silent
+failure ``composition_version`` exists to prevent.
+
 **Where it lives.** Qdrant has no collection-level metadata, and §4.2 allows exactly two
 collections — so the fingerprint is a point in the **control plane**, ``vsir_runs`` (D9): one
 point per pages collection, discriminated by ``kind``. That collection holds runs, windows and
@@ -44,7 +52,7 @@ from typing import Any, Mapping
 from qdrant_client.http import models as qm
 
 from vsir import logging as vsir_logging
-from vsir.config import COMPOSITION_VERSION, DISTANCE, Config
+from vsir.config import COMPOSITION_VERSION, DISTANCE, SPARSE_VERSION, Config
 from vsir.core.ids import NAMESPACE
 
 _log = vsir_logging.get_logger(__name__)
@@ -55,9 +63,12 @@ _log = vsir_logging.get_logger(__name__)
 KIND = "fingerprint"
 KIND_KEY = "kind"
 
-#: The §6.6 field set, in the order the spec names them. A fifth field is a release, not a config
-#: change: it would re-key every collection and refuse every existing one, which is the point.
-FIELDS: tuple[str, ...] = ("embed_model", "dim", "distance", "composition_version")
+#: The §6.6 field set, in the order the spec names them. The fifth, ``sparse_version``, was added
+#: as a release and did exactly what this comment used to warn a fifth field would do: it re-keyed
+#: every collection and refused every existing one, which is the point. A *sixth* would do the same
+#: again — that is the cost, and it is the correct cost for a change to how a vector is made.
+FIELDS: tuple[str, ...] = ("embed_model", "dim", "distance", "composition_version",
+                           "sparse_version")
 
 
 class FingerprintMismatch(RuntimeError):
@@ -83,12 +94,13 @@ class FingerprintMismatch(RuntimeError):
 
 @dataclass(frozen=True)
 class Fingerprint:
-    """``{embed_model, dim, distance, composition_version}``: how the vectors were made."""
+    """``{embed_model, dim, distance, composition_version, sparse_version}``: how it was made."""
 
     embed_model: str
     dim: int
     distance: str = DISTANCE
     composition_version: str = COMPOSITION_VERSION
+    sparse_version: str = SPARSE_VERSION
 
     @classmethod
     def of(cls, cfg: Config) -> "Fingerprint":
@@ -100,18 +112,20 @@ class Fingerprint:
         missing = [field for field in FIELDS if field not in values]
         if missing:
             raise FingerprintMismatch(
-                f"a stored fingerprint is missing {missing}: §6.6 names all four of "
+                f"a stored fingerprint is missing {missing}: the recipe is "
                 f"{list(FIELDS)}, "
                 f"and a record that omits one cannot say whether it matches",
                 missing=missing, stored=dict(values),
             )
         return cls(embed_model=str(values["embed_model"]), dim=int(values["dim"]),
                    distance=str(values["distance"]),
-                   composition_version=str(values["composition_version"]))
+                   composition_version=str(values["composition_version"]),
+                   sparse_version=str(values["sparse_version"]))
 
     def as_dict(self) -> dict[str, Any]:
         return {"embed_model": self.embed_model, "dim": self.dim, "distance": self.distance,
-                "composition_version": self.composition_version}
+                "composition_version": self.composition_version,
+                "sparse_version": self.sparse_version}
 
     @property
     def digest(self) -> str:

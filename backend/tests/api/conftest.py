@@ -205,7 +205,8 @@ def seed_with_vectors(client: Any, collection: str, records: Any, *, dim: int,
     nothing — which is honest there and useless here: `skim_pages` reads a *vector*, so a corpus
     with none of them can only ever return nothing. The vectors are built by the shipped
     :func:`vsir.ingest.index.build_point`, so the `lexical` and `captions` surfaces are the real
-    ones — `sparse.build` over the page's ``text`` and over `dedupe`d generated text — and only
+    ones — `sparse.build_document` over the page's ``text`` and over `dedupe`d generated text at
+    each surface's own ``avg_len`` — and only
     the dense vector is stood in for.
 
     **The stand-in is deliberate and it is a function of the page's own text**:

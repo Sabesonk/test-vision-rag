@@ -102,13 +102,14 @@ one Part per language, the `dpi_index` raster last — then the `point_id` of ev
 the surfaces each one carries. Everything is written `is_current=False`: step 11 (U011) is the only
 thing that flips it. Re-running is free, because a page whose composition has not changed is
 served from the vector already on its point (`embed_key`, register B5) — the second run of the
-command above reports `0 embedded, 42 reused`.
+command above reports `0 embedded, 42 reused`. **A stub run and a live run never reuse each other's
+vectors**: `StubEmbedder` namespaces its model id as `stub:<model>` (`fixes/006`), so switching
+`VSIR_VLM` re-embeds rather than silently reporting hash vectors as `reused`.
 
-The §6.6 fingerprint (`{embed_model, dim, distance, composition_version}`) is settled **before any
-vector is bought** and recorded on a `kind: fingerprint` point in the `vsir_runs` control plane,
-one per pages collection. Changing `VSIR_EMBED_MODEL`, `VSIR_EMBED_DIM` or the pinned
-`COMPOSITION_VERSION` makes the next run refuse `embed_fingerprint_mismatch` with zero points
-written — the remedy is a new collection plus a full re-embed plus an alias swap, never an
+The §6.6 fingerprint (`{embed_model, dim, distance, composition_version, sparse_version}` — five
+fields since `fixes/005`) is settled **before any vector is bought** and recorded on a `kind: fingerprint` point in the `vsir_runs` control plane, one per pages collection. Changing `VSIR_EMBED_MODEL`, `VSIR_EMBED_DIM`, the pinned `COMPOSITION_VERSION` or `SPARSE_VERSION` (which
+covers `BM25_K1`, `BM25_B` and either `BM25_AVG_LEN_*` — change one, bump it) makes the next run
+refuse `embed_fingerprint_mismatch` with zero points written — the remedy is a new collection plus a full re-embed plus an alias swap, never an
 in-place mix:
 
 ```bash
@@ -255,6 +256,11 @@ backend/.venv/bin/vsir ingest data/source/synthetic_3window.pdf --vlm stub \
 backend/.venv/bin/vsir ingest data/source/synthetic_3window.pdf --vlm stub \
   --fixture /tmp/recorded --until stitch          # ... and the recording replays
 ```
+
+**`--record` writes, so the path must be writable by the process that runs it.** From inside a
+container `./data` is mounted **read-only**, so `--record /srv/data/fixtures/…` fails — and it fails
+*after* the response is back, which on a live run is after the call is billed. Record to a
+writable bind mount, or run the command on the host.
 
 Recording is a **flag on one run, never configuration**: an ambient record mode would let a fixture
 accumulate responses from runs nobody meant to freeze. A call that raised — a truncation to bisect,

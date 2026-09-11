@@ -60,6 +60,13 @@ services:
       VSIR_VLM: "${VSIR_VLM:-stub}"
       VSIR_VLM_MODEL: "${VSIR_VLM_MODEL:-gemini-3.8-flash}"
       VSIR_EMBED_MODEL: "${VSIR_EMBED_MODEL:-gemini-embedding-2}"
+      # The dim is in the collection name (`config.pages_collection`), so this is the *only* lever
+      # that needs to move to stand a second index up beside the first: 3072 serves
+      # `vsir_pages_3072` and cannot collide with `vsir_pages_1536` even by accident. It was absent
+      # from this anchor entirely, which meant a shell exporting it changed nothing a container
+      # could see — the process took `config.py`'s 1536 default and served the old collection while
+      # every log line in the terminal said otherwise.
+      VSIR_EMBED_DIM: "${VSIR_EMBED_DIM:-1536}"
       # Interpolated like VSIR_VLM above, and for the same reason: replay must key on the
       # version the checked-in fixtures were frozen under (s2-v1), while a live run needs
       # the version this release actually ships. `scripts/stack.sh up --live` exports the

@@ -1,0 +1,1005 @@
+{
+  "pages": [
+    {
+      "page_index": 1,
+      "printed_page_no": "31",
+      "page_kind": "prose",
+      "lang": [
+        "en"
+      ],
+      "sections": [
+        {
+          "title": "9 Operation",
+          "is_start": true
+        },
+        {
+          "title": "9.1 Status indicators of the UE410-SD",
+          "is_start": true
+        },
+        {
+          "title": "9.2 Operating notes",
+          "is_start": true
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Introduces the operation of the UE410 Safeguard Detector Box safety system. Details the status indicator LEDs of the UE410-SD in Table 3 along with their displays and relevance, and begins operating notes on safety outputs Q1/Q2 and diagnostic output Q3."
+        }
+      ],
+      "codes": [
+        "8021417/2018-01-17",
+        "UE410",
+        "UE410-SD",
+        "Table 3",
+        "PWR",
+        "Q1",
+        "Q2",
+        "RES REQ",
+        "ERR",
+        "I1",
+        "I2",
+        "I3",
+        "I4",
+        "I5 / I6",
+        "I7 / I8",
+        "Q3"
+      ],
+      "topics": [
+        "operation",
+        "status indicators",
+        "led status",
+        "safety outputs"
+      ]
+    },
+    {
+      "page_index": 2,
+      "printed_page_no": "32",
+      "page_kind": "prose",
+      "lang": [
+        "en"
+      ],
+      "sections": [
+        {
+          "title": "9 OPERATION",
+          "is_start": false
+        },
+        {
+          "title": "9.2 Operating notes",
+          "is_start": false
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Specifies the configuration of output Q3 in Table 4 and gives a safety danger notice regarding diagnostic outputs Y1 and Y2. Describes operating modes with two sensor pairs (A and B) and with one sensor pair (A), outlining signal behavior and reset conditions."
+        }
+      ],
+      "codes": [
+        "8021417/2018-01-17",
+        "Table 4",
+        "I2",
+        "Q3",
+        "RES REQ",
+        "Y1",
+        "Y2",
+        "I5/I6",
+        "I7/I8",
+        "I1",
+        "Q1",
+        "Q2",
+        "Q1/2",
+        "I4",
+        "UB",
+        "UE410-SD"
+      ],
+      "topics": [
+        "output configuration",
+        "sensor pair operation modes",
+        "safety output behavior",
+        "reset procedure"
+      ]
+    },
+    {
+      "page_index": 3,
+      "printed_page_no": "33",
+      "page_kind": "prose",
+      "lang": [
+        "en"
+      ],
+      "sections": [
+        {
+          "title": "9 OPERATION",
+          "is_start": false
+        },
+        {
+          "title": "9.2 Operating notes",
+          "is_start": false
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Covers operating behavior when switching on, the prohibition of connecting sensor pair B in single sensor mode, and the handling of discrepancy errors. Explains discrepancy error types (discrepancy time and simultaneity violation) and how to delete a discrepancy error."
+        }
+      ],
+      "codes": [
+        "8021417/2018-01-17",
+        "Y1",
+        "UE410-SD",
+        "RES REQ",
+        "Q3",
+        "I4",
+        "Q1",
+        "Q2",
+        "Q1/2",
+        "I7/I8",
+        "I7",
+        "I8",
+        "Y2"
+      ],
+      "topics": [
+        "switch-on behavior",
+        "discrepancy error",
+        "error reset",
+        "sensor inputs"
+      ]
+    },
+    {
+      "page_index": 4,
+      "printed_page_no": "34",
+      "page_kind": "prose",
+      "lang": [
+        "en"
+      ],
+      "sections": [
+        {
+          "title": "9 OPERATION",
+          "is_start": false
+        },
+        {
+          "title": "9.2 Operating notes",
+          "is_start": false
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Provides a safety danger warning concerning the resetting of discrepancy errors. It mandates ensuring the error was caused by an operating fault and shutting down the system immediately if discrepancy errors occur frequently."
+        }
+      ],
+      "codes": [
+        "8021417/2018-01-17"
+      ],
+      "topics": [
+        "safety warning",
+        "discrepancy error reset"
+      ]
+    },
+    {
+      "page_index": 5,
+      "printed_page_no": "35",
+      "page_kind": "prose",
+      "lang": [
+        "en"
+      ],
+      "sections": [
+        {
+          "title": "10 Repair",
+          "is_start": true
+        },
+        {
+          "title": "10.1 Regular thorough check",
+          "is_start": true
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "States maintenance-free sensor characteristics while recommending regular cleaning of front screens and checking connections. Specifies guidelines and requirements for performing regular thorough checks on protective devices according to manufacturer and machine user instructions."
+        }
+      ],
+      "codes": [
+        "8021417/2018-01-17"
+      ],
+      "topics": [
+        "maintenance",
+        "repair",
+        "regular checks",
+        "inspection"
+      ]
+    },
+    {
+      "page_index": 6,
+      "printed_page_no": "36",
+      "page_kind": "table",
+      "lang": [
+        "en"
+      ],
+      "sections": [
+        {
+          "title": "11 Troubleshooting",
+          "is_start": true
+        },
+        {
+          "title": "11.1 Sensor fault diagnosis",
+          "is_start": true
+        },
+        {
+          "title": "11.2 UE410-SD fault diagnosis",
+          "is_start": true
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Provides troubleshooting guidelines and safety instructions for faults interrupting system function. Features Table 5 for sensor fault diagnosis by LED indicators and Table 6 for UE410-SD fault diagnosis based on flash codes of the Error-LED ERR."
+        }
+      ],
+      "codes": [
+        "8021417/2018-01-17",
+        "Table 5",
+        "Table 6",
+        "ERR",
+        "UE410-SD"
+      ],
+      "topics": [
+        "troubleshooting",
+        "sensor fault diagnosis",
+        "led flash codes",
+        "error indications"
+      ]
+    },
+    {
+      "page_index": 7,
+      "printed_page_no": "37",
+      "page_kind": "prose",
+      "lang": [
+        "en"
+      ],
+      "sections": [
+        {
+          "title": "12 Disposal",
+          "is_start": true
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Outlines disposal instructions for the sensor in compliance with country-specific regulations. It emphasizes efforts to recycle constituent materials, especially precious metals."
+        }
+      ],
+      "codes": [
+        "8021417/2018-01-17"
+      ],
+      "topics": [
+        "disposal",
+        "recycling",
+        "environmental regulations"
+      ]
+    },
+    {
+      "page_index": 8,
+      "printed_page_no": "38",
+      "page_kind": "table",
+      "lang": [
+        "en"
+      ],
+      "sections": [
+        {
+          "title": "13 Technical data",
+          "is_start": true
+        },
+        {
+          "title": "13.1 Data sheet for the safety system",
+          "is_start": true
+        },
+        {
+          "title": "13.2 Data sheet for Safeguard Detector sensor",
+          "is_start": true
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Contains technical specifications and safety parameters for the Safeguard Detector Box UE410 safety system across Tables 7, 8, and 9. Details functional safety ratings (SIL, PL, PFHd, MTTFd), overall system response time, and general sensor optical/electrical ratings."
+        }
+      ],
+      "codes": [
+        "8021417/2018-01-17",
+        "UE410",
+        "Table 7",
+        "SIL2",
+        "IEC 61508",
+        "SILCL2",
+        "EN 62061",
+        "EN ISO 13849-1",
+        "PL d",
+        "PFHD",
+        "1.5 × 10-9",
+        "DCavg",
+        "MTTFD",
+        "CCF",
+        "TM",
+        "Table 8",
+        "Table 9",
+        "M8",
+        "UE410-SD",
+        "UOUT",
+        "Imax",
+        "IP67",
+        "EN 60529"
+      ],
+      "topics": [
+        "technical data",
+        "safety parameters",
+        "functional safety",
+        "sensor data sheet"
+      ]
+    },
+    {
+      "page_index": 9,
+      "printed_page_no": "39",
+      "page_kind": "table",
+      "lang": [
+        "en"
+      ],
+      "sections": [
+        {
+          "title": "13 TECHNICAL DATA",
+          "is_start": false
+        },
+        {
+          "title": "13.2 Data sheet for Safeguard Detector sensor",
+          "is_start": false
+        },
+        {
+          "title": "13.3 Data sheet UE410-SD",
+          "is_start": true
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Concludes sensor ambient operating temperatures and lists electrical specifications for the UE410-SD module. Includes Table 10 for the supply circuit (A1, A2), Table 11 for the input circuit (I1–I8), and Table 12 for control outputs (Y1, Y2)."
+        }
+      ],
+      "codes": [
+        "8021417/2018-01-17",
+        "DIN 5033",
+        "UE410-SD",
+        "Table 10",
+        "A1",
+        "A2",
+        "UB",
+        "PELV",
+        "SELV",
+        "Table 11",
+        "I1–I8",
+        "I5/I6",
+        "I7/I8",
+        "I4",
+        "Table 12",
+        "Y1",
+        "Y2",
+        "PNP"
+      ],
+      "topics": [
+        "technical specifications",
+        "supply circuit",
+        "input circuit",
+        "control outputs"
+      ]
+    },
+    {
+      "page_index": 10,
+      "printed_page_no": "40",
+      "page_kind": "table",
+      "lang": [
+        "en"
+      ],
+      "sections": [
+        {
+          "title": "13 TECHNICAL DATA",
+          "is_start": false
+        },
+        {
+          "title": "13.3 Data sheet UE410-SD",
+          "is_start": false
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Provides Table 13 specifying characteristics of the UE410-SD output circuits (Q1, Q2, Q3, UOUT) including switching voltages, currents, and test pulses. Accompanied by Figure 14 showing a derating load chart of output current versus ambient temperature."
+        }
+      ],
+      "codes": [
+        "8021417/2018-01-17",
+        "Table 13",
+        "Q1",
+        "Q2",
+        "Q3",
+        "UOUT",
+        "PNP",
+        "IQn",
+        "TU",
+        "Isum",
+        "Figure 14",
+        "UE410-SD"
+      ],
+      "topics": [
+        "output circuit specifications",
+        "current derating",
+        "load chart",
+        "switching outputs"
+      ]
+    },
+    {
+      "page_index": 11,
+      "printed_page_no": "41",
+      "page_kind": "table",
+      "lang": [
+        "en"
+      ],
+      "sections": [
+        {
+          "title": "13 TECHNICAL DATA",
+          "is_start": false
+        },
+        {
+          "title": "13.3 Data sheet UE410-SD",
+          "is_start": false
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Presents tables for UE410-SD physical and electrical operating specifications: Table 14 for general system data (weight, EMC), Table 15 for operating conditions (temperatures, humidity), Table 16 for mechanical vibration strength, and Table 17 detailing terminal wire connection sizes and tightening torques."
+        }
+      ],
+      "codes": [
+        "8021417/2018-01-17",
+        "Table 14",
+        "EN 61000-6-2",
+        "EN 61000-6-4",
+        "Table 15",
+        "EN 61131-2",
+        "Table 16",
+        "EN 60068-2-64",
+        "Table 17",
+        "EN 46288",
+        "UL-508",
+        "CSA",
+        "UE410-SD3xx",
+        "UE410-SD4xx",
+        "AWG 30–12"
+      ],
+      "topics": [
+        "operating data",
+        "environmental specifications",
+        "mechanical strength",
+        "terminal connection data"
+      ]
+    },
+    {
+      "page_index": 12,
+      "printed_page_no": "42",
+      "page_kind": "schematic",
+      "lang": [
+        "en"
+      ],
+      "sections": [
+        {
+          "title": "13 TECHNICAL DATA",
+          "is_start": false
+        },
+        {
+          "title": "13.4 Sensor dimensional drawing",
+          "is_start": true
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Shows Figure 15 containing dimensional drawings and callout annotations for the sensor in millimeters. Highlights the detection direction, sender and receiver optical axes, status LEDs, M3 threaded mounting holes, and connector."
+        }
+      ],
+      "codes": [
+        "8021417/2018-01-17",
+        "Figure 15",
+        "M3"
+      ],
+      "topics": [
+        "sensor dimensions",
+        "technical drawing",
+        "optical axes",
+        "mounting dimensions"
+      ]
+    },
+    {
+      "page_index": 13,
+      "printed_page_no": "43",
+      "page_kind": "schematic",
+      "lang": [
+        "en"
+      ],
+      "sections": [
+        {
+          "title": "13 TECHNICAL DATA",
+          "is_start": false
+        },
+        {
+          "title": "13.5 Dimensional drawings for UE410-SD safety evaluation module",
+          "is_start": true
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Displays Figure 16 providing exact mechanical dimensions in millimeters for the UE410-SD400 safety evaluation module. The drawings show front, side, and terminal layout views."
+        }
+      ],
+      "codes": [
+        "8021417/2018-01-17",
+        "Figure 16",
+        "UE410-SD400",
+        "UE410-SD"
+      ],
+      "topics": [
+        "dimensional drawing",
+        "evaluation module dimensions",
+        "mechanical drawing"
+      ]
+    },
+    {
+      "page_index": 14,
+      "printed_page_no": "44",
+      "page_kind": "schematic",
+      "lang": [
+        "en"
+      ],
+      "sections": [
+        {
+          "title": "13 TECHNICAL DATA",
+          "is_start": false
+        },
+        {
+          "title": "13.5 Dimensional drawings for UE410-SD safety evaluation module",
+          "is_start": false
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Features Figure 17 showing dimensional drawings with all millimeter measurements for the UE410-SD300 safety evaluation module. Outlines enclosure dimensions and screw terminal configuration."
+        }
+      ],
+      "codes": [
+        "8021417/2018-01-17",
+        "Figure 17",
+        "UE410-SD300"
+      ],
+      "topics": [
+        "dimensional drawing",
+        "module dimensions",
+        "screw terminals",
+        "mechanical dimensions"
+      ]
+    },
+    {
+      "page_index": 15,
+      "printed_page_no": "45",
+      "page_kind": "table",
+      "lang": [
+        "en"
+      ],
+      "sections": [
+        {
+          "title": "14 Ordering information",
+          "is_start": true
+        },
+        {
+          "title": "14.1 UE410 Safeguard Detector Box safety system ordering information",
+          "is_start": true
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Contains Table 18 with ordering information for the UE410 Safeguard Detector Box safety system packages and components. Lists type codes and part numbers for complete packages, sensor pairs, and safety evaluation modules with screw or spring terminals."
+        }
+      ],
+      "codes": [
+        "8021417/2018-01-17",
+        "Table 18",
+        "UE410",
+        "UE410-SD",
+        "SAPPD2D-06AP005",
+        "1089445",
+        "SAPPD2D-06AP006",
+        "1089446",
+        "SAPPD2D-06AP007",
+        "1089570",
+        "SAPPD2D-06AP008",
+        "1089571",
+        "SAPPO2D-06A0001",
+        "1068895",
+        "UE410-SD400",
+        "1088689",
+        "UE410-SD300",
+        "1089540"
+      ],
+      "topics": [
+        "ordering information",
+        "part numbers",
+        "type codes",
+        "safety modules"
+      ]
+    },
+    {
+      "page_index": 16,
+      "printed_page_no": "46",
+      "page_kind": "table",
+      "lang": [
+        "en"
+      ],
+      "sections": [
+        {
+          "title": "14 ORDERING INFORMATION",
+          "is_start": false
+        },
+        {
+          "title": "14.2 Ordering information for accessories",
+          "is_start": true
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Provides Table 19 listing type codes and part numbers for accessories compatible with the system. Includes individual Safeguard Detector sensors, various M8 connection cables (PVC and PUR), and a mounting bracket."
+        }
+      ],
+      "codes": [
+        "8021417/2018-01-17",
+        "Table 19",
+        "WTB4-3P2100S13",
+        "1075282",
+        "DOL-0803-G02M",
+        "6010785",
+        "DOL-0803-G02MC",
+        "6025888",
+        "DOL-0803-W02M",
+        "6008489",
+        "DOL-0803-W02MC",
+        "6025891",
+        "DOL-0803-G05M",
+        "6022009",
+        "DOL-0803-G05MC",
+        "6025889",
+        "DOL-0803-W05M",
+        "6022012",
+        "DOL-0803-W05MC",
+        "6025892",
+        "DOL-0803-G10M",
+        "6022011",
+        "DOL-0803-G10MC",
+        "6025890",
+        "DOL-0803-W10M",
+        "6022010",
+        "DOL-0803-W10MC",
+        "6025893",
+        "BEF-KHS-N08",
+        "2051607",
+        "M8"
+      ],
+      "topics": [
+        "accessories",
+        "ordering information",
+        "connecting cables",
+        "mounting brackets"
+      ]
+    },
+    {
+      "page_index": 17,
+      "printed_page_no": "47",
+      "page_kind": "prose",
+      "lang": [
+        "en"
+      ],
+      "sections": [
+        {
+          "title": "15 Annex",
+          "is_start": true
+        },
+        {
+          "title": "15.1 Compliance with EU directives",
+          "is_start": true
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Presents an excerpt of the manufacturer's EU declaration of conformity stating compliance with applicable EU directives. Provides instructions on how to download the complete declaration of conformity from the SICK website."
+        }
+      ],
+      "codes": [
+        "8021417/2018-01-17"
+      ],
+      "topics": [
+        "declaration of conformity",
+        "compliance",
+        "eu directives"
+      ]
+    },
+    {
+      "page_index": 18,
+      "printed_page_no": "48",
+      "page_kind": "table",
+      "lang": [
+        "en"
+      ],
+      "sections": [
+        {
+          "title": "15 ANNEX",
+          "is_start": false
+        },
+        {
+          "title": "15.2 Checklist for initial commissioning and commissioning",
+          "is_start": true
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Presents an initial commissioning and commissioning checklist for manufacturers and installers. Lists specific safety criteria, compliance checks, and operational verification items with Yes/No checkboxes."
+        }
+      ],
+      "codes": [
+        "8021417/2018-01-17",
+        "EN ISO 13849-1",
+        "EN 62061"
+      ],
+      "topics": [
+        "commissioning checklist",
+        "safety verification",
+        "inspection"
+      ]
+    },
+    {
+      "page_index": 19,
+      "printed_page_no": "49",
+      "page_kind": "prose",
+      "lang": [
+        "en"
+      ],
+      "sections": [
+        {
+          "title": "16 Glossary",
+          "is_start": true
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Defines key terminology related to optical and electronic safety equipment. Includes glossary entries from Response time to Retroreflector, defining terms like CCF, DCavg, Dangerous state, MTTFd, OSSD, PDDB, PFHd, and PL."
+        }
+      ],
+      "codes": [
+        "8021417/2018-01-17",
+        "OSSD",
+        "CCF",
+        "DCavg",
+        "ISO 13849",
+        "EN ISO 13849",
+        "MTTFD",
+        "PDDB",
+        "IEC 60947-5-3",
+        "EN 60947-5-3",
+        "PFHD",
+        "PL"
+      ],
+      "topics": [
+        "glossary",
+        "definitions",
+        "safety terminology",
+        "standards"
+      ]
+    },
+    {
+      "page_index": 20,
+      "printed_page_no": "50",
+      "page_kind": "prose",
+      "lang": [
+        "en"
+      ],
+      "sections": [
+        {
+          "title": "16 GLOSSARY",
+          "is_start": false
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Continues the glossary of safety system terms. Defines Reset, Protective field, External device monitoring (EDM), SIL, SILCL, and Restart interlock."
+        }
+      ],
+      "codes": [
+        "8021417/2018-01-17",
+        "EDM",
+        "OSSD",
+        "SIL",
+        "SILCL",
+        "IEC 62061",
+        "EN 62061"
+      ],
+      "topics": [
+        "glossary",
+        "definitions",
+        "safety interlock",
+        "monitoring"
+      ]
+    },
+    {
+      "page_index": 21,
+      "printed_page_no": "51",
+      "page_kind": "toc",
+      "lang": [
+        "en"
+      ],
+      "sections": [
+        {
+          "title": "17 List of figures",
+          "is_start": true
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Lists figures 1 through 17 included throughout the operating instructions along with their corresponding page numbers."
+        }
+      ],
+      "codes": [
+        "8021417/2018-01-17",
+        "UE410-SD",
+        "UE410-SD400",
+        "UE410-SD300"
+      ],
+      "topics": [
+        "list of figures",
+        "figure index"
+      ]
+    },
+    {
+      "page_index": 22,
+      "printed_page_no": "52",
+      "page_kind": "toc",
+      "lang": [
+        "en"
+      ],
+      "sections": [
+        {
+          "title": "18 List of tables",
+          "is_start": true
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Lists tables 1 through 19 contained within the operating instructions together with their associated page numbers."
+        }
+      ],
+      "codes": [
+        "8021417/2018-01-17",
+        "UE410-SD",
+        "UE410"
+      ],
+      "topics": [
+        "list of tables",
+        "table index"
+      ]
+    },
+    {
+      "page_index": 23,
+      "printed_page_no": "53",
+      "page_kind": "blank",
+      "lang": [
+        "en"
+      ],
+      "sections": [
+        {
+          "title": "18 LIST OF TABLES",
+          "is_start": false
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Blank page belonging to section 18 List of tables, carrying only the running header and footer."
+        }
+      ],
+      "codes": [
+        "8021417/2018-01-17"
+      ],
+      "topics": [
+        "blank page"
+      ]
+    },
+    {
+      "page_index": 24,
+      "printed_page_no": "54",
+      "page_kind": "blank",
+      "lang": [
+        "en"
+      ],
+      "sections": [
+        {
+          "title": "18 LIST OF TABLES",
+          "is_start": false
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Blank page under the running header for section 18 List of tables, showing standard document margins and footer."
+        }
+      ],
+      "codes": [
+        "8021417/2018-01-17"
+      ],
+      "topics": [
+        "blank page"
+      ]
+    },
+    {
+      "page_index": 25,
+      "printed_page_no": "55",
+      "page_kind": "blank",
+      "lang": [
+        "en"
+      ],
+      "sections": [
+        {
+          "title": "18 LIST OF TABLES",
+          "is_start": false
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Blank page under the running header for section 18 List of tables with publication reference footer."
+        }
+      ],
+      "codes": [
+        "8021417/2018-01-17"
+      ],
+      "topics": [
+        "blank page"
+      ]
+    },
+    {
+      "page_index": 26,
+      "printed_page_no": "",
+      "page_kind": "cover",
+      "lang": [
+        "en"
+      ],
+      "sections": [],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Back cover page listing contact details, phone numbers, and email addresses for SICK subsidiary offices worldwide. Includes the SICK Sensor Intelligence company logo and corporate headquarters information."
+        }
+      ],
+      "codes": [
+        "8021417/2018-01-17/en"
+      ],
+      "topics": [
+        "contact addresses",
+        "worldwide offices",
+        "back cover"
+      ]
+    }
+  ]
+}

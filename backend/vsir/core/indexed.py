@@ -45,7 +45,8 @@ INDEXED: MappingProxyType = MappingProxyType({
 TEXT_FIELDS = ("text", "vlm_codes")
 
 #: The named vectors of §5.5. `dense` is the one fused image+text embedding per page (D4); the two
-#: sparse surfaces store raw term frequencies and let Qdrant compute IDF at query time (D2).
+#: sparse surfaces store BM25 term weights — tf saturation and length normalisation, applied at
+#: index time — and let Qdrant supply the IDF factor at query time (D2).
 DENSE_VECTOR = "dense"
 SPARSE_VECTORS = ("lexical", "captions")
 
@@ -87,8 +88,9 @@ def vectors_config(dim: int) -> dict[str, qm.VectorParams]:
 
 
 def sparse_vectors_config() -> dict[str, qm.SparseVectorParams]:
-    # IDF is computed by Qdrant across the collection at query time. Storing raw term counts is
-    # what keeps a new document from staling every vector already in the index (D2).
+    # IDF is computed by Qdrant across the collection at query time. Storing only the tf half is
+    # what keeps a new document from staling every vector already in the index (D2). The modifier
+    # must stay IDF: the stored values are BM25's tf component and are not a ranking without it.
     return {name: qm.SparseVectorParams(modifier=qm.Modifier.IDF) for name in SPARSE_VECTORS}
 
 
@@ -211,6 +213,7 @@ def _vector_problems(info: Any, dim: int) -> list[str]:
         if modifier != qm.Modifier.IDF.value:
             problems.append(
                 f"sparse vector {name!r}: modifier={modifier!r}, expected "
-                f"{qm.Modifier.IDF.value!r} — raw term frequencies need Qdrant-side IDF (D2)"
+                f"{qm.Modifier.IDF.value!r} — the stored values are BM25's tf component and "
+                f"need Qdrant-side IDF to be a ranking at all (D2)"
             )
     return problems

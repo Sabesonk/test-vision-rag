@@ -69,7 +69,11 @@ def test_the_dense_vector_is_cosine_at_the_configured_dimension(qdrant, scratch)
 
 
 def test_both_sparse_surfaces_use_qdrant_side_idf(qdrant, scratch):
-    """D2 — raw term frequencies are stored, so a new document does not stale every vector."""
+    """D2 — only BM25's tf half is stored, so a new document does not stale every vector.
+
+    The modifier is what makes the stored floats a ranking at all: the idf factor is never computed
+    locally, which is why ingesting a document changes no value already written.
+    """
     sparse = qdrant.get_collection(scratch).config.params.sparse_vectors
 
     assert set(sparse) == set(SPARSE_VECTORS) == {"lexical", "captions"}

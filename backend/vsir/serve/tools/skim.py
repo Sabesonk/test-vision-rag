@@ -327,12 +327,20 @@ def _points(client: Any, collection: str, *, query: Any, using: str,
 
 
 def _sparse_query(text: str) -> qm.SparseVector | None:
-    """The query's sparse vector — raw term frequencies, IDF applied by Qdrant at query time (D2).
+    """The query's sparse vector — **1.0 per distinct term**, never a count and never a BM25 weight.
+
+    Qdrant computes ``Σ idf(t)·q(t)·d(t)`` and the document side already carries BM25's tf component
+    (:func:`vsir.ingest.sparse.build_document`), so with ``q(t) = 1`` what comes back **is** BM25.
+    Saturating here as well would apply ``k1`` twice; counting here would let a caller who wrote the
+    same word twice weight it double off filler rather than intent.
+
+    One vector serves both sparse branches, and that stays right: the per-surface asymmetry is
+    entirely on the document side, in which ``avg_len`` each was written against.
 
     ``None`` when the query has no tokens at all, which is what makes an image-only query skip the
     two sparse branches rather than send an empty vector Qdrant would happily score nothing with.
     """
-    indices, values = sparse.build(text)
+    indices, values = sparse.build_query(text)
     return qm.SparseVector(indices=indices, values=values) if indices else None
 
 

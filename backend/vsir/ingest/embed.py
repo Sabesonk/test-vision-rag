@@ -395,9 +395,28 @@ class StubEmbedder:
     model: str
     name: str = "stub"
 
+    #: Prefixed onto the model id so a stub vector and a real one can never share an ``embed_key``.
+    NAMESPACE = "stub:"
+
     @classmethod
     def from_config(cls, cfg: Config) -> "StubEmbedder":
-        return cls(dim=_checked_dim(cfg.embed_dim), model=_pinned(cfg.embed_model))
+        """The stub, under a **namespaced** model id — which is the fix for a silent re-use.
+
+        ``embed_key`` is ``sha256(composition version ‖ embed model ‖ composed string)`` (§6.3) and
+        carries no record of *which backend* produced the vector. Both embedders pinned the same
+        ``VSIR_EMBED_MODEL``, and the reuse test in :func:`embed_document` is key-equality plus
+        dim-equality — so a collection seeded under ``VSIR_VLM=stub`` and then re-ingested under
+        ``gemini`` reused every blake2b hash vector, billed nothing, and reported them as *reused*.
+        A run that looked like a successful production re-embed had bought no embedding at all.
+
+        Prefixing here makes that collision impossible by construction rather than by a check
+        somebody has to remember to run, and it costs no signature churn: ``Composition.key`` already
+        takes the model string. ``_pinned`` still sees the operator's own id, so the ``-latest``
+        refusal (F11) is untouched, and the namespace propagates truthfully into the step-09 print
+        and the ``embed_document`` log line, where "which backend made these" was unanswerable.
+        """
+        return cls(dim=_checked_dim(cfg.embed_dim),
+                   model=f"{cls.NAMESPACE}{_pinned(cfg.embed_model)}")
 
     def _vector(self, seed: str) -> list[float]:
         """A unit vector of ``dim`` floats, derived from ``seed`` and nothing else."""

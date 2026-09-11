@@ -94,7 +94,10 @@ cmd_up() {
     dim  "  Every ingest now calls ${VSIR_VLM_MODEL:-gemini-3.8-flash} for S1 and once per window"
     dim  "  for S2, and ${VSIR_EMBED_MODEL:-gemini-embedding-2} once per page. This costs real money."
     dim  "  Nothing is seeded in this mode. Freeze a paid run for free replay with:"
-    dim  "     bash scripts/stack.sh seed your.pdf --record /srv/data/fixtures/your-doc"
+    dim  "     mkdir -p data/fixtures/live/your-doc   # ./data is mounted READ-ONLY;"
+    dim  "     ...then bind that directory in writable and --record into it. Recording into"
+    dim  "     /srv/data fails AFTER the call is billed: the recorder writes once the response"
+    dim  "     is back, and cache.write does not handle an unwritable path."
   fi
 
   bold "Building the image (same Dockerfile as production and the test stack)"
@@ -174,7 +177,7 @@ cmd_status() {
 
   echo
   bold "Documents in the index"
-  curl -s "$QDRANT/collections/vsir_pages_1536/points/scroll" \
+  curl -s "$QDRANT/collections/${VSIR_COLLECTION:-vsir_pages}_${VSIR_EMBED_DIM:-1536}/points/scroll" \
        -H 'Content-Type: application/json' \
        -d '{"limit":500,"with_payload":["doc_id","revision","is_current"]}' \
     | pyjson '

@@ -3,7 +3,7 @@
 One page, one point, three surfaces (§5.3, I1)::
 
     dense      the fused image+text vector of step 09 (D4)
-    lexical    sparse, raw term frequencies over `text`, IDF applied by Qdrant (D2)
+    lexical    sparse, BM25 term weights over `text`, IDF applied by Qdrant (D2)
     captions   sparse, over `summaries[] + topics`, deduped against `text`, weight 0.4 (D2)
 
 What is ported: the two-zone payload, the deterministic ``point_id``, the sparse surfaces built
@@ -53,6 +53,7 @@ from vsir.core import ids
 from vsir.core.exact import scope_conditions
 from vsir.core.indexed import DENSE_VECTOR, SPARSE_VECTORS, create_collection
 from vsir.core.record import PageRecord
+from vsir.config import BM25_AVG_LEN_CAPTIONS, BM25_AVG_LEN_LEXICAL
 from vsir.ingest import sparse
 from vsir.ingest.fingerprint import Fingerprint, FingerprintMismatch, require
 
@@ -122,10 +123,12 @@ def _vectors(record: PageRecord, dense: Sequence[float]) -> dict[str, Any]:
     generated text (which the acceptance criteria assert).
     """
     vectors: dict[str, Any] = {DENSE_VECTOR: list(dense)}
-    lexical_indices, lexical_values = sparse.build(record.text)
+    lexical_indices, lexical_values = sparse.build_document(
+        record.text, avg_len=BM25_AVG_LEN_LEXICAL)
     if lexical_indices:
         vectors[LEXICAL] = qm.SparseVector(indices=lexical_indices, values=lexical_values)
-    caption_indices, caption_values = sparse.build(caption_text(record))
+    caption_indices, caption_values = sparse.build_document(
+        caption_text(record), avg_len=BM25_AVG_LEN_CAPTIONS)
     if caption_indices:
         vectors[CAPTIONS] = qm.SparseVector(indices=caption_indices, values=caption_values)
     return vectors

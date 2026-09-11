@@ -1,0 +1,15 @@
+{
+  "bytes": 24397,
+  "finish_reason": "STOP",
+  "images": 26,
+  "key": "cb1436a0a0f9da45ec3e0a9bb1c124231fb22106c9466eacae8a93d7acc5b384",
+  "label": "S2 31-56",
+  "namespace": "extract",
+  "origin": "model",
+  "stage": "s2",
+  "usage": {
+    "output_tokens": 8007,
+    "prompt_tokens": 29533,
+    "total_tokens": 37540
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "bytes": 237,
+  "finish_reason": "STOP",
+  "images": 2,
+  "key": "f3424930e4368254d8db26c4430294d614994aac68da4acc2088ecc87130be94",
+  "label": "S1 BES0068-Datasheet@2.0.pdf",
+  "namespace": "facts",
+  "origin": "model",
+  "stage": "s1",
+  "usage": {
+    "output_tokens": 124,
+    "prompt_tokens": 2641,
+    "total_tokens": 4133
+  }
+}

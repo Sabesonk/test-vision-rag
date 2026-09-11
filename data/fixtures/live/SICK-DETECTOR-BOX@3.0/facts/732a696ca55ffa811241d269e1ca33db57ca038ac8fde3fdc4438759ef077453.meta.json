@@ -1,0 +1,15 @@
+{
+  "bytes": 5491,
+  "finish_reason": "STOP",
+  "images": 12,
+  "key": "732a696ca55ffa811241d269e1ca33db57ca038ac8fde3fdc4438759ef077453",
+  "label": "S1 SICK-DETECTOR-BOX@3.0.pdf",
+  "namespace": "facts",
+  "origin": "model",
+  "stage": "s1",
+  "usage": {
+    "output_tokens": 2059,
+    "prompt_tokens": 13683,
+    "total_tokens": 17120
+  }
+}

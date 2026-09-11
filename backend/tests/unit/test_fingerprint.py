@@ -1,4 +1,4 @@
-"""L0 — the embedding fingerprint (Spec §6.6): four fields, one gate, and a refusal that explains.
+"""L0 — the embedding fingerprint (Spec §6.6): five fields, one gate, and a refusal that explains.
 
 The failure here is the quietest one in the system. Two families of vector in one cosine space
 produce worse neighbours and nothing else: no error, no log line, and afterwards no way to tell
@@ -71,11 +71,38 @@ def stored(fingerprint: Fingerprint, *, collection: str = PAGES) -> dict[str, di
         "digest": fingerprint.digest, **fingerprint.as_dict()}}
 
 
-# ── the four fields (§6.6) ───────────────────────────────────────────────────────────────────────
+# ── the five fields (§6.6) ───────────────────────────────────────────────────────────────────────
 
-def test_the_fingerprint_is_exactly_the_four_fields_section_6_6_names():
-    assert fingerprint_module.FIELDS == ("embed_model", "dim", "distance", "composition_version")
+def test_the_fingerprint_is_exactly_the_fields_the_recipe_names():
+    """`sparse_version` is the fifth: how the two sparse surfaces are weighted.
+
+    A BM25 collection and a raw-term-frequency one are byte-identical in shape, declare the same
+    `Modifier.IDF`, and pass every schema check — they differ only in what the stored floats mean.
+    """
+    assert fingerprint_module.FIELDS == ("embed_model", "dim", "distance", "composition_version",
+                                         "sparse_version")
     assert set(Fingerprint.of(configured()).as_dict()) == set(fingerprint_module.FIELDS)
+
+
+def test_the_sparse_recipe_moves_the_fingerprint_without_the_model_moving():
+    """The same model, the same composition, a different sparse weighting — a different collection."""
+    now = Fingerprint.of(configured())
+    was = Fingerprint(embed_model=now.embed_model, dim=now.dim, distance=now.distance,
+                      composition_version=now.composition_version, sparse_version="tf-v0")
+
+    assert now.digest != was.digest
+    assert now.differences(was) == {"sparse_version": ("tf-v0", "bm25-v1")}
+
+
+def test_a_collection_built_before_the_sparse_recipe_was_recorded_is_refused():
+    """The migration behaviour, asserted rather than discovered in production."""
+    stored = Fingerprint.of(configured()).as_dict()
+    del stored["sparse_version"]
+
+    with pytest.raises(FingerprintMismatch) as refusal:
+        Fingerprint.from_mapping(stored)
+
+    assert refusal.value.details["missing"] == ["sparse_version"]
 
 
 def test_it_is_single_sourced_from_the_configuration():
@@ -134,7 +161,8 @@ def test_a_stored_record_missing_a_field_cannot_say_whether_it_matches():
     with pytest.raises(FingerprintMismatch) as refusal:
         Fingerprint.from_mapping({"embed_model": "gemini-embedding-2", "dim": 1536})
 
-    assert refusal.value.details["missing"] == ["distance", "composition_version"]
+    assert refusal.value.details["missing"] == ["distance", "composition_version",
+                                                "sparse_version"]
 
 
 # ── the control point ────────────────────────────────────────────────────────────────────────────

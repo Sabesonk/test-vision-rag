@@ -1,0 +1,1112 @@
+{
+  "pages": [
+    {
+      "page_index": 1,
+      "printed_page_no": "",
+      "page_kind": "cover",
+      "lang": ["en"],
+      "sections": [],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Cover page for the UE410 Safeguard Detector Box operating instructions, presenting an overview image of the functional safety system module."
+        }
+      ],
+      "codes": [
+        "UE410",
+        "UE410-SD",
+        "Y1",
+        "Y2",
+        "A1",
+        "A2",
+        "I1",
+        "I2",
+        "I3",
+        "I4",
+        "PWR",
+        "Q1/2",
+        "RES REQ",
+        "ERR",
+        "I5",
+        "I6",
+        "I7",
+        "I8",
+        "Q1",
+        "Q2",
+        "Q3",
+        "Uout"
+      ],
+      "topics": [
+        "cover",
+        "functional safety system",
+        "ue410 safeguard detector box"
+      ]
+    },
+    {
+      "page_index": 2,
+      "printed_page_no": "2",
+      "page_kind": "prose",
+      "lang": ["en"],
+      "sections": [],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Imprint and legal notices page stating the described product name, manufacturer address for SICK AG, copyright reservations, and document originality status."
+        }
+      ],
+      "codes": [
+        "UE410",
+        "8021417/2018-01-17"
+      ],
+      "topics": [
+        "manufacturer information",
+        "legal notice",
+        "copyright"
+      ]
+    },
+    {
+      "page_index": 3,
+      "printed_page_no": "3",
+      "page_kind": "toc",
+      "lang": ["en"],
+      "sections": [
+        {
+          "title": "Contents",
+          "is_start": true
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Table of contents listing sections 1 through 7.1, spanning general documentation, safety information, product description, project planning, mounting, electrical installation, and configuration."
+        }
+      ],
+      "codes": [
+        "UE410-SD",
+        "8021417/2018-01-17"
+      ],
+      "topics": [
+        "table of contents"
+      ]
+    },
+    {
+      "page_index": 4,
+      "printed_page_no": "4",
+      "page_kind": "toc",
+      "lang": ["en"],
+      "sections": [
+        {
+          "title": "Contents",
+          "is_start": false
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Continuation of the table of contents listing sections 7.2 through 18, including commissioning, operation, repair, troubleshooting, disposal, technical data, ordering details, and annexes."
+        }
+      ],
+      "codes": [
+        "UE410-SD",
+        "8021417/2018-01-17"
+      ],
+      "topics": [
+        "table of contents"
+      ]
+    },
+    {
+      "page_index": 5,
+      "printed_page_no": "5",
+      "page_kind": "prose",
+      "lang": ["en"],
+      "sections": [
+        {
+          "title": "1 About this document",
+          "is_start": true
+        },
+        {
+          "title": "1.1 Purpose of this document",
+          "is_start": true
+        },
+        {
+          "title": "1.2 Scope",
+          "is_start": true
+        },
+        {
+          "title": "1.3 Target groups and structure of these operating instructions",
+          "is_start": true
+        },
+        {
+          "title": "1.4 Further information",
+          "is_start": true
+        },
+        {
+          "title": "1.5 Symbols and document conventions",
+          "is_start": true
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Explains the manual's purpose across the product life cycle, defines its scope and target audience, and directs users to additional online resources from SICK."
+        }
+      ],
+      "codes": [
+        "8021415",
+        "UE410-SD",
+        "8021417/2018-01-17"
+      ],
+      "topics": [
+        "purpose",
+        "scope",
+        "target groups",
+        "documentation conventions"
+      ]
+    },
+    {
+      "page_index": 6,
+      "printed_page_no": "6",
+      "page_kind": "prose",
+      "lang": ["en"],
+      "sections": [
+        {
+          "title": "1 About this document",
+          "is_start": false
+        },
+        {
+          "title": "1.5 Symbols and document conventions",
+          "is_start": false
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Defines warning signal words including DANGER, WARNING, CAUTION, and NOTICE, alongside typography and symbols used for instructions and notes."
+        }
+      ],
+      "codes": [
+        "8021417/2018-01-17"
+      ],
+      "topics": [
+        "safety warning levels",
+        "symbols",
+        "document conventions"
+      ]
+    },
+    {
+      "page_index": 7,
+      "printed_page_no": "7",
+      "page_kind": "prose",
+      "lang": ["en"],
+      "sections": [
+        {
+          "title": "2 Safety information",
+          "is_start": true
+        },
+        {
+          "title": "2.1 General safety notes",
+          "is_start": true
+        },
+        {
+          "title": "2.2 Intended use",
+          "is_start": true
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Presents general safety notes regarding the effectiveness of protective devices and defines intended use for the Safeguard Detector proximity sensor and UE410-SD logic unit."
+        }
+      ],
+      "codes": [
+        "UE410-SD",
+        "EN 60947-5-3",
+        "8021417/2018-01-17"
+      ],
+      "topics": [
+        "general safety notes",
+        "intended use",
+        "standards compliance"
+      ]
+    },
+    {
+      "page_index": 8,
+      "printed_page_no": "8",
+      "page_kind": "prose",
+      "lang": ["en"],
+      "sections": [
+        {
+          "title": "2 Safety information",
+          "is_start": false
+        },
+        {
+          "title": "2.2 Intended use",
+          "is_start": false
+        },
+        {
+          "title": "2.3 Requirements for the qualification of personnel",
+          "is_start": true
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Outlines safety levels and UL application requirements, followed by specific qualification criteria for personnel handling planning, mounting, electrical installation, configuration, and maintenance."
+        }
+      ],
+      "codes": [
+        "EN ISO 13849-1",
+        "EN 60947-5-3",
+        "EN 62061",
+        "NFPA 79",
+        "UE410-SD",
+        "8021417/2018-01-17"
+      ],
+      "topics": [
+        "ul applications",
+        "safety standards",
+        "personnel qualification"
+      ]
+    },
+    {
+      "page_index": 9,
+      "printed_page_no": "9",
+      "page_kind": "prose",
+      "lang": ["en"],
+      "sections": [
+        {
+          "title": "3 Product description",
+          "is_start": true
+        },
+        {
+          "title": "3.1 Application description",
+          "is_start": true
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Describes application principles using carton magazines on packaging machines as physical guards and identifies the physical and functional limits of the system."
+        }
+      ],
+      "codes": [
+        "Figure 1",
+        "Figure 2",
+        "8021417/2018-01-17"
+      ],
+      "topics": [
+        "application description",
+        "carton magazine monitoring",
+        "system limits"
+      ]
+    },
+    {
+      "page_index": 10,
+      "printed_page_no": "10",
+      "page_kind": "prose",
+      "lang": ["en"],
+      "sections": [
+        {
+          "title": "3 Product description",
+          "is_start": false
+        },
+        {
+          "title": "3.1 Application description",
+          "is_start": false
+        },
+        {
+          "title": "3.2 Safety function",
+          "is_start": true
+        },
+        {
+          "title": "3.3 Safe state",
+          "is_start": true
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Presents a block diagram of the safety chain and specifies the conditions that govern the safety function and initiate a safe state on outputs Q1/Q2."
+        }
+      ],
+      "codes": [
+        "Figure 3",
+        "UE410-SD",
+        "Q1/Q2",
+        "8021417/2018-01-17"
+      ],
+      "topics": [
+        "safety chain",
+        "safety function",
+        "safe state"
+      ]
+    },
+    {
+      "page_index": 11,
+      "printed_page_no": "11",
+      "page_kind": "prose",
+      "lang": ["en"],
+      "sections": [
+        {
+          "title": "3 Product description",
+          "is_start": false
+        },
+        {
+          "title": "3.4 System components",
+          "is_start": true
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Introduces the Safeguard Detector sensor pair SAPP02D-06A0001, output Q switching characteristics within the detection zone, and the UE410-SD safety evaluation module."
+        }
+      ],
+      "codes": [
+        "Table 1",
+        "SAPP02D-06A0001",
+        "1068895",
+        "Figure 4",
+        "UE410-SD",
+        "I1",
+        "Q1/2",
+        "8021417/2018-01-17"
+      ],
+      "topics": [
+        "system components",
+        "sensor pair",
+        "switching behavior",
+        "evaluation module"
+      ]
+    },
+    {
+      "page_index": 12,
+      "printed_page_no": "12",
+      "page_kind": "prose",
+      "lang": ["en"],
+      "sections": [
+        {
+          "title": "3 Product description",
+          "is_start": false
+        },
+        {
+          "title": "3.4 System components",
+          "is_start": false
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Notes that Safeguard Detector sensors are supplied with voltage via the UE410-SD module, cross-referencing the wiring notes section."
+        }
+      ],
+      "codes": [
+        "UE410-SD",
+        "8021417/2018-01-17"
+      ],
+      "topics": [
+        "voltage supply reference",
+        "wiring reference"
+      ]
+    },
+    {
+      "page_index": 13,
+      "printed_page_no": "13",
+      "page_kind": "prose",
+      "lang": ["en"],
+      "sections": [
+        {
+          "title": "4 Project planning",
+          "is_start": true
+        },
+        {
+          "title": "4.1 Safety",
+          "is_start": true
+        },
+        {
+          "title": "4.2 Prerequisites",
+          "is_start": true
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Covers project planning safety precautions, machine structural prerequisites, and required optical remission properties of detected objects to ensure reliable operation."
+        }
+      ],
+      "codes": [
+        "8021417/2018-01-17"
+      ],
+      "topics": [
+        "project planning safety",
+        "structural prerequisites",
+        "optical properties"
+      ]
+    },
+    {
+      "page_index": 14,
+      "printed_page_no": "14",
+      "page_kind": "prose",
+      "lang": ["en"],
+      "sections": [
+        {
+          "title": "4 Project planning",
+          "is_start": false
+        },
+        {
+          "title": "4.3 Setup location",
+          "is_start": true
+        },
+        {
+          "title": "4.4 Response time",
+          "is_start": true
+        },
+        {
+          "title": "4.5 Integrating the equipment into the electrical control",
+          "is_start": true
+        },
+        {
+          "title": "4.6 Testing plan",
+          "is_start": true
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Outlines setup positioning, response time considerations, integration into electrical controls including restart interlock and cross-circuit detection, and defining a testing plan."
+        }
+      ],
+      "codes": [
+        "Q1",
+        "Q2",
+        "UE410-SD",
+        "UOUT",
+        "8021417/2018-01-17"
+      ],
+      "topics": [
+        "sensor positioning",
+        "response time",
+        "restart interlock",
+        "cross-circuit detection"
+      ]
+    },
+    {
+      "page_index": 15,
+      "printed_page_no": "15",
+      "page_kind": "prose",
+      "lang": ["en"],
+      "sections": [
+        {
+          "title": "4 Project planning",
+          "is_start": false
+        },
+        {
+          "title": "4.6 Testing plan",
+          "is_start": false
+        },
+        {
+          "title": "4.6.1 Recommendations for regular checks",
+          "is_start": true
+        },
+        {
+          "title": "4.6.2 Carrying out thorough checks",
+          "is_start": true
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Provides criteria and intervals for regular thorough checks and details a checklist for visual inspection of the machine and protective device."
+        }
+      ],
+      "codes": [
+        "8021417/2018-01-17"
+      ],
+      "topics": [
+        "regular checks",
+        "visual inspection checklist"
+      ]
+    },
+    {
+      "page_index": 16,
+      "printed_page_no": "16",
+      "page_kind": "prose",
+      "lang": ["en"],
+      "sections": [
+        {
+          "title": "4 Project planning",
+          "is_start": false
+        },
+        {
+          "title": "4.6 Testing plan",
+          "is_start": false
+        },
+        {
+          "title": "4.6.2 Carrying out thorough checks",
+          "is_start": false}
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Defines the test procedure to verify the principal protective function by introducing and removing objects within and beyond specified sensing ranges for each sensor."
+        }
+      ],
+      "codes": [
+        "UE410-SD",
+        "8021417/2018-01-17"
+      ],
+      "topics": [
+        "functional check",
+        "protective device test procedure"
+      ]
+    },
+    {
+      "page_index": 17,
+      "printed_page_no": "17",
+      "page_kind": "prose",
+      "lang": ["en"],
+      "sections": [
+        {
+          "title": "5 Mounting",
+          "is_start": true
+        },
+        {
+          "title": "5.1 Placing the sensors",
+          "is_start": true
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Specifies distance requirements and geometric alignment of sensors to the material, including mounting at different heights and angles to avoid mutual optical interference."
+        }
+      ],
+      "codes": [
+        "Figure 5",
+        "8021417/2018-01-17"
+      ],
+      "topics": [
+        "sensor placement",
+        "angular alignment",
+        "distance to material"
+      ]
+    },
+    {
+      "page_index": 18,
+      "printed_page_no": "18",
+      "page_kind": "prose",
+      "lang": ["en"],
+      "sections": [
+        {
+          "title": "5 Mounting",
+          "is_start": false
+        },
+        {
+          "title": "5.1 Placing the sensors",
+          "is_start": false},
+        {
+          "title": "5.2 Mounting the sensors",
+          "is_start": true
+        },
+        {
+          "title": "5.3 Mounting the control switch for reset",
+          "is_start": true
+        },
+        {
+          "title": "5.4 Mounting the UE410-SD",
+          "is_start": true
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Warns against ambient optical interference sources and outlines mechanical mounting specifications for sensors, reset switches, and the UE410-SD module on standard DIN rails."
+        }
+      ],
+      "codes": [
+        "UE410-SD",
+        "IP 54",
+        "EN 50274",
+        "EN 60715",
+        "8021417/2018-01-17"
+      ],
+      "topics": [
+        "interference hazards",
+        "sensor bracket mounting",
+        "control switch mounting",
+        "din rail enclosure"
+      ]
+    },
+    {
+      "page_index": 19,
+      "printed_page_no": "19",
+      "page_kind": "prose",
+      "lang": ["en"],
+      "sections": [
+        {
+          "title": "5 Mounting",
+          "is_start": false
+        },
+        {
+          "title": "5.4 Mounting the UE410-SD",
+          "is_start": false}
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Provides numbered installation steps and diagrams showing how to mount the UE410-SD module onto the DIN rail, verify the grounding clip, and install end pieces."
+        }
+      ],
+      "codes": [
+        "Figure 6",
+        "Figure 7",
+        "UE410-SD",
+        "8021417/2018-01-17"
+      ],
+      "topics": [
+        "din rail installation",
+        "grounding clip",
+        "end piece attachment"
+      ]
+    },
+    {
+      "page_index": 20,
+      "printed_page_no": "20",
+      "page_kind": "prose",
+      "lang": ["en"],
+      "sections": [
+        {
+          "title": "5 Mounting",
+          "is_start": false
+        },
+        {
+          "title": "5.5 Dismantling the UE410-SD",
+          "is_start": true
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Provides step-by-step instructions and illustrations for removing pluggable terminals and dismantling the UE410-SD module from the DIN mounting rail."
+        }
+      ],
+      "codes": [
+        "Figure 8",
+        "Figure 9",
+        "UE410-SD",
+        "8021417/2018-01-17"
+      ],
+      "topics": [
+        "dismantling",
+        "terminal detachment",
+        "din rail removal"
+      ]
+    },
+    {
+      "page_index": 21,
+      "printed_page_no": "21",
+      "page_kind": "prose",
+      "lang": ["en"],
+      "sections": [
+        {
+          "title": "6 Electrical installation",
+          "is_start": true
+        },
+        {
+          "title": "6.1 Safety",
+          "is_start": true
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Details electrical safety warnings, emphasizing machine isolation, proper voltage supply, and deactivating output effects during installation work."
+        }
+      ],
+      "codes": [
+        "8021417/2018-01-17"
+      ],
+      "topics": [
+        "electrical safety",
+        "voltage disconnection",
+        "installation safety"
+      ]
+    },
+    {
+      "page_index": 22,
+      "printed_page_no": "22",
+      "page_kind": "prose",
+      "lang": ["en"],
+      "sections": [
+        {
+          "title": "6 Electrical installation",
+          "is_start": false
+        },
+        {
+          "title": "6.1 Safety",
+          "is_start": false}
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Sets forth requirements for voltage supply, overvoltage protection, EMC standards compliance, and cabling segregation to prevent dangerous cross-circuits."
+        }
+      ],
+      "codes": [
+        "UOUT",
+        "UE410-SD",
+        "EN61000-6-2",
+        "EN61131-2",
+        "IP54",
+        "EN55011",
+        "EN50274",
+        "EN60664",
+        "EN50178",
+        "UL1310",
+        "EN62305-1",
+        "EN61643-11",
+        "ENISO13849-1",
+        "EN62061",
+        "8021417/2018-01-17"
+      ],
+      "topics": [
+        "power supply requirements",
+        "overvoltage protection",
+        "cross-circuit prevention"
+      ]
+    },
+    {
+      "page_index": 23,
+      "printed_page_no": "23",
+      "page_kind": "table",
+      "lang": ["en"],
+      "sections": [
+        {
+          "title": "6 Electrical installation",
+          "is_start": false
+        },
+        {
+          "title": "6.2 Description of the terminals",
+          "is_start": true
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Illustrates the UE410-SD terminal block configuration and provides the terminal assignment table for power, inputs, diagnostic outputs, and safety outputs."
+        }
+      ],
+      "codes": [
+        "Figure 10",
+        "Table 2",
+        "Y1",
+        "Y2",
+        "A1",
+        "A2",
+        "I1",
+        "I2",
+        "I3",
+        "I4",
+        "I5",
+        "I6",
+        "I7",
+        "I8",
+        "Q1",
+        "Q2",
+        "Q3",
+        "UOUT",
+        "UE410-SD",
+        "8021417/2018-01-17"
+      ],
+      "topics": [
+        "terminal layout",
+        "terminal assignments",
+        "pin configuration"
+      ]
+    },
+    {
+      "page_index": 24,
+      "printed_page_no": "24",
+      "page_kind": "prose",
+      "lang": ["en"],
+      "sections": [
+        {
+          "title": "6 Electrical installation",
+          "is_start": false
+        },
+        {
+          "title": "6.2 Description of the terminals",
+          "is_start": false
+        },
+        {
+          "title": "6.3 Wiring notes",
+          "is_start": true
+        },
+        {
+          "title": "6.3.1 Wiring the inputs",
+          "is_start": true
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Concludes the terminal description table, explains sensor voltage supply via UOUT, and details input wiring diagrams and operating mode selections for sensor pairs."
+        }
+      ],
+      "codes": [
+        "UOUT",
+        "I5",
+        "I6",
+        "I7",
+        "I8",
+        "Figure 11",
+        "I1",
+        "I4",
+        "UE410-SD",
+        "8021417/2018-01-17"
+      ],
+      "topics": [
+        "wiring inputs",
+        "sensor connection diagram",
+        "operating mode selection"
+      ]
+    },
+    {
+      "page_index": 25,
+      "printed_page_no": "25",
+      "page_kind": "schematic",
+      "lang": ["en"],
+      "sections": [
+        {
+          "title": "6 Electrical installation",
+          "is_start": false
+        },
+        {
+          "title": "6.3.2 Wiring the outputs",
+          "is_start": true
+        },
+        {
+          "title": "6.3.3 Connection layouts",
+          "is_start": true
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Details safety guidelines for output wiring and provides a circuit connection diagram for operating with one sensor pair."
+        }
+      ],
+      "codes": [
+        "Q1/Q2",
+        "Figure 12",
+        "A1",
+        "A2",
+        "I1",
+        "I2",
+        "I3",
+        "I4",
+        "I5",
+        "I6",
+        "I7",
+        "I8",
+        "Y1",
+        "Y2",
+        "Q1",
+        "Q2",
+        "Q3",
+        "UOUT",
+        "K1",
+        "K2",
+        "RES REQ",
+        "8021417/2018-01-17"
+      ],
+      "topics": [
+        "output wiring",
+        "connection schematic",
+        "single sensor pair wiring"
+      ]
+    },
+    {
+      "page_index": 26,
+      "printed_page_no": "26",
+      "page_kind": "schematic",
+      "lang": ["en"],
+      "sections": [
+        {
+          "title": "6 Electrical installation",
+          "is_start": false
+        },
+        {
+          "title": "6.3.3 Connection layouts",
+          "is_start": false}
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Provides the complete schematic connection layout for the UE410-SD operating mode utilizing two sensor pairs."
+        }
+      ],
+      "codes": [
+        "Figure 13",
+        "A1",
+        "A2",
+        "B1",
+        "B2",
+        "I1",
+        "I2",
+        "I3",
+        "I4",
+        "I5",
+        "I6",
+        "I7",
+        "I8",
+        "Y1",
+        "Y2",
+        "Q1",
+        "Q2",
+        "Q3",
+        "UOUT",
+        "K1",
+        "K2",
+        "RES REQ",
+        "8021417/2018-01-17"
+      ],
+      "topics": [
+        "connection layout",
+        "two sensor pairs",
+        "wiring schematic"
+      ]
+    },
+    {
+      "page_index": 27,
+      "printed_page_no": "27",
+      "page_kind": "prose",
+      "lang": ["en"],
+      "sections": [
+        {
+          "title": "7 Configuration",
+          "is_start": true
+        },
+        {
+          "title": "7.1 Safety",
+          "is_start": true
+        },
+        {
+          "title": "7.2 Positioning and aligning the sensors",
+          "is_start": true
+        },
+        {
+          "title": "7.3 Configuration of the UE410-SD",
+          "is_start": true
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Covers safety warnings during configuration, step-by-step instructions for positioning and optically aligning the sensors, and UE410-SD operating mode setup via input I1."
+        }
+      ],
+      "codes": [
+        "UE410-SD",
+        "I1",
+        "8021417/2018-01-17"
+      ],
+      "topics": [
+        "configuration safety",
+        "sensor alignment procedure",
+        "operating mode setting"
+      ]
+    },
+    {
+      "page_index": 28,
+      "printed_page_no": "28",
+      "page_kind": "prose",
+      "lang": ["en"],
+      "sections": [
+        {
+          "title": "7 Configuration",
+          "is_start": false
+        },
+        {
+          "title": "7.3 Configuration of the UE410-SD",
+          "is_start": false}
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Briefly describes configuring diagnostic output Q3 to drive a reset-required indicator light or signal a higher-level control system."
+        }
+      ],
+      "codes": [
+        "Q3",
+        "UE410-SD",
+        "8021417/2018-01-17"
+      ],
+      "topics": [
+        "diagnostic output configuration",
+        "output q3",
+        "reset signal"
+      ]
+    },
+    {
+      "page_index": 29,
+      "printed_page_no": "29",
+      "page_kind": "prose",
+      "lang": ["en"],
+      "sections": [
+        {
+          "title": "8 Commissioning",
+          "is_start": true
+        },
+        {
+          "title": "8.1 Validation",
+          "is_start": true
+        }
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "Highlights commissioning safety requirements and lists validation checklist items required before system release and after modifications."
+        }
+      ],
+      "codes": [
+        "UE410",
+        "UE410-SD",
+        "8021417/2018-01-17"
+      ],
+      "topics": [
+        "commissioning safety",
+        "validation procedure",
+        "validation criteria"
+      ]
+    },
+    {
+      "page_index": 30,
+      "printed_page_no": "30",
+      "page_kind": "prose",
+      "lang": ["en"],
+      "sections": [
+        {
+          "title": "8 Commissioning",
+          "is_start": false
+        },
+        {
+          "title": "8.1 Validation",
+          "is_start": false}
+      ],
+      "summaries": [
+        {
+          "lang": "en",
+          "text": "States the qualification mandate for personnel executing validation and specifies the requirement for traceable documentation."
+        }
+      ],
+      "codes": [
+        "8021417/2018-01-17"
+      ],
+      "topics": [
+        "validation authorization",
+        "traceable documentation"
+      ]
+    }
+  ]
+}

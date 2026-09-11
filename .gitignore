@@ -2,6 +2,11 @@
 .env
 .env.*
 !.env.example
+# The two profile samples ARE committed: they carry no secret (the key is empty and
+# `scripts/use-env.sh` injects it from the .env you already had), and a profile nobody can read
+# is a profile nobody switches to correctly.
+!.env.stub.example
+!.env.live.example
 
 # Input documents. Generated fixtures are checked in explicitly (Spec §4.1).
 data/source/*

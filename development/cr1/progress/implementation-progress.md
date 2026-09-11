@@ -7,13 +7,14 @@
 
 | | |
 |---|---|
-| **Complete** | **32 / 33 units (97%)** — 25 of the planned 26 (every one but **U013**), plus U027, U028, U029, U030, U031 and U032 added after the plan was written (plan §4b) and the `fixes/` bundle |
+| **Complete** | **32 / 33 units (97%)** — 25 of the planned 26 (every one but **U013**), plus U027, U028, U029, U030, U031 and U032 added after the plan was written (plan §4b) and the `fixes/` bundle, now **001–007** |
 | **Current milestone** | **M8 is closed, and so is the plan.** U025 closed revisions, resume and graceful shutdown; **U026** closes the last one — `vsir eval corpus`, §12.6's report and the D11 gates. **Every milestone M0-M8 is now closed.** The only unit that is not `[x]` is **U013**, whose paid re-bill waits on OQ-1 |
-| **Latest** | **The completion gate ran — 15 of 16 ACs closed with evidence, all 19 §10 rows closed by the milestone that owns them, and `v0.1.0` deliberately NOT tagged.** It closed two criteria that were open and found three bad pointers in this file. **AC-012** was missing §4.3's third refusal: `fingerprint.require` guards the *write*, but a process that only ever **reads** embeds the query with one model and compares it against vectors made by another — no guard fires and the only symptom is worse neighbours, which is indistinguishable from a thin corpus. `doctor.check_collection_fingerprint` now refuses that boot. **AC-013**'s `summaries[]` was on Part A's wire and off the test: the field set was asserted against the export module's **own constant**, so deleting the field from both left the suite green. **AC-014 is 8 of 9** — M2b's demo cannot run without OQ-1's PDF, so the tag waits on a decision that is the project owner's. See **Completion gate** at the foot of this file |
-| **Previously** | **U026 — the catalogue, measured rather than asserted.** `vsir eval corpus` prints §12.6's five metrics against D11's gates, exits non-zero on any failure, and stops with a named **P0 STOP** on a `code_precision` under 1.00. Three findings the build produced: **(1)** `0/0` is the one arithmetic accident that turns an absent corpus into a perfect safety score, so a zero denominator is `None` and a named skip, never `1.00`; **(2)** the document-wide `lookup` status explains a recall miss *wrongly* — a code printed on an untrusted page inside a searchable document answers `not_found`, and a report echoing that would send a reader hunting a tokenisation bug that is not there, so a miss is explained from the page's own record; **(3)** a ground-truth file is found by the `doc_id` it **declares**, not by its directory name — fixture directories are named after the corpus (`synthetic_pages` holds `SYN-M1`), so the obvious `data/fixtures/<doc_id>/` path finds nothing for most of them. The report also prints `1/denominator` and marks a set **underpowered** when one miss costs more than its gate's whole tolerance |
+| **Latest** | **`fixes/005`, `006`, `007` — the retrieval, cache and deployment audit (2026-09-11).** Three defects the fixtures could not show, all found against the one real run. **005:** both sparse surfaces stored **raw term counts**, so the lexical branch had no term-frequency saturation and no length normalisation — over the 56 real pages, the query *"Safeguard Detector individual sensors"* ranked the **only page that prints the phrase** **9th**, behind prose pages repeating `sensors` 13, 9, 9 and 8 times. BM25's tf component puts it **2nd**; `sparse_version` is now the fifth §6.6 field (spec **C16**, **C17**). Every sparse assertion in the suite was about *shape*; **not one was about order**, which is why 1,473 green tests could not see it. **006:** `embed_key` carries the model id but not the backend, so a stub-seeded collection re-ingested live **reused every hash vector and billed nothing** while reporting them as `reused` — the stub id is now namespaced. **007:** `VSIR_EMBED_DIM` was absent from the compose anchor, so exporting it changed nothing a container could see, and `stack.sh status` read a hardcoded `vsir_pages_1536` — the failure, hidden by the tool you would use to find it. Two claims in the change as written did not reproduce and were corrected rather than kept (the rank was *16th*, the captions `avg_len` *"mean 15.8"*); the ranking test now carries the whole measurement. New open defects: **§4c P10** (a `sparse_version` change has no supported migration) and **P11** (the only paid run's receipts are untracked) |
+| **Previously** | **The completion gate ran — 15 of 16 ACs closed with evidence, all 19 §10 rows closed by the milestone that owns them, and `v0.1.0` deliberately NOT tagged.** It closed two criteria that were open and found three bad pointers in this file. **AC-012** was missing §4.3's third refusal: `fingerprint.require` guards the *write*, but a process that only ever **reads** embeds the query with one model and compares it against vectors made by another — no guard fires and the only symptom is worse neighbours, which is indistinguishable from a thin corpus. `doctor.check_collection_fingerprint` now refuses that boot. **AC-013**'s `summaries[]` was on Part A's wire and off the test: the field set was asserted against the export module's **own constant**, so deleting the field from both left the suite green. **AC-014 is 8 of 9** — M2b's demo cannot run without OQ-1's PDF, so the tag waits on a decision that is the project owner's. See **Completion gate** at the foot of this file |
+| **Before that** | **U026 — the catalogue, measured rather than asserted.** `vsir eval corpus` prints §12.6's five metrics against D11's gates, exits non-zero on any failure, and stops with a named **P0 STOP** on a `code_precision` under 1.00. Three findings the build produced: **(1)** `0/0` is the one arithmetic accident that turns an absent corpus into a perfect safety score, so a zero denominator is `None` and a named skip, never `1.00`; **(2)** the document-wide `lookup` status explains a recall miss *wrongly* — a code printed on an untrusted page inside a searchable document answers `not_found`, and a report echoing that would send a reader hunting a tokenisation bug that is not there, so a miss is explained from the page's own record; **(3)** a ground-truth file is found by the `doc_id` it **declares**, not by its directory name — fixture directories are named after the corpus (`synthetic_pages` holds `SYN-M1`), so the obvious `data/fixtures/<doc_id>/` path finds nothing for most of them. The report also prints `1/denominator` and marks a set **underpowered** when one miss costs more than its gate's whole tolerance |
 | **Next unit** | **None — the plan and the completion gate are both done.** The only work left is not a unit: it is the **`v0.1.0` decision**, which needs an input this build cannot produce |
 | **Then** | **`v0.1.0` is blocked on one thing, twice.** **U013** is `[!]` and **AC-014** is ⚠ for the same reason — OQ-1's `data/source/TC1E-SF.pdf` was never delivered, so M2b's paid ingest and M2b's demo command have both never run. Either the pilot PDF lands (and one paid run closes both), or the owner decides to ship v0.1.0 with the M2b slice **explicitly waived**. Tagging while a top-level criterion is knowingly unmet would put the untrue claim in the one place nobody re-reads |
-| **Read first** | **Plan §4c — six open defects found by running the system.** None breaks a build; all of them mislead somebody who trusts the output. P1 (a live run records no cost) and P2 (no VLM cache store, so a re-ingest re-bills) both land on U013 |
+| **Read first** | **`fixes/README.md`'s register (001–007) and plan §4c — eight open defects found by running the system.** None breaks a build; all of them mislead somebody who trusts the output. P1 (a live run records no cost) and P2 (no VLM cache store, so a re-ingest re-bills) both land on U013 |
 | **Blocked** | **U013** — the paid re-bill only, and now on **OQ-1 alone**: `data/source/TC1E-SF.pdf` is still not present. **OQ-2 is closed** — a key is configured and was exercised live on 2026-09-10, ingesting a real 4-page datasheet to `published` through `POST /documents`. The ladder is no longer a blocker either: the shipped `plan()` refused the 55-page pilot at **step 05**, one step before the spend everyone thought it was waiting on a credential for, and `fixes/001` now folds it to `[[1, 30], [31, 55]]` — byte-for-byte what its own acceptance table declared. Nothing downstream is blocked (§17) |
 
 ---
@@ -98,6 +99,14 @@ Two things a later unit should not have to rediscover:
 - [x] **fixes/001, 002, 003** — the window ladder refused 48% of the real corpus including the
       pilot; §6.4 check (2) raised on one witness with 22 measured false positives; `label_verified`
       contradicted the page's own text. See `fixes/README.md` for the two measured deviations
+- [x] **fixes/005, 006, 007** — the retrieval, cache and deployment audit. Both sparse surfaces
+      ranked by **repetition** rather than relevance (raw term counts, no saturation, no length
+      normalisation — the only page printing the asked-for phrase came **9th** of 56; BM25 puts it
+      **2nd**); a **stub vector could be reused by the live backend**, so a paid re-embed bought
+      nothing and said `reused`; and `VSIR_EMBED_DIM` reached no container while `stack.sh status`
+      read a hardcoded collection. Spec **C16**/**C17** carry the sparse recipe and the fifth §6.6
+      fingerprint field. **None of the three was visible to the suite** — every sparse assertion
+      was about shape, never order
 
 ### Surface work added after the plan (spend: none)
 - [x] **U031 The typed API surface: eight named routes, the corpus, and MCP resources** — added
@@ -5770,3 +5779,136 @@ Tagging a release while a top-level criterion is knowingly unmet would put the u
 one place nobody re-reads. The tag needs either the pilot PDF — after which U013's paid ingest and
 M2b's demo close both rows together — or an explicit decision to ship v0.1.0 with the M2b slice
 excluded and AC-014 recorded as waived. **That is a call for the project owner, not for the build.**
+
+---
+
+## fixes/005, 006, 007 — the retrieval, cache and deployment audit (2026-09-11)
+
+**Spend:** none to apply. The evidence is the paid run of 2026-09-10, already bought.
+**Files:** `ingest/sparse.py` (rewritten), `ingest/index.py`, `ingest/fingerprint.py`,
+`serve/tools/skim.py`, `core/indexed.py`, `config.py`, `ingest/embed.py`, `docker-compose.yml`,
+`scripts/stack.sh`; six test files.
+**Spec touched:** **C16** and **C17** (§2.3), and with them §2.4's `app/sparse.py` row, §5.3's
+surface list, §6.6's field set and D2's cell. **Plan:** §4c **P10**, **P11**.
+
+Three defects, found the way 001–004 were — by auditing the shipped system against a real run
+rather than against the fixtures — but one surface over: **retrieval**, the **embedding cache**,
+and the **deployment anchors**. The full write-up is
+[`fixes/005`](../../../fixes/005-the-lexical-surface-ranks-by-repetition.md); 006 and 007 are
+summarised in `fixes/README.md`. What is worth keeping here is why a green suite could not see any
+of them.
+
+### 005 — the lexical surface ranked by repetition, not relevance
+
+Both sparse surfaces stored **raw term counts**. IDF is one of BM25's three factors; the other
+two — term-frequency **saturation** and **length normalisation** — were absent, so the score rose
+linearly and without bound with repetition and a long page was never penalised for being long.
+
+Measured on `SICK-DETECTOR-BOX@3.0`, 56 pages, the query *"Safeguard Detector individual sensors"*:
+
+| weighting | rank of page 46 | top five |
+|---|---|---|
+| **raw term frequency** (as shipped) | **9th** | 17, 11, 29, 14, 22 |
+| saturation only (`b = 0`) | 3rd | 11, 22, 46, 17, 29 |
+| length normalisation only | 5th | 17, 11, 14, 29, 46 |
+| **BM25 tf component** (this fix) | **2nd** | 11, **46**, 22, 17, 14 |
+
+Page 46 is the **only** page in the document that prints `individual sensors`. The pages that beat
+it print `sensors` 13, 9, 9 and 8 times and do not contain the phrase. `individual` already carried
+idf 2.79 against `sensors`' 0.693 — four times the weight — and still lost, which is the point: no
+re-weighting of the branch could have recovered it, because the defect was inside the branch's own
+arithmetic.
+
+**Why 1,473 green tests could not see it.** Every sparse assertion was about **shape** — indices
+sorted, values positive, the tokenizer agreeing with the phrase index, `Modifier.IDF` declared on
+the collection. Not one was about **order**. A ranking defect is invisible to a suite that never
+ranks two pages against each other, and no fixture corpus could have shown it anyway:
+`synthetic_pages` is 30 hand-written pages of roughly equal length with nothing to repeat. This is
+the same lesson U028 recorded about the live path, in a different register — *the stub cannot lie
+to you about something you never asked it*.
+
+**D2's reason is kept; only its letter changed.** D2 stores raw counts so that no corpus statistic
+is held locally — *"otherwise ingesting one new document shifts the IDF of every term and silently
+stales every sparse vector already in the index."* Still true: `|D|` is the document's own property
+and `avg_len` is a released pin, so **ingesting a document still changes no stored value**, and the
+idf factor is still never computed here. §2.4's *port as-is* became *port with changes* (C16).
+
+**`build()` is gone**, replaced by `build_document(text, *, avg_len)` and `build_query(text)`,
+because a query built with document weights applies `k1` twice and a document built with query
+weights loses saturation — and **both mistakes present identically, as worse neighbours**. A stale
+call site should be an `AttributeError`, not a wrong float in a vector. One test asserts the name
+is absent.
+
+**`sparse_version` is the fifth fingerprint field** (C17). A BM25 collection and a raw-count
+collection are byte-identical in shape, declare the same `Modifier.IDF`, and pass every schema
+check in `core/indexed.py` — they differ only in what the stored floats *mean*. Without the field
+this fix would itself have become the §6.6 failure. `ingest/fingerprint.py`'s own comment warned
+that *"a fifth field is a release, not a config change"*; it now records that the fifth arrived and
+did exactly that.
+
+**One claim in the change as written did not survive checking, and was corrected rather than
+kept.** The captions `avg_len` was annotated *"measured: mean 15.8, median 18"*. It does not
+reproduce on any slice of the repository: the deduped caption length over the only two corpora that
+carry both halves is mean 5.3 / median 4 (n=32), and over the two **real** pages 10 and 15. The
+constant stays at 16.0 — it rounds up deliberately, because under-penalising length on a surface
+already weighted 0.4 costs recall it was added to provide — but the comment now states the true
+evidence base and that n=2 is thin. The same applied to the reported rank: the write-up said
+**16th**, which is not reproducible; 9th is, and the test now carries the whole measurement as a
+table of per-page term counts so the figure cannot drift from the claim again.
+
+### 006 — a stub vector could be reused by the live backend
+
+`embed_key` is `sha256(composition version ‖ embed model ‖ composed string)` and carries **no
+record of which backend produced the vector**. Both embedders pin the same `VSIR_EMBED_MODEL`, and
+`embed_document`'s reuse test is key-equality plus dim-equality — both hold across a
+`VSIR_VLM=stub` → `gemini` switch. A collection seeded in replay and then re-ingested live
+**reused every blake2b hash vector, billed nothing, and reported them as `reused`**: a run that
+looked like a successful production re-embed had bought no embedding at all, with no error and no
+way afterwards to tell which family a vector belonged to.
+
+`StubEmbedder.from_config` now namespaces its own id — `stub:<pinned model>`. By construction, not
+by a check somebody has to remember. `_pinned` still sees the operator's unprefixed id so F11's
+`-latest` refusal is untouched, and the namespace propagates truthfully into the step-09 print and
+the `embed_document` log line, where *"which backend made these"* was unanswerable.
+
+**The general shape matters more than the fix:** the §6.3 cache keys key on the *recipe*, and the
+backend is not part of the recipe. `extract_key` and `read_key` are safe from this only because
+`FixtureStore` is the only store that exists (§4c P2) — the live cache store inherits the defect
+unless it namespaces too.
+
+### 007 — the deployment anchors disagreed with the release
+
+`VSIR_EMBED_DIM` was **absent from `docker-compose.yml`'s environment block**. The dim is in the
+collection name, so it is the one lever that needs to move to stand a second index up beside the
+first — and because the anchor did not pass it, a shell exporting it changed nothing a container
+could see: the process took `config.py`'s 1536 default and served the old collection while every
+log line said otherwise. It was in `.env.example` the whole time, which is what made it look
+configured.
+
+And `stack.sh status` curled `vsir_pages_1536` **literally** — so the one command an operator runs
+to see what is in the index would have reported an empty index for any release that was not 1536:
+the failure above, hidden by the tool you would use to find it. Also corrected: `--live`'s
+suggested `--record /srv/data/fixtures/…`, which cannot work, because `./data` is mounted
+read-only and the recorder writes *after* the response is back — so the failure lands after the
+call is billed.
+
+### Two things this left open, both recorded rather than decided
+
+- **§4c P10 — a `sparse_version` change has no supported migration.** Every collection built
+  before this is refused at boot, correctly. The cheap repair needs no model call at all — both
+  sparse surfaces are derived entirely from payload already stored — but there is no `vsir`
+  subcommand that rewrites them in place, and §15 Factor XII means an operational action without
+  one is not supported. So the only path is delete-and-re-ingest, which deletes the embedding cache
+  with the collection and makes the re-embed a **live** call. 58 pages is pennies; 5,630 is not.
+- **§4c P11 — the only paid run's receipts are untracked.** `data/fixtures/live/` is 188 KB,
+  neither committed nor gitignored, and is the sole evidence behind 005's `avg_len` figures and
+  006's discovery. §12.1's premise is *"one paid ingest buys a permanent test corpus"*; this one
+  bought a temporary one. Committing third-party document text is the owner's call, and
+  `data/fixtures/legacy/` is the precedent that says yes.
+
+### Invariants / failure rows
+
+No invariant or failure row changes ownership. **F11** (the fingerprint) is *strengthened* — it now
+also refuses a collection whose sparse recipe differs, which is a failure it could not previously
+see. **I2, I3** untouched: no model output reaches a lexical index by a new route, `exact_filter`
+is not involved, and no `score` field appears anywhere (RRF is still ranks-only, §7.6).

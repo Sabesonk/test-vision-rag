@@ -40,6 +40,26 @@ MAX_READ_PAGES = 3              # tightened from impl's 4, deliberately (§2.4, 
 DISTANCE = "cosine"             # §5.5
 COMPOSITION_VERSION = "d4-fused-v1"  # the D4 dense composition; part of the fingerprint (§6.6)
 
+# BM25 (D2). The tf half — saturation and length normalisation — is computed into the document
+# vector by `ingest/sparse.py`; the idf half stays Qdrant's, via `Modifier.IDF`, so ingesting a
+# document still stales nothing. k1 and b are BM25's canonical values and Qdrant's own defaults.
+# `avg_len` is the one number here that is an observation rather than a convention, and the two
+# surfaces are an order of magnitude apart — so one shared value would compress the length penalty
+# on captions to nothing. Both are measured off `data/fixtures/live/`, the frozen receipts of the
+# only real ingest, and the two are NOT equally well evidenced: the lexical figure rests on 58
+# pages, the captions figure on 2. The captions pin therefore rounds UP from what those two pages
+# measure (10 and 15 tokens after `dedupe`) — under-penalising length on a surface already weighted
+# 0.4 costs recall it was added to provide, while over-penalising it silently removes the channel.
+# Revisit it as a release when a larger paid ingest lands; `fixes/005` records how to re-derive it.
+# Changing any of the four is a release, not a tweak: bump SPARSE_VERSION with it or the fingerprint
+# agrees with a collection it no longer describes.
+BM25_K1 = 1.2                   # term-frequency saturation; the weight is bounded by k1 + 1
+BM25_B = 0.75                   # length normalisation: 0 is none, 1 is full
+BM25_AVG_LEN_LEXICAL = 256.0    # tokens of `text` per page (measured: SICK 260 mean / 231 median
+                                # over 56 pages, BES 215 over 2)
+BM25_AVG_LEN_CAPTIONS = 16.0    # tokens of deduped generated text (measured: 2 pages, 10 and 15)
+SPARSE_VERSION = "bm25-v1"      # the sparse recipe; part of the fingerprint (§6.6)
+
 # ── Config (Spec §15 Factor III) ─────────────────────────────────────────────────────────────────
 REQUIRED_ENV = (
     "VSIR_PORT",
@@ -136,6 +156,7 @@ class Config:
             "dim": self.embed_dim,
             "distance": DISTANCE,
             "composition_version": COMPOSITION_VERSION,
+            "sparse_version": SPARSE_VERSION,
         }
 
     @property

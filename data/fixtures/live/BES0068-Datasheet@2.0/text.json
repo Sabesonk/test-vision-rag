@@ -1,0 +1,17 @@
+{
+  "probe_version": "pymupdf-1.28.2",
+  "content_hash": "ed7b693ee881220f210bf2d1902c0a9667fbdbd319dd906dccc210482617c5b8",
+  "page_count": 2,
+  "pages": [
+    {
+      "page_no": 1,
+      "text": "Inductive Sensors\nBES M12MI-PSC40B-S04G\nOrder Code: BES0068\nInternet\nwww.balluff.com\neCl@ss 9.1: 27-27-01-01\nSubject to change without notice: 265936\nETIM 6.0: EC002714\nBES0068_0.46_2021-03-18\n1 / 2\n \n \n \n \nBasic features\nApproval/Conformity\nCE\ncULus\nEAC\nWEEE\nBasic standard\nIEC 60947-5-2\nTrademark\nGlobal\nDisplay/Operation\nFunction indicator\nyes\nPower indicator\nno\nElectrical connection\nConnection\nM12x1-Male, 3-pin, A-coded\nPolarity reversal protected\nyes\nProtection against device mix-ups\nyes\nShort-circuit protection\nyes\nElectrical data\nLoad capacitance max. at Ue\n1 µF\nMin. operating current Im\n0 mA\nNo-load current Io max., damped\n5 mA\nNo-load current Io max., undamped\n2 mA\nOperating voltage Ub\n10...30 VDC\nOutput resistance Ra\n33.0 kOhm + D\nProtection class\nII\nRated insulation voltage Ui\n250 V AC\nRated operating current Ie\n200 mA\nRated operating voltage Ue DC\n24 V\nRated short circuit current\n100 A\nReady delay tv max.\n21 ms\nResidual current Ir max.\n10 µA\nRipple max. (% of Ue)\n15 %\nSwitching frequency\n2500 Hz\nUtilization category\nDC -13\nVoltage drop static max.\n1.5 V\nEnvironmental conditions\nAmbient temperature\n-25...70 °C\nContamination scale\n3\nEN 60068-2-27, Shock\nHalf-sinus, 30 g , 11 ms\nEN 60068-2-6, Vibration\n55 Hz, amplitude 1 mm, 3x30 min\nIP rating\nIP68\nFunctional safety\nMTTF (40 °C)\n640 a\nn\n",
+      "label": ""
+    },
+    {
+      "page_no": 2,
+      "text": "Inductive Sensors\nBES M12MI-PSC40B-S04G\nOrder Code: BES0068\nInternet\nwww.balluff.com\neCl@ss 9.1: 27-27-01-01\nSubject to change without notice: 265936\nETIM 6.0: EC002714\nBES0068_0.46_2021-03-18\n2 / 2\nMaterial\nHousing material\nBrass, Nickel-free coated\nMaterial sensing surface\nPBT\nMechanical data\nDimension\nØ 12 x 65 mm\nInstallation\nfor flush mounting\nSize\nM12x1\nTightening torque\n10 Nm\nOutput/Interface\nSwitching output\nPNP normally open (NO)\nRange/Distance\nAssured operating distance Sa\n3.2 mm\nHysteresis H max. (% of Sr)\n15.0 %\nRated operating distance Sn\n4 mm\nReal switching distance sr\n4 mm\nRepeat accuracy max. (% of Sr)\n5.0 %\nSwitching distance marking\n■■\nTemperature drift max. (% of Sr)\n10 %\nTolerance Sr\n±10 %\nRemarks\nThe sensor is functional again after the overload has been eliminated.\nFor more information about MTTF and B10d see MTTF / B10d Certificate\nIndication of the MTTF- / B10d value does not represent a binding composition and/or life expectancy assurance; these are simply experiential values with \nno warranty implications. These declared values also do not extend the expiration period for defect claims or affect it in any way.\nConnector Drawings\nWiring Diagrams\n",
+      "label": ""
+    }
+  ]
+}

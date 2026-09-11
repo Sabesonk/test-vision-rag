@@ -130,13 +130,14 @@ def test_doctor_prints_release_model_ids_and_index_fingerprint(captured_log):
         "VSIR_VLM_MODEL": "gemini-3.8-flash",
         "VSIR_EMBED_MODEL": "gemini-embedding-2",
     }
-    # The fingerprint is what a collection is checked against, so all four of its inputs are
+    # The fingerprint is what a collection is checked against, so all five of its inputs are
     # printed, not just the digest (§6.6).
     assert summary["fingerprint"] == {
         "embed_model": "gemini-embedding-2",
         "dim": 1536,
         "distance": "cosine",
         "composition_version": "d4-fused-v1",
+        "sparse_version": "bm25-v1",
     }
     assert len(summary["fingerprint_id"]) == 16
 

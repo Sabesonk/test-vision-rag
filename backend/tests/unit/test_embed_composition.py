@@ -436,6 +436,30 @@ def test_the_stub_moves_with_the_model_id_so_two_recipes_never_share_a_vector():
             != StubEmbedder(dim=16, model="b").embed_pages([page]))
 
 
+def test_a_stub_vector_can_never_be_reused_by_the_live_backend():
+    """The cache leak: `embed_key` carries the model id but not the backend that produced it.
+
+    Both embedders pinned the same VSIR_EMBED_MODEL, and `embed_document`'s reuse test is
+    key-equality plus dim-equality — so a collection seeded under VSIR_VLM=stub and re-ingested
+    under gemini reused every blake2b hash vector, billed nothing, and reported them as *reused*.
+    A run that looked like a successful production re-embed had bought no embedding at all.
+    """
+    stub = embedder(load_config(SYNTHETIC_ENV))
+    page = compose(record(text="body"), raster(), text_chars=2000)
+
+    assert stub.model.startswith(StubEmbedder.NAMESPACE)
+    assert stub.model == "stub:gemini-embedding-2"
+    assert page.key(stub.model) != page.key("gemini-embedding-2")
+
+
+def test_the_namespace_does_not_defeat_the_model_pin():
+    """F11 still refuses a floating alias — `_pinned` sees the operator's own id, unprefixed."""
+    floating = {**SYNTHETIC_ENV, "VSIR_EMBED_MODEL": "gemini-embedding" + "-lat" + "est"}
+
+    with pytest.raises(EmbedUnavailable):
+        StubEmbedder.from_config(load_config(floating))
+
+
 def test_the_backend_is_a_configuration_lookup_never_a_branch():
     """§15 Factor X — VSIR_VLM selects the embedding backend too, so a stub run cannot spend."""
     assert isinstance(embedder(load_config(SYNTHETIC_ENV)), StubEmbedder)
