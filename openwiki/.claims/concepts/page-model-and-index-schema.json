@@ -1,0 +1,252 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:56ccb22d9002811b11853a13b327a6a6106de765141de229691a21ecff36c810",
+  "claims": [
+    {
+      "id": "claim_7360231f52b342d690f8812a3c2b8729",
+      "statement": "point_id is a deterministic UUIDv5 of the page id rather than a random id, so re-ingesting the same page overwrites its point instead of adding a second one — which is what makes doubled totals structurally impossible.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/ids.py#L1-L7",
+          "version": "repo-lines-v1:sha256:e7bec6c2756dae49ac74078f8dfa360e28f5ea5df36009b453d359d48c7aaff5:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZDMwNzM4ZjkwNTBjNjc0NGQ1OWU4OTA0OTdhMDNmNzU2ZTA3ZTBkM2IzNDdkMzczMjNiMzA2ZmFkOWQyYzE3OCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMDQ5OTAzZWYyOGZjNDM3N2ExZWI1YmQ4OTk1OGY3YTM3N2IyZTdjZGFjOGQwZGZmZDdmODM4YzE2NjhlYTdlYSJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/core/ids.py#L104-L114",
+          "version": "repo-lines-v1:sha256:c6c161e2c8d6cbbbdc8fb9636f1659d7fe380bc133ecc241a0b9ef68de01a130:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA1ZDgxN2M0ODE2M2M2OGJiZDQ2NjVkM2ZkMzJlYjljM2JkZWNhYTkzMzFiZTFhY2I4N2NmMTgwMWQwZGFkMmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJiOTMwNTc4MDI3ODg5M2M0YTBlNmQ5YWFmMDk2YzZlNmRkNDM5NjY1MmQwMzlkYjk0MzBkODI2YzNmNTFiMTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk3NjEwMTE3YzgwOWQ1OTE3YTk1ZjE3NGY2ZGZmZTcyNWM4ODdkNmU5MDJkYTlhYWM2ZGI2OWEyY2U2Y2M0ZmQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_8c2a39049def4137acf24dc832956aae",
+      "statement": "Only the canonical page-id spelling parses: over-padded forms such as #p0001 are refused, and point_id canonicalises through that parse, because a lenient parse with a string-keyed hash would give one page several point ids and turn a mis-padded citation into a silent miss.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/ids.py#L36-L40",
+          "version": "repo-lines-v1:sha256:767b05cb20d7f31959bf5a86e3d86e8ec66ea2680f268402d7709ade34a8bc3e:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNjQxNzUxOWZiZDE1M2EzOWQ2ZDNmMTRiZWM3NThjZjRjMzg1ZmJkMDAwY2MyNWU1MjhhYjU5M2NhNGQ1OGY2NiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDQyNzU5MDk3M2RhNjQ0OWUxMTZiYzU5YWUzZjVkM2M1ZDczMGUyNmQ5MzIwZTdkZDNjNzE3ODQwNWZmYTFmZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjFlYTNiZTA1NDliN2ZiZWZmODcwNmQ4MWZiYTczZDhiNTBlNDE1ZDZkNDEwYmFkMmQ1ZjlhOTI2ZWQ1MjM5MSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNzU0OWU1M2Y4YjNhZGZhYjA5ZmJjNGJlMDFiNmFiYTY2Y2Y1YzQ4MGE0ZmZjOGNkNzExZDEwOTgzMGU0ZjA2ZiJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/core/ids.py#L61-L82",
+          "version": "repo-lines-v1:sha256:ed3c0f7d51e44e0db7ca727433ea6b0274e77b33e65dbe256afbf156d4536c5c:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImExN2VhNTEzNTkyYmM4NWRiNjRhYzYyZWIwZjE4MDRhMjQyZmI0YjZmYzI2OWIwYmZlNTY2MWEyZGM1M2QyNDgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYyOTMzM2E3OGU5NTQzZDhjNWIyODU1ODRlZGY4NTg0MTZjNTZjNjIxNjE4ODE5YTMzYzk5NTk3ZjVmNGJjYWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImMyMjYzNzllZjBhOThjYjhlYmEwZjdmMmY1NGMxNjRkMDliOWQ1ZGFjYzFlMDA5MmVhZDYyZjI4MmQ1MmY2OGUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_43508d43d6834614951e3ef184bb552b",
+      "statement": "The UUID namespace point ids hash under is pinned to uuid.NAMESPACE_URL and asserted by a test, because the namespace is part of the id and changing it would orphan every point in the collection.",
+      "evidence": [
+        {
+          "resource": "repo://backend/tests/unit/test_ids.py#L1-L40",
+          "version": "repo-lines-v1:sha256:7c7b7d1cb6db8370b0807601aaa286ddd08a25faff704d075b12ee491329adb0:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3MGE3YmMyNmE0OGQ1OWVjNDYzYzBlYmZlOTNiNDU1ZmQ3MzQwNDVhZTIxZGNjNWJkZGZiMzgyZDNkNTE2ZTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFmMzQ1ODNhNTk4NzY3YmY1NmFlZmViNjVlMjAzM2ExNjUxY2M0YzhkN2U2ZjBhZjNlNWNmZDMyOTNmOTMzYjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhiNjk1Zjc4YjE1OWFkNDdkZDBhM2MzNjU3OWJiN2QwYzM0ODkwMDE2NjVhZDE0MDUwZjZmMmMyOWEzZWU0NjIifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/core/ids.py#L11-L23",
+          "version": "repo-lines-v1:sha256:8cecd9fe7acefcd97d0f934e61cd972c44be6658c703bbfc72f985c56ec2f4b0:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhiNzBkMmJjZjdlOGRmOTM2NmUyMmY5YmQ3MDJjOGNiZmZmMjFhNTkxZWVjOTczMGY3ZjRkZTM5NWY5MjU1N2UiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA0OTkwM2VmMjhmYzQzNzdhMWViNWJkODk5NThmN2EzNzdiMmU3Y2RhYzhkMGRmZmQ3ZjgzOGMxNjY4ZWE3ZWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEzMDAxYzkxMGU3MGM3NDBmOTUyNjYyM2Q3Nzc4NjkyMWYwZjQzMGZkYThiNjA5MDYwOWMzZWU5MGRkZmMwNzQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_04ac50d5253b4b798acc2ab3a1507dab",
+      "statement": "series_id deliberately omits the revision so that a scope expressed as a series survives a revision boundary, which a section_id cannot.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/ids.py#L88-L101",
+          "version": "repo-lines-v1:sha256:6e0168fb75856ae74876be7d5b88bf07107b741efed639bf6b4cdd15fac85947:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZjMGEwNWU1YWEzZjJhYjIzYzdiYjFkNGJmZTBlNmExYjUxZTM0NjZkZjY2ZjQyOTg1OTZiMTFhODA0MGUyZDMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhlNGU5YzFmZGExODMzNzIyMmY5YzAyMjIwMTU5MTA1MmQwZTNhOWY2MzQyZThiYzY2ZDlmMjhkZjM3OTQ2M2EifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d28c74dde7674e61bc29f28d17187e5c",
+      "statement": "run_id is a ULID — 48 bits of millisecond time then 80 bits of randomness in Crockford base32 — so run ids sort lexically into time order without an index, two runs started in the same millisecond still differ, and a transcribed id cannot become a different one.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/ids.py#L116-L134",
+          "version": "repo-lines-v1:sha256:48f3ad4adecd08802b38398ba4f342474e6796057dfd063c483d8dfa0c118579:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU4NjRkZWY4MWRmODI5NDVhMTVhYTQ0ZDQ2OTczYTljM2UzNjRkOGRlMzY3MzcxYTYyYjA2ZmI3ZjFkY2VhOTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJhZWZkMjQ2NWY3MGNkYTY3YWEzNWEzMDYxNGNiNzFkMGJhMGI0MThlNDc5MDI0MTdiMDQ2ODljNGRiODlhZTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzOWIxY2Q1NjNjNmFkM2MxNTBkNWQwODY4ZDlhNGJhMDFkNGZkZjg2ZDU5ZTNkZDQ5NzdiY2RmZjRiMWMyMzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/core/ids.py#L25-L30",
+          "version": "repo-lines-v1:sha256:9e8f0a9687db22cdea3d1f19e8e06a717d875f87f61dab3f65f3baaa546164f5:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTAzNzU5NDdhYmRiMDQyOWZhMDU3ZTIxMWU5OGI3NWMzNzVlOTk3MzgxYTkxOTZkYTExMzU0MzgwMzczZmIzNiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZjVlODRlNDViYzcyNmIyOGExZGUzMzJjYzRhNjhiZjM1NmJhZTYyZjcwNDk5MjA2ZmZhNTYzZTJkMzQ1MmYzMSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjQ4ZmI5YTkzMTAxNjZhMTI5NmY1MTAwOWQ4NGZjOWJlNjM5OWJkOGNhZTkxYjZhYmRhMzRjNTQyMDQ1OTE0ZSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_a09a8e4ad7de47f99d9312d15f33ee9f",
+      "statement": "The page record is validated with extra=forbid and split into a flat facet zone and nested content/provenance zones, kept visibly different because Qdrant will filter a nested key by running an unindexed scan — a silent recall loss rather than an error.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/record.py#L1-L13",
+          "version": "repo-lines-v1:sha256:7def6b871b250eeac852004bae9e5355615a3fde380120c3df78ec96cd5d1c36:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3ZmZmZDczOTM2MDcyYjhmNTY2YWFlY2ZiNGQ2NzU1OGNiZmY4ZGU5ZTdjNDMwM2JiOGExZWJlNTQ0ODNiMTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU2Y2FmY2U5NDExMzMyNDY5ZTAyNDgwNmRmMzY5OTdkMWU2OTk1ZjhlZDFhMTJhMmZjZTk5NTJkZGEzMTg5ODYifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/core/record.py#L140-L180",
+          "version": "repo-lines-v1:sha256:6bda879d8153ecfe0a76877973495a1f585bc048bd5be2c9fbdf67d27955cce0:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI3Yjk0NDhjOTg5ZWI5YmViMGUxZDdjZTE3OGZlYzBkMmY5YTA4NmFlNjMyMWVjMWU1MzdkYmMwNDM2MjQ3ODciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY4YjM2MjM0Y2EyNjFiZDczMzc5MGM4NGYyYzIxMjU3Yzc2YWQ5YzhhMjhhN2Q2MDNlOTNhNzYwMTJiMWZkMjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRiMjViNzFmNjdjMTYzYzBjZDExODViYWM2OTQ0MjFkYjI2MGZiYmEzNzcwY2I5MmFjN2M0NjRjZmUyNGY1ZjMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5e1c41b8781d4b86862a0a3227aa457e",
+      "statement": "section_id and series_id are arrays on the record so a page straddling two sections carries both ids and a scope matches on any element; a single scalar per page is how a scope silently excludes a page it should have contained.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/indexed.py#L30-L36",
+          "version": "repo-lines-v1:sha256:331c645c54edc4f89dbaeab1df9b414076801ecd68150871415cee7ab0b5b32c:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOGU3ZmVlOGI5NTAzMTQxM2U4ZTMzZTM0YjYzNmMxOGVhNGIwMzRhNDE4OGVkYzhiNmFmODRkOGViZDU3MDE5MyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYjM2MTM3N2I3NTM4NTBiZjkwZDQ1MTg4OWRmMDMwYjdhOTgxMjkyMWMyMzdiNDI4MGI4M2Q5MTE4ZGYzNGIwNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTk0NjljZGYyN2Q4YjYyMjJhYWE1ZjM4ZjIwOGJmMTdkZmVkZWIzOWE1MWYzN2U1YmMwZmQ1YjRkNDZiODg5OCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNWVjOTMyZmQwMjM4MmZiYjI1NmM4MTY0NTExYjFkZWQ4ZTAwOGNiNmEyODEyMDc5MGQxOWU1ZGFlZGM5OWY3OCJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/core/record.py#L161-L166",
+          "version": "repo-lines-v1:sha256:e8d5531599adda70a67b0856b44f89f3c9da331a247c2076e65cf41559cf4202:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiODg5YWQ3NjNjN2ViZDlmNzI3ODUxMGM4MGRjODdjNmQ2YmZjNzMyNDhmMTQzOTM1MzNlODkwNTM3N2U5M2QxYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOTYyNmQxNDEzZThhODBmYWRhNzhhYjUyNDMyZDZhZjAwNzRiMzllZGEwYjI1YjIxMzNhMDZlY2I0MjlhMTcyNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYWFiOTkyYjM2ZTE0Y2Q4MzdhY2NmMTY1MzQ1ZDc3MTY0YTdjMTEwM2FkZGIxNDY1YzFkY2Y1ODMwZjU3MTQ1MSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjU3YzA1NTA3ZDUwYjUxZjk3OTQ4ODdmMmE0NzViOWM5NmJkNGEyODhhZmU1MDVhYTg4M2FjNzAzYzkzZDIxYiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_a8100c81b10648bdae5b64823ff1dd25",
+      "statement": "is_current defaults to False on the record type itself, so a page being unqueryable until the publish gates flip it is a property of the type rather than something each writer must remember.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/record.py#L152-L153",
+          "version": "repo-lines-v1:sha256:7c78cbb6d9174f9d95ea2b0f7ae03756c8d7680107f6966bf535f316308917d4:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYjE3OTc4YmJjNWM0ZDk4NTIxMzY4ZDY0YWJlZDNlZTc5ZWIyNDllNDMxOTc5NThkNTI3NGMzMzEzYWQ0ODMzYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDgyY2QxN2U4MTcxODcxNzFjZjg2Y2FiNGRmZjMzOTQ3MzI3MWVjMmI2MDRmNDNiMTAxMzY3YzA0NmQzY2U2OSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjZlOTUxZTgwZjAxYmRjMmU4ZDFmZmI0Njg5MDJkNzgyNWI4Y2UxYWQ5MjcwZTgwYzAyMDI5ZDVlOGExNjcxYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYmU3M2RmOGYzNTYzMzQzNjZmZGYxN2IzZDg1YTU1NTgxYjAyODc3MGI2MTRjMjM4ZTJiODgyNzI5YTIzYWFiZiJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/core/record.py#L24-L26",
+          "version": "repo-lines-v1:sha256:2c2b092cfd62802363e79f4d9900062dc9ae91012ec99fe49dea9b68f35f2bcc:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYzM4ZjRlOWYxYzZjYjMyMjUzMGE3NmE1NTJiODA2MzA3ZTNkZjhjYmFkOTFmODUzN2UzNmU2ZDg2MmY0YjIxNSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjAzYTZlN2ZjMWYyMGMxMGUxZTI3OWVmZmNjMjhmODI0ZDVlNjI1ZGVkYjdlMzAyMmM2Njc3MjQwYWZmODdlNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYmVjZTdmMTNiN2I2YTM1MTZmY2Q0YjU0MzJkODU4ZTVmNWEyNTIwNGU2Njc4ZDkzMTBmMDUzM2U5NTQ3OWY0NSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_09e43b91aa7b49b29ad33c927d748444",
+      "statement": "The ingest probe is the only writer of the flat text field and it extracts the full page rather than a crop, which is what confines model output to the separate opt-in vlm_codes surface whose hits are permanently labelled unverified.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/record.py#L15-L18",
+          "version": "repo-lines-v1:sha256:525e6f6aed03ac84d55ecb46b698f7b23d6e5cdc730ab8e0525a08d964c5a1a1:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOTg0YmI5ZDM2ZmI1MGM2NDMxNTFmMzNiMWU5NjdmZjhiZjFmNDExNjg4ODAwZWQ0MzA5ZmFkOGY4MzRjMjUzZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOGUyZTNmZGQ4ODZiNmM3NzkzMDdkMTY4MzE5ODYwN2ZlNmFkYzI0NTFkZDg4ZTM1MWFlYTY2ZDI0OTlkNDUyOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMTI4MzExM2YwYjdkMzdiMTI1ZjM4ZmEyMzJmZGYxZTAwMDViYTg3MTE4MjgzZGYxZDI2NjYxZTJmYzNmYzhmOSJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/core/record.py#L169-L176",
+          "version": "repo-lines-v1:sha256:973ccbe54876792cf210d69da92d67b860b87a8d79531e1188cd7c826e5edef9:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYWJjNDIzZWU0YWQ0NTUwYTExODdiNWI0ODdiYWE0YTI0ZTQ3NDJmNDM5YzM2YmMxNWIzNDcxM2ZjYmI5ZTNkOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOGJkYTkxMWM1MWVlOGU3MWJmNTBhMjI1NGQ1NjBmNmVjOGNlOTlhMDdmZGRkOTk0ZDFhOWI1NzY1YWYwODYzZCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_2618e6471bd041d39d0e21135198a0f3",
+      "statement": "No page record carries an image path of any kind, because rasters are re-rendered on demand and a record must not depend on a file that may not exist on the instance serving the request.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/record.py#L18-L21",
+          "version": "repo-lines-v1:sha256:fe2dbe34379c6ff7f5f60b3a6f7264e0f096769c259f25740f88bcb1ac881cbd:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTg0YmI5ZDM2ZmI1MGM2NDMxNTFmMzNiMWU5NjdmZjhiZjFmNDExNjg4ODAwZWQ0MzA5ZmFkOGY4MzRjMjUzZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZDk4ZjYwMTI1NDgwYTQxMWU5NzI5ZTI1OGQ1ODhkMTNlYzU0ZDc5YWRkNGQxOGUxNzg1M2Q0MmNlODNjMjRiNyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNzdjNDI1MDk2NGFkNGVhMGRiZTc4OGZmMDdjMjM1MWQ2NjE0NTdjNThhMDdiYTU4NzliODcxODZmMDgwODRlNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTVlODllY2RkZjQ3ODBkNzRhYWQ4MDdjMjI4MTBmMWU1MjQ4MzcyMWVlNmM3OWQ5ZTkxOTY5MTM4OGJlZjIwZSJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/ingest/index.py#L62-L68",
+          "version": "repo-lines-v1:sha256:0ad8d02cf5628e2f8c6d9943aec2c9baa52440a495c9548333fe43091d96f036:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzkzYjlkYmIzYzliYTA1ZDYxZDU2MzE1MTk5ZWQ1OWQyMWVlNDdlMmM1ZDA5OWQxZDIyNzkyMzVjY2RkZGUxOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMWExNmJkZDVmOTRlZDQ2OGFlYTM4MWNkMjUxZDYzOTNmM2FkZGU3YWNhNTU2YTE4MWRkNGY0YTMzMWNjNzRlOCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOGZjZjk2NmE0Y2Y2ZTEwN2UyMTY1NGQxNmJiMWUxZmU1YzIxOGFmY2NkZWU4MjJiZGM1Y2MyZWVmOWE4Yzk0YiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiY2MyMjIyNDg4MmQxNDBkMTRjMzc0OTk1NjBlMTQ2YjUxZmZmOTlmZmI3ZjcxN2Y3NzA5ZTQwYzJlMmIyMmNkMyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_fe3bded9e7af439ab070188d52c5643e",
+      "statement": "Vectors are not part of the page payload — they travel beside it in the upsert — because a vector is never read by a filter or returned in a response.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/record.py#L141-L145",
+          "version": "repo-lines-v1:sha256:e0c9cb293574f2236528367208bad110fa8d642738bbabf176b54138f6125097:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTAyM2VmOTU1ZmRkMzI1Y2I1YzU5MjFhNjExMjY5MDAxMzQyZGFlMGE0MTE2MWVlMzhiZTRkM2VlMjMyOWUzMiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTZhNzE1MjU3MmVlODRmMTA5MDZjNzRiOWYyYTkyNDM0ZGRhYjBlM2M0MjgxM2IwNGU1OTdlZmNlYzk1MWIyNiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTMxYzAyZTY2OTU0OTUyMTQ1MWE1MzYzOWJkZmU4YjI5MzZhZmQ4NTAyOTVmYWE2MTkxN2Y2MGFjMTNkZDU5MSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMWU1OTMwM2VjZDBiYzc1MmNlNGIyMmYzZmQ4NzUxODI3Y2UwYjc1NTI1YzVmODQ3NTlhMTU2ODMwZjhkMWIwNCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_fc03e39615224f39926ccd0f6e23fff5",
+      "statement": "scope_keys() is INDEXED minus the two text surfaces, so text and vlm_codes cannot be used as caller filters and remain reachable only through the tools that own the single exact-match path.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/indexed.py#L71-L84",
+          "version": "repo-lines-v1:sha256:afc7f06c936d558ad1d3f8574a058c3828e372d6591acf4705d416c0dd04b1ad:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM0ZDllMGZjZTJhNjM2MzE2MzVkODI5ZWMwYjlhYzM1ODNmNmJjOTEzOThiZjdiODY0Y2EzYWEwM2YwNWEzMTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIwMDBlYzU3MGRkZTc4OTY3YmMzNGQxZGNjOTVlOWRiMzM2NDYzMDFjZjU2ODk4NGRhOTU3NTUwYTllMjBiNzYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a6968421a96e45148753ba13afb15bb4",
+      "statement": "grounded_rate is the share of the model's claimed codes that the page's own text prints, measured with the same phrase-over-variants question the index is asked rather than a token-set intersection — which could not match a multi-token code and would push a healthy document under the publish gate.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/health.py#L19-L27",
+          "version": "repo-lines-v1:sha256:d5ab1fef9ba06e6d4546d83d00baf1f27793b9aec4178caaf9ce8edb7b26deae:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDQ1ZjYyY2MxYTJhZDE2MTBlYjNkYzc3N2E4OGQ3YWU5MGZiNDY1MGMyMjFhMGM2YWVmY2YxODMwNDNjYzk3NyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZDQ4NTRmOGM5NGVkZDBmMjdjNDBkNjFlMmZkOTllZWQ5NmY5MDRjNTkzOTI4MmU0OGYzMWI2OWM1NmM3NGUzNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiM2EzNTlkYzhlZThiNWRlYzAwY2Y4YmQ2OGRiMDUzMGVkNTgzMDRkZjhmNjFmMDM5ZmYwODQxNmNmNWZlMGI2ZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNWY3Y2IzMjhlNjU5ZWIyZDkyOGI0MGViNzNjYjI3YzQxNzExZTUyZWVhMjhlZTdlZjkzM2NlMTE1NzE3MDdkZiJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/core/health.py#L52-L60",
+          "version": "repo-lines-v1:sha256:0de2a12a62721f6f0c32108aa3655e5124e188cdf625a336ff031d81eb2efd46:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTIzNzZlYjM4MDE2YzQ5NmIxMGQxZTNhMmZlOTQ4NTIyNTc0YWRmNjM1ZjkyYjUzMDc3MGEyNTkwYTliYzljMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTI3MzAyMjFhOTYzOTJmZmFiNmMyZmQ1NjY3NTM1Yzk0OTA5NzVhNmVmYzJkNGVkZTJiMGQ3OTk0ZDE2MGY4YSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMDFlMDY0YzFjZjk0ZTAyZTZjYWQ4N2VjNjdhZTYxODg0MzhlM2ZiOGUwM2I1NThjMmFiNGE0ZmQ3ZGJkOWYwMiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_73618a8fcffd4a22868feb8e51bdda7b",
+      "statement": "grounded_rate is None rather than 0.0 on a page with no text layer, and every aggregate ignores those pages, because scoring an unreadable page zero would report \"extraction is broken\" where the truth is \"there was nothing to check\" and would quarantine exactly the scanned documents that must be published but unsearchable.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/health.py#L73-L86",
+          "version": "repo-lines-v1:sha256:5e536ea7aa2ee11df99643ae7d72b4b9cfcfc9e1d5d43de6652c58e4c48b3eb1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUwY2NkNmU4OWQ4ZGUwNWIxMjdhNzY3YmIyY2IyNjhmZWIxODViZWQ3ZWYwYjgyNjM5ZmUyMTBlOTU4NjMyNmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI1OTNkMDM0MWRjOGIyZWE0OTEzMjg4YjNhNTJlZGJlNDdjYjg1YjdlOTAyYmI3OGZjMTBhZjEyOGU3NTUwYTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc1OWQxZTQzNWE5MGE2YzMzMTI1MTAwYzliOTMyMTdmMGY3ZTczNTliZWYwOWYyMTdhN2Q5OWYwZWZjZWYxM2IifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/core/health.py#L9-L18",
+          "version": "repo-lines-v1:sha256:d37febbff03376ebf9540a20a6a2798c11d07d5551cc86b34bcc345767472192:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJjOGEyZjYxZTY3ZmJjYjUxZDZkNGE5MGU5YjZhMzg4NzQ0ZDZhNTc4NWNiODcyZjBjY2UwMjI2MTVkMTI4MzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI2YjNhM2ViNWEwM2VlMGQ1NzMwYTk4NGE4ZTJhNmYyZmUwMDc1ZDE5MmI3MTFjNmY0ZWRkNDNhMWY4Y2U3ZTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFjN2M4Zjc2ZjU1ZTc4MDhjZWViNDE3M2FiMjA5ZDAyZTNhZjg4MDc5YzEyM2I5M2U1MDYzOTNhOTRiMmMxYjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY4ZTkzNjEyMGI3MGQ3ZTdhNzMwMTlhOWYyYzM1ZjlmNGQ0NTc0MjkyYjc0MTA3NzFhN2IzMWFhYWNiZjdmOWIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d1cfb36308004e4287e5f7dfbb1c1199",
+      "statement": "A page that has a text layer and no claimed codes rates 1.0, because nothing was claimed and therefore nothing is unbacked.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/health.py#L73-L86",
+          "version": "repo-lines-v1:sha256:5e536ea7aa2ee11df99643ae7d72b4b9cfcfc9e1d5d43de6652c58e4c48b3eb1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUwY2NkNmU4OWQ4ZGUwNWIxMjdhNzY3YmIyY2IyNjhmZWIxODViZWQ3ZWYwYjgyNjM5ZmUyMTBlOTU4NjMyNmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI1OTNkMDM0MWRjOGIyZWE0OTEzMjg4YjNhNTJlZGJlNDdjYjg1YjdlOTAyYmI3OGZjMTBhZjEyOGU3NTUwYTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc1OWQxZTQzNWE5MGE2YzMzMTI1MTAwYzliOTMyMTdmMGY3ZTczNTliZWYwOWYyMTdhN2Q5OWYwZWZjZWYxM2IifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_097e6aef506245a1ad5a77cc1101b04d",
+      "statement": "The trust ladder is a pin rather than configuration: page_trust maps a grounded rate onto ok at 0.8 and above, degraded down to 0.2, untrusted below that, and no_text which nothing promotes — so no deployment can re-tune what trusted means by editing an environment variable.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/health.py#L28-L31",
+          "version": "repo-lines-v1:sha256:d1ec00b7d73a82fa62afc80ff162aa7d30872245ad1792e55405cc8dde0a4fdb:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzQ4YjBiYmEwNDMyNWUyMWZhMDU4OWQyNzQzZWVhMGY3ZGQ0M2Y2YWZmZjE3NmJiNDc5YzBiYTQyMWI2OTUzZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYmY3OTlkZjYyNTM5YzdkMWY5NGEwMWU3ZTcwM2JkZjIxOTczOWUwNzQzZDQxOGYzZmQwNmJiYTc1NTEzMTNiMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiN2IxNDY5NTZjNDRjZWI2N2ViZWM3OTI0ODQ5YzExYTQ4MzFkMTAzODhlNGJhNjdjNWE0YmQ2OWYyZmRjNzBhMSJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/core/health.py#L40-L50",
+          "version": "repo-lines-v1:sha256:8e16b95bbce507adc8bcc278660186fa0bebc847d81f4440f2d7f4b4cbd05a32:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA3NTFhZjI4YzY4ZWI2YjQ5ODEyMTk0Mjc2OGFiNmFkZTA5MjIwMzVjY2Y2ODYxMGE3NGRiYzE1YWEzMDFkN2EiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjEyNmRlYmFlYTc4MGQyZjc0ODlhN2E0ZjY5MzRmOWZkMDlmMDU4NjhkZDkxNzRiYzJlN2FhZjIwZGQzNDE0NGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhlODhjYWQ1ODQ3Yjg5MzdiODgwNjk3YTVjZTQ3M2JkMGNhY2Y3NDVhNjQ0OWZkNjI3ZTJjMWM2NmU2MWM0NWEifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/core/health.py#L88-L102",
+          "version": "repo-lines-v1:sha256:5ecfc26ab3d770d41c23c9f7bdaa11c648119544a5ed86483c5d0f13b1f86678:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2NDBmNmZiZjNiZWMyZmVhNjNmM2Q3MjJiZWNhOTNiYzUyYjQ2YTRhMTkwOWZiM2Y1M2ZhMjNhZWQ4MGY0OTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFhZTMxNjcxMmQzYjg5MzZlZmY0YjMzN2IxMzJhN2RiNzk1MjRhZDdjYTNlYjdjYzk5MGQ1OTlkYmNiMzYwNzIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdkYWMwNzIzM2E5ZjkwYzk4YTg0ZGE2YTQ2MGFiMjVkYWI4OTUyYzhhYTg0NGJjYzIwYmVkMTY5MGZjMjQwZmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc0NWEwZGIxNmNiZmFjZjk5MTYwNGMxY2E3NjA2ODk3MmU0ODVjZWNlZjE5NTQxNjk3Zjg1YjBkOWNmMTQ5NDIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0b7a8272b583491aafcacf8367a09d16",
+      "statement": "UNSEARCHABLE_TRUST names untrusted and no_text in one place because three components need the identical rule — lookup excludes those pages from hits, verify reports unverifiable for them, and the observed-token inventory takes no codes from them — while degraded is deliberately excluded as a text layer with problems rather than one that cannot be read.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/record.py#L43-L48",
+          "version": "repo-lines-v1:sha256:e8ad24790726d8152bc55684f7255cd7238c542a657374d0d79f603ed4dda694:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDIwNTllMjk5NWJkOGE5MjVlZGZlMzdkMDVjOWNmZDlmNGQ5YjlkYWZmODEwMDZjOTM1MTdlOTQxYjEyZjUyNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMWVkNGIxYTA3NzQxOGEyOTQ1Njc5ODA1NGQ3MWM2MmE2Yjk5OTExZDkwYmM3YWUzNGExZDY0ZDUyM2UxYmZkMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMTQ2YWMzYjQ0NTY0YjVkYjEzYjFjZDk3ZTFkY2M4ODM4Y2VlYThkMzFlOWYxZmVhMjAzNjNkODE1MTBiYWQxZCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_2d9f18301b3443678abb9b8cb8f5cc76",
+      "statement": "blind_spot marks a document whose searchable ratio is zero, because such a binder has no text surface for a query carrying a printed code to reach and would otherwise leave the answer set silently — whereas a partially scanned document is still found through the pages that do have text.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/health.py#L136-L158",
+          "version": "repo-lines-v1:sha256:da6be4f10644740f63104dbca503531bdab8f74fb742b0c2db138ca37ef7d62a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYwZmMxNjZlOTljNzhmYjk5MDJiYjllOGNlOTlkN2UxZDhmODQxZDE1N2I5YTVjOGI2YzRlYzQyYjZhYzUwNjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjkwZTc5ZjFjMjg2MTNlZjc3MzgzMjA0ZWYxZGQwYWNjNGQzOTY2OGIxMGJkOTgyYWFjZTdhZGE5YzAxNjc4NTgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_394186cdb8d34cc6b460c09d5d9058ac",
+      "statement": "demote ensures a page is never more trusted than its document, because filtering and verification act per page and a document-level signal nothing on a page reflects would have no effect; no_text is never overwritten, since why that page is unsearchable is a fact about the page rather than the document.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/health.py#L207-L218",
+          "version": "repo-lines-v1:sha256:3d44746f12ecd7b93649e00a330a599d40c13209524edf65e9cf9b5b10eb9b30:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYyNzM0YTAzOGY4OTUyNGY2MGU0ODc3ZGQ5NjM4ODNmYmUxOTM5OWU2NTg3ZjQ3M2VlOGFkZTRhZjM4ODhmNDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYwNDBiYjI4M2E4Y2JjNGUyMTBjNTczYTgwMGIxMjZmNGZjMWI0Y2I5MjZmOGFiMzg3MDdlMWYwYTJhMDVjZmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhjYzRhN2QxY2M3OTZhYmEzZTQ2NzIzMzI3ZjUxN2U5ZjgxMTk4MmQyNTBmMDcwMjk4NmU0YjU3NjRhZDk1ODkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.1",
+    "at": "2026-09-11T14:07:28.402Z"
+  }
+}

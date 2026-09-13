@@ -1,0 +1,260 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:0d6b131619047b83e70166580c63aa736b88d7667b0595dac1703609b812b6c0",
+  "claims": [
+    {
+      "id": "claim_8302f5ea73a64992b5528494d9b360fd",
+      "statement": "The lower test layers are structurally prevented from reaching a paid model: the unit and end-to-end scripts export the replay backend with the paid switch off, and the CI workflow sets the same values at job level so a future job that forgets the script still cannot reach a live model.",
+      "evidence": [
+        {
+          "resource": "repo://.github/workflows/ci.yml#L33-L37",
+          "version": "repo-lines-v1:sha256:8a3d06fe25ddf1cbd025be0094dc6775a0b586e506f8b8c4ed78d31ad9233982:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTg5OTUzZmIyZmM5OTkzM2YwNGFiOTYwYWFlYmJkNzBjMTVhY2Q4ZjNmYWYwNjEwMDk5ODZiMDc0MTUxNDlkMiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiY2U2YzI4NTJiMGE5YTcxZTM3ZTZmYWE2MTRiNWYzMTI2Njk5MGNjNWMxMWMwYzE2N2ZiNjI3YzYwYWIzYzg5MyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYzFmMDVlN2VlOTVlY2Q1ODg5NjM5OGZmYTc1NjcwNDA3OGM3YTU0NjQ3ZWQwN2ZkYjg2YTU3YjdiMWMxYmY3MyJ9"
+        },
+        {
+          "resource": "repo://scripts/test-e2e.sh#L8-L11",
+          "version": "repo-lines-v1:sha256:a72a5e4bc6f0e769cce2718d7f6b1b68e484e86c22b19ec0d988789a03befd5c:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiODU1NGQ2ZTU1NGNiYWE5Yzk4ZWFjMmUwNzhlNzA4Nzk0OThjYzhkNjAxMTk1ODAwYWI0Y2Q0Mjc0ZmE3MTcyNiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiODhmYzYzMzY2N2QwMzAwNzMxYmRkODQ0NzJkYzQyNGUxZjljNjQxNzVlYTJiYWRiNjY2NDcyZDkxYWViNGVmYyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTgxMTg2Y2JjZGFiM2M5MzQ4ZTIzYjk0ZTkyMjMzY2I0MDFlODEyNGE4OGNjZDU4ZDEyNTMxMjU1NzM1MGU4YyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMmUxMTA0ZGU3ZjVhNmFhY2FmYTBhZTA2MDgwZjgzMjg1YjRjMzk4YzhjNjA1OWE3NjliNjlmZWJjOTU4ZDkyZiJ9"
+        },
+        {
+          "resource": "repo://scripts/test-unit.sh#L28-L32",
+          "version": "repo-lines-v1:sha256:0fcafc3265bc369fe147d9e91a4f7bfbdee6722fb7f1c14d1097b390f97a1b4e:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZGY2ZGFhYWRkNjI1MzZhMDAxNDc5NTJjYzEwMjA5MmY5MWZlM2I4NDRkODAzM2NlNWY1OGUxMDBkNWJhOTEzMiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjg2YTEyYTAzNWIxMTY4ZjhiYjg5Y2E1ZGIyYTFhMWM3NzMzYjg5NjAzYWM2MWQyZTc2YmQ3NmQyZTBiNmJkOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNWYwMzRiYWNlMzFkMDA4ZjA2YjkzMWFhZTRjODY1MGZjMjY4NTFkNzE4OWFiZDZkZDk1NjM1NGQ5YmYyMzQ5ZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNzI2ODk4M2ZlOGIyYmM1MzhmZjUyOTExNDZkNWY2YzkxNGU4NGFjNjczZTQ1ODRmMDUzYmM2MzYxN2I5ZTA2ZiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_e3648cc6cf174245ba6c39c6384fad68",
+      "statement": "The first test layer also runs the frontend component suite and a type-check after the backend suite, so the console is part of layer 0/1 rather than a separate step to remember.",
+      "evidence": [
+        {
+          "resource": "repo://scripts/test-unit.sh#L34-L42",
+          "version": "repo-lines-v1:sha256:575ea882ca0292096547c0433f104efb46b67ba9b92f8ca93db54af74c6c8e4e:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMTBlMTQ3OTQxOTY4NGU1YTA5ODhlZGY0YmZjM2M2YmY4YjNiNTE1YTgwNzYzMzYwYzdjOTRhMjIxZTA5ZjA3ZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODYwYTY2NTcyOWEzNTNhOTUwNmQ2MzM3ODQyODM0NmRiNmM2MGUyZmZkZDQ0NmUzOTk1Mjg3YWJjYTIyMWYwYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNzQxNTU2YTI4NTQ5NTY4NTFjNTcyYjFlMzJkZWZkODc5ZDAzOWJiYTM3NjJlZDQ2N2RhZjYzYjZhNmRmODAyMCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_88cbbc1202f04515a40fee564a51de18",
+      "statement": "The paid layer refuses rather than prompts: it exits non-zero without the paid switch, and separately without a credential — because a paid layer with no credential fails per call after billing whatever it managed to send.",
+      "evidence": [
+        {
+          "resource": "repo://scripts/test-paid.sh#L1-L31",
+          "version": "repo-lines-v1:sha256:5ddfa233f6510dffd82328ab8ec6c6f62f62cb0662af623b781409db720c8f5a:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFkOTVmYzA0YTgwYzk1MmY0OWNlNDE4ODYyN2M1M2IwZmJlOGM0NDA0MWI5NTJkNTkyYWNkMWRlOTk4NjE0NjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM3NjlkMjM3Y2Q0MjBiOWQzOGI5ODFhMGE0ZjY3NzAxOTBhNGE4M2RjYTFmZTU2YzRmNWJhMWUyY2JjMGVmNzYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY0YjJlMDAwOTM2NDNkY2IyZDU2MTA3YTlmNzU4MzE4YmRjNjMwOWMyOTliZDA0ZjI4ZmE0N2Q1MGQ0YWUyMzkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d33662b599bb4865b0ae01c39ab5b275",
+      "statement": "The conformance suite deliberately never scans markdown or its own source, because the specification and the README quote every banned string and a suite that scanned them could only be kept green by not writing things down.",
+      "evidence": [
+        {
+          "resource": "repo://backend/tests/unit/test_conformance.py#L1-L19",
+          "version": "repo-lines-v1:sha256:ed8af87f2929ccd2d6923c07ddd10ef25b9ec36df70f61e991abe99d817a664e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM0OTNjMmRjYzA1NDEzZGZjY2MzZGFkMmQ2MGJlMTBkOWVhNDVlYTYzNGFkNTYyNjljNWYyYzVjYzI3MzQ5MGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUzODRiZmRiMmRmMzgwYjY1NTdjYzdhNzFkMTY4OTE0MTViY2NhYTg3Njk5NDA2ZTIzNmY3NTJjNjQxNTM4OWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMxYjNkZmM1Y2NhNDc3ZTIzZTY4NjAyNTE5OTBlNTVmNDQ0YjYyOTQ4ZmEyOTk5NDRjMTYwZDI2NGMzZmE2OTAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_250cf7380ba94e8b80eb8c7208a148f0",
+      "statement": "The conformance suite validates itself before validating the codebase — asserting it found files, that each subdirectory scan has something to scan, that markdown and its own source are excluded, and that a deliberately injected violation is caught and its removal clears the suite.",
+      "evidence": [
+        {
+          "resource": "repo://backend/tests/unit/test_conformance.py#L88-L138",
+          "version": "repo-lines-v1:sha256:4020aeecdac24b4fc2f5f9834339ea08bffde7f9e60bff2eda1dd259265e5a7d:eyJzZWxlY3RlZExpbmVDb3VudCI6NTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkYzNmMDM0MzJhODg2NGU1ZTY0MWIyYzU1NTVhMDQ2OTVkZDk1NTJmYjBjMDQ5N2Y2ZTZiYjFiYmIxOTUwNjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFkNzczYTY2ZjM2YmJiNjE3OTBlZTYwZGFmNGJjYTY1NWUxZTFhNzQ5ZmNmYjNjNmI5NzdlOThmMTg1ODE4ZTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUwZmIwZGQ5NTNhMDMxODA3NDhmMTA2ZTA5MGNkMTZjMWNhZjg0N2Q3OGQyMDFlZjliYTA1NDJiYWNjZTExOTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc3ZTVhMDdlMWFmYmFiNDhjZTRiMGY0NzkyNDY3MjdmMDA2YmU2NTJkODczNWRmZDM2N2MwZDExNGQ0YjRkNzgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_793a5659d51e4c05b9c688859bdf0137",
+      "statement": "Conformance forbids any-order text matching under the serving package, a declared fuzzy-matching dependency, fuzzy matching from the standard library, and any model field named score.",
+      "evidence": [
+        {
+          "resource": "repo://backend/tests/unit/test_conformance.py#L140-L171",
+          "version": "repo-lines-v1:sha256:e8646b9e7378081b2eba5a6559c5895974503eeeb651bb58fc40dd1ef2f78c5b:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJiY2I0ZmFlYWU0MGU4NzY4NGY1Y2ZlOGY1YjljOWVjNjQ3YzZmMjg1YmVjNDk4NTI0MzMxMDliY2M2OGIxZDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjEyMTI5MGY5NDgzNDViMjNjZGU0NTljZTNjZDk4OGMxMzk1MjhlMmI1MDBhZmYyYWQyZTZlZDA4MWZmZjUyNzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc3NDg0NDQzOGYwMWY3ZjE5ZGU5NzNjOGU0M2NhZTZiNzQ0YjliN2NmM2RlNTg5NmVkYTY5MzQ1NGRlMjAxMTIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_499d7e2f15dd45b88854e3cc68a0b192",
+      "statement": "Conformance forbids a floating model alias anywhere and any relational database, ORM or migration dependency, in both the package and the requirement files.",
+      "evidence": [
+        {
+          "resource": "repo://backend/tests/unit/test_conformance.py#L173-L190",
+          "version": "repo-lines-v1:sha256:9d307ef1f20bb10a7c3478f7c4de86c5b5e9c5faa0e2e455e280d3cd2c684567:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM4NDU0ZDc3YWFkYjcxNjI0ZGM5MTdjOTVkYzQ2ZWU3MTUwMDVmY2JiZjVmNzhkZmIxYTA3MzkwNDhiNjFlMDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQxMTAxODZjYjk4YzNmNjRiOWIwMTgxMTlmNGMwY2E2YTFlNmM1YzY3MDg0OTVkOWQxNDBiMDExZTY3NzM0NmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIyOWQ5NjFjOWFlM2MyNThkYjA3Y2NjYWFkNDE5OGVkMzMyNDVhYTMxY2QzOTkwZGFlNWJhMTZlNjVlNGZlMzAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3ef1bd8a1d86442aba806760265216ca",
+      "statement": "A conformance rule asserts the test stack declares no Postgres service, pins the same store version, and never publishes the dev instance's gRPC port — because publishing it would let a test run read, and its volume teardown wipe, the dev collection.",
+      "evidence": [
+        {
+          "resource": "repo://backend/tests/unit/test_conformance.py#L192-L208",
+          "version": "repo-lines-v1:sha256:d1d6f813d6a4bee299d1535c01676d0fe110e645c1fb80fc1a9083dff941cb3d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkxNWQ4OThjNDJhODk4NGMzMDFmMzQ3YTgyODJkYzQyNWViNmVhMjc2OGZlNDdmODNlNzVmODUxYjY4NDUyNDciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhhNGRhMmY1NmJkYWQ4MTdjYTViMjNjNzY4NzhkZWFiZTY3YzQwMzJlY2VhOWI0ZmE2ZWU3NzVlNGYwMjc5NGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBiODBhNjhhZGQ1M2YzMTY1ZWIxZTMyZTlhZGJlYjBkN2EwYjdiMjBlY2Y5ZGFlZGJmYjVhMjE4OGJkYjhlZjAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_95f74db78008457ab429e928e0493d67",
+      "statement": "The text-extraction call is forbidden outside the probe module, because a second extractor means the text a claim is verified against is not the text that was indexed.",
+      "evidence": [
+        {
+          "resource": "repo://backend/tests/unit/test_conformance.py#L210-L222",
+          "version": "repo-lines-v1:sha256:fcf2aa5ee270a6094de897b0bd7d926c5d465537ec1c278ab7d831a22e895cdc:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZjNjYwOGIxZGQ1NGJkNGY1MTVmNzQ0MzZjMDBjMDAzYzAzYTQxMjFmMTAwY2IyMDk3MWEwMTEzNzhlNmE4NTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI5OWQwY2U2NzZkMTNiNTdkMzA2Yzk0NDcyNTYwOGVmNDU4NzNlN2Y0ZmVhMTA1ZDUzZDdiYTFkNWJhNDJkMmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjUyNDQwMjAxN2IxNzI1MDc1YmZkZjMyZjlmMTJiYTViYjFhYWIwYThmOTc5YzIzNDk3YjA5MmI5MjRhOGJiNTAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d1706dd2509d43049a3a88d3e93cb926",
+      "statement": "Conformance forbids opening a log file anywhere in the application, because stdout is the event stream and the platform collects it.",
+      "evidence": [
+        {
+          "resource": "repo://backend/tests/unit/test_conformance.py#L231-L234",
+          "version": "repo-lines-v1:sha256:550e2dd7cc8539807c6e3b1a277b9db65f89613614f4e27a2d5db11e3171ba5a:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDU1YWJjOTlmZTZlMmFlNDA2OGZjNTM5YTljOTdmNzEzNzQ1ZDM5MDlmNmZkOGJhYWEwYmFmMGJhZTQ4MWQ1OCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiY2FmYjI0OTRmZmZmOGI5Y2MzY2MzYWM2NTU0ZmJiZGY1Y2ZkMjI2ZWQyNDE4ZGUxMTQ5YjkxNGZlNGRmZjA5NiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDhlNDViZmRjM2IyYmQ1MDVmYjA0YjdmYTkxNzY3MWYxNTAzMGExZTBiMmMwOWZhZjg5ZjllNGU2MzA0ZGYzZSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_248ca3d74660496c861027ccca9f702c",
+      "statement": "The image-tag rule resolves build arguments before judging a reference and skips one supplied by configuration, so an argument-pinned digest is recognised as pinned while an untagged image is treated as the same defect as an explicit latest tag.",
+      "evidence": [
+        {
+          "resource": "repo://backend/tests/unit/test_conformance.py#L236-L255",
+          "version": "repo-lines-v1:sha256:b10e22fdddd0d778c01283e03e9d29ad21569b2c2028d59c0e0958e76645cc01:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE3YjkyZjQ2ZGM1NGNlZmQ0YTk0MjQ3YzRmY2QyNjc4NDFkZjhlYmE4MDFmZTY4MjI5ODNkMjU5OGFkYWEyZmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAzMzhhMDcwMjQ2OWM0OTg2NzM1NjEzMjYwYzczNWJlNzhkYTZkZThmZjA5ZThkZjg1NjFmYjA3YzU1NDUxNWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYzZmI3NWVlMGQ5MDVjNGUzMTEzMTZkYzU5MDM5YTRkODI4OGJjNGI1MzlmM2M0MDIyODUyYWU3YWVjMjE3NWEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e1e8baf8f2bf41b995e35d83de938af0",
+      "statement": "The module-state rule is enforced both as a regular expression and as an AST scan for a module-level container that is actually written to, with a planted offender asserting the scan works.",
+      "evidence": [
+        {
+          "resource": "repo://backend/tests/unit/test_conformance.py#L323-L333",
+          "version": "repo-lines-v1:sha256:b402324e422aa6f84aaa4998e916d4a45e89d677016a67196bb77e36ba69fc5e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI4ZTY1MGExOWIzYmRjNWZmNjBlMDc3NzBlZDEzNjUzOTAxNTQyN2Q0N2MxMjQ4YjhhNjYxZWUwMjc5MmY5MTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE0NzE3M2E4ODZkZDM0MWVmMWFmOGJkYjVlYTQyZmVmMTY0ZTA0ZGM5ZmRjMTA2YWU1ZmY4ZGIzZmFjN2MyZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdlODg5Nzc2YzM2MzMyOTg2MjIzM2MwMDJkMzUwZWRlZjZkMDA2NTM2NTBiMDM5MjFhZTQwM2UwZTQ1MzgxNTYifQ"
+        },
+        {
+          "resource": "repo://backend/tests/unit/test_conformance.py#L415-L442",
+          "version": "repo-lines-v1:sha256:e1277d9a0f06a0c3d68ec7e35bbcabe1e6438285f258fdda76998ea43d15001a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVjMmJlNmU4YWIyMDY5MzE5OWZmNDUzYjc1YTJhOTllYTgxY2ZhMjJiYzU1MGU5ZDhmY2VhZmEyOTEzNGEyMTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNiZTQxNGZlM2RhNmIzYzhjNTJmYThmZTlkMzgzYmFmZTE3YWYwMGMyZTg4NWJmM2VhOTExYjk2OGU4M2Q1YzUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg4MGEwZmI1ODZmZDc0ZDk5N2E2NzViMzIzMTQ0NzI5NTZlNTllZWUzZjI2MTcwMjk4MmUyMjFkMmU3MGQ4NzcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_9a31ea7694a34dfca28daf130e7c28d6",
+      "statement": "Conformance forbids the blocking HTTP client in the package, because a blocking call inside an async handler stalls the whole event loop.",
+      "evidence": [
+        {
+          "resource": "repo://backend/tests/unit/test_conformance.py#L444-L447",
+          "version": "repo-lines-v1:sha256:1a35414e79d175e92f69cb0a41f41a3a058cb62f04d3e33e57b9a7303d490929:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNjk0ODllNzRiMjA5ZjM0M2M0N2QwN2EwM2I0OTIxOGM4MmRjOTJkMDAyZmY4NjViOTdmYjk5ODEwNDgwNDQwZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjdhOWM0OTI0YzBhZTkzNDQ0ZGQ5NGM2OGQ3MGFkMThhOGYzODQ5MjRkZTA0NDRhNDYyZjM2Y2EzMTI0M2JhNiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjQ4OTRmNDE2NmIzNjE2NjIyNDA5NzZlNjgxZmZjZTUyY2M3ZDhiMzNjYjkxNTU2N2JlY2ZlZDQ2ZTU3OGI3OSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_58fe8be00c37410492f135fb863dd045",
+      "statement": "That only the probe writes the page text field is deliberately not a grep, because the indexing module legitimately upserts a payload containing that key — the real check is the extraction-call rule paired with an assertion that each record's text equals the probe's text for that page.",
+      "evidence": [
+        {
+          "resource": "repo://backend/tests/unit/test_conformance.py#L13-L18",
+          "version": "repo-lines-v1:sha256:b05531b408e9e10b020ebe4250f56a22d3dea27bb5f8a4d5a9b4b05f291ab174:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYjFhMmY4MTFhMzZmMmRmNDNhNDE5ZmFkM2EyZGM3MDZhN2U0ZmFjNDY5M2U4ZTFjODkwNmIzOTU0NzhkMDAwMiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTMwM2VjZGQ0YTRkMTBmMTljNzNmZDQyZmQxMjQzN2ZkMzM1NGE4MjY4MTYwNWRhNTI1NWE5N2EzOTA2OGRiYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDNmY2M2NmZjMDNlZTg1OTI4ZDljZjAzODdlMGRhZDgwZGE3NjFkYTkyNGQ2N2QwNzE4MDRlMTYyNmI5YTVhNyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDk1NTc3NmQzMGQzNGM5Y2QzOTdkM2ZlMTIzNjM5ZjNiZTQ0OWZjYWFhMGQzZmJjOGFjNjAxYjk3ZjhmZWVkOCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_193b984d3fb44c4b9294d787d1072bb7",
+      "statement": "The API layer brings up the store and backend from the test compose file with a readiness wait and always tears the stack down with volumes removed, because a test run starts from an empty collection or it is not a test.",
+      "evidence": [
+        {
+          "resource": "repo://scripts/test-api.sh#L19-L37",
+          "version": "repo-lines-v1:sha256:efe1f68274032c2d02ff5ad1ff0f3942e000e4dedb6a4505b1e7fc1d77b4f5df:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZiNTI0ZThiN2RkMzljOThiZWE2M2UzZTViMTEzNzdkNmFiYWVjZmY0MmVhMzZjN2I4ZWQ4NzFmNzRkNjRkZGIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY0NzFiMzA1MWZkZGE4ZjY3MGJjMzgyOTk0MzdjY2U2MThhY2I5YjY3OWUzMmVmNjU1N2U1YTIwZWE0ZWMzOWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA1ZDYzYjVlZDI2YmFkZmQ2YjZjODE1ZjRjYzZkZjE1NzkzNDViNDQ5M2FjY2ZiMzYzZDUxZDMyZmMyYzBmOTgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0b687febcac54128af1c5708dc24318a",
+      "statement": "The end-to-end run parameterises the console port, the fixture (as separate host and container paths for one directory) and the read quota, and raises that quota because a browser run asks several whole questions while the ceiling itself is exercised on its own instance in the API layer.",
+      "evidence": [
+        {
+          "resource": "repo://scripts/test-e2e.sh#L20-L40",
+          "version": "repo-lines-v1:sha256:7f2660dbd0b0e0e38d8099fce4794b2ab970873ba050361834cffd3815c3c4f9:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZmYzIyYzQzMDIyMTk5MWYxMGUxZThjZmE3NzFkNzI0MjVlYjc1MDBkOGQ3YTAyNzQzNTBkMmM4ZGJmMmVlNjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZiNzk4NWVkMGVhODA2ZGRjYzQ0ODE0YjFjODA5MTk4MzgwMjQxNDg3MmI3MzdiZDc1NzM4Zjc5YTAyYWE5MjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQzMjkwMzY4NzM2YTRhMDJmZjRjYmVmYmMzYzVjYmMxMmUwZWFlMTZiMWEyODYxNGQyYjhiOGU0MzgzN2MyMzciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYxMTM5ZWM3YzljYTk0OTMwZWMxYzFlODRlMThmZmRmYzE0YzU2YjMwN2EwOTA4NDUzMmRlNTNhZTEyNDE5NjMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_08cff71bf33b4a5a82eaa3e069ee0bef",
+      "statement": "The browser configuration pins a single worker because one suite really stops the store's container to prove the outage path, and a second worker asking a question then would be asserting about an outage it did not arrange.",
+      "evidence": [
+        {
+          "resource": "repo://e2e/playwright.config.ts#L28-L31",
+          "version": "repo-lines-v1:sha256:dc2eda75dff20fb2f173c06419ffe06d16316f9efb8fc85ac48dd9acb424ebb0:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTRhNjJjZGMzZmFjNjRmZDcwMmZiZjcwZDNmN2JiOWY5ODMzYzljMGMwYjVmYTBiZTUzNjEzMTdhMjgzYWRiMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNmJlMjBiMzJiM2E2OWY4MWY2ZDEzMWEyNjNkYTE3ZDlmYjdmZDM1MDFkZDIyMmMxMzMyOGZhMDhmYWExYjFjYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiY2M3MTBhNjUwZDE1MWRmZDY2NDI0NjVmNjhlNmFlYmMwYWRjZTk3YjcyNThhNWFjMzgzMzNhOWFiNTEwYzc1NCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzNhOGYwODBhZjU0YmQwNTJkZWJlMWFkMWU5NWI4MzNlZmE1NTg5NDc1MGJiM2RjZDI2Mzc5Yjk3NzhkNGExYSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_293c729d174a418b9bcfcac73e702d39",
+      "statement": "The browser suite deliberately declares no web-server block, because the console under test is a container built from the console image sharing a network with the production backend image — a web-server block would substitute a host dev server and the suite would stop being evidence about what ships.",
+      "evidence": [
+        {
+          "resource": "repo://e2e/playwright.config.ts#L1-L14",
+          "version": "repo-lines-v1:sha256:28f05e17d0f38c70469b975b7ccd28af9534b6462be941e3d54624d220705571:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3MmE0MjkzODJiMmUxNDcxOGUwZTM3YjA1NzBhOGExNzAyOTkxZmNkODQ5OGNkODQwNjBhOGJmNGYwNTAxN2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI1YTEyNmJlNTIyYWM2ZWNkZjVmNTE4NDFlNTdkY2JhMTM2NmQ4ZmI1YmFjOTAxMDI4NDBhZmMzOTQ2ZGM3MjUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ff65a7ef7e0a4ebea4ae152eba1dbecf",
+      "statement": "The browser suite forbids focused tests and retries once in CI only, because a focused test reaching CI is a suite that silently stopped covering the rest while a local retry hides a flake someone should see.",
+      "evidence": [
+        {
+          "resource": "repo://e2e/playwright.config.ts#L10-L13",
+          "version": "repo-lines-v1:sha256:01f68ef757a7abb6d95789a5ad70b1810d0358ff2b5f5e08a255c169720edd42:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNjIzY2I0YzEzZDY3NzU5ZDU0Zjc2NzFkNDQwMzQ5NzJkMDkwM2EzOWQwOGFmYWU3M2JiOTgxZWI5YWIwZGNmMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYzQyNjJhYmQ5ZjM4NjYyMWI2NzNkMDg1ZDgzODUzMmFhYTU0YTllNDgzYmQ1YzZkMGFiOTk2ZGZjMTFhNTQ5MyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjY1MWUwMTE2YzAwOWQ3YjQ4MDU3ODg2MTUwOTA3ZjIxN2Q2ZTlhZDUyMTY4MDM1NmNjMDM0YmQwMTAyYzU4ZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjc1NzE0ZDg0NDg5YjJmNzJiZGEwOWE0Y2NlODRhNjY1NjMyMjlkYTZiNjllNmUwYTBjOTNhMjg5NzVjNzliMiJ9"
+        },
+        {
+          "resource": "repo://e2e/playwright.config.ts#L26-L28",
+          "version": "repo-lines-v1:sha256:2fea95d39ad1ecf7c5cc97b8caad8030524edd4e0b5f08a092dbc2c84825a188:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMmQ0Zjc3MTE0ZjliMDZjYmFlMWZhZmI1YjNiYWNhZDBhYTRlYWIzYTYxMTk5NGExODE4YWQxOWQzYTliMWJjOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOTRhNjJjZGMzZmFjNjRmZDcwMmZiZjcwZDNmN2JiOWY5ODMzYzljMGMwYjVmYTBiZTUzNjEzMTdhMjgzYWRiMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiN2NjYzQxMWE2MDJhZjE4MDM1ZWRkYTEwMDVlODM5NTgyZjBlZGVhMjk0ODIyMzNmODNiMTM3M2FkYzE1NzlhNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMGFmYjYwODQ0MzQ4YzJlOGI3MjhkNDVmYWY5MTZiYTFjOGFkYTQ0NTNkMmIxZDE1YTkwNjZjOTc1YmQ1OTIwYiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_a07a6c7ab58446aab8e698851e27f7d2",
+      "statement": "CI runs two jobs on pinned runner images with in-progress runs cancelled per branch, because a runner that moves under a green build is the same defect one layer out and a superseded run says nothing about the commit that replaced it.",
+      "evidence": [
+        {
+          "resource": "repo://.github/workflows/ci.yml#L22-L31",
+          "version": "repo-lines-v1:sha256:e7d9fdd24838719a768b4fa8fbc8a1c5fec5d812351830b518c39028a8d62cd8:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNmMmZhNzNmMDcwNDg5ZDk3MjRhMDI5ZGZiNTAyYWEwODg1MDdkMDg1NzliYmJjYzk0ZWQ5MzVjMWEwNTMzMTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU0ZmE3ZTgzYzdhN2VkNGJiZjE3ZWIwNzc1MWU1OTY1NjQyNDZlODQ5MmQ1ZDE3ODBjMGEwNjY5ODYxMDc1NjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRkZjFkZjJlNzgwMWZkY2RjNTc0ZDcyMjJlNzYzYmIzZjAwYTJjZmQ5ZmVkY2ZlNDdiY2M5YjY4YmNlZDIwOGYifQ"
+        },
+        {
+          "resource": "repo://.github/workflows/ci.yml#L39-L44",
+          "version": "repo-lines-v1:sha256:20d539aec0a76e7459c3a6467dd0e68d907171866180c648a11ab5cd5a81c0b8:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDA3OGQ5ODU3YzM2NjFlMDNkZmViYzg5NzY5N2RjYzQ2ODQwYTRmMjIzZjE3NjY2NTA2MTgwZjM4ZmMwZjNhOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZGE2NGM0MzY2YTZmN2Q0YTM2NzFjNzE5MzQwNzI5MDgzMGU2MTIxYzM3NjFhNWE3YTQwNTQ1NDQ4ZTBlMjg4MyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOWFmYWE2YTYzNWI0YzI3ZWFjYjc1NGE1Y2ZlYmFmNTQ1NmQ1NzNhODMxZWNhMGRjZTEwNzIwNjk1N2EwZTBmMSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYWY3N2U4ODYyZWMxZDQzNjk0MjZmY2FmYWQ5MTBhOGM5MDQ0MTAxMDQzZmE1MmZhNjQ2MWY3NWJmY2RmMDlkYSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_699141000aa24cf08854f1f8676df504",
+      "statement": "Because CI runs the API script, which builds the image, both dependency resolutions are exercised per run — the development set installed directly and the hash-locked set the image installs.",
+      "evidence": [
+        {
+          "resource": "repo://.github/workflows/ci.yml#L82-L96",
+          "version": "repo-lines-v1:sha256:1e300fbe7f58a9eb39aba7b371c0d57049f7de3b31cb70e86a023415a05d9077:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc3OTRiMTM4YTRmYTU5ODY4YTc3MmQ1NjhkZTI2M2JmMTRhNzliMTRhYTEwODVhODY3ZTQxYzZhODY2NzdkOTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFkNDJhZjQ1ZjFmZGY5Nzg4NmYxYTBhOGUwZjA0YThhZmRjNDg2ODFiYTM2MjM5ZDUzMzNjYTllNmZlNmFmNTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI1NDIyMTM3OTkwMDk0ODZjZGI1NmY4ZjY5MWEyMGU2YjQyYTg3ZmE1ZjMzOGVkNjcwNzA2NjllYmFkMjU3YmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJmMmM5MzNkMGJiMGFmMWZkYThmOTdiN2ZiNjg0YjYzYzg0ODBjZWI5OTI2MjI0ZThhNWM2MmMyMmFkMzM1YmEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5942bc79628d4daabb7197656696141d",
+      "statement": "The abstention evaluation is re-run as its own named CI step so the run summary reports whether the safety evaluation passed rather than burying it among the dots, and that step covers both the assertions and the shipped evaluation subcommands inside the same managed stack.",
+      "evidence": [
+        {
+          "resource": "repo://.github/workflows/ci.yml#L98-L108",
+          "version": "repo-lines-v1:sha256:d98250322c345c26ae85154b15cce4d4f0472d798f9699ef41b6eef6f3af1d1a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI3M2Y2YjZkMTFjZDI3OTJmMjNlYzUyZWRiZGVlYzBjY2Q0NjJkYjlhOGFkMjNjNzYwNTMwMGEyYWRlY2JjMWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBjMjE1NTU3MDU5OTZmNmFmZGY5YmViYzZhOGQzNzMyZjhhMGZkOTVkNzBkY2UwOGMxMDU1N2M1Mzk4MzczZmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjEwN2QyNjEyNWVhZDBlYWYzN2FhN2JmMzA3NWQ4ZTNlMzdkN2ZjMDY4ODllN2Q1OGYwZDAyZDJlNzkyMmI4ZmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a1c3ae9dcaf446f296da34555d1fb9ad",
+      "statement": "The CI workflow references no secret anywhere and does not run the paid layer at all.",
+      "evidence": [
+        {
+          "resource": "repo://.github/workflows/ci.yml#L8-L17",
+          "version": "repo-lines-v1:sha256:d8bf6aebe8e345292bd3eb62c2851b594031fe6c60338fc444711f8abee8e9ce:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc3NTdlNWI0ZmZiMWY0M2UxMDNmM2EyNTM1NjdhYTkyYjNhOTc3MTczOGE2NGU3NDZjYjc2OWYyZTYzNDg3NDgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1OWUzYjlmMmNlZTBjMDgwOWJmNDA2NjFmZmYzZTJmZWQyNjQ0ZTFkMGUwN2NlMjIwNGVkMmJhMzllYTExYjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNkZWNkNGZkZTE0NzIyNWQ3YzNlMGU0ODhmYjAzMDU2MjRkZjkzZjZlMmZkNGEyOTdjODU5N2M0NDgyZDhhYzMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQzMzYyYzE5ZmFlZGQ3MDQzMTVmNTg4ODMwZTRhNWQwODE5ZTY5ZDg5MjA3NjAyZGM2NTdhY2VhZDQzYTUyMWEifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.1",
+    "at": "2026-09-11T14:07:28.402Z"
+  }
+}

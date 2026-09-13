@@ -1,0 +1,198 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:ee301be7370b4ea0f603f9ebd447fbd130caddeea9bb941c2f2c84933f95a8ff",
+  "claims": [
+    {
+      "id": "claim_a54d78199cfd49aaa3060a0df87c31e7",
+      "statement": "The pages collection declares one cosine dense vector plus two sparse vectors, and both sparse surfaces carry Qdrant's IDF modifier so only BM25's term-frequency half is stored and the IDF half is computed at query time — which is what stops a newly ingested document from staling every vector already in the index.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/indexed.py#L85-L95",
+          "version": "repo-lines-v1:sha256:86b2c31305996a29edb69bb86fe004bcd7f1f84b31a198687042623905cd7800:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJiMzE2YjhhZDM2ZGJlNjZmZjU1YTBkMWMxNGQwYTAwNDAyNGQ5ZTc0ZTEzMmM4OGNhMDMwNWRlZjkzZWYyOGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRmYThiZGRkNzIwNWNiYmUwZDhlY2VkY2I2NzJhZDVmY2ZkYTI0YjIwZjdkMGNkZGUzNzZjY2Q5NzQyNWMwN2UifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_8bbbc53b454048c3858fb50a6114f0a9",
+      "statement": "create_collection creates every payload index before the first point is written, because filterable HNSW builds extra graph edges from indexed payload values as points arrive and indexing afterwards silently leaves the filter answering from a worse graph.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/indexed.py#L97-L121",
+          "version": "repo-lines-v1:sha256:0ad2871ae7afb3c90e5a0eb5ee35c5b5050dde2fe498a1a9a303639c944a73ed:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRjMmExNGI5ZGU4MjExNjg2MmMzNDAzNDhmZjI1MDI4ZjZjZWUzZjUyNzE3YzI2NWU2NmRiNWEzNWNjNjc0MmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwZTJhNDY1MDA5NWZhOTVkMGUyYmI0MWIyZGIyOTA5NGQzNDA0ZDI4Y2UxMjMzOWVjODhiYjRiNWM1YmU4ZjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNkMzQyZWE3ODdjZWQ5ZGMyM2MxZjNiMWFjOTMzOGI0ZmUwMzhjZjU2NzFhZmQ1ZTJhNDM4MTAzMDc4MjJhMTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE1NWYzMTZhN2YyYThiNjY4NjRjMmQ1NDNlNjE2NDU5ZThhNTZiNzU3MTQxMjRiMzMzYzIyOTBjZmQxNGJiMjcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e410e86634b74b20a553a105d65cb6bf",
+      "statement": "The control plane collection is created payload-only with vectors_config={}, because every control record is fetched by id or exact filter and nothing in it is searched by similarity.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/fingerprint.py#L150-L166",
+          "version": "repo-lines-v1:sha256:3379169bc6ff2ad72ce6a27203361a2927ea8ce8cae51d15465106df6ba93238:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI4NzM5MmU2ZDNhZDEzODJmMDQzMWU3ZWQzMjc0ODg3MjI5NDc5NDNkYjQ4ZDZjZDBkNGMwMmM4NWY3OWQ0YTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVmZTUwZTQ5ZDljZDY1ZGJkM2UyYmUwMTRjYWU1ZmI1MWM5NzhmMWM2OWY2YzAyYzBjZGNlNGYxNmU3Y2FkZTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYwZDQ5YjA3MzAzNmMxNjk4NWU3NWJlODY4NTBlMzMzOGNiMWFkYTk4YTZjZGVkNDFiODc2MTExOWMwZGRjMTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_fc41ae87fe2943ecb8baa9030e86e6cd",
+      "statement": "Every point in the control plane carries a kind discriminator, and the release uses six: run, window, observed_tokens, fingerprint, budget and vlm_cache.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/fingerprint.py#L60-L64",
+          "version": "repo-lines-v1:sha256:fa8bf6d092fd668b9d8262a581582f349a411f1954baf5bd3265859514c6e36e:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMTJlN2RiMmE3MmMyNTQ3OGI3MDY1NDM0NzFiYTNlZmZkZmE0YjgxNDUwZTk2MzY5OTAyNWM4MGFiZmNkMTVjZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDRjZWI5ZTlmOTNlYjllOTU4MjE0ZWRhN2M0N2E2M2VlNzJlYTk5NzQxNmE5NjY4OWFkMmE0NWNmOGMxYzUwOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOGZjZjk2NmE0Y2Y2ZTEwN2UyMTY1NGQxNmJiMWUxZmU1YzIxOGFmY2NkZWU4MjJiZGM1Y2MyZWVmOWE4Yzk0YiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTlmZDZhZTg3MTdmNzg2ZjFlYmJjY2M4MDI2YmIyZmI1YmYzZWJmYjZlMTYxMGFiMGJlY2IzZTgyYmI3ODg2NiJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/ingest/run.py#L68-L71",
+          "version": "repo-lines-v1:sha256:2ffc6f29ed15887853db6f9c3683e4c71c4e6d00fbd5f25dfbe53474201f87ca:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYWU4N2JkODc1MzA2Y2JjMjZlNDkzZGRhMjkyZWIyYmNjNjJhNDIwZjk1ZWU1OWVkZjkxMDJkNWIyYWIwMDYyYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYWExMjcxMWRhMDkzNzdmYTRmZWI0YWVkNDYzMjk1MTVkZjY0YTA3OTY5MDAyNmY1NGUwZDc5ZWQxZDlkZGI4YyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTZmYzZiMTUwZTdlMDgxZmY4ODY4MWFhMDA2YjUwOTM5YmUxMDdlZjg1ZjAzYzUyZTdjZmUyYzNlZTRiZTE2ZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYTczZThiMGVlNGRhZjU3MmZmOWQzZmI5OTA1OTlhMjcxYzljNzE4YzdlNmE5NWRjNGE4YWZkMWUyM2I0MzA1YyJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/serve/budget.py#L45-L47",
+          "version": "repo-lines-v1:sha256:8ddf7120267131229e530c433b43b8c8575f9577a31c29d9c4eb673bd3a6bf94:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzE0OWI1MGY0MzQ2OGI5OGUxODE0Yzk3ZWY3Yjk3OGU0NjZmMTFlYzM2MzM2MTQ4MjU2NzIzZjhhMDNlZDJmNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTQ0YmZkZTRmMWFkOTFlZjk1YmY5YzdmNWYzNGFmZmIyODhhY2E4NTc2ZDc4MWFmMmE3N2NiYzUxYTM4OTA5MyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODFkY2QxNzQ1ZDM4MzNmNGI2NDcwOGI3NGI2YTNlNGM0YWM0MzUzNTAwMmY2NTU4MWQ5ODY2ZjRhYmI5ZjYxOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNmM2NjhhNmViNTliMWM4ZDc1ZjA2ZmE1YmRiMDAxYmYyYTY2MzQ3YmM5NjllNWE1OTM0MTk5NmQzMzVhM2M3MyJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/vlm/cache.py#L310-L315",
+          "version": "repo-lines-v1:sha256:021c96ceae5a00e154b208de32453952c18129898fbcbbba4266710f2328356a:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzI1OGJmNDliYWM3NDZjZmUyNzgzZjg3YWQ1M2ZjYjFjNDRiZWMzYWI5ZTg4NDQ4ZTY1NmZhODliM2U0YzAwMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOWIwYmJjZGM2YmE5Mzg2MzYxZWUxZGU5Y2NmMTYzYzBmNTU3NmY4NGRhMzkyMzkwZTA4YTViYzFkZTkyMjM3NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTU5NmY5N2I4ZjI2MzdkYTlkMDY1Mzg2ZWNjYjUzNWMxNzJjMjhlNTllM2VhZTlhOTZmYmE0YzBmNmE3Y2M3MyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_1d7d4efa36434ff9a579613c413fa231",
+      "statement": "ensure_control_plane reads the live payload schema before creating the run_id, doc_id, revision and state indexes, so an index that already exists is not re-created on every run and a collection created by an earlier release still gains the missing ones.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/run.py#L360-L374",
+          "version": "repo-lines-v1:sha256:ea5d8cdc0090e567b6cc359e5a6c1e3195c253357becd275277237f8c9ea642f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAzNmMxZjg5OTBiY2Q2MTQwYjhhMjEzYjEyZWNlZTIyY2RjNWUyNjVhZWRhMGU1MDIwMjI5NmRiOWQxYTU0MTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg0MjQ0YTgyODA5NzBkYWQ2ZjM5NWNiZWQxZTg5ZGJmNTAyYWYyNjZlYTQwMzM4MDVmZDlkZGU3NmI4MDQxNzYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ0YTYzM2NhNmE4OTRmZjFkMWEyNjdlNzdhNWM3MTQyODM0M2Y3MWRmOTQzZDNkYWJjYjAzOGU2NTdjODczNmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZlODI4YTIyMDBlNWFhNTVhNmJjMjMyZDE0MWNkOTQ0YWU5Yjc1ZmNkYWFhNDgxNjQ2YjU0MzJlYWM5NWQ2ZmIifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/ingest/run.py#L99-L104",
+          "version": "repo-lines-v1:sha256:e175ecd1e17d9de727e05a13d2e764ddb969e1faad96deccca274881ea55908e:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjM2ZDc4M2EyYzhhMzMwY2Y5N2ExMDliNmUxNTYyODAzZTJkNmYwNDZlNjM1Y2YwZGY4MzdhOTU3YzE1MTYyNyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZmM2MzQ0ODlkNjNiNTEyODNkMzljM2FmM2ZkNDI5ZDEzNWFmZTQyMzUwZmY4YTRjZjk5NjM3YzYyMWI1YTBjNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODk4YmUwMjgzYzc2NzhiMDZmNzQyNmE3ZDVmYjAwZTZjZWFiMjAxYTQ0ZjRjY2E4ZjIxZmY2NmNiMzRmYjgzNiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_f5e64ad5735a43b084b6037079a96439",
+      "statement": "Control-plane writes are retried only when they are idempotent — a filtered set_payload with a constant value, a filtered delete, a keyed upsert — and when the bounded retries are exhausted the run reports itself unpublished rather than half-published, because published_at is written only after the flip returns.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/run.py#L377-L400",
+          "version": "repo-lines-v1:sha256:a048a1c3cc1f31ffa44af57481e8a667490f613ad151c81367b172686e4811f1:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImViZTM0NGNiMDgxZjY0NDRkYTM2ZTA1YTFjYTExNTk2NDRmYWQ2M2Q3OGI5ZWZiNjcxYjU4YWZjMWNhN2QyNTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU3ZDQyM2ZhNDA1NjYxMDliNDFjMmM1ODcwOTQzMjVhODFkNmE0OTk5YTBiOGU5NmFiM2ZmYTQzMGZjZGIyYzgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg5YTYxMGMxOGM5YzVhYmY4M2E0NTFiNzRiNTcyODJlNDI4YzVlMWZkMmE5OWFlNDU3MjBmNTdlZTcwNTk3NjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJiN2MwMzY0M2Y4YjFiN2ZmNjZiOTdkYWFlNTA3YjI0ZjNlYmM0NDVmMGJjNzIyMTc0ZDM5ZWI2OTdmYTEyOWUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_804e4f31a9894e30b11691c80ce0633b",
+      "statement": "The document store holds source PDFs rather than derived artefacts, which is what lets the no-persisted-raster rule stand: rasters are still re-rendered on demand, and now have a file to be re-rendered from.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/store.py#L1-L19",
+          "version": "repo-lines-v1:sha256:010f595560995734dc4d44979c7c737620934bfa6c40443be5b594cd4ea95a73:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI0NGZjNTc4YTQwYWI4YzYyZTc2ZTg1NjQ3YzM4Y2I5NWIxMmU4NDc5ZWViZDA0ZTM0OGM5YzAxYTRmNWY3MGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE3ZDkwZDkyOGQ5N2UyOGJhYjlmYjQ1OTk1NzlmYWQ1NTRlNDhiZWJmOGE5NDc5ZDMwYjA0NWRkMTBlZDBmODUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d5fedb03fe2747209f67cf4a1b045ef0",
+      "statement": "A document is stored identity-addressed as <doc_id>@<revision>.pdf so no path is ever written into a page payload; the content hash lives on the run record instead, and locate() refuses bytes that disagree with the hash the caller expects.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/store.py#L21-L30",
+          "version": "repo-lines-v1:sha256:d2262b33f7f45502a92539dfe091f18da05a4b7588d37117a306332c25835b9e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYxNjI3NTVjYzU2YTU5ZDJjMWQyYmJjMjkzMTQ2MDUzYmVkMjM3YmNkNWUyNjExMWQ0NzI2MmE2OWM5NjVmMWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk5ZmI4MDdhZmFiNTA1NTEzN2FlOTFlZjU4Yzk4Y2I3N2I5ZjBhNzNiMzc5MDdjYmQxYmQ2ODgxODhhZjI0Y2EiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcxNGNkZjY1ZWFlYTkyZDc2MzJlY2I3NzZjYjMwOTEwZDk3NWZlNjA4YWYzYzhlZjZmNTEzYjljOTAzZWMzZDAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_423eab28633d4ab4a6be220ed5f365ac",
+      "statement": "Document id and revision are validated against a conservative component pattern before they reach a filesystem path, because a page_id can arrive from a caller's saved citation and an unchecked revision would be a path traversal carried by a citation.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/store.py#L76-L81",
+          "version": "repo-lines-v1:sha256:e1803a2ba1d603614dfcda472a8803bacc4a4cf5a906b49c8935b96ecc1f8234:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNjg0OWU1NmJmZjIwYjI1YzViZTMzNGJmMTgxZDI1M2M1ZWQ4ODljMTk0NWU1MDA5YjA4Nzk0MjVlZmI3ZGE4YSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYmExNmRiYWQzMDYzNDkzZmY3NDBjN2JlZmJmMGFiZWU4MGQ2NGRhOTg2OTliMDY3M2YyZTk2MGMxOWJmNTU4ZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMWI3ZjQ4ZjEzYTIzYjE0Y2UxNjM5NDBjM2UzNGUzNjg0M2ZkNThjODA4MjIwZDY0Y2ZlY2ZmOWY0NDVkZWM4MiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_565215b9eec4454b801d41f5c9bedab6",
+      "statement": "The document store writes through a dot-prefixed staging directory inside its own root so the final rename stays on one filesystem and is atomic.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/store.py#L73-L75",
+          "version": "repo-lines-v1:sha256:ba16dbad3063493ff740c7befbf0abee80d64da98699b0673f2e960c19bf558f:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNWM3MmM2MDliOTQzMjIzYzBjMjg3N2RiZWNhOGU3ZTVmNWRjZDQ3OTY5OWE0OGNlYWU1NzlmZTYxOGI1MjI1OCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiN2ZhZDRkMWQ5ZDc3MjdlN2Q1ZTY2NjM2MThiMDBjMDRiNjhmMjcxYTQ3ZDY0N2UxOWJjNWUxYjA1NDFmYzQ4NCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOGE2MjI4NWYxY2JiMWQ1Y2I4YTBiZmM4NzcxZTVkZmM0NTZlNGI2MzhlYmQ1ZGVkOTUzN2ZjNDk3Nzk5MDYzYSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_2cad35af81ca4bc199a34d88f0e29a07",
+      "statement": "VSIR_DOC_STORE is deliberately not one of the required environment variables and defaults to a directory under the platform temporary directory, so a release that never ingests and never serves an image is not made unstartable by it.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/store.py#L58-L67",
+          "version": "repo-lines-v1:sha256:6cb10d951fe320c42492662fcb4d8749ae5046700c0d87c4b6b2c379171e5b37:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBlNThmOGFhMWFmYzgzZGZiZjQ3Mjg3YjE0NTgyMmI4M2E4MjVjMWQ5NTAwOTdmYWUzYjJlNTdkMTdmYTUxZjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhmY2Y5NjZhNGNmNmUxMDdlMjE2NTRkMTZiYjFlMWZlNWMyMThhZmNjZGVlODIyYmRjNWNjMmVlZjlhOGM5NGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk1Y2Q3ODA0ZTAzM2U5ZWU1YTllYmZkNDE1ZWMzNTQ2MDgwYjMyOGI3YTAxY2YzNGM0MjEwMmZiNjc3ZTIwMjQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_320aafeca4c846cda67cec0cfafa8cc8",
+      "statement": "There is exactly one raster cache in the system — render._cached, shared by the ingest and serving paths and keyed by the source file's content hash — and the serving layer deliberately adds no second cache keyed by page_id, which could not see a re-ingest from corrected bytes and would serve superseded pixels for the life of the process.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/render.py#L165-L179",
+          "version": "repo-lines-v1:sha256:f91efdf52636708bd4e3fd590bfa12c1e52f4698bd3fab8dd62e70a183ddf10e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVkYTRiNWU0Y2QyNjllMWZjMjYyYTIyNzE5Y2M1N2EzNzVkOWZiOGZmYzBjNTM4ZmNiZDg3NGZhZGVlNDJlYzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU5MmQ1ZTY2YzNmMDdmNGE1ODFjZDk5MmE2OTU1NDI0ZTZiOWFlOTUyMzI5OTIyOWIwMjYzZjIyOTJlM2YwNDciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFhNTQxYzllNTJjOWE1ZWMzYmMzZjM1OGJmNjBlYjk0YTc0ZDUzYzgzMzI1OGEzYmU3Y2M1ODM4YWEzMjVkMDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg5ZmZiMWM4NDNjM2YwZTUxMjQ3YWZiZDE1Nzk4MzFlZTE4MTg1MDk4NDk4YjkxMThhODU3YzE3NWQ5YWJiY2IifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/serve/raster_cache.py#L9-L16",
+          "version": "repo-lines-v1:sha256:0ea939e93073e939d43c0914488f0afff7a9c773e3ea7bc556c666fc892b6705:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDA4ODcxNTkyNDIyYzM3YTU1YTYyY2M5ZGM1ZDQwNDhiNTg5OWVmZjc2MDlmNmNkN2I5MGEwY2Q2OGZiMmM0MyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTgxMTU2NjIxMDY1ODMwMzJhMTI2NTdlMDJhZTliYjkzOWE1NDMxNTA5YzVkZGQ5MjI1YjNlOWQzMDE3MDdmZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODk2YWU2Njc4ZDU3NDgxNDM5NDAxNjQyYjAwYTk2N2Q3YjZlYTljYmY4OGU2ODFjYWQ4NWU0OWUzODhjMjk5MSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_9ae86e669ab24d2393b304f129021542",
+      "statement": "Page rectangles get their own far larger memo separate from the raster cache, because a page box is four floats while a raster is megabytes and the box is what decides whether the raster may be made at all.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/render.py#L182-L192",
+          "version": "repo-lines-v1:sha256:218931e5981ad539946121290c6c7bf942ca65566524a1c189f5554013f2202a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNkY2EzZjVlMzBlNWI4YzlmYzg1YzI5ZDlmYzg5OTFlODc5OTU1YzJkNzQyOWVmZjU4NzU5YTU1NDRhYzhlMjAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc5MDc0NjU2M2EzZDUxODI4MmZmYzFhNTA1Yzk4NGFjM2UxYjVmMTRiOWU4ZTc3NWQ0NWRiMjEzYjFhNTQ1NDQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBlZDc1NDRjZGQ1ZjUyMDFmZjIyYjRkN2ExNmI2OWU0YmVhYjI2YzIzZjE1ZWNiMWZmNmE5YjFmY2JmNTVmZDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcyZjNmNzI3ZjZkM2YxZTZkMzhmZmRiZWJmYjRjYWVkNGExZDVlZDIyMTRhY2Y5NTEyYzBmYzEwYWZiYzQ2YTkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7c62c67270bd4bfd8c32c4204982f199",
+      "statement": "The serving layer owns the raster request policy the renderer must not know: percent-encoding the page_id's # in one place, resolving page_id through the indexed page and its run to stored bytes, passing the run record's content_hash as an integrity expectation, and checking the megapixel ceiling from a prediction before the render allocates.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/raster_cache.py#L17-L40",
+          "version": "repo-lines-v1:sha256:751ff28d221a5486c4eb51e2661887ba1f463989bd2b35b03239a44265a32ff3:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzMDNlY2RkNGE0ZDEwZjE5YzczZmQ0MmZkMTI0MzdmZDMzNTRhODI2ODE2MDVkYTUyNTVhOTdhMzkwNjhkYmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjliNDYyZjQ5NGFiM2UxOTRlMjFiMjM5MDY1NGViZDFhZmNhMzc3NDY2MjNjNGQ2ZDViYTEzYjU0NDQ1MmNmMjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVjODViMmZmYzg3MDIxYWE5MzZlODg0NmQwNDkxNmNiN2MyODc3OGJkODVjYjAxZGIwNGYyZjg3NDBkMTRjMGEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ecf17eeeac4d41519ed0254cbde45d1e",
+      "statement": "Raster resolution keeps three failures distinct because callers retry them differently: an unknown page is a 404, a page that is not the current revision is its own 404, and a page whose source document is missing from the store is a 503.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/store.py#L31-L34",
+          "version": "repo-lines-v1:sha256:062353d7f9790356bb5f2f5b9d3135e35940bea25d95baff52455c58333b9d63:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZGU4OGZmNTE0MThmNWI4ZWIzYzVhYmQxNjg4MmZmYTEzNDc0MmFjZmVlZTM1YzkyYjgxMjEyYTU2NDE5MGVkMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNWE4ZTY3MDk2MDZmNGRiNjg2YzYyODRkNGYwNDY2OTMxZDZmNWUwZjg3YTJkNzBhNTk1NTQzMmY4YTI1Y2Y3YSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYzNkNWI0NTczMjE4MWJiNjFlZWQwOWIwNTE3NWViYTFjOWQ3YjhjOTdiMThiNmY2MjIxOGQ3OTFmOTY4ZGQ2YiJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/serve/raster_cache.py#L26-L31",
+          "version": "repo-lines-v1:sha256:bca43e044bafb6f1becad0906ca3480e110f385855890069115cadcb32b9471a:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYjI2Y2ZkZTU3OTQ4N2EzNmE0MWI5MTlhNmExMzMxMDI4NWE5ZDlhMjQ3YTBmNWU2YTIzNzdhMTU3MmVkY2JhYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiY2UxNWVjYjY5ZTIxNTVlMjAzYWIxOWZmNTYyNzM4ZjhlNjE3ZGIzNzk2MjZlOWVjNjc1ODZkYzBmNGU0MGIxYyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMGZjYWU5YWEyNTIxNDA3NGJkNjQ3YjRhMTE3M2EyOTY0OTM2YmUxYjZhNjdlNWQyNTE0M2JkMThkNzAxNzlhNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiY2FkNTI1ZTJhOTE3MmIxZTJlYTlmN2Q5YWRhOTQ0NDhiZmJmMjVjOWY3N2QwZWVlNzdiNzc0NTJkMjMzZjUyNyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_aa08e593de0744d6977e09fd12e481fe",
+      "statement": "The upload spool is a transport buffer removed when the ingest child exits however it exits; what makes an uploaded run resumable after its accepting instance is gone is the document store, not the spool.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/ingest.py#L19-L32",
+          "version": "repo-lines-v1:sha256:f7bf3fa69161caa20c830e2a5b89ea66b7b4a361c41383a2aa470f7590a9a636:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJkMDIxMjUyYTNiNDM4MTdiMTcyYjc3ZDFlZDA4MDg0M2EwMTBkOWNiNjRhZThjNDY4MDNmNDdhNWU5OTliMGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZlYjIwMTg3ZjRlYjczZmRiNzE5ZTY4YjM3NDZhN2QwZWI5NjZlNDY3OGVmYTdlZjRhZjY3ODljZWVmN2IxNDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJjMWViN2EwZjZjY2NiNGQ4YmE2MGQwMzQ1OTI1ZjlhZDJjMTEwMTM3NTczMWE2ZTI1NGMxZDRmNDgwMzYzYzkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEyODc0ZWM0YjMxM2JlMTk1YThhNDZmMzU2MWYwODZiMWIzZGJhYTBmNjg3OGI0NmMxZjNmNDI4NjEzYWY5MmIifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/serve/ingest.py#L74-L78",
+          "version": "repo-lines-v1:sha256:8ea00c84b223fa407c79545590e1b6f6bdbb12d9940412c39d89185b7a6591bb:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOGMxOTY5YjE0MGFjMjdlN2ExNzdkZjMxN2RiNzUxYjI1MTQ3OTgwZWQyNDcxODE2NWU0Y2QxZGY4M2Y2ODQ5MSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODcwMjhhNThlMzc5NmJjMjAyN2VkMjUzZmQ2NjAwZWIxOWU2MGZkYWNkM2EzYTViZWVkNDYxZjBjNTNjZTU2YyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMGQ0ZjI2ZGYzOGE5NDY0MWZlMDAzNDQ3NjkwNjUyM2UxNDFlYmMxODg1NWU5OWI2YTU0MTY4ZjAzM2RmMjI5OSJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.1",
+    "at": "2026-09-11T14:07:28.402Z"
+  }
+}

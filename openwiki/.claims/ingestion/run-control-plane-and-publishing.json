@@ -1,0 +1,274 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:23c8e604f14820b7ec2d261952a404ab723406a82f6c03d9e279a42930efc484",
+  "claims": [
+    {
+      "id": "claim_9e1fbcac96f243d1a0cf2397242b0390",
+      "statement": "Run state lives in the Qdrant control plane as one point per run and one per window rather than in process memory, which is what lets a second instance report on a run it never executed — the previous in-process dict stranded a paid run on every restart.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/run.py#L1-L12",
+          "version": "repo-lines-v1:sha256:6873be4bdf94c23d64d9c1a3d5992e2420151610c40cb20d818410c3a1050305:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUyMTMxOTk3NjQ1OTdkNjNiMzU3NjVkMGY3ZmNmNjE4ZmQ2NGQ4MDViNDJmNmI3MDI3MzMyYTdhYmUxM2QxNjAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA4Yzg4M2Y1YjY0MmYwZTcwODg0ODQ5NWQzOTE2OWZhYWU1NjQ4YzVlYjg1NDdiYTBjNThiZTI5ODRmYzhmMTcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_78f787aa86364c99b1a19027596c0659",
+      "statement": "Windows have their own state vocabulary (queued, running, done, failed) distinct from a run's, because a window is never gated or published — those are judgements about a document — and what matters for a resume is whether a window's work is done.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/run.py#L75-L84",
+          "version": "repo-lines-v1:sha256:dbff8e00f6917ac72a5fd31426036a3c6e8a1a99f0f1b9332b6246ff725547f0:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBlYjI4YWM3NGI2ZGM2YTc0MDU1ZGM4ZmJmM2FhNjk5Yjg5ZTUxMDRiODkxMzA3ZTIyYWQ1Y2YyZWQ5MTE2MTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI0ODM2MmQ5NzkwYWQ1YTM4ODZjMDQxYjM2YTQ5NWU4MDAwNDJiODlhNDJhZDMyMTkzNmUxYWMzMDIzZGFiOTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE3M2U4YjBlZTRkYWY1NzJmZjlkM2ZiOTkwNTk5YTI3MWM5YzcxOGM3ZTZhOTVkYzRhOGFmZDFlMjNiNDMwNWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI0ZTVkNTI2MzE2MDRjNjIwNDZmN2FiMTVmYjgxY2IxMWU1Njg5ZTQ2NTNiYzZkZGRjNDQyNDhmOGNhNWI4ZGUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_039cc9d4aa784becb906627124c225cd",
+      "statement": "The run lease is explicitly advisory because Qdrant has no compare-and-swap: a duplicated worker re-bills windows but cannot corrupt the index, since point ids are derived and nothing is queryable until the gates flip visibility.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/run.py#L13-L19",
+          "version": "repo-lines-v1:sha256:6029d5a493f67e21e4534081e7f5e54854af79b5992b195eb7d8d1c85432c37c:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjBkZWRiZGYzYzZmMzg0ZTY2MzNhMzQwNTU1ZTBjZDFlNTZkMDk0YmM3OTY0NTg5NzYyYzdhZWRmMmQyOTgyYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzgzMDIwMDk1Yzk5MWE2ZGY4Y2RhNmY0MWNhZDU5NjIwYmM2ZTNlZTM1ZmRmNWNjZTExNTZhZmFiNGUyMjQzMiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNzAyNTkzYWUyZTM3Njg5YzU4NTIzOWI0MjI4Mzk3NjNiYjJlMWY0OTkxNDAzNWU2MjdlNTBjZTI5YTQ0NTAyZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYWJlNzQwMTlkOGE1NmY5ZDg2NzM3NTFiMmQ2MDgwMjI2OGU1MGIyZjg3MjZiMmE3ZjZiNWQ4M2Q4MmQzNjBlMSJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/ingest/run.py#L464-L487",
+          "version": "repo-lines-v1:sha256:ec4f61a93fb11fd2b1e2e75345a87e0c968d176a3f2bf675827d72e787219cef:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MGE3YTJlZTUzOWM4ZDYxNzRhMzczMmQ3YTgxMjEzNGE5OGQ4OGNjZTQ3YjU3OTFkMWVhMDcxZTU1N2U1NzIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2OTRkNDIzN2I3M2VkYTQxZDYwZDIxYzI4OGE4ODQ3NWNmNjQ5ZWIyMmFlZmQwMzNjNzljMzBiZDcwMjY5N2MiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBlNmQyOTcxYWUyZTc2ZWZhMTM2ZTc2MjQyMzExNjk5ZDBjYmUyZjliN2U1N2VhZDU2ODVkZjI0NDk4YTFjMjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJkNTkyNDY4YTdjZDFlN2Y4MzJjYmZlZGQzOTAzNWQ4NzNmYzRhOTc1OWIwYTBhYzNkNTM4NGUwYmRmMTgyYmUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_b2f6e564dd3e46d08026a6792c58c622",
+      "statement": "A lease is believed for a fixed interval and renewed as the run makes progress, so a worker that dies simply stops renewing and its lease expires rather than needing to be cleaned up.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/run.py#L510-L519",
+          "version": "repo-lines-v1:sha256:11d7b88a0e15c827487c2a434a8fd57185898ec7df5869b32542c24de922b18d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY5MjUxZGNiOGNlZTEyMWU5NmRkMzE1NjQzMzI3OGUwMTlhNTY4OTA2NTBlY2ExMzRlOWYzNWNiNTBlZDhhODMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdhYTVkNzRkZTU3NzA4M2EyOGE4ODdjMTExMWYxZmQwYjk5NDZiZjMxYjE4NDI4YzkwNWE1NjEyY2E0ZjhhOWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhkYzgyNzA0YzE0NTg5ZmJkNDMxZDU2NmVjN2E2NWU3MWU1MTA1YjVkMWY4ZTVlYzEyMzZiYWY3MjVlNDViZmIifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/ingest/run.py#L92-L95",
+          "version": "repo-lines-v1:sha256:a909c23d313c9f3c6cba1924ad052b8f5682762f067e8e491b268cf5ce276c80:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZGMzMGI5NjE3OWI2Y2QzMzQyNGUyOWFkMjgyMmExNThhY2I2ZTE5ZGMyNjdkMWZkOWU1OWUzZmQ2ZGQzYWJkMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjlkODA3Y2Q2NzQzMmY0NWM4N2E0ODVkODM4NGVkMjg0YzU2NDE3OGM5N2IwYjRiNDc0ZTA1YWNmMjU4ZmRkNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZmM2MzQ0ODlkNjNiNTEyODNkMzljM2FmM2ZkNDI5ZDEzNWFmZTQyMzUwZmY4YTRjZjk5NjM3YzYyMWI1YTBjNSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_896eb7e9560b45b78f89977c630b3a9d",
+      "statement": "claim() checks the live lease before it checks the run state, deliberately, so an operator racing a live worker is told about the worker rather than about a state machine.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/run.py#L464-L495",
+          "version": "repo-lines-v1:sha256:223bc2fa9ebf8fa6462667b983bd74425efbcc44989dffeb0f952c5d433db3c6:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MGE3YTJlZTUzOWM4ZDYxNzRhMzczMmQ3YTgxMjEzNGE5OGQ4OGNjZTQ3YjU3OTFkMWVhMDcxZTU1N2U1NzIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRlMGFiMDQwOGFjNTczNDI5NzJmN2VlZTg1Yzk5YTZjNDBmOWE4MjE3YmE3ZmYxYTg2YzEyZDhmNjAxMjU3OTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBlNmQyOTcxYWUyZTc2ZWZhMTM2ZTc2MjQyMzExNjk5ZDBjYmUyZjliN2U1N2VhZDU2ODVkZjI0NDk4YTFjMjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY1YmM0ZDgwMzU0ZmYwMzYyYTY3Mjk4ZDY0MTQ3ZDBhNWExNjUzNDM0NmU5N2U2YTc3NTJkMWNhYmM3ZmIyNmQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7ef981e711e14bb8975984f4185ba81b",
+      "statement": "stopped is the only run state a resume takes without --steal, because every other state is either somebody's live work, a judgement a resume would re-litigate, an unread failure, or a document already serving.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/run.py#L85-L91",
+          "version": "repo-lines-v1:sha256:966d1d960e2e600c982bb4aa355cbdb8e0099392113aed4674d3a01921530fe1:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZWY3NzhiODMyM2JhNjgwNWNjYTY1MTI2MGZiYzBjODVlYzRjMzYzMWQ1MzdmY2QyMmZmNTk3NDg3YjE5N2I4YyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNzViNWE2NTA0OWFkMDZkMDIyM2ZhZDc3MzQxNjA3ODEwOWFlMGVlMDM1ZGFhMjA2ZjM5NTA4ZGVlMjM0NDk5MCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYTc5NTE5MTI4YzcyODhmZGI5MDViOWM4M2YyY2M0YTdmNWNlOGM5M2ZhMTk2OTI5MjJlNDI4MDY4NzE4MDEyZSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_3fc698e372d44c8fab9dcca25a7fe9e1",
+      "statement": "Claiming a run clears any previously recorded stop rather than carrying it forward, so a published record cannot also report a sigterm failure; the stop remains in the event stream where history belongs.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/run.py#L496-L505",
+          "version": "repo-lines-v1:sha256:ebab49d07fa7f9f4bff928f7a5f2acd284fb0fb2b6652a33bc48b535ac50f7e2:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI0Njk4MWNkNDU4NWMxYTA4Y2E2NjVlNGRkMzZjYWFiMjU5ZWI2MDAwY2QwMjQzMTUyODIxYjg3ZDkzOGVhMDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRmZTY2MDQzODA4NzcxYWQxNDc4NzI3Nzg3OWM5MzMwZGY3MWIwNmE3NmJhOTEwMjA4ZjU5ZTA3OGY2ODM3NWMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZlMzNkMmI2YWJkNDgyNTZhYjgyODMyNzcwMzI3ODRlZjQ5NGVkYjE0NmUyZGJiOTFlYzNiZDkwMjkxZTRmMzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjExMTlkYzQ3NDhjYzVmNGNiNTU0NjkyMmIxOWFjOGIyYjg0YzUzNWEzMzg4ZmRjYjAyZWI0Nzc4M2VkZTAxMDgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0d41c673ede44a27948ed9c955347efd",
+      "statement": "The SIGTERM handler sets a flag and writes nothing, because a handler that wrote the checkpoint could interleave with an in-flight save to the same run point and leave the run running with a live lease — the exact state that would make a later resume refuse without --steal.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/cli.py#L664-L690",
+          "version": "repo-lines-v1:sha256:3afc743ca8ebf5a8c19e35a1ad6be89177d9228e39f6c4291aef6c7395bac124:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2YTgzYzc2YzFlMjRlZjQ4YmNmYjg2NWZmM2E0YjczMTVlZDdlOTI2ZmNmYTk2YzY5MTJjMmZkNDY0NDY1NzMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE5NzdmNjBiM2YyZjg1MDVkNWUyMWYwNzgwNTcxMjI2NzJjOWNkMTgxNTAyZjhmNmI5OWY5ZmQ4MDQ3YjE3ZmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjlmMzk0OThkMTU3ZWMzNmJlZTAyOWRiNjY2Y2UxNzI5MDgzNzJjYTcyMWMwNTFjNWI3NWRlM2Y4ZTgwYjk5NzMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhlYmJmNmRkN2QyOWE3YmQyNzJhZjA4ZDAzNDE4Y2M5MTU5OGIwZTc4M2U2ODRlNmViYTNhYWJlOTU0M2Q3NGMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_676496cea8524d3593b7cd61c72106b8",
+      "statement": "Drain points sit where no control-plane write is in flight — after each window's checkpoint and at each step boundary — which is what makes \"at most one window lost\" a property of where those calls are rather than a hope.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/cli.py#L692-L700",
+          "version": "repo-lines-v1:sha256:b2fe1f0c2e0934fdf2ed6f3e3d9db0354ee31a2a6b4dd8888e86a783c741a3f1:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTBkZTI1ODcxOTYxNDkyNjA3MWM4ZmIxOWZkODY2MTUwNTU1ZjFiMDEzNTRmOGNkMTYwM2ExMDlhN2RkYWU0MCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOWEwNTkyNTFlYzEyZjY4ZGVlMTFlZmE2ODg0M2RjNTNjZDllMDQ4M2FiOTQwYzBmYmRmZTQ3OGE3ODdiNDU5MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDZmZjk4NDcwYzI4MTFmMDg3YzhiY2I5Mjc4NzFhMDQxNzA4YmE2MWU3ZmI1OGNiNjQ5ZTAxZjM2ZDE3ZDM3NiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNTMyZDcwNjI2OTdiNzRmOWI3NmRjZTM3MjE1ODg3MTA1NjRmYzJiZjExNjRhODY1NWJlNzA0MDIyYmQyNWY5OCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_396004d6ddcc4468b5dfbcf43169f90e",
+      "statement": "A stop releases the lease rather than leaving it to expire, because a stopped run is one a resume should be able to take over immediately.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/run.py#L521-L535",
+          "version": "repo-lines-v1:sha256:f7f2d0daf8965e7b19efec7988cea116653b5adfb76b2afd7e12bdb06ff09aa6:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEwMjBmNzQ3ODZiYzM0NzdlNWQ2MWNkZTllNmZlZmZiYWE1ODNhMTg4NTRlYjg2ZTdlYmY0ZDNlN2I2MDM3MjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVhODRhOWVmY2E5NWY0MTkxN2U3YmZlOTI4MDczMmQ1YzVkMzk1OWFmNWIwOTlkNmIwY2FhNGI0MzQ3NmZiMjEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk4OWI1OTAwYzk1MjA3ZGY3ZWZmZWMyZGNiNzM2YjAyYjUzZGFkOTcxZGU2MDBkODZlMDk4YzA2ZjBlYWIyZTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhmNWVlNTAzZjE0MjU2YzBjNTM2YjM4ZGMxY2Q2ZjU3OTQyNjU5ZjgwYWExZTFkZjc4MGQ3YjVkOWQ2NGJlYTAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e3ff3e2868aa4fd58c542862f4e3aec5",
+      "statement": "The five publish gates measure the document against itself rather than against an operator-typed declaration: window coverage and offset check block, grounded rate blocks and is overridable, and text coverage and label monotonicity only flag.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/gates.py#L19-L30",
+          "version": "repo-lines-v1:sha256:282c7a096b95d641d468e1cedcbd6d2ea6f5bd84f5507fc318848bdeff30292c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY1OWZiZjg4ZmNmMDYyMjE4OGVjMTk2MGI2MzJjYzk1MzUzNmZjZjAzMDMxYzYyN2Q1YWZlNTA0YWNkNDc2YzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJlYWQxZWI5NmY5MmIyNjA5YjQ0ZGY2YTAxM2NiZjhmMzVkNGIyMTA1MDAzNmFiOGI2YWE4ZGU5ODU4MWRiY2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE3NDc5OTg1Mjc4MmFhMzVjZDUyMzBiYzdiYTgyYjJiNTNiOTJkNzVkZDZlNjA0YjA2YmY3ZTUxZGY5MTBmYTMifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/ingest/gates.py#L66-L76",
+          "version": "repo-lines-v1:sha256:6f8a0af200056844b9fbb5eb6ed91b526f290355c4ab3dfea1c4afeef2d1c04e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM0MWU3YjhhZTZkMmRkZmIzNjhkN2QyMDE1ZDVkZWVhYmM1NGE2MTZmMjY1ZWMwYjI4NmVjZjA1MWYyYjU3YjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhkNWFkZjkyYmZlZDc0MTYzYzc2MDNkMjcxNWQyNzQ2MmE1YmJkNzgwMWFkNzJhYzllMjcxMjU0ODI0YjY5ZTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJkMWI1ZDhlZDk1M2E1N2YwNGNlNTViZTI4YzNkMDUyNjUzYjQzNzJhYTExZjJjMzkzNjVhOGZhMWE1MTZjYjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFlZDFhOWMzNGJhMTI2NGFlNTIzYmYyN2FjMzlmMTg3MzRhZTVlNjBjMGM1N2ZhNjhlNTY5ZDVlNzk1YTU4MTIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1af70ae48a80410d86cf8bcc8e604468",
+      "statement": "Publication is all-or-nothing because publishing most of a document and flagging the remainder produces a later measurement that is measuring an ingestion bug while looking exactly like a retrieval score.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/gates.py#L1-L9",
+          "version": "repo-lines-v1:sha256:34eae1e2d36a808329128b3ae3c535c5f84dd17797fd02ade7cdbc2ec3340b03:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTdhYWE0ZmRkZjY5NTIxODE2YjVlMTQ5Yzk1Yjk1NjAyZjYwZTdjN2Y4YzI0MzU2NmMzMDAxNTBiYTdiNmM2OSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNmQ2NjVhYTJhZmI4MGE5MjZlMDc3MjgyZDVkYWJlZmI4YTA4NTgwNzFlMzE5ZmM1YmQwYjZhNWEyMjEzZjY4YiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_ebdf27716a9c4a4c8880aad812d2ced9",
+      "statement": "On a fully scanned document the grounded-rate gate is skipped rather than failed, so the document publishes and answers as not searchable — quarantining it would tell an agent a part does not exist when the page simply cannot be searched.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/gates.py#L318-L326",
+          "version": "repo-lines-v1:sha256:28366b0a3d901df169108b83fdfb332deb53e5cccbf4ab8f8f30f426b13e1d44:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiODUyNWUyODhhNTYxNTkxMWQxMjM3NWY4NDE2YmRjNTg2ZGM0MGQ4ODIxMDlmNTdlMDIyMjQxOGQ2ZGQyN2VhZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMWYxZGE3ODM1Y2Q4NWE0NDI2ZDBjY2Q2YjYyMGQ5YTA3MmY0Njk2ZTllYzdlY2E4YTZjMmZlMTAyNTcyMmRhNyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiN2JkZjkxNjYxM2UwZGUyY2QyMGY5YjU1YWMzYTBjNDg1OTM1MjViZDliMTNjMDE3YzYwN2Y5NDMyYmYxN2YzOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYzMzMjYwZDdiNzE5MjhhOGM3YWU2YmYzNDk5NjcyMzQ5YjU1NjIxN2Q0Zjc1ZTY4NDQ5MjM1MTA1MjU1NWQ2MiJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/ingest/gates.py#L32-L38",
+          "version": "repo-lines-v1:sha256:5907505f9618a770e879d82bee8ce609c7446c9e09cd96b5ec38c0baee94a8fa:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjBhZjk4NWQzOTNjZGZjY2U0OGU4MDM5YmZmMDVhN2UwMTY1YzZiNjA0NjJjYWU4ZGE4Y2JkNzI3NmNlZjYyMiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMmViMWEwNmUxZWNlYTgxMWI5MWY5MTQzMmE1YzZkOTE1YWIwMTlmYThmYWEwYTJmNTYwMDlmNTE2NjdkM2RjNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiN2Q4YjQ2NzdjM2UyM2U4NWQxZDA5ZTI4Zjg1NDg5N2QzYjA2OTFjNmNlY2RkNThhMzE5Y2QyZjc2ZjQ0NTU3ZSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_5c5a0c27d57747b6b42d76163e01ad2e",
+      "statement": "Exactly one gate accepts an override, and the override requires a non-default reason that is recorded on the run and stamped on every page; window coverage and offset check refuse an override because neither failure is a threshold judgement.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/gates.py#L233-L248",
+          "version": "repo-lines-v1:sha256:53e19da559a837650b21e5019ae849f310ec7081654c613dc34bdf3a140c71a9:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlkYTA5ZjM0ZWRmNTQ2MGRkZWJiZTlkZmE5NDVjZGU3MDRhMzc3MDU5MjI2NmY4ZjcxMGE1MTFmYzg3Yzk3NmEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg3NzkzNmZmZTRlNjY0ZDY3Nzc2YWE4MzUwYjMzNmRjMTc3YzY3YzA1MjIzNzQzYmE2MjNiMzU5ZjUzNTExYzIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRkYTg1MjhiYmYwZTgyMTAwZWYxOGRhYmUzODI5NDkzMDUxMmJjNDZiZDYxMjE5YjBlNTFkNWJmZjhmYzliMWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVmZWQ3Mjc0MzIyZDBkYjAxZDU2ZmI3ZTViYjM1ZmJkN2MxNDUyNzRlODdkZWEzYmRkMjk3ZDI0NTEzODIxNjIifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/ingest/gates.py#L40-L46",
+          "version": "repo-lines-v1:sha256:732533f0b1bbe949b87e6faebe2bff24467f588cee913c592d16cb1b754bf1ca:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzkxZmMzNTI2MDA3ZDIzYTJmYzI1NDQ5Y2JmNTcyNGEyZTlkZTg1YTRmZDc4MGJhM2NkYzk1M2MyYjgwMWRhMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTM4NGJmZGIyZGYzODBiNjU1N2NjN2E3MWQxNjg5MTQxNWJjY2FhODc2OTk0MDZlMjM2Zjc1MmM2NDE1Mzg5ZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOGI3M2RmNzM0MDdmOGFiOGJkZmYwM2JmNDI2MzAxMzI3MmVhZjJiYTliNGExNjhmNjAyZDMzN2MxMjVjY2I3NyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMWI3ODQzZmUzNjJlNjY2ZTg1YmUwYWZkMjU4NTMzZDZjYjc4YTM2YTI2ODc2ZjQ5NzBhODczMmZiZTBiNDFmMiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_ba58b38c958b4263bc5ed753347c9d4b",
+      "statement": "The publish gate's threshold is the same constant the page-level trust ladder uses rather than a second literal, because two thresholds for one judgement would let a page be individually trusted inside a document the gate refuses to publish.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/gates.py#L56-L61",
+          "version": "repo-lines-v1:sha256:faecd71a6176f99062ba5996bfbccc3d8e30426eac92aa5f63464506068c2e30:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDc3ODM1OTkxNTExMGU3YmQzZWQzMjlhNWQ2ZTQxZDAwODg4OTRkN2EzMjVjNGYwYzg2Y2E5NDBjZGI5NDc0YyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZDExMjJlNzJhZTY3NjdmNDMyNzdlYWNmNTVkN2RhZmYyYWRiZWMxZDQyMWUxOWU2ZDYwZTAzNmIxZmMwMWViZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMGM3ODUwZmFkZDFlZGQyZjFjMjJmNzdmZjZjNjJkZTUxMGU4NDZmNTQ2MjQzNzQ4NGYxMzY4YWMyZmYzZTdkYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTVmMzA1ZmQ5N2I3OWJiNjA3ZjQ2YTcwNjNiYTJjNGI0MTE3ODQxZDY2OTVkMjcyMjNkMTVkNzM2NGY2ZDRhOSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_f201e63879504a86a2291a84e72ef8d5",
+      "statement": "Re-running the gates reads the run's pages back out of the index rather than accepting them from the ingesting process, so the re-evaluation judges the document that is actually stored.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/run.py#L874-L886",
+          "version": "repo-lines-v1:sha256:b61d5043c3309927aa4c39b0285822e136ef2a4920a10a56cf586b9b0ffd3f33:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc5MjkzMDI0MDU0Yjc3YmQzMzE3ZTYyYTIyYjdhYzIxZWEyMDcxNGNlNzRlNWExOGRkZTc2ZWNhMDNmZmVmNDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY0OWE4MDI1MTkwMGRjNTFjMDkyNWQ0MmYxNDc1Y2YyNGMxNjFkNTU3Y2U0OTI5OTkyNTY5NjhlODYwNTY1NzUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRkY2M4YmI3ZTFiZTc2YmJlNDY3NjI2NTIyMzQzNjNlNzQ1MzFhYTIyNjc3OTc2ZjFkMTJmZTQ3OGI0MGVmMDAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5cf73fc651c24638bd07e1eb57d6f8e7",
+      "statement": "Publish executes in a fixed order — gates, flip, flags, retirement, count, then the record — with published_at written last because it is the claim that the flip completed, and retirement placed between the flip and the record so no window exists in which the document is absent from the index.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/run.py#L807-L856",
+          "version": "repo-lines-v1:sha256:2019421f25ff2fb03a58d83004b8af08bab413c32b4d012b4b428124e64c94fe:eyJzZWxlY3RlZExpbmVDb3VudCI6NTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA3NWJhOTE2YmVhODdiZGZmODZjNmY1YzFjYmFkMTVhYzBjMGFiZmY1N2Y1MTVkMDZhODJlNjhiM2ZjODQ1MGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM1YmQ4MWM1ZTdjNTA2YTQwNzU2MDdiOTZkZGUyMGY4M2QzODZmMDY2MTFhMTYzOTBmNzgwZTJmM2I2ZjU4YTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY0OWQ5NTBlYWZiMDYxYzQxYjcyZjQ5ZDg1MzcyM2Q3ODQ2NTI2N2ZmNzA1NThlZTJlODlhMmI4Mjc4YmZkMzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBlNmQyOTcxYWUyZTc2ZWZhMTM2ZTc2MjQyMzExNjk5ZDBjYmUyZjliN2U1N2VhZDU2ODVkZjI0NDk4YTFjMjMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a9b80d561d9248cba63f1b1149e24f18",
+      "statement": "A blocked publish saves the run as gated with the blocking gates named and leaves zero pages queryable, because a half-published document would make every coverage measurement report the pipeline's own incompleteness as a property of the corpus.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/run.py#L818-L833",
+          "version": "repo-lines-v1:sha256:a72ff858acc8cce137d1022e2d3434f285220dac4a0ccbc2d4ffc21136c63bbc:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUyODhlZGYyNzk3Y2ExNTNmOWViNWFlZGJlZjgyMDA3ZTBkYTRlZjc3OTI5MWVjMTFjZGQ1YjFjZmQ1MzVhNTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIxOTRlZWE3ODU4YTA2YTYwNThmY2EyODE4MDBjNTVlZmRiZDg0NTE5MmEyNzQzOWZiZWJiMDUxZTA2Yjg1Y2UiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdkYThiMmNhMzc5OWIwMzUyZGQ4YjgzNDBmNmM0NTMzYjE3ZTc2M2UxYjFmMDVlYTg4ZWIxMzg1ZjI1ODQ0Y2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI2NzdjMTVlYWQ0ZmY0OTkyMWQ5ZDcxYzgyNmU3ZDFiNzllZmMzNWFiOTE2N2UwMzkzOGZkNDFkYzE1ZmY2NGMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_c5962413893f4d9282d6be31a666102e",
+      "statement": "Retirement has three filter-based idempotent clauses: earlier runs of the same document revision are deleted, the previously current other revision is demoted and kept, and no other document is ever touched because every filter carries the document's own id.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/run.py#L33-L47",
+          "version": "repo-lines-v1:sha256:6e28449201fbe8ea9d59c3dd2ecd7acdcac4f67b60d409702ed32960fd5accaf:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUzODRiZmRiMmRmMzgwYjY1NTdjYzdhNzFkMTY4OTE0MTViY2NhYTg3Njk5NDA2ZTIzNmY3NTJjNjQxNTM4OWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMyMzkwZWVlNWY5MWFmMzM0ZjUwN2ZlNDMwODU1MTg0ZmEyNjkzMmI0ZjM4NzAyYjk0OWEwMDNlMTIyZjE5MjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImViNDgwNzM2NjEwMjhlNDBiNDM3Mzc5ZGQ4NTM4NjY2MTJiZWU2M2Q4N2FlYmZiMzk1YTczYzE0MjExMDQ1YTkifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/ingest/run.py#L727-L768",
+          "version": "repo-lines-v1:sha256:cacb06f7675035cd497d24f9d46a8980a4ed0408f5ea81972f71ef8966603c22:eyJzZWxlY3RlZExpbmVDb3VudCI6NDIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFlNjE1YmVhYjI5OGFjYzA0Yzc3M2ViM2FhYmE3ZTU0Yjc3NTIzOTMzM2M2ZWM3ZWJkZmVhMTE5YTAyNzdmMTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ1ZTFhMTczZDViMTRhMTM5MTdhYzA4ZDhlMTFiNjViNmQ5MGQ5NTRhZTI0NjRlYmI3ZDE2MzczZTE1NDc5OGUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYxYmYxYzQ5ZDhhZDVhZTViMGIyZDFhY2Y2ZjM1ZjM3NWZjY2MwYzE2NTg0YTdiMzdiNGFkYmFkODA3MTdkZmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU3ODRhY2Y3ZDdhYmFjMmU3MzZkNzMyMTI0ODU2MTBlNjcyODFlZWZhNDFkNzljODY2OTg3MDhhMWU1ODJjODQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_71881aa3933047459878280dc8ae9c70",
+      "statement": "The retirement report goes into the run record, so the evidence that stale points were deleted and the evidence that the other revision was kept are the same record and neither can be claimed without the other being visible.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/run.py#L727-L735",
+          "version": "repo-lines-v1:sha256:4a98f184e08eb50839e94a8daa065e60391b975899ca4323d0f2ba0e329611e6:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYWU2MTViZWFiMjk4YWNjMDRjNzczZWIzYWFiYTdlNTRiNzc1MjM5MzMzYzZlYzdlYmRmZWExMTlhMDI3N2YxMiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDlmZGU1YTlmNzgxZjU0OGRiNjRjYTU4YzA3MzUzZjY4NGJlM2RlZWQ0NTQwZGIyOGQwNmZmNjdjNDAzODVlMiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZjFiZjFjNDlkOGFkNWFlNWIwYjJkMWFjZjZmMzVmMzc1ZmNjYzBjMTY1ODRhN2IzN2I0YWRiYWQ4MDcxN2RmZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMTFiNWZmZWM4ZWY0NTUwZGMxMjQ1ZjNlM2U3ZmQ4NDQ5ZGM2YTU0OWRlN2JkZjAzMDQ3ZGRjZjNhZTc4NjU5NiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_b2cf03c42deb49c291dafe96a1723518",
+      "statement": "Retiring a document demotes and keeps every page rather than deleting it, so a superseded-revision result and an audit of a previously given answer both remain possible; it is an operator subcommand rather than an HTTP verb any bearer token can reach.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/run.py#L771-L790",
+          "version": "repo-lines-v1:sha256:6b2c14430c01d050930e06e6ca5a6c63bd26791f6c1c0a775d032fc3c9a2f4e3:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMxNGRmMGM4NzZhYjI4MDU1NWE2YmYwZDQxMDhjOTI3ZGY3NDY0ODc4OGE2YmRhZjkyMTY5YWY5MjZjMzRiNzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY2ZjcyZjYwNTdhNGQ2NDFlOGViOTkzMTQ3NjFjN2UwYWVmYWNlMWI0MGEzYTk2NjljNjBiNDU5MTE4MzY2YWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY0OWQ5NTBlYWZiMDYxYzQxYjcyZjQ5ZDg1MzcyM2Q3ODQ2NTI2N2ZmNzA1NThlZTJlODlhMmI4Mjc4YmZkMzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU4M2IzNTMxMjZiOGRkZGFlMWMwY2JhNWRiODYyZjQyMTJhOTZhM2M0MGUxNzdmYTVkN2YyYmUyNjYyY2I3MTkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_4ab9d9556aa3454faa75953ebed841e6",
+      "statement": "Both run exports are generated from the index and streamed rather than written to the instance's filesystem, so any replica can serve any run's export — replacing a design where the directory was written only by the CLI path and never by the HTTP path.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/export.py#L15-L27",
+          "version": "repo-lines-v1:sha256:0027cb9883d066ba0a2125199f047eaeef23d18d7ac2ef8db611208055ee1b72:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIyNmFmN2QyOTAxYWViNjEzODkyOTJhY2EwODVkYzFiNTUxMzI4NjNkNDMyZjVlMmVhMGMyNGJiZjM1YTMzYWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNhOGNlMGM0NjljNGJjZjIyMWUzMWM1YmIxNDdlMzNhZmYyODZlM2Q5NTM3YmQ0NzYzNjRhNzUxZWNjZWJkMDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM2Yjg4NjM5Yzc1MGEyMTA1OTQ2MjQ2NGM2OWRmNzk3NDY3NzhmMGYzNDRkNTQ0MzA1Y2IxNzg0MDAyMzIxYjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYwNzVjYmU0ODdmYWQxOGMwOWMzMDJiNzljOGJhYTVkNDU1MjAyMzRhOTYzOTA2MTAyNjM2ZDk5MDU0OGVjNGEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f56850238c4d4a65aa29fc9185d7e579",
+      "statement": "The withheld-identifiers export is gone with the allowlist gate that produced it, because a code the text layer does not back is not withheld but simply absent from the backed-codes list and counted against the page's grounded rate.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/export.py#L9-L14",
+          "version": "repo-lines-v1:sha256:0348b1fc3614e003e594ba11fb2f1eac8938a0c96b01af9500617116e1e37d87:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDYzNzk2MjZiMTdmNGUzNGMyOTBiMjMxZGNiMTI0NDI2Yjc3MTQ4MDczNDQ0ZGJmZjVlYWFhZWQ2ZTgxODgzNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNTk5NTgxZWQ4ZDgzYzY4MGRmMzUzOTc4Y2VhNTBkMDI4MDZjNjkzMDBmM2NhZDc2YzI0ZTFkZTdkMjhjNzk4NyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODk2MjA2NDVkOGVmNzFhZTI3ZTlhMzk1NGU5MzExNTE3ZjljMGNmMDYxMjlkZTA0ODU5MGRjNGRhNTg0NDJiZiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_50bf9e37ef89478ab1152f9c199c60c1",
+      "statement": "The export's safety flag is computed from two configured sources — the uploader's document type and the model's own topics — with no keyword list in the module (asserted by AST scan), and it is advisory metadata rather than a gate, a filter default or a reason to hide a page.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/export.py#L29-L41",
+          "version": "repo-lines-v1:sha256:83c070ee48efef6a1a9738cc3a785f731df3342577b23df135f9294cb311d88e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdhY2JlZGMxNjdmOWVkZmU5ZGQxMTg0MzUxMDI5ZjUxZGQzMDk3ODM0MDE4NzcwYWJkZDllMjkxYTc0OTNhNzQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJlOGJhMjVkZDBlMjcwOGEyOGEyMzAwZjRkNzkwZDg0ODUxOWU1Y2IxOTkzM2ZmMTQzMGMwNTBkY2RmNTY4NmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFhM2U2YzA0OGRjZDBmNjQ4OWI5MTU5NGUxODg4YjUyN2ExYWYwYWI1NTg0NmMzZDg3ZmQ0ZmJjZDc2NTI2MjEifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.1",
+    "at": "2026-09-11T14:07:28.402Z"
+  }
+}

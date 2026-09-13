@@ -1,0 +1,6 @@
+# Files
+
+- [Embedding and the Three Retrieval Surfaces](embedding-and-sparse-surfaces.md) - How one page becomes one fused image-plus-text dense vector and two BM25 sparse surfaces, why the collection is its own embedding cache, and which fingerprint changes refuse a collection versus the one that has an in-place migration.
+- [Ingestion Pipeline](pipeline.md) - The eleven ordered steps that turn a PDF into indexed pages — identity, text probe, rasters, document facts, windows, extraction, derivation, stitching, embedding, indexing and publish — with each step's inputs, refusals, and whether it needs a store or can spend money.
+- [Run Lifecycle, Gates and Publication](run-control-plane-and-publishing.md) - How an ingest run is recorded in Qdrant, leased, checkpointed per window, stopped and resumed; the five publish gates and the one that may be overridden; the visibility flip; and the three-clause retirement that keeps superseded pages.
+- [Windowing and VLM Extraction](vlm-extraction-and-windows.md) - How pages are grouped into windows by a three-rung ladder, what the extraction schema may and may not ask for, and how a bad response is bisected and re-billed rather than kept — including the two independent offset checks and what a failure costs.

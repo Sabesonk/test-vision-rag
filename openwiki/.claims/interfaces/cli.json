@@ -1,0 +1,168 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:b74baaee35a08b30e92c4c69a48c59e244694b0f5e421dd46692e6374f130158",
+  "claims": [
+    {
+      "id": "claim_86083ee03c5c46a0ae67a14f95d8c56d",
+      "statement": "The CLI is the supported operational surface by construction: each operational action is a subparser, every command returns an exit code, and a refusal is a non-zero exit with a named reason rather than a warning followed by a partial success.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/cli.py#L1-L11",
+          "version": "repo-lines-v1:sha256:bae0b0d2ce686c9490fa692906dbe73c438486edb99c8863b21918f0f363ef4c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBhMTQyOGM5M2I4MzJhN2JmZmJhOWYwMWYyMjM3YjBmMmY1NDRkMTk4YzY2YzE1NzBhZmQ5ZmE4YmU3NGE4MmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzMDNlY2RkNGE0ZDEwZjE5YzczZmQ0MmZkMTI0MzdmZDMzNTRhODI2ODE2MDVkYTUyNTVhOTdhMzkwNjhkYmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU4Njc4OGRjOTUzMWE3ZjkxOGVkOWYxZDY3ODY5NGFhYTNmZWYzN2UxNjE2MDdiYTQxOWUzZThkMWEwNmJjNzgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_2e72584f84b140a0889193290f59a451",
+      "statement": "main() configures logging from the raw environment before any check runs, because the boot self-check reports a missing or malformed log level and needs a working logger to report with, then installs the signal handler and runs exactly one command.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/cli.py#L4196-L4213",
+          "version": "repo-lines-v1:sha256:ffba7bae3309d96fe6eb23a1f0eab381716ce7a53cec2cd6eaf4bed98607b970:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU0NDBhYmY0ZDM3NmViNGUzYWUxZjNiZDU3Y2FhYjlhMTg1OGJlMjBjNTdlNzRmN2YwNGExOGQ1NTI4ZGZmMWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAyY2M4NzNiZTQ1Y2U1ODY0NzQ3ZmRiZjc5NWE0ZDM3NjBiNjEzMGY2NjgzNzExOTk2YWIzMmEzMTIzNzc3N2EiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhkY2E3NDk1M2NhNzg2Zjg2MDdjNTBhY2EyMjMwM2RmY2YyMjMwMjM0MjQ1MTNmZDI2NTExNjkyNzlmZjMxOTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_743cd10d21304543affaece5553735ea",
+      "statement": "The CLI uses three exit codes — zero for success, one for a refusal and 130 for an interruption — and a typed absence exits zero because searching and finding nothing is a successful call, which is what lets a demonstration chain commands with &&.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/cli.py#L100-L102",
+          "version": "repo-lines-v1:sha256:619ba44563139af241e5b5e5188cb5050cd2aad2aeed9ccc159213b66e0d5817:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMmM1ODVmYjk2MTIwNzc1Njg3ODk5MTZhMzIyMDFhNzVlNjNjOThmOTYwYWUwMTljZTQwZDM3OTMyMzIyZWU0YyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOTM5NjhjNWE3NDFlMGNhYjFlZTIzZWMzN2ExOGY0MDRlZDFjODNkOTc5YWNmZTlhZjA1MzM0NjZlMzJiNTAyMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTQ0NWQ2YzU5NzhkOTQ4OGI5YmYzYmMwZDI3Y2Q3YWM1OWQ4MzEwN2U0ZTljNjA0NDdhNDhjNjc4MzRiYzYwNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOWVmYjk4MDUxNTZiMGZmNDU4ZDFmZGUzNDFhOTcxMmY3ODBhNzA1MzljNmYzM2Q3NjVlMzM3YWE3NjBlYzE1YyJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/cli.py#L2366-L2370",
+          "version": "repo-lines-v1:sha256:ce14c96fb996dc41ced972dc819b92f2ce552d2b64185a15129d5b077ad54d4b:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMGQ4MTU3MzJmYzI3OWYxMzYyODM3MzVmYjQ3YjM4NTY4Y2QwNjM1ZmQ2Y2YxYTNlMzAwZWY2ODE1MWZkMWIzOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZmQxOTk5OGVlMTZkN2I3MGYzMWZkZjAyN2QyODU1ODczZjdmMjcyMDA4NmZhYWU4NDdmMWViYjUwNmM4NjZjMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMWRhZGVmNGRiMjU1MTMxNWM2Zjc5MmExOTQ3NWYyOTVlZTEzYzBkNDZhN2U4MjZmMDhhZGFlZDNmZTkxNDQ1MSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_2be70295f20445ed8f487f4ac1ba602a",
+      "statement": "`vsir serve` runs the boot self-check before binding, so a refusal exits non-zero with no socket bound.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/cli.py#L3778-L3783",
+          "version": "repo-lines-v1:sha256:dfe2055f3fbeaa67157848ee4e777766dbb48ba2ff4a04e210ded1c272fd247f:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiY2EyYmFjNWNjM2M5NWRmMzZlZWY4MmE1ODAzYTI1ODU4ZjQzMWE4YjhhOTZjOTM0MjAzMWI0MmNiMzA1YWU5MSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzBjMWYxODhmMTQyZWQ3YTgyNDY4MGIyMDcxNzJjNTUxOWJjNjE0YTQ4ZmRhN2NmMTY3ZWRiOGRkZjc5OTU2YyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiY2U1NWFkZjJjOTUyOWYzNDIxMjI2NTIxNDZhMjczN2I1ODMwM2U1MDQxZDNmNmQ3ZjgyN2Y2ZDY0MzU3OTg0ZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMjYyN2MxMDM4ZGQ2ZGYxNzQwMjFlODc3OGRhMjMzYWRiOWMxNDIxMjVlNTc3NmVmNDczYTBjZTc0MWVmZDliNSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_084d610492954629bc8136056552c9b2",
+      "statement": "`vsir doctor --create-collection` creates the pages collection from the index schema and then asserts the live schema back against it, as a one-off admin process rather than live surgery.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/cli.py#L3600-L3611",
+          "version": "repo-lines-v1:sha256:c64d3368bca644a7dc2ae521206c5d43cb0de62ff77590e410c54557f592c54d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU4MTQwN2Q0N2IwZTNiOTZkOGNjOWFmZWQ3YmE1ZmY1OGY5YzY0NjhiZjNhYTE5NjNmNTgxMDEwNTA2YjNhNTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNiNmZmMjI3OTA3YmVkMzk3Njk1NTI2OTU5NTAwMzkwZTc3MjA1OTZkZmM0MzAwMTg2ZmMxYTY2OThiMzhlNWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYxNDc5MTcyNWE3NzJkNTgwODg4ZTYwMzIyZDQzZGQ0OWQ5NjVkYjMzYWEzYWExZTk1NDk3Y2M5MDVkMjgyODQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc4MWRjMjUwYThmOGZhMDcyMmViOTFlYTE3MGIzMzg3OWYwOWRhM2ViY2IyNmViYjFhMTNlMGFhNTkxZjVhMGYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_9a55a971470d479eabed18671ad6d8a6",
+      "statement": "`vsir ingest --resume` makes the PDF argument optional because it resolves the source file from the document store by the run's own document and revision, which is what makes an uploaded run resumable after the instance that accepted it is gone.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/cli.py#L3613-L3620",
+          "version": "repo-lines-v1:sha256:af05a535e06d495ea1132a1209ea20ea45257bfa14d150eacca80e0e3e7ab1c7:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNjAzN2EyZTI5YTEyOTRhY2MyMmZhNjE2NjRkOTUwNWUzNTZjZDBmZTMxMWEwM2JmMjA0MzQ2ODc2MTU0NTdiMiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTE5ZDExNDcxY2RiYjJmZTllYTI2MzE4NzNhN2NhYjhiNTVmNTc5ZTg3YTMwYjUzZmNlNTkwY2I3Yjc1ZmEzYyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODM5OGYwYjA0Mzc1YWI5NjQzOGNiMDYyZWZhMzU3ZjgzMzQ1MzAwM2VlMGRkMzRhZmY4YTE5ZTA0NzI3YTVhMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMTNjOWI0NGM1YzlhNzE4NzcxNWI0NGFmNWE1YmVkOGFhZGExMmIwZDlkYWQxMjA2NjVhNDE2OWNkODA2OTM4YiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_48487d60eb7a43a8b49696e54fb339f8",
+      "statement": "`vsir retire` sets every page not-current and keeps it, and deletion is deliberately not offered, because a retired page is what a superseded-revision result reads and what an audit of an answer already given is checked against.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/cli.py#L3702-L3707",
+          "version": "repo-lines-v1:sha256:ff625edf2718ed62d8f4fe8c2dc6862908fb1bc80a5ca667d2ee60e4211f10cd:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOWE2ODU2MjYzZjViNjg5ZTU3OGIzZDVkMDRhMTZjZjhhYjFmYzlmZWE2YjcyYzU1M2JkYjllYTZhMTllYTZjZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzBjMWYxODhmMTQyZWQ3YTgyNDY4MGIyMDcxNzJjNTUxOWJjNjE0YTQ4ZmRhN2NmMTY3ZWRiOGRkZjc5OTU2YyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzg0NDI4NWU4YmRmMWEzN2E0Nzk4Mjc2MTg1OWRiZjc3YWEyOWRmMWExNDM0YTQ0NDdhOTAwMGMxMTY0OGQ3YiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYzVjMTNlYThkY2RhZDkwNWRmZTk0NjA4YTg4N2Y4NTA3NjgyOWQ4NGZhY2RkN2VmODllMjQ5ODg5MjZkYzQzYSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_54bfac071a6e4af49463e7111c992ecf",
+      "statement": "`vsir migrate` offers only repairs that can be re-derived from stored payload, which is why a sparse-recipe change has an in-place path and a dense-recipe change does not.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/cli.py#L3727-L3732",
+          "version": "repo-lines-v1:sha256:fc319c1428e91a4cedbd566f4ca9d9eda690a7938815f42f7dc5a1db83a2391f:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYWQyZGU3YzUyZTJjMzlhZWRiNjM0OWYwOWY1MzNjOTVmNzUyNDEyMjMyZGY4M2MzNTNjYmY5NDc3MmZiYjJiNyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYmFlYjhjYjBkNjk4NTIzNTc1Njg0MDgyYWUyOTdmNmIzOTFmMmY0OWJhNTAzMzFiYWE0M2Q1NTA2YzMyN2Q0YyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZjJlM2EyNjNjNjQ3ZjcyZGI3ZjRmN2UxZDRlNmZjOWRhYjBlYjhmMjc5ZmFlOGE1ZDVhODhjOGEzN2MyMzk5YyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjljZmQ4YjhiZDI0ZjllOTJiODUzNTEyNDc2ZTQ4NzczNmRiOWNkMmRiN2Y2MjY1YWYzMjI1OWRlNDIxYzAwNyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_0cff11e69c4c4d489c3923d68d2843f5",
+      "statement": "`vsir publish` releases a document a gate is holding by recording the reason in the run record and flagging every page as published with an override.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/cli.py#L3752-L3757",
+          "version": "repo-lines-v1:sha256:d6fc77d33bf9028accc12fa0c725fd2e556f6c90b8a8c0ddb76b64ec551d6db5:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDkzMTg5Y2JmMWRjM2VjZmU5Mzg5ZmFlYWI5ODA0ZWE2MjhmMjY0NDMxMzcwODE3OTMzYzJkMDc4MmM1OWI1OSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYWYzZDhiMmMzNGUzYjJlMGFhODViYWFlMWYzN2E5NDkzNTAwNTZkNzQxMTI2ZGE3YTdjMmJjOTg1OTZkZjU1YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTU4OWZkNmU5NjVhNWI5Mzg5ZDQ4NDFlMGYzMTUwYThmNmUxOGY2OWM2NGQ5NDM5M2I3NjRlMDFmYjc1Y2ZmNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjc4NDFjZGJiY2I3NzY5ZjQ4OTFjMmRhODA1NTg2YmQzMWIxMjk1NjM0NjVkZDc5NTQ0OWYxZDZjNTIwZmU0NSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_cc5a3bcfd68a43da8763524cf18ddbb5",
+      "statement": "The tool one-shots call the release's own dispatcher rather than a CLI-local implementation, and their identity for the audit line and budget ledger is a stable local-process name rather than a bearer-token digest.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/cli.py#L2394-L2400",
+          "version": "repo-lines-v1:sha256:653e601089e47f61c4c4bafc3a7419b441c526b72c34c5a946d8166779935d26:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYzljNjc0NjU4M2UyZTQ1M2UwMDIzZTBlNTI3MDYyYzAyYjIwYTFkYWI0NjgwZjcxZjJjYWE0ZmRlYWJkMTczYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOWNiZjMzODZhZjZjNTAzOWY0NWVhYzA0NDk2MmYzMjU0YzhmYjA2MTE3MmYzYjM2ODkwNGY2YTE2NzY3MTdjMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOGZmMmMyYTg5YTgxZGIzNmZiODI1NGJmYWQ0YWZiOTZlMzdkZjUzMzNiNGJmM2I0MWEzNDk0YTgwYTQ1M2MzOSJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/serve/auth.py#L167-L182",
+          "version": "repo-lines-v1:sha256:9fc01556e3d24afea1b157de513e039e3c7303ca86aa81c85a224d4a15660052:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU1MWMyZDlhMDY4ZDlkMGI4NGNiZjA4Y2M4N2RkMDcyMDJkNTBjYTQ4ODQ3YWJlODAyMWFhOTRiNGM4ZmMyYTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlhYzRjZDc4MGIyMjFiMDdiZmJjMGY5NzAwNjM2Njg5NjBlNmNhMTE1MzhlZGYxZjFkZWIwNmI0Y2I0OGFkOGUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQzZWI5ZmYzYWNiY2FlOWRmMmQ0MThiMmQ0ZDk3YTA2MGYzYmI5YTZkNWQ3NThkY2Q4ZGE0OTU2MmI1ZmRjZmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNmZGZhMTVlZjIwZTY4MTk1NjdlYzA5MjhlYWFlMTE1NTdkNzIyMzJlMTQwMmY3NWY0YmY4NDFlOWQ1NTVjNzEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_78343df4d67f415a9d0d34e129afdfdf",
+      "statement": "A one-off process is given a local identity rather than a credential because the bearer requirement exists to guard a reachable socket, and an operator who can run a subcommand could equally run publish — a credential read from the same environment the server reads would be ceremony rather than authentication.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/auth.py#L167-L182",
+          "version": "repo-lines-v1:sha256:9fc01556e3d24afea1b157de513e039e3c7303ca86aa81c85a224d4a15660052:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU1MWMyZDlhMDY4ZDlkMGI4NGNiZjA4Y2M4N2RkMDcyMDJkNTBjYTQ4ODQ3YWJlODAyMWFhOTRiNGM4ZmMyYTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlhYzRjZDc4MGIyMjFiMDdiZmJjMGY5NzAwNjM2Njg5NjBlNmNhMTE1MzhlZGYxZjFkZWIwNmI0Y2I0OGFkOGUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQzZWI5ZmYzYWNiY2FlOWRmMmQ0MThiMmQ0ZDk3YTA2MGYzYmI5YTZkNWQ3NThkY2Q4ZGE0OTU2MmI1ZmRjZmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNmZGZhMTVlZjIwZTY4MTk1NjdlYzA5MjhlYWFlMTE1NTdkNzIyMzJlMTQwMmY3NWY0YmY4NDFlOWQ1NTVjNzEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_32e76c5b905746b6bc03389c8043dd6b",
+      "statement": "A test asserts byte-identity between a CLI one-shot's JSON output and the HTTP response body for the same request, run in-process so it is visible which callable answered — because a shared code path that holds only on reading stops holding the first time somebody adds a CLI convenience.",
+      "evidence": [
+        {
+          "resource": "repo://backend/tests/api/test_one_shot_parity.py#L1-L20",
+          "version": "repo-lines-v1:sha256:b57fd720f4b26131311dc33282988b9adb49530c659fe38c5ab689abbe7680fb:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdlYTdhYThlZTE1MGQ4YmQwOTEyOTEyMmY1ZWI4MzlkYjJkNjFiZDBhMjgwYWViM2JkNjM3OGYwZDFiZmZjZDEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzMDNlY2RkNGE0ZDEwZjE5YzczZmQ0MmZkMTI0MzdmZDMzNTRhODI2ODE2MDVkYTUyNTVhOTdhMzkwNjhkYmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ5NTU3NzZkMzBkMzRjOWNkMzk3ZDNmZTEyMzYzOWYzYmU0NDlmY2FhYTBkM2ZiYzhhYzYwMWI5N2Y4ZmVlZDgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_015c5b4c2de04abdb63d9f16720e6371",
+      "statement": "`vsir ask --explain` runs the free half of the runner — the descent, the tri-state triage and the route — and spends nothing on any path.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/cli.py#L3988-L3993",
+          "version": "repo-lines-v1:sha256:66bd0cddbcaafa02cc1374133689e97c7e108510e4f344d2fcebdb5e45c99a57:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYmEyMjczMzVkYWQ3Nzc4NGY1ZDNmYzcxZjU5MjIxNzBiMTJiYWY2NGNmNjA5Nzk0YWE2YTljMDU1MWFmN2QxYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzBjMWYxODhmMTQyZWQ3YTgyNDY4MGIyMDcxNzJjNTUxOWJjNjE0YTQ4ZmRhN2NmMTY3ZWRiOGRkZjc5OTU2YyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYWVmOWMzNDYzMjhmMjE0MTJkNTIwZGNkMzNjODA0NGI5Y2VlOTJmNmJiZjU1ZTJjOTAxMDg4NDBiNDk3M2Y5OSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNGVkYjA3MmEyMjYyZGIwYzViMGIxZGI4ZDRjNzA5OTdkMzMyMmQ3OTZjMTI2NTRjNzdhMzZmYzJmYjE4MDI4YSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_4060ae6be31c4339a41d80e9149a37f0",
+      "statement": "`vsir read` is the paid step: a directed vision read of at most three pages at a server-pinned dpi answering one question, whose question is part of the cache key so a new question is a cache miss.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/cli.py#L3971-L3984",
+          "version": "repo-lines-v1:sha256:e69ef22e6d5afe252edbedf883e2a3460f1addab703ab21d0b29b4e083f96449:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNmN2ZhZjkzNTAwNjQ4ODUxMjc0Y2Q1NWJkZmZmNzgyZTQ4ODNjOWNhYTFhNWEwMWZmYWI0YzMyMjBiOGZkMDgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg0YWQ1YmZjNTZkMDQ2ODM2YmExZmE4ZjMyMWZhMDA5YzMzOTlkZWIxMGI3NGFjOWFlNDg4NzYwY2RlMDcxM2YiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY2Nzc5MzY1MWE3OTQ0ZjZiN2ExYmFhMTQzNTkzMzBjZGQwMTAxMzdiYTVjMjAyZmE1ZmJiNDk3ZDI0YmYyOTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFlZjljMzQ2MzI4ZjIxNDEyZDUyMGRjZDMzYzgwNDRiOWNlZTkyZjZiYmY1NWUyYzkwMTA4ODQwYjQ5NzNmOTkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_82a15fc12bd94100a336bdda8bd6ae83",
+      "statement": "With --json the CLI prints nothing on stdout but the envelope and moves the event stream to stderr before the boot check runs, so a boot refusal is still reported in full — the two outputs are separated rather than one being silenced.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/cli.py#L2371-L2388",
+          "version": "repo-lines-v1:sha256:5034bab86990cbec7a52dc97e78bb9d4b8cea7c2fdd621a3a96771bf794e4dec:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ5MzU0NzI0NGIzMzZkMmU1YmFhNzViZTRjOWY1NmZkYTdmNjI4YjMzNmZlMjVlNzQ1ZjJkMWIzNWQ3Nzk4MDgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE5NTg3YWRiNDZhNDEzNTE3Njg2MTJiZjhkYmFjZjE0YWYyNzY2ZDM3NzY0YTRlNzliZjNmOTY0MjdiMGViODYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjEwMDMxNGVmM2JmMmI1OTYxNWRkNGI2ZDk5ODFkOWZhNDVkYmM5Mjg5YjZjNDEzMjcwOTI1YWVhZDQ0OTQxNjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIwOTg4YTBmNzRlNWNmMzlhODRhNDZiYmY2NWFhZDRlNTAzNmY1MGU0OTJlY2E0MzM4YjNlNzQ2NTU1MTYyYWQifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.1",
+    "at": "2026-09-11T14:07:28.402Z"
+  }
+}

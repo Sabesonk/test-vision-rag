@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:21a6050e46ef31d35d126fcbb3552889d6cd392485905ce822f1a289734ffd2f",
+  "claims": [
+    {
+      "id": "claim_b3d631a5141e48b0badcc88b29cca01d",
+      "statement": "The project requires Python 3.11 or newer and installs a single console script, `vsir`, declared as the only supported operational surface.",
+      "evidence": [
+        {
+          "resource": "repo://backend/pyproject.toml#L5-L13",
+          "version": "repo-lines-v1:sha256:c7c924ac0d7613eb9c7008c0aa838fe7821b9e575d681099b3daff79501799f8:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNzAyYTgxYzM4MzZlZGVmMmQwYmExMWQyMzUzZmI2ZGFiYzc3NzE1MGE3Y2E4M2VhMGQ5ZTlhNzAzMTNmZWFiYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYjZiZTUzYzkzNmFkZGU3YmE4MzQ4OWFkZWIwYmUxMTk5YWY0YmUyYzQyZGJkNTBkNTExNTcxOWVhYTRlYzIwZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiY2FkNTFkN2Q1MGQyNGYxZTk1MjU0YWY0NGJlNGI1MWU2ZjU1ZTJjZDA3NjIyNDY2YTJlODlhYjI2Y2EyMDE3YyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTYyZGNkYjZjNjFkNDgwZmMyNmNkYzRiYWFiZDcxMmU5ZGM4NDE0YzEyYmEyMWI2ZTkyNDRlODhmMzZiMTk3NiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_b80f2c751b0c44d6bfd3171b403e1812",
+      "statement": "The extraction prompts and the console page are shipped as package data because both are read at runtime from a module-relative path and are release artefacts — the prompt text is hashed into the cache keys, and omitting them made a live run fail and the console route refuse while a source tree and every test stayed green.",
+      "evidence": [
+        {
+          "resource": "repo://backend/pyproject.toml#L22-L31",
+          "version": "repo-lines-v1:sha256:b4a018a60d15f36cb8271071372bb59307d147cf3c1779472b7824d657c5bdb3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU1MWZiNDc3ZTcxZTFkYTZlMmVjZDVlYTJhN2RhMDBjYjJlNGUxZTM2MjZhYmMwODgyNWExNmRmMWVkYTBmMzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhhZjUzYjgwYWMxNzNkNmUwYzIwN2UwYWZkYzAyMGRmNmI3ODFjYzJlYWJjNzZjYmNjODViMzQ5MDM4NGFlZWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNkN2I4YzI1ZTYzYTM5OWI1NDAxYWUwYWYyMGI5MDllMGNlYTNkYzA2ZmI0OWFkN2VlMzdiMGY4YzY2NzMwZjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImMzMGJlZGFiZmRjMTM3ZTVkYjMzNDk1ZjU4NzRjNDBhZjE2MDZiZDNhYmYzNWRlNDE2M2YwY2QyYWU2MzBiN2IifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e8fce8e50f8e456893cd2e715c18728c",
+      "statement": "Bare pytest runs only the unit layer because the test paths are pinned to that directory, and the API and paid scripts name their own directories explicitly — so no Docker-bound or paid test can be picked up by the fast layer.",
+      "evidence": [
+        {
+          "resource": "repo://backend/pyproject.toml#L39-L45",
+          "version": "repo-lines-v1:sha256:c2e632eb4709343ea4136f8f479f076a7f38b133f59c86221ef7f035f82ff861:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjBkODhjODE5MTRjYTlmMzExNzg3YjM3ZTJhYmNiNWE2N2YwMWRjZjVkYWY0ZDkwZjkzMGM1ZmRlMjBhZTFjYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZWFiZWIzOWNjN2I0OWRiNDg3N2RmYzIyYjY5YjA1NDBmYzI1ZjQ5OWM5YTE4MWVmNGQ5YzAyNmVjYWRkODk5ZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjEsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjk0MTZlMDlmNzhiYTMxNmMwMzI1NjgyMTNiODU1ZWU3NTZlNDE1NjVkOTE4ZjA5NTE5YzgxZmQ2MjBmNDA2MCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_118ef6173ffa4f1690f457e53c306a64",
+      "statement": "`stack.sh up` builds the image from the same Dockerfile as production and the test stack, starts the store, waits for the collection-creating admin run to finish, starts the API and seeds a 42-page corpus in replay mode at no cost.",
+      "evidence": [
+        {
+          "resource": "repo://scripts/stack.sh#L104-L117",
+          "version": "repo-lines-v1:sha256:d2f529e3f268477f54324a2b6660c6e282149b693b11fa98a983b83dd7a5bbf5:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRmZTZiMDY4MjA2MTkwNjEyNDY3ZTRjMjA2MDY1MzcxNGU2ZDk5Zjc5MjYzM2E3NjUxMjIzZWU2YmQ4ZGVmY2IiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIyODkwZTdmYWE4YjJjYzE4MGY5NjNjNmJkMWNmMDljMTU3NzI4N2Y0NDhmMDk3YmU2MjI5ZTI0NDhiY2IzMjIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU1ZjM2NzVjMzAxY2I4M2M1ZDFkYjgwMTNlNzZlMjBjMDA0Zjc3MjU1NmI3ZTc3NWM3Mjc3NzViMDljZTNjMmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI4NDM4NWM0ZjU0N2I2YmJkZGVmMTg1MGZlY2QyMWZiODJiMTg2M2NiNDg3MzliNmYyODg4NjA2ZjNmYTY2MDcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1635d7513aa2470aa3fa6839ec0198db",
+      "statement": "`stack.sh up --live` exports the live backend, the paid switch and the released prompt version, refuses outright when no credential is loaded, prints what an ingest will cost, and seeds nothing — so no money is spent by accident.",
+      "evidence": [
+        {
+          "resource": "repo://scripts/stack.sh#L66-L100",
+          "version": "repo-lines-v1:sha256:bcd64e87dd4c3c79678fb690d5eecd3e412a53757dda34863ef6d9b78b5742cf:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQxNmMzMjFkMDc1YmMzNzcxZGFiOTE5YTg1Yjc3ZGE5YWU4ZjYzYzIxZjYwODNmOGViM2Q4YTUxMmU4MDkzMGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg3YTkzZWRkZjRjYzEzZDk3NmQwMGYzN2FiYzdhMzk3NGVlYmNmNjg0MjUwNzhjYjA2YzBiOGM5OTU1ODU5OGYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU0NjRjMGI4NWJiM2RkNTEyOGZlZmY2N2M3MmNmZmJmMDFiM2JkOTY3ZDQwYWFmNDhlNjdkYzY5OTQ0N2ViODYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU1ZjM2NzVjMzAxY2I4M2M1ZDFkYjgwMTNlNzZlMjBjMDA0Zjc3MjU1NmI3ZTc3NWM3Mjc3NzViMDljZTNjMmYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_4c5f112dc8d74931ac0a0f9a072a9761",
+      "statement": "The live override sets the released prompt version rather than the one in the environment file, because the checked-in fixtures were frozen under that version and a live run has no fixtures to match, so it must use the text the release ships or the prompt loader refuses it by name.",
+      "evidence": [
+        {
+          "resource": "repo://scripts/stack.sh#L81-L87",
+          "version": "repo-lines-v1:sha256:35cc4be7fd35a42ac1d40253aeda8524373c09a025e26be57f5ce27a1a8ae285:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDU2ODAxZjU4NDY1YzU1MDYwM2JhNjU3OWU5YjA0ZTUxZDdlZTEzMzQ4YTc5YjVmODc2MDVmMzQwN2FmN2MzNyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTE3NmQ5NDlkZWEwMjNlMGYzOGU2ODhkNDY2MTc3MmQ1MGQzMWY4NGExNWMzMjI5Yjg5Y2Y4ZjQ4NDAyNjY1ZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDlkYWU4MGRhYzM2M2MwZWI2M2NiZTBiYmZkYzEwZTY2MWVmNWE1ZjAyZjA3NjMxNWIzZjgyYWQwMTQwN2RjOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTkyZTBiNTc3ZTQ4MTQ3MTIwNzhkMzUxYzA1NmIxNzkwODc2OTMwZGI4N2M0N2EzYjRmZGNhZDU3YTg3MTQ3NyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_f4eeb749ab2640f0a515caaffc90823b",
+      "statement": "The stack script exposes status, seed, logs, an arbitrary vsir subcommand in the stack's own image, and a teardown that optionally drops the index, with status reporting the token the running container actually holds.",
+      "evidence": [
+        {
+          "resource": "repo://scripts/stack.sh#L2-L12",
+          "version": "repo-lines-v1:sha256:1aaf32867b820a5d62148dbf9bdb1c7f2dfda8aac625b32b8f55890ed119c080:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBhZDAzNTE3MzYwYWYzY2I4MmY1Nzk3NGYxNTE0ZDk1NWIwZjYzMTJiNmNiN2FiOTdmNjgzMmNmYjAwNDdlOTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMyYzQ4NThlMjJjYzJjOTY3YjQyMTUwZmE1NTA1NjJhMmM4MzljMmNlYmNhYWI5MWNhYmRmNmY0ZGEwMjAwMjIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjoxLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFkOTVmYzA0YTgwYzk1MmY0OWNlNDE4ODYyN2M1M2IwZmJlOGM0NDA0MWI5NTJkNTkyYWNkMWRlOTk4NjE0NjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM5ZjRjZmFhNjAzY2Q0MmY3ZmFjZTkxNjkzZGI1YjNjZWVmOTE0YTExMmExMDY2MzJjMWJlZmVhNTM2NmU4NDMifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.1",
+    "at": "2026-09-11T14:07:28.402Z"
+  }
+}

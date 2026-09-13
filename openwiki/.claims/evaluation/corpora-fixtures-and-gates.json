@@ -1,0 +1,286 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:bef1f7ec984b2224fa21a08eaea4216cd246702271cc6d1759aa91d19ac249f6",
+  "claims": [
+    {
+      "id": "claim_7e2bc0f7953b4a29a2f7b57b732f8347",
+      "statement": "No measurement is written down in the evaluation modules: every expected number is read from a checked-in expectation file, so no line in eval code can be edited to turn a red row green — the only literals are the spec's gate thresholds, pinned in code so relaxing one is a reviewable release rather than an environment edit.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/eval/acceptance.py#L10-L24",
+          "version": "repo-lines-v1:sha256:827ea64c9f90f4eb7d48793d8b72ac15c17071a5abffb0a736b4ceb902a09a92:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImMwM2NhOGI5YWM1Y2VhNThlOWQ5MWY5MTg2MjE1NWQxMjYwZjBhMjM1OWNkOWZlNmI4YWIzOWI3NDgxYjllZmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFkNTM3ZTU2NThmNjFiN2E2NDAxMGE2ZGY1NjdjYzhlYmUzNjA0OGZmODRmNTljNzliM2FkODBmZGJhY2YyNDYifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/eval/corpus.py#L13-L21",
+          "version": "repo-lines-v1:sha256:c2db438c848c1323359ac11ae27265ede35faa682671ae70f1f5d402264ec25f:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMTg5YjIyYjkxNjY2Zjc3ODBkZWJhNGY4NThiMTAwOGMyMDMwOTJiNDRlY2QzMDNjN2UzOWUxMDdmOTA4Y2YxMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNzdjOTg3MDhiNDdhNGViNTUzYTIyN2RiMWMyMzFlNTFmOTdjYjg4YWVjNTdjMWRkZTIyOWMyM2M5NmVlZmM0OSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNTI4ODg1NjllZDVjNTE1NGQ5YzlmOWYyMzMyZTFlZTdlZWQ5MDczZTA3YmNkNWMxMjBmOTYyYTYyZGVmNTY3YSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODE1YmI5YzAzNTBhN2IwMGNhNjNhNTMwMjk0MzhjYWQ5NTdjODA5YTljMDViMTBjZGFiOWUzNzlhYTU3MjU0OSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_a01279be9f8a4f7593a5921ec81e15c4",
+      "statement": "The hand-written synthetic corpus stores only each page's text and the model's claims and derives the page record from them, because a hand-authored record could contradict itself; its points are upserted with an empty vector map so the corpus exercises the exact surface and nothing that ranks.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/eval/synthetic.py#L10-L23",
+          "version": "repo-lines-v1:sha256:26244789f1d8bd7d8c1d945f66c3c4c521b2a9408f9edc182d4eeb32631e4363:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgxMjM1NDQ4MTU3NmYxYTRjZmUzYTlkN2UxMzY5MzVlY2Y3Zjg5ZjY2MzRjYTY0YTkyNDEwMWQ5ZWU4ZWNiYmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEwOWE4NjRlMTA3NjZlZmQyZjYzODVkNWRiNjkyMTFkNTE5Y2NmOWRjZTRhNWU5ZTEyZGVkZmVhM2JkYzNmOWMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhlZWYyY2VjZTYzZDIyZDY5ZDI1NDc3OTU4MjVhMTlmMzFlOWI2YWI3M2M2M2YwYTNhOWU5YTk0ZjlmOGZkNTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJlY2U3ZjEzYjdiNmEzNTE2ZmNkNGI1NDMyZDg1OGU1ZjVhMjUyMDRlNjY3OGQ5MzEwZjA1MzNlOTU0NzlmNDUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3a0b643f6ee24d51831db39270ade070",
+      "statement": "The generated 42-page corpus wires six specific hazards into the page geometry — folds across sections, a printed-label offset, a code below the footer that a cropped raster would miss, a scanned cover over a born-digital body, a code read off the facing sheet, and a code printed on no page — so the pipeline's failure modes are exercised rather than described.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/eval/synthetic_pdf.py#L1-L31",
+          "version": "repo-lines-v1:sha256:f149d45bbfb6a895aa6e049bb705f827c087b33dfcbee966b8dc74471bfb1bf2:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY1MjEyZjE0ZTFjZTkwODNjNTcwZGI2M2QxZDlkMzFhYmQ1Y2I1M2Q1ZDA4MmE5YzBjMDliZGI2NWU1YmE2ODYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVlZmEwYWEwZGU2ZTc5ZGRhNzU3YzFiNjE4YjM2MGE5N2ZlZDczZmU2YTg3OWJkZWJkNGI2M2ViMzBhZTYwMDMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_4f69e367dee843e594af4ff2f663df63",
+      "statement": "The generated 150-page corpus differs from the 42-page one in exactly one load-bearing way: it declares no contents page, so the window planner has no chapter boundary and falls to the fold-at-the-cap rung, producing five windows of thirty — the only place that rung is exercised end to end.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/eval/synthetic_large.py#L1-L30",
+          "version": "repo-lines-v1:sha256:dbb797015fb148e0db2ca81e51ce55f7a35cd30d7f629b90448922f5881c24df:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU0YTZlMDcyYTg5MjM1MDA1OTA2NjdmN2QwNzdmMjVkMzEwMDQ3NGVhMWU1ZjdmODkzMGZlZTRkMTM3ODVkMWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY4NTgxMGUxOGRiMWVmNTM4YWU4MDlhOWNjMzgzMzdmN2JkODhlNzM3ODE4NjBiMTE4YjY0ZmE3YTFjNjIyZjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFlY2Y5NjM1MmQwYTY0YmNiZjllYWVkMDc2ZDhmNjQ2ZjNkOWVkMzM2ZWJlYmY2MzYzMGQ5YjE0ZGE3MWE1ZmYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_541c75edcced4b06a7e76dc6fb9db49e",
+      "statement": "Frozen extraction fixtures are keyed so they move when the model id, the prompt version, the dpi or the extraction schema moves, which is deliberate: a schema edit means the model was asked a different question and its old answer does not contain the new field.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/eval/synthetic_pdf.py#L32-L45",
+          "version": "repo-lines-v1:sha256:32b31583407b9d9c3b1892fbab7326170a25d261840559718970a062c45b8321:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdjMDU2MjZjYWZhOGM4YTBmZjU1MGI2N2I5NGU3MzY4MWVlNjk2NmIxNzEzMmM5ZGQ5ZjdmYmE1OTc4ODM4YjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUzODRiZmRiMmRmMzgwYjY1NTdjYzdhNzFkMTY4OTE0MTViY2NhYTg3Njk5NDA2ZTIzNmY3NTJjNjQxNTM4OWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIxYTViZTBhODdhY2VlYmQ2ZmNkYTFkMDhmZWYxNDk1MGRjNDYzZmYyZmNjYWUyZTlkYzE3MjBmMzE1Zjg4MTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM1YTUzOTAwZDI4Y2ZlNGEzOTU1MWVhOGJkMWY1OTUxMjQ3YTU5ZmEyOWE2ZDUxNzAwOTliYWYzZDE3NTE0Y2QifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_4038ae273d7049a89c7eb657ff4dea94",
+      "statement": "The ported legacy fixture is read-only and carries a ledger of every file with its sha256, so the fixture's integrity can be proved even where the original source tree is not mounted.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/eval/legacy.py#L11-L23",
+          "version": "repo-lines-v1:sha256:560655460e576d21062951c7c918f4b222315620261c35d414a51efd23698f34:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY2ZTQzNDMzNjU5NDgyODBhODNkNGE1MTkxNTZhNDM3OGRlNGJiNzY1NDM4ZjI1ZTBjZWYwOTY5Nzg0NmFhN2QiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhiNjUwODBmOTU5NWE3MzlkYTZhMzkwMDBiMjQ4ZjVlYTdkMWMyYTM1NzY3NGIwOWYxNWQwODY0ODA1NWVhYTIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_544e5adf37ce4176af1c1a8530a82f99",
+      "statement": "One export run of the previous implementation is pinned with its reason recorded: the other candidate runs withheld labels that a later fix backs, so their negative sets are polluted by a defect already corrected.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/eval/legacy.py#L24-L32",
+          "version": "repo-lines-v1:sha256:516f185bb9070f64e54ed4ac90f140264f1858c696fc68593c2a6963a02fdfdd:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNGJmMzhiZDJhYzNjNWY1NDM2YTBhYzUxNzJlNTI5Y2JhNWEwMzFmYTE5OTRlOTY3M2IzYjNjODI5YjljOGNlOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOGRiNTU4YjQ2Y2ZiZDZkOWI4MTdhNzZlODNlYTJiNzllMTgwMmM4MGQxOWI3ODljMmIwM2U3YmVlNGQ4MmQxYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYzBhY2NlNmQ2YjdiYTk0MWIyNTlkNWIzZGQ2MzhjYmI0MTE3ZDA3OWUyOGMyNTg4YTRhNjdlZmJiNjFiMDFiNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDk1MjQxY2QxN2E5OGNhOGIwYTJmYTYwMTdmYmY0YjcwZjY4ZmNmYjAzNDE5MzBmNTEwNzFmMDJlYjE3YzI1ZSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_e55fff4a7b8c42fc8ba448ef00ce1dd8",
+      "statement": "The legacy baseline exposes an observable projection of the text layer rather than the text layer itself — for each page, the identifier strings the old gate found in that page's own text — and nothing the model said is included in it.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/eval/legacy.py#L34-L45",
+          "version": "repo-lines-v1:sha256:fc080cf38ab72e3e099336207e593257a704387bc2625b97f677e550c61d701f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyNGUxMDE4M2JiMTU5N2ZmNjgzMWUyYTdmMTgzYzA3M2Q4ZjNiZDkwOTE0NGRjYmQ3ODg2OWRiMDNlYWY2NmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIxZDRjZGYwODYwMGE4NDk4ZTQ2OWRkZjM0NWM2YTdkMDMzZDhjMWY3NmM3MjhhNTgzZjEyZGEwOThiMDVjOTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM4NzBkNGY5M2QxNGJhMmU0NWUyYjJmODk0MTRjMjQxM2UxZTM3NThlZTk1N2E5NzEwM2E4ZDZjYzU1MmVlYWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE1YTMwZWU4YWEyMWU0ZDZmZmVhM2M2ZmI0MTUxMzQ3YTg4ZWEwYTcxY2MzM2FlYzJlZjQ2NTRkMDRjZGQyYjgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_9d9fc1c28e69498698b016c0156a75a1",
+      "statement": "vsir eval acceptance runs three sections — synthetic, parity and real — where parity's gains are printed and never failed, and the real section's unmeasurable rows skip by name with the skip count printed in the summary.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/eval/acceptance.py#L26-L44",
+          "version": "repo-lines-v1:sha256:6aba85b17c581c6169b7c52f043d1efc77309c9dfe81cca1503d6372dc3476d1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI4NjI2YWMyZDk5ODBkZDUyOTA5YTU0ODMwNjNiYjcyZDgzNjMzNzU0MGM1OTJkZTYwZDM2MGFhMzEzOWZiZDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk4ZDdjYjZkMjQwYmFkOGY1ZGI0NTUyYzA2YjU1MTNkNGYzNmUzMjc5YzM5ZjEzZjA2MTc5M2I3Y2JjMzQ4ZDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRlZGM2N2ExOTY4MWRlMWRjNDc5MDU1Nzc0YjNmZWY0N2NhMzRlMDc0NTZlNDJjYWQ4ZWU2NWE4NzQ1YjgyMGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYyNThlYjdhMWQzOTEwMzM5YWYxNzg4MGNkZTIwMGYxZWI0ZjY4MjQwMzM4ODQyMjBhMzIzODk0NzA1MGM3N2QifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_31bd12fbb30344809611f3ea1fa2461c",
+      "statement": "The acceptance command writes down the spec's own text — the label list and its order, the page and window counts, the weak-absence constant — and asserts it against the checked-in expectation table, because a table that had drifted from the spec would make every measurement below it meaningless.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/eval/acceptance.py#L17-L24",
+          "version": "repo-lines-v1:sha256:12cb8cfe8cdce1f9d36224712e8dc6450cba15e5ddd4f9c40992cec9f1bd57de:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjhhNzAxYzIzZDAwMWQ1Y2Y0YmFlYjU2ZTNjYzFjMDVlYmU1MDlhN2E4YWU0NmRjOWYyOTVjMTA0YTM3N2UyYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZjUyMGMwOWI3NGNhNGE0OTQ3ZDM0ZDBlYzY0ODMxYWQ3MDliMzUyMGU0N2I1MDM3ZDEzYWU1NjE2MTM4MmNkYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMWQ1MzdlNTY1OGY2MWI3YTY0MDEwYTZkZjU2N2NjOGViZTM2MDQ4ZmY4NGY1OWM3OWIzYWQ4MGZkYmFjZjI0NiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_bbdc127b567443af9691964e352010a4",
+      "statement": "Every acceptance section seeds a collection of its own, queries it and drops it, so the serving collection is never touched and no path can reach a model.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/eval/acceptance.py#L45-L48",
+          "version": "repo-lines-v1:sha256:1341d99ee141c7275bede039d9adbebfb30a830ef5195deb107a259e7f8400e6:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiN2U0MjIzN2QwODQ2MzQwYTIyZWU0YmE2YTg3MGMwOTU1YTg3NmQ0MTk3YWE0ZDljNDBjNmZmM2E0ZWU1MTkzZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTM4NGJmZGIyZGYzODBiNjU1N2NjN2E3MWQxNjg5MTQxNWJjY2FhODc2OTk0MDZlMjM2Zjc1MmM2NDE1Mzg5ZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTQwNTM1MDNjNTBmZmIwNjYyOTRiYWE0OTU2YzdkNmE5NjU2OWQ3YjhhYzAzMDczNzg0ZjdlOGM1MWNiYzUwYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOWM1MzY0MWZhYWFmMjA5OTMwOWM1NTlkYjJhODg5Y2MxY2VmMGRkM2FhMjUyNjc1MTQyZTkyNGE4ZGJmNGZmNiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_07c5dd276b334ae58c173920ca0da8c9",
+      "statement": "The abstention eval puts one hundred one-character-off codes through the exact surface and the confirming check, and can be pointed at a live indexed corpus in a read-only mode that performs no upsert, delete or collection creation.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/eval/abstention.py#L1-L27",
+          "version": "repo-lines-v1:sha256:a5f01bf847712285f94b3be6be9acd4b5376a63d2b0be276f64bbe20cb59d87d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFhMzYzNmZjYzNjNTNmNzQ5MWE0MjhkODdmYTcxYmExNmE3MjE1NmIyMzdlMjY2MjAwMzliMTliZTlmYWNlYjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFkYjM4MGM0YmNkYzU1YTljZDMxZjU2MjRlZGIzZGVmMGEzNThlMWE2MzIxMjczZDY4ZmI2Y2EzMzhlYzFhYjEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY5N2ZlYTdjMGU1YTY3NDk5ZGUxYzQ5NDU0MWIwZmYxYmUyMmQ4MmVmN2Y3MTNkZTJjMjkwZDNjZTUyZGFjYWEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ba4e6063b38b44df87396f2e3bc60f8f",
+      "statement": "The abstention eval includes a control row looking up the real codes the fakes were mutated from, because a corpus that answered nothing at all would otherwise pass every absence assertion — making a broken index indistinguishable from a correctly abstaining one.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/eval/abstention.py#L29-L35",
+          "version": "repo-lines-v1:sha256:68dd5df1e509d3b61bb340bd44402ae831fe222b8f2772e5618df27624c97018:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYzk1YWRmNDMwODQzNTQyMzM2NTE2ZjYwMTI0ZWQ4NDhiZDU2OWE0NGYxYjE2MmVlZjlkMDY2YTVjZThkYmU3MyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjVkOWVkMjUwMzFjYTBmZTM1NjFiNGVmNzdkMGNjYzEwZjAyYTE3MGUwYzZmZDA3ODVhNjE2Y2ZjMDgwMDhkYiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYmVjZTdmMTNiN2I2YTM1MTZmY2Q0YjU0MzJkODU4ZTVmNWEyNTIwNGU2Njc4ZDkzMTBmMDUzM2U5NTQ3OWY0NSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_e56acac844dc441fb8505c6947f91a5d",
+      "statement": "An abstention run that cannot measure prints \"abstention_correctness: not measured\" and exits non-zero rather than reporting a ratio, since zero of zero is never 1.00.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/eval/abstention.py#L250-L262",
+          "version": "repo-lines-v1:sha256:bfc5beb37d841eef299fdd3a6b4357e30dedf15dfe06d33e73668ed4cb6f1aba:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk4ZWMyZDhhYjMzNWQ5ZTVjMzYxNWIxMTdhNDljMWI5OTcxMTk1NDI4ZjU4MjliYjExNDQxYzUzNjkxZmI0YzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNmZjhlNmQyNjQ0MjBlNmE3OGU1OTBiMjBkMmFjM2ZkNjllYmI2NGUwZjViMmYzNjFkYWFiMjg4MzYzMGM2NzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJkZWVhOTY4MGExMDNkYjFmMTUzYTliNzU4Y2E4ZmIyMDg1ZjYyNzEwNGU1MjJiOGUxZjEyNTNlN2JmNDkzYzkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7f7d2fea11734b4a9cdc04f9b7d51f83",
+      "statement": "The corpus evaluation pins five gates transcribed from the specification — code_precision at 1.00 as a P0 stop, code_recall at 0.95 and blocked below 0.90, abstention_correctness at 1.00 as a P0 stop, alarm_label_hit at 0.99 and xref_resolve at 0.99.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/eval/corpus.py#L151-L160",
+          "version": "repo-lines-v1:sha256:49fbfce914086d6644909dca16271871cb2c8888da4ee6f3933c226f67876fd9:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyMWMxNDUzNDdmMTQwOTJlM2QwNDQ1ZWNlMjZiNjBiNDNjMGEyMmM4NTc1MzBhZTAwMmVjMDhkMWRiZDk2ZjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdlNWEwNWExMGZhZDBlNjJhNjIxMGMxOTkwOTg4NjhlOTU2ZjdiNWYzYWFjNWY1ODZlZjk2MGQxNzg5ODE0YmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjExYmQ2YzZhOTAxMTYwYmQzYTU5ZjQ0NDM2MmNmYzVmMDc4MzZkYzg5MGE4Y2JmMGJkN2IwZjg1OWVlYzA0NzYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0c27e45cc6dc43af9c0bd733492ecc6c",
+      "statement": "The abstention_correctness floor is pinned in two modules and the two are asserted equal at import time, so one gate cannot drift into two numbers.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/eval/corpus.py#L162-L170",
+          "version": "repo-lines-v1:sha256:ee029828ce81c4346f448fd8fb43c5911d7c7d259b4c0490540664c6fc968756:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNzdmZTQ1ZjljNzFlNDhkNDgxMGFiN2JjNDhiZTk1ZTNiODk5OTRkZDdiMGU5ZjIyODBiN2JiOGZjNWY0YjQ3ZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOGY0ZjlhYzBjNDAwNTQ2OWMxOTFlMDBjMzc4NzdlNjlmYzVlNTVlM2EzOWQxMGU3NTEyNzIyMmEyNTU5MDFhMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTM3ZjNjYWU4NWVhYWY2NzdiNzI3YzEzODZhYmM3NjZkM2YzOWU0ZDM1OGFkZWU1ZjExZTYzNGRlZWZjYTc5MyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_3385386845864a8fb78256c108d42bdc",
+      "statement": "Both code ratios are counted over (code, page) pairs rather than per code, because a code found on the right page and also on a wrong one would score as found under a per-code reading — and the injury the system exists to prevent is the wrong page.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/eval/corpus.py#L23-L30",
+          "version": "repo-lines-v1:sha256:58401fc56ddf76e33f9218673695ebb871b61c73eea9cfbf878bbe6c49d2aa02:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjcxNDBjOTZlN2M0ZWE3ZWI1YmJhZDc0ZTQ0NzQwYWM0NjljMmRjOTQzMDViY2M1OWNjZGFhNWU3NTI4ZmI1ZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTE4YmM2MmU3OTQ0YjAyNmNjMzk3NWY1MTQ3MzZiODIzMTI4ZjMzODllYjRjNzI1YzQ5YWVjNDM1MTQxNGY3YSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODU1ZTRlYmZmMDkwZWZiYzY2OTgwNTAxMDdjNjlkNjNjZDRlMzliMDQzMzUyYTVhNGRmY2U4MzdkNTRmOWE0NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjM2MzBmZDY1YmZjZWZiOTZlZWVkMDJjODQ2NzgyNWM3Mzg2MDZiNDJhODgyNzVjYTQ2NzdkMmU0ZWI5ODUyOCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_33393682e75545b0addb609c14be6679",
+      "statement": "Each metric row prints its denominator and the smallest non-zero shortfall the set can register, and a target metric whose resolution is coarser than its gate's tolerance is marked underpowered; a safety metric at a 1.00 floor is never marked underpowered because \"no miss in n\" is exactly what that gate asks.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/eval/corpus.py#L32-L36",
+          "version": "repo-lines-v1:sha256:0b4e2c5888dce04fdb455dcd8aee4ac7e3ec4459053e954bc3ad5655061647eb:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzFlZWYwMmM1OWIzYjRkMzBmMDlhMDJhMzUxNzg5OTg5ZDVlNGQxZjY3ZmI4MzUyMWY2NzJjODY3NTdkZmZlZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDNmMmY3YzlhOTgwMGEzYTVhN2VmMDc2ZDZlNzg4MmRjYTYxMDhkYTMyM2NmNzJjZTkyMjExNjQyOGYyNjQ4ZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTJmZTJjZjdlOWIzMjNiNjhjZDA3OTJmNjExZGYwNWY4ZDhlOGJlYTcwMzVjNWM1YTAxODdlOWFkMDc2Yjc1YiJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/eval/corpus.py#L535-L554",
+          "version": "repo-lines-v1:sha256:6d96ff10ef22e4370e127ab7478d755599da9c03d66ad3e3e218d8945fdf9be2:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRjYTUzNDE2YWE1MzI0ODg1NmU2NzZjMWZhNzAyYWIwOTY1OGQ5Mzc5NDAwN2ZmZGY0YjcyYWEwMDczNTVlMmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQxNDFiNzg5YTA5YzQ2MGU1N2NjZWUyYjA4OWJmOGYyMDAwZmRmNjgwM2ZhMTU0Y2FlN2IyNDhlM2VjMTEzNjgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcwY2UzZjI0YWI0N2MyZjVhOWQzMzdmMzc3ZWQ4NTczZmE1NjU4NDA3NjQwMmYxYWYwNTRhM2RlZDYxOTQ2MmYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_4835ad4a98ad4899a8ff288858c92f94",
+      "statement": "A ground-truth set may declare itself unavailable with a reason and then skips with that reason printed, while a set with neither rows nor a stated reason is a refusal — because a missing file and a file declaring a set unavailable are different facts.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/eval/corpus.py#L440-L479",
+          "version": "repo-lines-v1:sha256:d460f958a59f429a4232905d06670f9f3469843a22a92bdeb6ce6b3c9b3123b4:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg0NTE4NGYyODE3OTUwMWM1NTFlMzk0NDBhNzIwZjE0NTY4NjRjZGNkNGI0YzNjZTZiOTJiNTIwNmFkZmZkNWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE2ZWY5ZDQ1YTE4NTZmMDVhMWM0YWE0MGRjOGIzNGU0NDMzM2I4MTFhMTI1Y2YyYTJkODVjNzZiNjc3OWM2ODYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUzOTA0ZjdmY2M3MzBiMGZhMWNkYzhkZmNmMzhhOTg2NzM0YWU3OTJjMjM5YzczYmNiYzM4NWE3MmExNjM5ZjgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIwYzFiNzNlMjE4ZDgxOGJiMjFmMzU0NjM3M2E4NDZhOWZmYzUzY2Q5YWRhN2EwNTJlM2E2M2VmNTU4N2YwMjYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5a37b9600a4544ae8155091b7174a535",
+      "statement": "A corpus report is green only when nothing was refused, nothing failed, and something was actually measured — so a run in which every set skipped by name is honest output but not a passing report.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/eval/corpus.py#L615-L624",
+          "version": "repo-lines-v1:sha256:cd1447bf96bc82c6603c9b1dde6e2844a08525878268431d5072a2d14ba4d079:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYzZDAwY2YyNzA5NjRkNDRhMTNkZmFjODc1MmIwOWZjYzQzNWIwZjE5YjMxNmFiY2Y4MWE3YWE2NGJiMTIyZDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE4YTA2MTUwZGEzYjBiZDVmMDA5OWY5NjM5MzQ3OTc5MTBjMmFlM2QxNmYzM2Q3YTU5ZDZlZjNlOTljNjM0ZTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJhMDA1N2NjMjQ2YzE5YTk3NWQ0OTEzY2MwN2RhNDkyZmQ1YjAxNDA1ZDI1OTUxYjQ2ZmVhNmQxNTY3YzUzZmEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_96ed6dcd7c5e43eeb489ded7240e3037",
+      "statement": "The corpus evaluation reads only: it triggers no ingest step and reaches no model on any path, and against an indexed corpus it creates, upserts and deletes nothing.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/eval/corpus.py#L49-L57",
+          "version": "repo-lines-v1:sha256:90765c6800c5b7665f649c35b08c98b9b6461f9fb817209360d59a9f53f92eb0:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiODk3NDcxMmJiNzQ3NzMyMzVhZTdjNTU4MWIxYjZhYmIzMjQ0NjIwMjRjZDY3NjRhZWM5YmQwYWNhMmRhOWIxYyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjc3NGY2NDQzNThlNzUzM2Q0ODM5ZmIwNmJkN2U3ZGVmNTE0ZDBhOWQ3MjBkYWVjMmY3OWQyNzBjYWE1NDU0NiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYmVjZTdmMTNiN2I2YTM1MTZmY2Q0YjU0MzJkODU4ZTVmNWEyNTIwNGU2Njc4ZDkzMTBmMDUzM2U5NTQ3OWY0NSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_31071ea86aec46b892403b42c5588388",
+      "statement": "A gate re-baseline must carry the corpus it was measured on, the measurement and a rationale, and is refused when any is missing, when it moves nothing, when it lands below the blocking floor, or when it would lower a safety floor — and it always departs from the specification's own number, so \"exactly once\" holds by construction.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/eval/corpus.py#L172-L189",
+          "version": "repo-lines-v1:sha256:358495b606fa9af2db3d585bbe7fb5b3d63e9d05ff29e48ab681704df18d5bc5:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2OWExMzk3NWMyNTZlYzgzMjBlMjAxNjA4M2M5NmRmNjM3Y2EzZDM1YmViZGUyMzE0YmVlM2E0NzExYjU2Y2EiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJmODE4OThlNWE5ZDYyYTMxZDRiY2I4MzBmYTI1OGFlZjc4NDA4ZDRiMjkzY2NiN2ZmNThmZTBhODhkMDc4NzAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhjYzRhN2QxY2M3OTZhYmEzZTQ2NzIzMzI3ZjUxN2U5ZjgxMTk4MmQyNTBmMDcwMjk4NmU0YjU3NjRhZDk1ODkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcwY2UzZjI0YWI0N2MyZjVhOWQzMzdmMzc3ZWQ4NTczZmE1NjU4NDA3NjQwMmYxYWYwNTRhM2RlZDYxOTQ2MmYifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/eval/corpus.py#L38-L48",
+          "version": "repo-lines-v1:sha256:c05b029df98084d7a70e97a2e1bf21c602a11357ea4a538a664864e7e6f0f5b4:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3Zjc0NGE0NGJkZGM5MDYyNWU3Y2U5YzQ2M2MxM2Q1NGYwN2ZmZTA2OWM0Yzc3YWFjM2ZjOWRiOWRiN2Y2MmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVlMDQ4OTcwYTU0MTg1NjZkYjg5MjgyM2U1Y2RkMDdhMTVkMDNjNWU3OWJhZTc5OTFkZjgyOGJiNTBhZjIyMmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNkMjA5NTA1ZWMwNWM4ODJkN2M4ZmMxMDA1MDQ1MjdhYzEwZDJlZjU0MDM4NWU3NmNjYWY2ZDk5YjE3ODI1MDUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_8a923e936c544fa3b1e5e679ae8fd2fa",
+      "statement": "The grounded-rate report evaluates candidate publish thresholds and decides nothing: pages with no text layer have no rate and are excluded from the denominator, the median is computed by the same function the publish gate uses, and a fully scanned document yields no distribution and no recommendation.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/eval/grounded_rate.py#L1-L31",
+          "version": "repo-lines-v1:sha256:ebcbd71ee070e8ce7bc96f64c0e6303055e9ef9b6f178526138bbf4c752fe9e5:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFjN2YxMDU2NmJjM2JlMTQ0MWQ3MTI1NzY4N2E5YmZiNmMyM2NjNDA1NjJiMDM2ODNhYzBiYjgzMDQ2YTY0ZTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRiMjA4ODgxNWQ5YWE4MzUzMDJkNzc1MzVjMDMyNWIxNzFlOWFlMGE5YjhkNDE3ZjAxMGZkMTYxYjExOTA0MDUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_fdb09bd41a1c4811adc5f176de660a78",
+      "statement": "VSIR_GROUNDED_RATE_THRESHOLD is read only by the distribution report, as the candidate being evaluated, and is deliberately not wired into the publish gate — the threshold reaches the gate by editing the pinned constant and shipping a release.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/eval/grounded_rate.py#L33-L43",
+          "version": "repo-lines-v1:sha256:0ffefe9ab25e179eb65cefca1f99e3e3470800f84cc5fe8f7cf44d070748cef5:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEzYzZjNDQ3NTU0NDc0MTEzMTBlYzFhYjFjOGNlNWY2MDFhMGJlYmUxOGY2OTk1ZTVlM2Y2ZTVlZDEzODAyZDgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImExZDE1ZTg4ZTVjOWEwMmY0YWEwNWRjYmQ1NTFjOGE2NDRmOGVjOTRkYTJlY2IwMzhkNzQ3MGJhYzU2YzQxYWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNkM2QzZTQ5ODBkOWQ5ZDgzMzdjM2YwYTQ0NDM1ZDcyMmI3MTBlNjgwNGI3NzVlYjVlYjZmYmZiMWE2ZTI0ZTMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e4ee7d4993e443a18bf42300d4d50633",
+      "statement": "read_key joins the page image hashes in the order they were supplied before digesting them with the question, so the same pages presented in a different order produce a different cache key and a different replay lookup.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/vlm/cache.py#L171-L184",
+          "version": "repo-lines-v1:sha256:e7342bfc98c282484b93ef151b8978ef476a41e5952c67c2c1c460d5a5c34d70:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjExOGNmYzY3ZGQ2MzViMjkxNDRkNzk5NGFmZGRiNDY4MGE1NGYwMDE4NjE4ODJkMTJmMDdmMmFlOTgyNDllYWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIyNDdhNTVjMTQxZGUxNmFlNTQ3ZDc5NmE3NWYzMjI3NzYyODgzN2I3YzVlMmU5YWQ0NjdhOGE2NDdlNTA2MTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZkNTE4ZjUxODNlOGRlOGI1ZDA2MjBiNTk2NTMzN2IwZjAxYThkY2Q1YjJiNTBlOWRhMDU0YTQ1NzMwMGJlMTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM4NTFiZTY0YWFiY2VlYzdiMGEyN2Y1OTEwNDM4ZDkzZDAwODQ4ZTFmYjVjY2ZhYmQyYjNhN2EyYmNkMTI0NzIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d4684944c17b4f7aaf24dc3d2d4aee00",
+      "statement": "The runner's Loop 5 vision escalation orders the pages it sends to read by the order skim_pages returned them, so a change to retrieval fusion reorders the read call and re-keys the ask replay fixtures that depend on it.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/eval/synthetic_pdf.py#L518-L543",
+          "version": "repo-lines-v1:sha256:0404f26378c95e2df38d406c03e986084639486dac12eeb486136ea0f06a87e2:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5Y2E4OTFiZmY3YWMxZjdjZWFhZTQwZWYwNTEwNjZiZTllZmU0N2I0ZTQyODFlODZjMzE5YmUyYzU1ZWJjZTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFmMGNkYjk3MmE3YmZiN2VkMjQ2ZjlmZjY3MjM4NWU1NWY0OTY4ZmMxMTA0M2RjNWI2ODRkNTFkZmEzMWRiY2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVkNjQ3Mjk3MzczZDRlZDA5MDk1ZDc1YzU1ZmQ4YzZkNmQwZGVmZTRmODM1N2Q0MzNmZTYyYTNlNTBlNDJmMjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNkMWU3NWUwZjBiOTllNWM3OGM0NjZmNjQwM2I5NjQxMTk1MzBjMmFiZGU3NjgxNWJmMWYyOTViZTk5ZGI3YWQifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/runner/loop.py#L790-L818",
+          "version": "repo-lines-v1:sha256:0e29e54a0b9849938fc5b55976ffcb2b32be302f050b174a340bdf753fa9c624:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA4ODVjMTk1YTE5ZWRmZDRiZmVjMzNlNTVlOWIwNTNlYWMxMDhkZGRiMDczZGVkYTQ2ODk2ZmZkZjZkZTNmNzIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQyMjA2NjdiYTBkOTAzOTNmZmMxOTQzNWY4MTY0NzY2MzM4NGNkN2RlZjkxNTMwMDg4MDlmYjg0ZmRjYWFlYjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNhOGE4YTVjNTU0OTUxODkzZDFlMTFlZjNlMzc1NjJlODczNGM5OWM4NjMwMjY1OWU1NWQ5ZWE4MTIyZmRiNmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEzZWQxNWY1YzQ3NWM0N2VjMmNjNjZkMGU1Y2ZmMTA5OTAzZDRhYTFmZDdkYjY0NWJiZTBkZjY5Y2E1MjJkMDgifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.1",
+    "at": "2026-09-12T16:01:50.652Z"
+  }
+}

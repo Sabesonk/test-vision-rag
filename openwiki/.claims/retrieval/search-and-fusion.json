@@ -1,0 +1,262 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:fc537df1b578b7602ede274c475343e0925916d1583fb8d82acd315d3100f20a",
+  "claims": [
+    {
+      "id": "claim_3b7e48bafab644e2aefe653710678062",
+      "statement": "One candidate function performs the search and the three narrowing rungs are three renderings of the list it returns — truncated, grouped by document, grouped by section — with no second collection, filter or storage.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/tools/skim.py#L35-L43",
+          "version": "repo-lines-v1:sha256:8dea7618bd43fad0b185252a45294c661b329432f0b69a056d72a1aaa998be58:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMGEzMGZlODQ5MmY2M2Q1ZjZjNDZjYTZmZmQyNjljNThiYWQ0YzM3MTIxMjcwMWFhYzQ4MDYxNTcxNTY5OTUyNyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiN2ZkZTQxMTE3OWZjYjE4N2U3MzA0NWFjMzNkOTQyMzk0MzMxMGI3MjliZDBmMTViYjVmYzljYmRjNTFjYjNmMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzgzYzVhMGQ3YmFiMmZkMTJlODQxNDM5MzdlYmZjMzg1MzQ2ODIyZDg3ZTAyN2U3ZjM1OTE4ZDJjZjMwMmYzYiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZWM2NTdmMTE0NDgxYzQyMGVlNTc3ODc1ODVmNGVjNmQ5MjIzYjliMGRmZjJkMzE0YmE4OTgyOTUyMDhhMTQ3YiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_363bd0933c124b27a6d827c407e76a2f",
+      "statement": "The flat search surface calls the same candidate function with weights and the fusion constant passed through, rather than running its own search, because a tuning surface whose ranking differed from the tool's would mean one of the two is lying about the index.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/retrieval.py#L40-L47",
+          "version": "repo-lines-v1:sha256:fc75c54ec38efca70c2ac0294c74c8194bae0171ea0412161a49d1f097eac0d9:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMmRmMjcwMTgyYTJlNTY2NmUxODc4ZWViMWRkY2VmMDJhNDY5ZDQzMGY2ZDc0NDQ1MWEzYzgyYzY1MjE0YTRjNiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiY2I2NDc3NzY4Y2U5NjI4YjA3ZmI2NDQ1ZTc4OTcxMzViZDI2NjBlMDI5YmQwMDMxZDFmZDk3M2VmMDhiZGZmNiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNThiNTUyYzkyMWVjZmI5YmI3YTU3MDI2ZDIzODEwMjRjODI0MDNlMDYxZGIyMjU1NGUzNGM4MGRhOTNiY2NjMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNmMzYzE4Y2ZhODU0M2Q1NWI2MWFhYTk1MmI3NjE2Y2JhMDAwZjdjYWE0YTRhNTYyM2I2YjUzZDI5M2JiNGMxZSJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/serve/tools/skim.py#L405-L412",
+          "version": "repo-lines-v1:sha256:45d6b1080d22312d236e44f4033b83dfe1bc490edd125c3abd5912ba9220b42a:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzkyMzFiYjZhNTgyNGRjODg0MDIxMDkxYjBkMjBlZWE3NWVjOGRlMmU1ZDljMjY0YTY0YzQ1YWU1MTgwMmRmOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNTY1ODFiMWZlOWEyOGY2ZmZjYjc4MTBlNGViOTg5MTRhYmVmYWM3NGEyMTM3MDk1NzFkNTdmNmI4YzUwNzJiZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDUzMmJkYzZiYmNhMDc4ODEwN2FiNjAzYTVjNDJkZGQ0OGMwZDNmZWE1YjYzOTU5ZWM0MDFjZGY4NTM0ZWIwMCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_dcf5345d7c9f4e20aac564a9d285bf11",
+      "statement": "A branch runs only when it has an input: an image-only query skips both sparse branches and degenerates to the dense ranking, and an identifier-only query skips the dense branch because embedding the code would reintroduce the blurring decomposition exists to prevent — the two conditions being exhaustive, every query reaches at least one branch.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/tools/skim.py#L461-L469",
+          "version": "repo-lines-v1:sha256:c7f184ce34142e05c8ec28446f98f8f2a1e00109f6e2d185a86e360fe47497e8:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzIzYTg4OTMyZjhhNjFmYWVmMDRhOTkyYWE4NmZkZmFiOWIwNDk1MGQwN2ZiYzI0OGNjN2U0NzZiMDg0OWFmYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYjk0ZmJiN2Q0MDQ2OTY3ODRmMzdhNzhkZjcyYmZjZDhlYWMwOGE0NzUxNjY3ZWMzYmU4ODFiZjY3ODZmNzQzOCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNTA0ZGM5YmVhMmU2OGRiMjE4ZDJiODU0MGExMjg2YTRlYWJlZjBkNjNiZDI3MDdmMmVkNDFiMWFiOWRlYmU3ZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODZjNThkYTFkMjVmNzIxNzI1Yjc2MTZhZDQwNDNlMzViODNmNTZhZjExYjYxNzBlYTBmMWFiYzQ0MzRhZTJlMCJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/serve/tools/skim.py#L480-L492",
+          "version": "repo-lines-v1:sha256:eeb36ddc6a77b54b29d4206aa02e2ab8d4ffe4a30851371858541faa6860ffca:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY1NDYwZmZkNzcxZmEyMmJkMGEyMTc5Y2I1ZjEwYWE0ZTk5OTFhODkxZTgxZDkzNmFhZmUyN2Y0NWIxZTc0NjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk4ZmRiNWIyODg2MTVjMjc3ZDMyN2U4OWU0MjE0MWMzZTk1ZTM1MDlmYTlhZmUzYjA5MzdmMGNkZjUwYTdhYWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgwOTM5NmZjODFmNzQxNDkzY2IwMDdkYTU1MGI2Y2FhYzlhMGNkYmZjOGQ0Y2EwODYyOGQxNDZmMzdjMjVjMWYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5437918f6cf0418cbcf9a71320971a2b",
+      "statement": "A branch weighted zero is not executed at all rather than executed and discarded, which changes no ranking but stops a dense-only search paying for two sparse round trips and makes the reported branch list mean what actually ran.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/tools/skim.py#L470-L479",
+          "version": "repo-lines-v1:sha256:ae54ba4322af7a9beb55889efad3d7d16a60692fa3c407e661ed0508bd046fbc:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM0ODFhYzg0YzA5Njg1YTE4OWEyMTYyNzk2NWUzNjU4M2M2Mzg1NjllOGU5NTk1OTY1MTIzZjUyZWE5MzM1ZjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhMjk5MWNiZGNjZDRhYTFmODUzZDhjNTQwY2EzMWU3ODgxMzRkMzYxODA4NGZhMDJmZTFjNDI1ZTg1MzZlMWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFmNWMyMjczMGFlYThjNGM3ZWNlZjFkYmFiNzhkMmRiNGQ3ZmQwNjM0ZTA0ZTFjOWJiNzIzMWJmNTgxMTkwMzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIxMjlmZTE0MTU3MjVlZjg1ZWY5NjA3MzlhYzM2YjE5MjEwMDJjZjZhNzg2MGE4ZmVlODMzOGYxNDUzYzMyZTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_32feb9da098348c0a003f1ab1c14d9ad",
+      "statement": "Query decomposition splits exact identifiers out before anything is embedded, sending the code to the phrase filter and only the prose to the embedding, because a printed code blurred into a high-dimensional average ranks pages that merely resemble the one printing it.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/tools/skim.py#L255-L266",
+          "version": "repo-lines-v1:sha256:ac389462432cd9eed6e818fd877832afcf670f493d00d6a071a8d96089eb081e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM0OGZhOTI3ZTA4N2I3N2Q1NDA3Njg1MWZhNmFlYTViNmMzMDYxNDM2ZjVkNmRlYTVhYTY4ZmI2YWI1NmY3MGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhNmJkYzc5ZTI5MjY1MjA5N2Y0MGQ5N2MxOTk1NmNkOTUyN2Y3ZTMzODdlMzZjN2VkZTI4NGJkMTdjY2ZiMjIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM4NmU4NjUxYTJlMGRmNDBiZTczNWI3YTI0YjljMmQ3ZTVlZTc0Yjg2MmNiZTkzZTMzODY3YWM2NzM4MDE3MzUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFiNjcwNTE5MzU0OTk3MmM5MmI4YTAwM2ZkYWQ1ZTI0ZWQ4YmY1ZDZiMGRmOTY4ZjdlY2E4MTgyNzVhN2YyZGUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_b18a352a8a6d495c8a97c0da83aedcfe",
+      "statement": "The identifier rule is not a grammar — a word is an identifier if it contains a digit, using the same code-like predicate imported rather than restated — and the crudeness is safe in this direction because a word wrongly treated as an identifier is asked of the stricter surface, producing a narrower answer that says so rather than a wrong page.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/tools/skim.py#L267-L275",
+          "version": "repo-lines-v1:sha256:7f5c338e3635e4ee92cb037a562c9a42a60c6798e2aab2e28b29b8b235c7042b:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZmY3NWQ2MzNiMmQxYjYzYmZkZDE3YTc3MzAzZWQ5MWVmYTAyNjJlODc1YjEzYmY1YjI4ZmQwOGM2YzQzZTgyOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMGNkNDI0NmIwNTcxZWUxNmQ1NzkwYWIzNjFlY2NmNzY2MTEwNmI0MzNlZDc0OThmYWYyZTM5MGE5NThjYWJjNSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYzY1ZTZjMzUyZWU3YWNjMzIyZGYyNWNiNmIzODVhNzhhMzJjY2JjMTY5ZTE1MGJiZjA3YjgwM2ZmNTYzZGVkYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDkyZTAyYTNmMjIzZmQ5YTlhMWM2ZjU4OWVjNmZhYWRiZWNiNTFlZmQ2ZjMxOWQyYjk5N2EwNjU4NzU3ODU3YyJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/serve/tools/skim.py#L283-L287",
+          "version": "repo-lines-v1:sha256:c26933fa047ecd70a5c5b74e61308ae43eba2685e3cfce4d9e27e12298ac4ea0:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZDcwNThhZmVhYTI4ZDUyYjlkZTEwMmI1YzM5MWMyYjVkYWU4NGM0MTJiNDNjYTM1YjRmYTQwNTlhNmYxYmE0ZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOWRkMGFlZDhkYTUyY2I1ODMwNmZiZDcyZmYyNWEwYmUwOTRjYjM5NDBhNjdkY2EzZDhiNDk5MWJhMTQ0ZjU1OCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDQ5NTM2ZGRiOGY3NTM3OTQ4NTExYTZiNDY0ZmQ5ZDAyYTkwNDdiYjRkODY2NWFkZDRlYmYyZWM2MDA5NWYyOCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_c032d697d516461399ada92589c00ede",
+      "statement": "Decomposition does not join adjacent words, so a spaced label becomes an identifier plus a prose word and the index is asked for the contiguous ordered phrase — the same phrase an exact lookup would use.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/tools/skim.py#L276-L282",
+          "version": "repo-lines-v1:sha256:e88ed4cd8a8797c75359c9d4805b3773ddda4cdc7608340c25a23712be0a6085:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYmJlYThmYjUwNzg5Mzg3ZDlkZTU3NGE0Y2Q1NmYxNGNlNzYyYzQyMzdmYmEzYTZlYjljZTZkM2UxMDU2NWZhNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiODZmZmI4ODgyZDAzM2ViODM1MmJmNzgxMzk0ZjM0ZjE1YmYzMmJhYzBhOTcwOTBlZDgyYmJiZjA2MmI5ZjJiOCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZWI5YjBkZDdkN2JiNDY5ODYxZjllYmY1YjBjNGU3NzExMzI0NGMwYWRhYWI1MWFmNjQxYjc4YjViNzFhZjM1MiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjgyMTExMzg1ZDQzZDYyYjk5MGYyOTFjYTI5MDM1MmRlMDAzYzBiMmViZDM4NjRkZTg2YjUzYjNiZjA1YmEwZiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_2655927192b547bea3b877ca28959079",
+      "statement": "Reciprocal rank fusion consumes per-surface ranks only — no similarity value enters the arithmetic — and the accumulated total is private, deliberately not named score, and never returned, with a conformance grep failing the build on that field name.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/tools/skim.py#L185-L193",
+          "version": "repo-lines-v1:sha256:466cb90793ddd6c005646254c262826e298c5b792d3018a775cf8f4ec99942f8:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiM2UxYzhkYTgzNTA5NTdhZDYwM2RjNjQ1NmRlYmQ4ZWJlYWU4ZjM1MGVjYTZiYTA0NjY5Nzc1ZDgxNjMzNGI0ZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNzRkZjI0OWZmYWY1ZjhhNTU1ZDQ1OTYyOTk0OWRhY2ZjMzBjNGU3MzUyM2Q1NTFmOGY0MTA0Yjg5MTZmNTZmOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDkyZDZlNWNjMzk1ODZmODkzNmY1NDA0YWQ4N2JjYzU2MjFkOWEyMDZhNGNlNGRlYzY1MjE0ODkwY2Q2MzE1NyJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/serve/tools/skim.py#L6-L18",
+          "version": "repo-lines-v1:sha256:9462f8240f04d5265e1454850fbf910e58c5a0818fb15fda8682a8935360ac3e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ0NzZkODZjYzQwMDM0NTdhNmM5OWIzZGQ5ODFmODdjYmQwZDQ0NTgyMzc0ODk0ZDBiMzRlMTk4Y2QwM2QxM2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYzMDI1MzhkMDE5YTA0ZmI3YzlhOTVkY2RhYWY2NmYxZWY2Y2I1YjI2NTk1OThlMmIyMDkyZTAxMTVhOWVkNjgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY5YzgxYjc0NWU2OTFmY2UwMThkNGQxMGM4M2FjYTJjN2MzYjRjMTY0NDFkMmRkZDY4MzUzNTdhMWZkMzgyZDkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a8675ac2181d4c96aee8b330c8672b47",
+      "statement": "Fusion ties break deterministically by total, then best per-surface rank, then point id, because the earlier implementation sorted on the total alone and left equal rows in insertion order — which breaks the requirement that the same query return the same rows in the same order.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/tools/skim.py#L19-L23",
+          "version": "repo-lines-v1:sha256:6c77dcc28ef9a7680813189382cf44ce519a12012e951995ce02ace7612178a1:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTNjZTM3ZWRhMmMyYWQyYzFhOWQ1NzcxM2ZhZGE0OWI1YWU2NjU0NmEzYzJhYTQyY2UxNjljZGFkMzUyNTdlOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZjliNTNkNzc0N2M4MGIxOThhODkxNmZlMzA4NjdkNTIzNmYyYzZiNjIwYWYzYWNkYTI3ZDkwZTYwZjMxMDJiYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTEwYjkzOThjZTQwMDkzYmJjY2VjZjlkMDc3OWMyOWI5MTk5YTgxZjRmZGI1ZmFkZTAyN2ZiMGI4NjU3MjFmYiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMjBiZDg2ZDU5MDMxOWQzNDg5ZDc1ODI2NDNlOTY0NDc0NDM2ODY5ODhkMzRkZGRhOGZkNmU1MzcwYWNlYWM1MSJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/serve/tools/skim.py#L216-L229",
+          "version": "repo-lines-v1:sha256:64465dfcf5fafa31c509b561fef5aed44fc9637081d2c276e1dddb87ea8b13d9:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQwMzhkNjBkMTAwOGNmNjM5YjE5NWM0YTA4ODdhYzdmODJmYmIxOTdjYmY3Njc1MGExNjg4ZWZhNjllYzY3NWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI4NGE0ZjY3MjFjYTE2Y2VmYWQwMWQ0ZGJkZjRhNTE1ZjJmMjI5Njg3NzhlNTNlZGZhYTU0MDEyNDZhMWQzOTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjEzMmY0YmRiZWM2ZGNlMzhjMTg5MGI2ODJkMDI0NzBiOTlkODRjYTViMDBjYmJjNDU0YjQ0ZjBhZDc0ZTkzNmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjlhODJlYmU5ZWQ0MDdjM2E2YmE0YjAwMzQyOTJiYWE1MmMxMWNlNWFlMjg2MTA3NDAyZGU0NzkyZWVlY2FjZmMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5d0e2b06ff504ea49efb445b092bae73",
+      "statement": "Per-surface ranks are retained rather than only which surfaces hit, because they are what the fusion consumed and therefore what makes a weight change explicable; a surface weighted zero contributes nothing and does not even appear in the row's surface list.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/tools/skim.py#L195-L215",
+          "version": "repo-lines-v1:sha256:ad2242e68a2fc389b6900a36a8311bf8ae8b0c9ff46bab8e0ce9e316a20942cf:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgzMGMwNzI2M2E0N2ViNGE3YzY4Y2IyZGYwYzBhZTA2MGI4ZDAxZWFjOTMyZDUwN2E0NmYxZDU1YjQ3ZDI2ZDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlhOTFmNmM0NjBhNzA3NzdjM2JlODcyNzcwMWQzNjg4NTc3MGEyNDdhNDY5MjVlMTM0M2UxNWRmMzViODEyZWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE1MmE3MDdkZDBhYmMxYmIxYmZlN2I4NjU2MDQxZTRjNmM0Y2E4MGI4MGQ4MmE2Yjk0NzRkYjZlNzIzNTFlMjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE3YTA4MTExZjhiZGFlMDBkNjJhNzUzNDE0MDg1MmNhZTBiNzUzMTkxNGI4ODczNDA4MmJiZTFkZjg5YWEzMzAifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/serve/tools/skim.py#L24-L27",
+          "version": "repo-lines-v1:sha256:fdea6e31450c60f45d183973101710f07fc610615a14615bccc78bb10454d3f7:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDZhNTgwYWEyZGI1MzQyZTljNjA0YjIyOTI4NWE4ZTU5ZGQ5MzcyODMzNGM3NjE3NTY1MTA4MmQ3ODI3ZDhjYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNGRlMThhYzhhNDE5ODNmNzA0NGI0YzExZjZmNjBlYWEwNmM3MjViNmJlMjdkMTYyZWFjNzAzNmY2YWI0YTdmNyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMGJmNWJjOGUwYTgxODk1ZGFhOTYxMDNjNWE3ZmJkZDRhZTllYTQ5NjNmZDQwNTE1ODlmOTQ2MzYwMGI3ZjZhMSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiM2JjNGQ0NThlNzZlNGQzZDQ4N2RiNDlkNTNlNjFmNzAwZTZkYWRjNjExZmVhMzM5MzVlZWYzZGU5N2VhNjViYiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_a002a184e3454d00bb8a3e1fa18710a5",
+      "statement": "The aggregate rungs carry no page id — they answer which binder and which chapter and hand back a scope to descend into — and grouping rather than re-searching is also what stops one chatty document occupying every slot.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/tools/skim.py#L37-L49",
+          "version": "repo-lines-v1:sha256:89376d7f08c85710e6ae93de2e900e7f653331048a5af65a1b1b19b43f2ba99e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFkYWIxMGVlY2Y4MWE2Y2RhNTRjYzRiMTA4YWNmM2EwNDJlYmVlYzkwYzJjMmE0Yjc5ZmJiM2RjNzE0YTQ3Y2QiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxZmU4MWI3OTEzMGExMDgxZTZkNGYxNWUzMmZjNjUwZTJiZmQwYWNjODJjNDc3MDg1ODRhMTQxN2VmYTU5ODgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhiMDRkNzBlM2FhZDYwMWY5ZWNlOTA2OWI1ZGUyYmE1M2IyOGQxMzExYmQwMmExNmUxYThhMjFjZGI2ZGJhNDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM1NTEyOGI0ZDEzNWY4NmNlYjFmNzhiNTQwMDExMWFmNjEzOGFjZjdkZTRlZjEzMThjODg5N2FkYzdlN2QxOWQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_20ae5d94ca95454587110b8e74f07bba",
+      "statement": "A document with no searchable text is returned by the document rung anyway, at a zero searchable ratio with no matched pages, because its silent absence would let an agent conclude a part is not in a binder nobody looked in.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/tools/skim.py#L46-L52",
+          "version": "repo-lines-v1:sha256:8942ec886efca1b019080ae9dd0eca5a9edd251b85363e93bef6a6b1db7cf028:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDUzZmMyZTYwYjg2YzkzMGM0OWZkMmM0MDNiN2Y0NTdmNzk5MGY5MzBmMjBjMTVkM2JmNjdhODAzODk4YjA1ZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTRjOWRkYjA5MTZjZjM0Y2EwZTNlNjRhN2NmOTFiMDQwODc2NTJiODM4ZjEwMjhkMDVkZWIxODY2ZjM2ZTIzMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMmZiOTA3M2UxMmQwZGE4NDVlNzM3YWVhYTkyYzQ4OGQ5MzExNmVmM2I5MzU2MTVlYjA0ZjQyMzRhNjg5MjNkNCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_a2ed441b78dc4758918d49544b72f798",
+      "statement": "An image can never reach the exact surface: there is no image parameter on the exact tools and none on the identifier path in search, so a photograph may find a candidate page but can never confirm a code.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/tools/skim.py#L54-L61",
+          "version": "repo-lines-v1:sha256:f8a6ae3163d2a1641ed01dbbc2ff3e1d879b223fcfe32ed594e105e58c7285c7:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZWYxOTliN2I0OGE3ODgzYWFiZGU1Zjk3NDgxNzJhOWU0NzkyNDYxMmE4Yjk5YzM4N2VkNjIxODBmYmUwNzJhMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiODE4YTAwMWI0MDc2YzkzYTg0NDliZjE4NThlNTU4OTQ3N2U5ZTg5ZmI4NTBiMDMyYjMxNDJlMTg4MWU4ZWFkZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNWQ4NmEwN2ZlOGI1Zjc4OTNiMGYwODA1Yjc0ZDRiMjVjMzQxYmQxNjI1MTM0NGFhNjcyMmVmOTRmYWE2OGQ0YiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYzQwOWVhZDg4NzU3OWM5ZmI2NGU1ZjkwOWRjYWJjZmVmNmM5MzM2MjI3NDRmNjc5YTg2ZjU0NTRmODAwN2ZiYiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_0ad67d3d2ed2429b9b7f985851899608",
+      "statement": "Two filters are built per search and the difference decides which absence is reported: scope conditions form the denominator absence selection reads, while content conditions go only into the branch filter — because a content filter that matched nothing has searched the scope rather than emptied it, and putting a required phrase into the scope would report a readable scope as unasked.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/tools/skim.py#L419-L434",
+          "version": "repo-lines-v1:sha256:fd5ae024c0ce1d829c46cac0d5b6f7a06bdd3fa8e735a8d44902e13b8ceaccd2:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjViOTI3YWFkZDMwNjEyNWI3ZjNmODE5Nzc4MmJiYzJiNTgxYjRiYTMwYjJmNDU3YjRkYzcxNDM3ZThiYjhhNzQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg3N2E5YzQ5NDY5ODg2Y2Q3OTMyNzQ0ZGRjYTgxMDVmMzAwYjIxYTkwZjAwMmQ1ODlkMmZhY2NjNDg2YWNjZjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM1Y2IzMGZmYjZiNGNkMmZlMzgyNDY3NzM4ZTdlYjYyMDhlZTBiZWUxZjQwNjliZWY2NTEyODgyMzFkMGE2MDYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImExNDYyMDAxZDdhNTNlNTBiMmVjNWZkNDg3NzY4ODNhZTIyMjg4YTk5YTJiNzU1YjUxMWJlMzQ1NmJjZDAyNTgifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/serve/tools/skim.py#L448-L458",
+          "version": "repo-lines-v1:sha256:b4431f95c1e215e7624e16eaba6b3efbc4a9a11ad30b4e815ec0a2d2aab1cb1a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRkNTlkOTA0MGMzNzY5M2EwNmMxZTZiYWE2MTAyYzM4MDkxMTc2Y2RjNDQ5OWI1NzRlMTIwYTE0YWI4NmFiZjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE1MTJkZWExMTM3MGJmY2MzNThhM2U5MGNlYzk5MTFkMTFkNmJlZTQ5ZmEwM2VhZGUyMmEwMWY1MGNmODE5NjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFjYjE5YmJmYzQ5YWQ1MDk0MjI1MGJlYzBlMWZiMzA1MjljNzliYjRlNWFkNDU5OWQxODUwMWRmMDU4NTBiNzIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNhNzk1ZDk5MzJlM2UyOWY4ZTExNTEwNjllYjM2NmQ3MzQzMmExZjkwMzIyNjM1OGQyMjdkMjVlMjA1ZjRlZDEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1cd4af78bc0d4529bf448954a3b71c13",
+      "statement": "Absence selection is ordered with found-in-superseded first because it is the only one of the four that is not an abstention, then empty scope as out-of-scope, then nothing readable as not-searchable, then not-found.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/tools/lookup.py#L299-L319",
+          "version": "repo-lines-v1:sha256:e4693e04a1900a423876e8210c8e340272576045edc3c4a41958c91c0b1869b7:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlmZGY5MDk0YzYyZTE3NTE2MTViYjU3ZDJmYWFiN2YwYmYzYzRlNzU4NmYyNDVhNDhkMGUxYWQ2OGUwMjE1ZjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM2NDU4N2RjNGE3ODU3OTQ5OTU2OWNmOTA4YTY0MTY3YjlmOGFkYTFkZDFjMTUxN2IzM2Y5YTc0YmJhYzBlNGMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZhM2NmNTE5MjM1NGY3MTYxNWFjNTEwMzRiM2U5N2MyMGVkYTk5NjQzZmNhZjViYmU2ZDQxYWQ1OWJkMTIxNjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEwN2IwNGY5YTdjY2RlMDZiMmJhNjk4ZmUwNDM5YzdlYWQ1NDY3MWZkZmM5MmYyY2Q0ZDUyNjIxM2UxNTQyMGIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_fbedf3e26e264417a96e7cecd2c19919",
+      "statement": "The superseded probe fires only where the scope selects no current page and reads the control plane rather than the page index, because a non-current point cannot distinguish a published-then-superseded revision from a run that never passed its gates — and naming the second would disclose a half-ingested revision through a status about the past.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/tools/lookup.py#L322-L337",
+          "version": "repo-lines-v1:sha256:e17e668b2274a063a1a2007bd95062c409d70aee5c1f77f6c1a309c9147df66e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQzNDY2OTZjM2Q4YWQyODUwYzI2ODk4YjZhNzM0YTM1ODY0NGUzNDE4NGE4OTUzMjRiMTI4ZGRiZGNmYzQwMTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE2YTcxNTI1NzJlZTg0ZjEwOTA2Yzc0YjlmMmE5MjQzNGRkYWIwZTNjNDI4MTNiMDRlNTk3ZWZjZWM5NTFiMjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVjYzU0ZmQ0MjJlYWMzNDliMmQ5NTBlZWViYTAyMDVmNjhmZmYxMjFmOGUzOWMxNGVkNmE5YjU5ODA0ODU5OWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZiZDM1YjUwNTJhYzMyNWI1NzA5NmNkODc3ZTI2YzViMzZkNTVkZTc5OTc3MWE2ZGY0ZDc4OWI1ZWNhODQ0OGEifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/serve/tools/skim.py#L503-L508",
+          "version": "repo-lines-v1:sha256:f3f02d2ccc7384e3d15e2c4d646205cd207c3a3af89de91d97a5047cac238238:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzE4ZTI4OTVkOWE1Mjg1Y2JkYzVjM2M2YjRkNjU3ZjZjNTg4MDRkYjQzNTFjMTNhZmNlNTUyZGE4ZGYxNzAyZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjBjMTc2MTE4ZGM4YzZjODEzNDEzZGY1OWNjM2U1YTZmZDZhZWE4ZWIwOGZkNjc4ZWJhZjVkODA0MDc3ZTY1MCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYmViMDBiZWNjYmFmZGEyMzg3MDg3ODhlZjE0MjUyN2QwZWEwYjg4MjkwNWEzZTFjZTJmOTc0OTdkY2NhYWFmZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZmRkNWIzNmM0ZmNjZmYzNmE5Yzc5OWRhZDhiMDE2YmQ5MTA4MmFhODVmNTg5NmY2Nzg4NzAxMjVkOGJhNDA1OSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_7e203f68d3b74c7e980487e44e791186",
+      "statement": "The flat search surface may return page text where a triage row may not, because a triage row withholds content so an agent cannot answer from the search result instead of paying for a page, while a caller on this path has declared it is doing its own reasoning — the remaining bound being size, with each row capped and stating when it truncated.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/retrieval.py#L33-L41",
+          "version": "repo-lines-v1:sha256:de66093ceb6593869d3d72e8186bf45fded4022a44b6923294cb55ec135e83de:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZDU0NmM3MzJhZTBjYTlhY2RjZGI2MmZlNmE4ZWQ4MjljYWI2YWVjNzU3NDVkYWFmNTI4MzA4YmQ4N2E3ZDM4NSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMmVmYzYyMTJlNjg4MWFlZWQ1OWM5OTA1YTA2NGM1NGE3YmFjYTdjNzkzY2RiZTU0OWExYjVjMTg2M2Q1YTJmZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMmMxNzc3ZWM3MGEzNmMxZDk5Mzg1ZjJmMjA5YTY1NGQzNzM0MjQ1OTU1Nzc4YjY5M2MyNDhmZTdjMGUzYTIwMSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZmM1NGI1MTdhOWI3NDljM2FjNjcxOWZhMjMzMDg4ZWMwMDliZTg4ZGQxYzM4ZTIyOTkxMjdjZTRmOGIxZTUwNSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_f7f92e58b48c4ddca6437f8cb76cd5b4",
+      "statement": "Every flat search row still states its text trust and whether it has text, because on a scanned page the text is empty since nobody could read it rather than because the page is blank, and the codes on those rows are the model's claims rather than verdicts.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/retrieval.py#L17-L24",
+          "version": "repo-lines-v1:sha256:44d3e37afbb759f3af401c8134b09d679d66d63e96de4b295d82b106e7e404d2:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiY2Y3NTQxNGVjNzkwMzFjZDdmZjVkNzM1ZDgxZWFmYmQzNjI0OTdhODkyMzZlZjA0ZmRkZTk0MThiY2RkMjFiMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOGVkNWI4NjMwOTM5OWZhYmI0MGVkMGUxNTQ1Njg0Zjc5OTM0ZGY5NWUyNjk0YjFhM2FjZDM4NmQ4NjdmMDAzZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZmQ1NjFkMDE2ZmQ0Njk4ZGNlNjU2NjkxNzY3YmNhYTliZDc1ZDRlNjBmNWNhNGI3M2Q4ZjgxNDhiYzE0MTU2MyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_ebca905c4a8e4e3f86fa33c9a90a7917",
+      "statement": "The flat search surface is deliberately not a ninth tool: the eight tools are an agent's moves and a knob is not a move, and neither of this surface's consumers is choosing a move.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/retrieval.py#L26-L32",
+          "version": "repo-lines-v1:sha256:0bf8b18541384bc70ea5190a588fa27e00798a93db5a1fc8511fbf63c14fda56:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiODFhYzM0YTc1Mzc2ZGEwM2JmYWMyMDA1ODE0YjhmMDEyYjc4M2RiZjA0YTJlZDZkMmFkMjFiNDc2MzdmMDJmMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNzJkMzdkYzBlZmQ4YjFlYWM2ZDJjZmY2OWU5ZTk4ODJjNjA3MTc3MmNmYWFiZDg4ODYwZTMzNjVkYmZlNTAyOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjMxZTI0MjRlZDIzZTY5NDY3YTAwYzdjZWVhYjA3NzE1NmE0MTBmODliNzYwZWJkZjI5ODgwNjU1OTAyMWYxMCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_dfb77b4d0f4d4c52b77b07b1074d9419",
+      "statement": "Each branch reads a fixed candidate depth that is deliberately not a multiple of the requested limit, so the limit truncates the fused list and changes nothing else — an agent narrowing its limit sees the same rows in the same order rather than a ranking that moves under it for no observable reason.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/tools/skim.py#L128-L141",
+          "version": "repo-lines-v1:sha256:8863f9bc282edfe2f55c36bdafcf44dfd68f62b9d879d11baf691b0df650c288:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyZWM5NDY5MTM0MTkzYzZhMTY0YjJhMjZhOTg0YjUwOWI4OTg2M2EwNzgyNWI5ZDFmMDVmM2M1MjhhNzBiYjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkwZTBjNjQyZWUxZjg0ZmY3NDcyMjA1ZWRlZWRmYzI1NWFmN2Y3M2E3NWQzZWYyYjFlZDZhMjJiNTlhYTA3ZGIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgwM2E2MDk2ZDA5ZmY4NTViYTA0NDY4YjI4NzYxN2I4MjlmM2Q3ZDA2MTkyOGQ0NTNkMWE1MzQ5NTMxYThkMWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNjNjU3YTkwYWNkNWFhNGZiY2I5OTE1ZDQ5NzlhMzNmN2I3ODk3MTg0NjRhOTk5OGYxNGM0ZjNkMjViMGY1ZDkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_30c3aa7e450049efa7e030b3a8e72045",
+      "statement": "The payload projection a triage row is built from omits the page text field, so page text is never loaded into the process on the skim path at all and there is no route by which it could reach a triage row — the withholding is structural rather than enforced row by row.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/tools/skim.py#L143-L153",
+          "version": "repo-lines-v1:sha256:2466aaa2afcdc7cef530763e0b95d4394fd94c4a98ec4fa953ec230865bc3a23:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIyNWEyYjQ5NDIyZDMxZTVkOWZkMGY3NmY1ZDRiN2ViNGM4ZmFhZTNhNjdhNjk2NDM3YTRhY2M2NmM0NmE3N2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM1ZTIwY2Q2MTRjNDkzN2NhZGNiOTE5ZDM5OTFmMWUyZWQ3ODQzYjVhM2M2Mjc4ZGZhZTY0MWQwYmExY2E0ZmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjliNzZmODIyMDMzOWY2YzE4MGE2MTUzMDlkMmRhYzhlZWNjYmM2YmI0ZTczM2E2Nzg4MDUwZGEyOGFhNjBiMjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJjMDljZDA2Y2MyMzlhNDUwYmQxOTI4NGEwMTYyZTYyNDE3NGEyMTVjOTQ0ZDc1ZTQxNTI5MGMxYWFjNDVjMGEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6184d6e708f0463d8dfd71766b7af48e",
+      "statement": "The agentic runner reaches retrieval by calling the eight tools through the same dispatcher the HTTP tool routes and the MCP server use, so it is a caller of the tool surface rather than a ninth path into it, and the budget, audit line, argument validation and typed refusals it meets are the ones that shipped.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/app.py#L1552-L1566",
+          "version": "repo-lines-v1:sha256:076fdb78792516e70f9b3f19d864173106f6167e0e872b145ceaf1cf462f1dab:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdjM2ZjZTczMWU5ZDU4ZDRiNDAzNjY3ZjZmNmUxNWJlMTc5MzEzMDRhN2Q1Mzg5MjhjNDZkMWQzZDkyMjY3NDciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZjYjA2ZDMxYzMwZTgzNzU4MTBiYTc4NTk4MTFhZTUxOTgzYzQxMWJhNzVhYmMyMWRlNDQxNjI3NDk1ZDdjZTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQzMzBjZTc2YmZjNWRmYjE3ZjZmOGI5NzEwYWM4Y2NmOWQzYmQ2OWRhNDhiOTQxOTYyOTYyZDliNzk0N2QxZWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJmNTU3MDk1NzU4MTllODRjYTBhYzNiMDI2NTE1NzA4ZTMyYmYwNWMyMjA1NWQ5ZDJiN2Q3MjU0M2Q2YjJkMzMifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.1",
+    "at": "2026-09-12T16:01:50.652Z"
+  }
+}

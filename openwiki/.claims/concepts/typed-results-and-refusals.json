@@ -1,0 +1,232 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:c5286542956081a01482b75b5102a4c872aaf132c6c4b38d5aaa8a8e861450d9",
+  "claims": [
+    {
+      "id": "claim_c35dbcb10f7f4e47af8454ad5949cde8",
+      "statement": "The status vocabulary is six values of which four are distinct absences — not_found, not_searchable, out_of_scope and found_only_in_superseded — each carrying a different instruction to the caller, because collapsing them into an empty list makes the agent guess.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/status.py#L1-L17",
+          "version": "repo-lines-v1:sha256:0d5f4e2eb2b467cb778e5e0b5adcf7cb0b884006938e398e45550ecc752fd92b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI4OWU2MWQ2NWI0YjJiMjYzNTY4NmFkMDU0YTk4OTljNzVmZDFjM2M3MTU1MjhlN2YzMGNmODRiZTQ4MTQyNTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzMDNlY2RkNGE0ZDEwZjE5YzczZmQ0MmZkMTI0MzdmZDMzNTRhODI2ODE2MDVkYTUyNTVhOTdhMzkwNjhkYmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA5NjU0OWI4MjJmOTI4NmE0NDMyMTNiM2IwN2VjY2RiNDBlY2FkNDNlNTUyY2IyYmU4NmYyOWY1N2EzNDQ2YzEifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/core/status.py#L22-L41",
+          "version": "repo-lines-v1:sha256:2722b266f3233e564c559d8783e660b1dfa015bcc3b4c47f197231bcb12227b3:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU0Yjc4NTcxNDQ1YzkxNjE3MmM2ZTMyNjAxMjI5NWRmMzU1NGRjOWU3MGI3MTViN2JlMTM4NjA4YTE2MDc4ZDMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhkMThjOTY5YjI3M2I1MGE2MDRmMTljNDYyYzBjNzI1NjA1ZWQ0NDllZmViMGU5MDYxZjFmNDU5NzVkNzJlZWEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7c269557fb234b4195402090daf191c3",
+      "statement": "An error status must never be treated as an absence, because an outage returned as \"nothing found\" renders the service's failure as the caller's fabricated confidence.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/status.py#L14-L16",
+          "version": "repo-lines-v1:sha256:df53fafcbe4ca943dccf2ee881fb61199a242e05c4ace0c74a032540ed3643fb:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjZkMWFmNDYzYTU4N2M4OWVlOTRmYzEyNmVmNzQ0MWI0NTY0MmZmOGY4ZTE0NmJiZjkyNDEwNGM1OGE1OTIyOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMGUwMGY2NTJlMmQ2ZGI2ZDBiYzU3MzA2ZmE5N2U4ZTJmYzI2MWM3NmZjMGRmNDA2MDkzNGNlZTE5YzBiOTg3NyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMGRmMGY0YmE0MWI0MTBhN2Q5YWM5Y2FmMTJhOTQ1ZjlkYTFlNmExNzlhMmVkNmUwOWY4ZDlkNTU1M2E2YzZmOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYmVjZTdmMTNiN2I2YTM1MTZmY2Q0YjU0MzJkODU4ZTVmNWEyNTIwNGU2Njc4ZDkzMTBmMDUzM2U5NTQ3OWY0NSJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/serve/errors.py#L64-L72",
+          "version": "repo-lines-v1:sha256:6103b59bcaf8ae4e1024a0aaeb4114e3116f4079541f1e84e326dc9345924a78:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzMyYTE5NjU4NzBmYWE4YjNhYThjMzJmNzFlYmZiYTRkYjAwYTcyNDIzMTY3OThmZmE3M2MwZDQ4NDc4YmNkYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOGQ5M2E2ZGZhZGVmNmU2YWMwODk4NmMyMzhkNjk1NTBjNWI1YWQ0MDBmOWExZjVhZDQzMzVkNTQwZjdlNDhmYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDNiMTlkYTg1NDZjYWMxZTg0MWE0NDkzZjIyMWRlNjM2YTcyY2I1YmE3YTFmMGMzMDJlMjVhYWNjZmYzOTFhYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNzVjZTY4MDBmMTkzNzc0YTRlZjZhOGRlODU0ODA1YjA3MDY4OTA4NWJlMTI0ZDNjZGViM2EyNWJjZDc2ZWJkNiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_3c3048a13d6c4dc5ba22ef35173ca058",
+      "statement": "A per-item check uses its own three-value vocabulary — present, absent, unverifiable — deliberately neither a boolean nor the response status enum, because unverifiable is the answer a boolean would have to lie about.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/status.py#L42-L46",
+          "version": "repo-lines-v1:sha256:adacd7c3e73aa4fcdc76b4bc217995d3ed0935d6ac486c57455adb1d4527f1e7:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTNiMWUyMzBlZmMxZjI4YzAzNmFiYzE2M2NmZWYyZDA3YTMzZDEwZTJkNTI3NTcwNzkwNTYyZjJiNDAzYzZlNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDFmNDFiZDhkZjUyZjcwYmJhYjViYTIyNTZmNmRmZmUwNzY5ZTQzZGM2YWU2M2RjODI1N2MxNDUwMTQ3ODU1OSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOGM0NTY1ZGVlZDNhZDRkOWU1Y2IxZDJiMTRhN2EzMTlhMGI0OGY3ZGI3OGU1YWQ4ODM1YjQ1YTEzOTJjYjQxYiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_b47e43f4bc98411b9e3528d52c1b6156",
+      "statement": "Responses come in two families because \"did you find anything\" and \"here is the verdict\" are different questions: Family A search responses can be empty and carry absence machinery, while Family B envelopes report whether the call ran and put the answer in per-item states — so a verify with every claim absent is status ok.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/envelope.py#L1-L22",
+          "version": "repo-lines-v1:sha256:ac51e487a55bbc05176c3c555bd88a121a667e6d32c401ffa99d48103baf3f5d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3Y2QyZWExMjY1MDdmMTMzZjM4NTEyZjgwNTFlMjc3YmQ0ODNiYzMyNjYwNjVmODUzMjQ0ZWYwOGUxMzU4ZmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEyMjU2MGM1MDY0MmY3NmFmMjViZmM4OTQ4Mzg3YzVjYzRiMGI4NGJhY2ZlMmQ2Njg4OTVjZTk1NzJiMGJlZjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJlY2U3ZjEzYjdiNmEzNTE2ZmNkNGI1NDMyZDg1OGU1ZjVhMjUyMDRlNjY3OGQ5MzEwZjA1MzNlOTU0NzlmNDUifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/serve/envelope.py#L506-L519",
+          "version": "repo-lines-v1:sha256:f4d879d65a5d56ea16e20bc01bbc94c6f556aa92e35df9282490b0bc89c92348:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyOGVkOWYwYzRmMThlNWExMmE0NjEwYTRmYTEyYzUwODI2MGY1MWU0MDE0NjZlMjJiMzUyYzU5ZDkyNWQ1NjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE0YmNmNTNhODM1ZTBhNTY5NTQ5NWU5YzA5ZWE4ZjI3OGE0OGIwM2U2YTIzMGU3Y2E3Yzg3NDBiOTE5YzA0ZjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhiMDA2MzZiMTI1ZmJjNDNkNjA0MmY2YmE0MzZhMzQzMDFlNjI4NDc3MTJmOTYwMjIzNWQ1ZmYwZDI5ZDQxNWMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_4192c60e652e45478895b3229d6ef1cc",
+      "statement": "An empty ok response is made impossible by a model validator that raises rather than asserts, precisely because python -O strips asserts and this check must not be strippable.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/envelope.py#L324-L338",
+          "version": "repo-lines-v1:sha256:792996e214213bd30f2add59dc7ad2677ec88c0b3ab2dedda0504dc7b205fc8a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEyYWIwOTBiY2QxNjIwZmE2MmVhZWUxNTdhNzRmY2E2MzVhYTI5ZTEyY2JmZmQ2MThiNTc5MmQ4N2JjMDNhM2YiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZhYjczM2QzYjAyM2FiNTJjMzEzOTZmZTQyZTU3NTM4ZDU4ZGVmZTAxZjE1Njk1MDE0NDFjODUyZmJiODQ0NTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY2M2ExZGI5NjM2YTUzMDU4MDI2ZTNkMmU4ODNlNTMyMjk4YmIyYzg2YTgxZWIwMDJiNWVhMzlkMDIwOGU5ZWIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3318515dcbfd40e4b80a9373db01b744",
+      "statement": "A Family A response reports total as the size of the matched set rather than the number of returned hits, with a separate capped flag, so a caller can distinguish a scoping problem from a complete answer.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/envelope.py#L295-L312",
+          "version": "repo-lines-v1:sha256:e5ead7f09ca4c35ae21884f4669ad963937bf8ab031fa0e83c534028d3fb0e14:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg5N2UzNmYyNTQyM2ZjZTkwMmVlZGViZmEwN2NlMjAwZmQ2NTI1MzJjYTY5Y2QyMjY0YjAxZTE5NDZlNzBkMWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIxZjRkMDljMWVhY2JlMDk2YTU4NTg1OWRjMzU1N2Y2MGFjMGRkMTNmYzRmZjEyYzBlZWZiN2IyYjdmZDFiMTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFlMWFkZmQ2OTM4NWNhNTQ3MmE3NzYwMDFlZTliOTQ5NGEwMzAzMWM5NGEzNjMwMGFhYTVmYmIzNTRmZjIzNDQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjExZTE5OWI2NTkxOWQ3ZWYwYjM0NWQ1NjYwYWZjYWYxZGZmZTViNDU3NjIxNzNiNTY1NTI3NWVhODBlMTg1ZjYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_84a6410c847c4564affdf403c5c86899",
+      "statement": "The weak/needs_scope trust signal is computed server-side from the match-set size against the pages searched, so a client cannot flip it by requesting a larger cap.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/envelope.py#L33-L36",
+          "version": "repo-lines-v1:sha256:7361093ea7ae5f88b3be2f0d9485cc899a3d5dd8147f2a269fd3c02c7ebbac3b:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYjAyMzgxZmUxM2YyMjIzNmYwZjQyYWY2N2YwZjBmYzZjMTdkNDg3MGE0NjI3NTljNzIyYzRmNjAwNGM5Y2NjOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMGUzNTBiNDUwOGQyZDRmOGViMDMwNWU1ZDU1NTljZDYzOGZjMWQ2ZjA4Mzc0OGI1MzQ3YTViMjk1YzRjNjY0ZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZGM3ZjcwOTI1YzkyOGUyMThmZjFhZDUxNGRkZDgyZmNiOTg1MDJmMzZjODE5ODUzZWYzODE5MjU1ZjIxZDk1OCJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/serve/envelope.py#L62-L69",
+          "version": "repo-lines-v1:sha256:696a063fd051407e9457298bd2e66c072b7a6ba86aa3deb3566887c09fea3cd1:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZWQ4MDI3MzE0MWNlNjRjMDZiODhjNDMxNzUxMTAzOGNmYzk5YjU3ZjBlMWZkN2JjOWM3MzQwZDYwZTE5MTk3ZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzEwM2Y2MDhlNjhkZmEyYjUzODYwZmQ0ZGUzMTgzYjliZWEzZDBlN2Q4NzljYTI1ZWY1MmM2YWFmMzA4ZDZhNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDNkNjhiOWEyMmFiNjcwMDRkZThjODU1ZWVhMzMxYjg4ZGZiZjQyMDRmZmQ2ZWYxMTUwNjdkZTgwMTNiNTU2MSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_e7cdbed82ac6417a9088b13f0411e3fa",
+      "statement": "Every Family A response echoes back the effective scope, because the service holds no session and the caller's scope is the whole truth about what was searched.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/envelope.py#L313-L322",
+          "version": "repo-lines-v1:sha256:fd5c6508941b3606e2ec30016747a004cb9ece719e4f9872d380feed9cce4a73:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZjMmJhNDAwOWE5Mjk3NTQ3YTMxYjBiY2IxOGNkNmUyODlhMmIyMjEyYzFmYjgyYTg1ZDFkMzI1NDYzZTAwZjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyY2RiZTY2YjdmNjM5YzM0ODUwOWI0NmZmNGQ1YjY1OGQ3Y2Q5YzU0NjYzZDRiZjg5Y2IyYTI5NjY1MDJkYTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFkNzBhYjEyZGNlZjM1OWI1Nzc5NmNiODUwZTZiZmU3MTYzZjdlZTU5ZjFjNjc5YTE3OGFjZDRmN2E2NzQ3NDYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFkOWNhMjlhYjkyYTE1MzI2ZDA3ZTA4M2MwYzZkNzlkN2Y4NGQ2NTNjYzA4ZmVjYWVjOTFmY2VmZGIzNmIwNjMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1200f43b835b4819a7adac2b0305a5d1",
+      "statement": "No response carries a similarity magnitude: the previous implementation's fused RRF sum is deliberately not ported, while an ordinal rank remains required — a position is not a confidence.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/envelope.py#L19-L22",
+          "version": "repo-lines-v1:sha256:8bc68ff233109e2627b4d432248da00fa2b5524d03ae8a9361f2215591b5230f:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMmEyM2VlYjQxZDMwNjBhYTUwMjZlZWVlOTdhZTY5ZTJmNWY1ZTNjNzY1MDdmMzhhYzllZjAxYzZjMmI0ZTI0ZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTIyNTYwYzUwNjQyZjc2YWYyNWJmYzg5NDgzODdjNWNjNGIwYjg0YmFjZmUyZDY2ODg5NWNlOTU3MmIwYmVmMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiM2JhNTY1NWJiMTAxOGE2MzQxZTQ5NjQ4Y2Y0NDEyOGUyN2JmOTJkN2Q5YWQ5MTg0YzUwMjg5YTFmNGIwNTg1NyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYmVjZTdmMTNiN2I2YTM1MTZmY2Q0YjU0MzJkODU4ZTVmNWEyNTIwNGU2Njc4ZDkzMTBmMDUzM2U5NTQ3OWY0NSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_fd0f2d1091d24331a6031e5cfb6b0392",
+      "statement": "One serialiser, wire(), produces the response bytes on every transport, which is what makes an MCP tools/call result byte-identical to the HTTP body for the same request; key order is model field order rather than sorted so status stays first.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/envelope.py#L39-L60",
+          "version": "repo-lines-v1:sha256:5cb91e3cb30cd1cfddb2c03441bf851569810b5d70f58a771d3c617c895b61a6:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNjMDkyMDAzZmYxYjBiYTlhYTVkMjVjZjIwZmM1MTVkY2Q3ZTM2MjhhZDA0NTZiMWJmYjI4YzQ2NmNiZTNhNDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRlMDRiYjIyMGM4YTA4ZmExNmM0MGE2MmM1NjQ1Y2MzNjA1Njg0NDgyMDZjZTMxMWFiZjI2YTAzYWZhZDcwNTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY2MWI2N2RiYWE4OGNkYThkY2M5NTZkNWRkOGUwODU4NjlhZjJmNzE2N2YxYzM1MDI0MTY3Y2YyY2JiOTAxN2QifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7ce4d0159231449ab6b7ee41d6cf3713",
+      "statement": "Refusals share one shape whose error code is the contract and whose error and detail fields are always present strings, so a client can branch on the code without a null check.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/errors.py#L55-L63",
+          "version": "repo-lines-v1:sha256:3cd3da48373d1bbda842058c928c85dce88646c0dadd4531c2e814ef0253f000:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMTRkNjYzMDNiNjIwM2RlYjA0MjVkOWVkYjBmNzYxMDAwODEwYmQ3Y2M2NzQ0MDczYmU3YmE5MDIzNTNmYjhiZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTA2NTBiZTIzMmM4ODk3YTIyZjJiMTYyMjE5NDdkZmY0MjdlMjlmMTZiYjJhNDdjN2EzYjYyNmQwNzJlOTllNiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDlmOTMwODNjMTk3MTIxYjk4MjcwMGJhOGFmYWJkMTcyMmNmMWQzZTc0MDQ1MDllODBlZmEyNzI0N2Y2MmYwNyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzg5M2Q5NTRhZmU4NWZiNzQzODg5ZTA3OTU5MmY2NzAwOTFiNWIzZWJjYmM0MjgxZDNhMjA4YmUwZGUzYTVhYiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_1a487c836fa8444dbfa9a10e7310a2c7",
+      "statement": "CODES_BY_STATUS documents every refusal code by HTTP status and is published in the schema's own description, but is deliberately documentation rather than a validated enum because caps.py and the tools own their codes and a second declaration would drift.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/errors.py#L36-L54",
+          "version": "repo-lines-v1:sha256:2ed2c587b0f14651c43d64d2e2a0c22c19f5e945965338d21959d5def0f46c79:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg1MWIxMzM1NzE4ZDllYzlmM2RhNTljZTU4YWViMGVjZjA2MGQ1YzFiMTk0NjQ0NmRlNjQ0NzJhODgxNmM1OTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRjZGFmZDVkYzk5YjIwZWY0MzE3YTdmZWNhOWMwNGU5NGE4ZWRiNGUzZjIyMWJmZjU3ZmU0ODM5NTdkNzdlNTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNjNTgxNjY2ZWE5YWVhYWE2NmY2MmJkYjEwODJmMDVlNDVmYzg5OTVjM2Y0Mjg3NmEyNmU2MzYwMDIyMjcxY2IifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0b04ed9c53f24a7aa0c458540bd364ea",
+      "statement": "The refusal model is the only model in the service declared extra=allow, because a refusal's details must name the bound that was hit — limit and requested on a cap, retryable on an outage, available on an unknown tool — and those keys differ per code.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/errors.py#L15-L26",
+          "version": "repo-lines-v1:sha256:ff174559cb8f87bb93542155e1b19f5498f5ee40c71ca9a179ca9f279c31bb77:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzMDNlY2RkNGE0ZDEwZjE5YzczZmQ0MmZkMTI0MzdmZDMzNTRhODI2ODE2MDVkYTUyNTVhOTdhMzkwNjhkYmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhkNjMwZjQ2ZTUzY2FmMjg0NmU5MzJiMWEwMGRjODFmZmEzMGY1MDE4MDk2ZjIwMzU0ZDgwOTRiOTUzZjc5MDciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU1YjZlODcwNmI0MzA0N2YyYTZkYjY3ZjEzMjYzODU5NTYwNGU2N2YzNjk2Njg3NmNlMDE1OGYwMDUzZTZiZDEifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/serve/errors.py#L64-L70",
+          "version": "repo-lines-v1:sha256:3840b3cba2a6e183efa616935f9acac51a5f12d1027b2c83d3853148d33959a2:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzMyYTE5NjU4NzBmYWE4YjNhYThjMzJmNzFlYmZiYTRkYjAwYTcyNDIzMTY3OThmZmE3M2MwZDQ4NDc4YmNkYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiM2Q2M2U0YTA3NWMyMjI3ZDk1OWRkM2JlNzdhNTFmNWM1M2I2NjM4ODI0NzgyNzJlMGUzZWYxZjEzMTMxYzAyZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDNiMTlkYTg1NDZjYWMxZTg0MWE0NDkzZjIyMWRlNjM2YTcyY2I1YmE3YTFmMGMzMDJlMjVhYWNjZmYzOTFhYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzUyMWZmMzJlODE4OTRkOGM5Y2I0OGNhNzE4NDUzZDIyNTEwZmY1NzA1ZjgzODRjNGI3MzhmZmZhOTIwYzRkMCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_9e85fab6262443eeac131928e9c404c6",
+      "statement": "Every cap is a typed 400 naming its bound rather than a clamp or a truncation, because a silently trimmed read answers about pages the caller did not ask for and a silently clamped dpi returns an unreadable image — both reporting success.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/caps.py#L1-L11",
+          "version": "repo-lines-v1:sha256:f73826cfb2a032b83f2ddf476206d31eefdd4e8895147156e829b20f18d3a03b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMyYWMzODNiYmYwODI3NDkyZmY2ZDAyMzgwZjVkNjdjYjRkNjQwNzJkZTc4Y2RmZWZjZTRhODVmMGI0YjBlOGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI5ZDA3NTg1ODNmODQwZTUxNDExNzIyZmQ5OThhMGY2NjBkM2MzYjNkNTVhYzFjYjAwZmY4MDU4OGVmN2EwYTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJlY2U3ZjEzYjdiNmEzNTE2ZmNkNGI1NDMyZDg1OGU1ZjVhMjUyMDRlNjY3OGQ5MzEwZjA1MzNlOTU0NzlmNDUifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/serve/caps.py#L39-L56",
+          "version": "repo-lines-v1:sha256:6bb7cad13fc4f855b48644d9990d2ebb3be6ca1f19217978dc68e9bea82759e8:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMyNmY3NjE0YTFhYmUzODBlNTdhYTlkZjQzYTFiYTU2ODRjZWI0MjZiZGY4N2NhMjcxNWU4MmQ1YmM5NDIyYzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU1ZGYzYWEzZTA5NWE0N2UyZWZiMWQ4ZTEwNTAyNjZlYzIyOGU3MzhjZDA1MzljNjZiODhlODU4N2Q4YzE2NzMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI4Y2M0Nzk2MmFlN2M3ZDc0NmRiOGFmNTk4YTRjNmI0Y2FkNTU0OTg4ZDA5MDg2NWJlNmE5YjNlODVkZGU5NTYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_10c6a13b7a6049c89d1788f7e9fbaae8",
+      "statement": "A read with no pages is refused rather than answered, because it would charge the caller's quota for a question with no pixels behind it — from which any answer could only be the model's prior knowledge; an empty question is refused separately because the question is an input to the read cache key.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/caps.py#L58-L96",
+          "version": "repo-lines-v1:sha256:2b735602931925ba2eff2b1c3ba9e8856137380bdcaca02ca03fc82e6bae1fc5:eyJzZWxlY3RlZExpbmVDb3VudCI6MzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJjNzJmM2IwYTYyMDVjOWZhZjA3ZWI0NzQzMjEwN2ZiYWRhYzQ1NTBiMTFlY2UzZWExMzgyNzZjZDA1Mjc3YzMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU3NDA3MTc5MWY3ZTM1YzkxMGRlMWRlNGU1OTliZWFhZDczMTI0NTczOWNhM2FkYTE0OTQ5NGUwZjFlY2VjNmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVkM2EwYmEwZDhmOWRkYzMyY2E1YzZlNWYzODY2OGJlNDc4MmVmNjM0MDAzNzJmNmMwNGZkNDY4YmRhZGQ1YTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f9caae95e56346639dc2b0d798f29231",
+      "statement": "dpi is an allow-listed money bound: only six values are accepted, and anything above the pinned answer dpi requires a normalised region because a full page at that resolution is megapixels of raster and tokens of vision input.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/caps.py#L131-L146",
+          "version": "repo-lines-v1:sha256:b370fd934317ac8cee83eaefdb9be759f76b2287c27daaff1e2951106251e75d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyYjBlOWM0NDIxMzQ2ZWVkMDVmN2RlM2M1MGJhZmI1MDJkZWU0M2MwMmQ3M2NhMmU5NjNhZWIxMzc4YmEzZGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIzZGYyYWNmMDZlOGMzZjAzYzcxMzVjNmU4YWM1YTljYTU0MzJhYmUwNmE3NGFjYTBmZGQ5YTUzYTAwOGY5ODciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEzYjBlYzViZjgxMWIwNzAzYzZjYjBmNjJkYmZhZGU5ZDY0ZDQwZjVhOTdmYjM5OWM1MDllODFlYTU2MmIyMGIifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/serve/caps.py#L21-L27",
+          "version": "repo-lines-v1:sha256:e68871ad60932f7883926dfd0395f0750c344d1725c930f1a79c04bacb1f3537:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDViZmM3MjJlZTdkMjZlMjc3NDJlOTZjMWUwNWJhNDNkYTBkMGVhYzQ1MjA1ZTk0MjkwMmJjYmNhNDY1MmIwOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZmU2NzMzNTkyMDYwOWU3ZDJiOTQwOTRmMzExNzkwOTk3MDY2NTg0ZWE5M2JiMGRhMDhhMmQwY2NmYTUwZTM0ZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOGY4MDRkZjZhOWM5ZmM1ZmI1ZDkxY2EwYmJlNjMwODkwNTM1MTM4OTY3MmE1OTQzODAzNjhkZDk5MzQwNDM0MiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOGYzYzQzM2E5M2U2MjBjODI5YmNkZDdiMjE5ZjQwNzU5YWQzM2EyOGY5ZjU3NDdiNzAyYmJjM2MxNmM0MTllNSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_d5a6372c12ce4529b8cb6785b420a35d",
+      "statement": "A malformed region is refused rather than clamped, because clamping an out-of-range crop would return a different crop from the one requested and report success.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/caps.py#L148-L167",
+          "version": "repo-lines-v1:sha256:160ac5312ab3972d1df0615cdb141d8ccf19fe386e3f954d4d764df01da163f7:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZiODQ4NmMwYzcwZmM3ZGFmNGMxNmZlMDI0YmMzNDM5NTFmMzQ0N2EyMWU0YWRiZDQ0NWIxZTVlNjU5ODNhODciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIzZGYyYWNmMDZlOGMzZjAzYzcxMzVjNmU4YWM1YTljYTU0MzJhYmUwNmE3NGFjYTBmZGQ5YTUzYTAwOGY5ODciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE5NmNjZTcyZjhlNTYzMGNmY2QyZjA3ZTA2YWUxNDAwMGQxNzc2YjQ5NDljYjlmMmFiNTgxYjljODAwZWMxNTYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f647a644b79c4fa997f5f335f0a8c71a",
+      "statement": "verify is bounded on the product of claims and pages rather than either list because the work is that many index counts, and an empty claims or pages list is refused by name since a verdict map with no verdicts reads as \"nothing to answer for\" — the one thing an answer gate must not conclude by accident.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/caps.py#L220-L252",
+          "version": "repo-lines-v1:sha256:45bad1cbbca2dc3ae4d5a6fa71dd6d809701b70fa8dc76265e2241eec4e45673:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIzMzg5NmJlNzkzNjMwMjQwMDllZjE5NThiOWRiMGRjNzllMTdiNDUyM2JlZGVjMzFiODNiNTM5YzBiYzg1MjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIzZGYyYWNmMDZlOGMzZjAzYzcxMzVjNmU4YWM1YTljYTU0MzJhYmUwNmE3NGFjYTBmZGQ5YTUzYTAwOGY5ODciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNjOWE5M2IxYWM4M2JjZjJmYzU5Y2VmNGQ3YTBkNzFmMWE1NWY4OTE3ZWRiOTIyOTcxMzBlYjg1OWMyY2Q1OGUifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/serve/caps.py#L29-L34",
+          "version": "repo-lines-v1:sha256:5742d79f6dde01c6cd1010b94218f9f1c7ebddf277f7482bb11e65c39cdc0589:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFlMTliYTI2MWFhYWQ0ZTVmYjc2Mjk3ODljMzFkOGJkMGUyNzNmMWY2YTMwMjEzMTg4MjI5ZDlhYThiOTg3YyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZGQxZmVjZmNkMjJmOGI1MWZlYjI4YjM5ZTYyNzQyMTZjMzU5NGE3MDIxNjM1YTFiYjU1ZDA0M2EwNjVhZDI4NCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjgxM2MxYzk3ZGJiMmFkZWY2ODQ0NGM3NGVmZDk5NmZkYWQ0MDNiMTM0Zjc2NTE5OWYzZmY2NmNjODM4Y2NlNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTgwOWExOWNjODAyMDdkY2Q4MGM5MjZiY2I1OTU5NGEwN2YwMzUyODI0YmVkOTRhODQ5ZDZiMTcyMDAyOWM4YyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_c90aea5063da4ca2ad3d8048f00dd22b",
+      "statement": "The skim row limit is a triage bound rather than a cost bound and is refused instead of clamped, because a caller asking for a hundred rows has misunderstood the move and silently returning twenty-five would let it believe it had seen a hundred — whereas lookup's cap bounds a page of a set and has no upper limit.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/caps.py#L203-L218",
+          "version": "repo-lines-v1:sha256:ceb8d8b854bb9734e6afc5865459e60d7d187d0d395421f822032fb6b77bbab5:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2NmY4NzUwZGZkMjRiNTA0MDNhNDYyZGE0ZjE3OTUyNTZiOTIxOGI2NWM2ODE5MjU4YzVjY2Y2ZjM4NTVmZjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIzZGYyYWNmMDZlOGMzZjAzYzcxMzVjNmU4YWM1YTljYTU0MzJhYmUwNmE3NGFjYTBmZGQ5YTUzYTAwOGY5ODciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ1Mzc1OWM4NzE2M2RiYjlmMThhNjA4YzFhMjI2MTkzNzIyMzNlN2VhYjAzYmJiZTIyZWJiYzU0NWJlOGFkMzIifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.1",
+    "at": "2026-09-11T14:07:28.402Z"
+  }
+}

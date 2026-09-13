@@ -1,0 +1,358 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:44c224276d6cb296e7d2c1b9279fccaa47e5139fccb8cc1ededb437cd8e09b79",
+  "claims": [
+    {
+      "id": "claim_8ebd8c05dfbb41fabb1eb69bf662c2db",
+      "statement": "VSIR_VLM selects the extraction backend and the embedding backend together through two parallel dict lookups (vsir.vlm.BACKENDS and vsir.ingest.embed.EMBEDDERS), so a run replaying extraction from a fixture cannot spend on embeddings and there is no second variable to set.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/embed.py#L663-L685",
+          "version": "repo-lines-v1:sha256:baa227062479942f8840faac40f1693e17d66fc9028a4fedf4aa9415375717ae:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE0NmIzZGQ1ODlhNTVmZjdhMmVlYWNkZDJhMDNkZWE4MjBhZmZmNGM3ZDc4YmUxYTY3YmQxNzNlZTE4YmYwYTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcxN2RhM2Y0OTcwNDJiMWZkMWUwMWQyMTRhMjNiZjY5NGYwNTFiM2JmODM0ZmViOGUxYTZiMjIyZTI5M2M4Y2MifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/vlm/__init__.py#L64-L75",
+          "version": "repo-lines-v1:sha256:5af6827840827567c417b3e24f837b927965950c343dc5e9de94d657235194d4:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM0OGE0ZjcwY2JhZDAxYzk1ZTJiM2E0NzVjOWE2YWRjOTQzZmQ1MDg5YmFhNDVhZjQ2NGQyNzkyNGNkZjJmNWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhiMGY4ZmFhMjBlNDg4OTQ3NjJjMGE5YWY4YTNmOTZmMjg5OWM2YjlmZWI4NGQ3NmU2MTM5YTIyZDhhMTM1MTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQzMjg2MDU5NGY1NGI3NmQyMzY4Yjg2ZWEzMjM0NDZkMWUxNjI1OTU3NGE1MWEyMDc3ZmE3MDkzNmEwNzdlMzIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0bb047cf46754e45890d2267d657c1d8",
+      "statement": "Both the stub and the live backends are imported unconditionally into the image and selected at boot from configuration, and a VSIR_VLM value the table does not know raises a typed vlm_backend_unavailable naming the available backends rather than a KeyError.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/embed.py#L674-L684",
+          "version": "repo-lines-v1:sha256:3ddb8fa69649561df2a15dbb506555479159bf55ec461e82718af58dec380e7e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU3NWJhY2MwZDM0ZmY0ZDU3NjhiNTQ2Y2NjNWQ0ZTg3MGE5ZGI1ZDNiYmIzZmQ1ZTExNThhZTk2ZWFlZjIwZTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxYzdiODg1YzNiYTUwMWIxYTk5ZjVhYmE2NDdiZTM2ZmNhOGE1NWIwMWUzMzk1NzNmNmRmNDExMmVhMTYyMDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYzNjdjOGE4OWY2NGYwZDAyOTMzZDkwYjgxOWQxZjk5OGIzOGQzMjExMGMwZTE2MjVlOThiMDFjNGUzMWFkZjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY3MjJkMGM4Y2QyODQzNTVhZDQ3MDQyYzIzYmRkMWQ1ZTI3OGZlZWUzYTc2ZDljNGNkMDdhY2Q5MGI0OTAwYWIifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/vlm/__init__.py#L87-L97",
+          "version": "repo-lines-v1:sha256:a6c4b6ccdd93f01abca7829d66a5320561719e82858c4d7a3ac312989339a288:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRlNzU3MjBiZTBmMGE1ZjU2M2I5ZWM5MDg1ZDdjYzk5Y2EwMjVkYWE5YjI1MGEzYWU2NmZiN2NmMGZmZjI4ODgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxYzdiODg1YzNiYTUwMWIxYTk5ZjVhYmE2NDdiZTM2ZmNhOGE1NWIwMWUzMzk1NzNmNmRmNDExMmVhMTYyMDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQzZDE3MWRlNzU0MzFhMDIxYTBkOTRmYTc2ZmFiZjBkNzEzOWM4OThjMWEwYjQ0YjQzY2E2MDkwM2ZhMWI4NDUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3f183845bbc140328d5a6c7faa10e908",
+      "statement": "A conformance grep over the whole vsir package fails the build on any test-only branch (if TESTING, TESTING environment reads, PYTEST_CURRENT_TEST, or a pytest membership test), so the code path under test is the code path that ships.",
+      "evidence": [
+        {
+          "resource": "repo://backend/tests/unit/test_conformance.py#L310-L321",
+          "version": "repo-lines-v1:sha256:8eca458f216e393acd5ac311b5bf8e25a96d1fa2ca4f68e0ad1f4bf38e852721:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdkZjJjYzQ4ZjdlZjA4ZWMyYTMwNGEyNmVjNjZiNjk1YWViNjUxN2VlMDY2ZTE5ODk0YzI4NWU2MDRhNWE5MzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAzZWU4Zjg3ZDNmNjY5ZWZmZjlkN2FkZmQyZTExN2U4NWNmOTgxMmNiMGU0ZDM1MDhlMGQ5ZmZlMzU4NmIxN2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQyNzk3OThhOWQ2M2QyNmM3MGY0ZDk2YjI1OTdhOWIwMmIwM2M0NjE4MmE1OTE2N2E5NmI3OGE3MGY1NjhlZDUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ddc2c6f71d7d4ca5b3c5f9ce1d317bdf",
+      "statement": "The four cache keys are sha256 digests over exactly the inputs that can change an answer: facts_key over content hash, model id and prompt version; extract_key over ordered page image hashes, model id, prompt version, dpi and schema hash; read_key over the extract_key inputs plus the question; and embed_key over composition version, embed model id and the composed string.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/vlm/cache.py#L147-L201",
+          "version": "repo-lines-v1:sha256:6bc6711494848ea571b98ae0e8af71ad9403e2f73e658488114ccefe67737eed:eyJzZWxlY3RlZExpbmVDb3VudCI6NTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM1MWJjNGI0MjE5OTE5ZDY5MWQwYjc5NjM0ODhhZjZiOGI2ODRjOGJjOTMzN2FlNWM1NzhkZjMwYzQyZTk1YzAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNmZTM4ZTlhMTU5NGIwNjhmYzM5MDJlOTE1N2Y1YzhjMzVhN2U2NDIzZjAyMzc3Y2MwZDU3NDE3YTBmNzliZjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBiMjA5YzFkY2E0MzNlMjFjZjI3YzAxMmExYmE3YmE1NDIyYTBjNzgwZDg5NGUxMzUxZTk4YmNjYzQzM2M4MzAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_866f60110caf4db59edd225c0789ea53",
+      "statement": "Cache key inputs are length-prefixed before joining, because a plain separator would let two different input splits collide on one key and serve one configuration's output as another's — and one of the inputs, prompt_version, is operator-supplied.",
+      "evidence": [
+        {
+          "resource": "repo://backend/tests/unit/test_cache_keys.py#L197-L209",
+          "version": "repo-lines-v1:sha256:40872aec823417bf96ab5724c0c3c19168337b21287980dd787b50830b92159b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE0OTZiMjhjYTc1ZmU5N2UyNDQzNGYwYTViMGI4ZmFmNzQ3NjVhOTdiYTBhNjE2YzA1YmU1NzVlMjYwNmUxNWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFkY2YzYzVkZjY3OGMzMmI4ZDlkZDUxYWU0OWRlMDI3ZjYxZmUxMDZhMzA2NzkxYmUxNjM0NmQ5NmRiZGExNzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFhMjI2OWYwOGIxMGI1YzVmMTcxYzE0NTQ4ZjNiOGZlMzU1ZjU2MmExYzI3MDgzYzY1MGI5NWQwMzk0YjQ0MTUifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/vlm/cache.py#L74-L82",
+          "version": "repo-lines-v1:sha256:b012e04ff7b71b0872466f1ff8cf0d6036ea99da8c19de8af51e176ae7a32cc7:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTg5MTg1MjQ2Mjg3ODkxYTMwYzJjMTEwNjhhOTY0ZWI0ZTBhNWJjMDUzMWQzMmE5ZGVlMmM5ODMxNjQxMDc4NyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiM2VkNTc4NmE0OTI3Yzk1ZGNkMmQwYWE2Y2NmNTZlY2FhYWM5YzFmYzBlZjVhMzY1NTUwN2QzYmE0OTc4NmQ2NiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNzE3ZWI4MmU1YWRlMjQ4MDBjMzZhODg3MWQ5OGIxYmM3OTZhMDVkYjFlNjZhZjNhYzFiNjBjYjdkOWNkODBjMyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_2bd2f502677343b3af005a347987159f",
+      "statement": "extract_key hashes the ordered page image hashes rather than a file hash plus a plan hash, so the key depends on the pixels the model will actually see and two windows of the same document cannot collide.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/vlm/cache.py#L159-L169",
+          "version": "repo-lines-v1:sha256:28b50ccd5aaee6dc2c231db8eaa120c5a27c72c8377a369ec310542b8979a835:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE0OTIzNjVhYTc1ZGEzYjBhOGY1N2E4ZGMwZWRiMzJhNGI3MTE4N2QyYTVlYzZlMGU2YjhiMGEwNzMwM2U1NDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU0YjE4NDI3NTJiNTA5ZmEzNjJiNzFjZDQyZjQzZGVhNWJmYjFhYTczMTI1M2Q3Yjk0ZTUwN2QyMmIzMjE1MzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjI1MDJiYzA1NDQ4Nzk4M2FkYTliYjhmYWIxYzMzYTAzMWRiYTk3ZTJkZGZlMWMyYmQ0YjAzOGQ1NjA5ZGQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6ef08c785ff64c1e94d810689ea71425",
+      "statement": "read_key includes the question, which is why the read tool pins dpi server-side: a caller-controlled dpi would be a cache-key input the caller could vary, billing the same question once per dpi.",
+      "evidence": [
+        {
+          "resource": "repo://backend/tests/unit/test_cache_keys.py#L133-L158",
+          "version": "repo-lines-v1:sha256:04f7e43bc062286fdf6233027051d13c486b5249891be9c0ac57d832e1642259:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIwODZmZGIwMzIxNTE3OGFiYzZiOTI4NjE2Yjk2ZGRlOTM0ZWQ1NzdhZmY2MTYzMDdkYmIwZTQzY2E4MTJiOWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI4NTM5NGNkNGYwMGY4OWRiM2ExNjdhOTIwMzAxMjQ3YjczZTg4OWM0OTI0ZjZiODM5M2U3YjZjOWNkZWMxODEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZhNzczMzEzNWE3ZDZmM2QzNDAxYTYyNzA1N2UzYzAxMTcyODJkODk5MWY3YjU0NzM1MGM3ZDRmNTZlNmI5MGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMxZjM1OGEwMzZjYjQ4NWIyMGRhZTkzOGVmNjhkMzI2ZDRiNWFkOWU5NmRiODRlZjUwM2Y3OTU3NmU5OWFiZWUifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/vlm/cache.py#L171-L185",
+          "version": "repo-lines-v1:sha256:55a6636d6237a0881ea727fcf9278aa2155ba2aea4a22ae3953019d468b1b439:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjExOGNmYzY3ZGQ2MzViMjkxNDRkNzk5NGFmZGRiNDY4MGE1NGYwMDE4NjE4ODJkMTJmMDdmMmFlOTgyNDllYWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZkNTE4ZjUxODNlOGRlOGI1ZDA2MjBiNTk2NTMzN2IwZjAxYThkY2Q1YjJiNTBlOWRhMDU0YTQ1NzMwMGJlMTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc1ODcxZGUyMDY4ZmQ4NDljOWZkZjRjYThkMWM2YjZiODJiYmJlYjM0ZGU2OTY0NWUxM2E3ODFmZDM5YzA5ZjIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6409900e26da4e8880279f2067328058",
+      "statement": "VSIR_VLM_TIER is deliberately not an input to any cache key, because batch and standard produce the same output and keying on the tier would re-bill a whole corpus for taking the discount.",
+      "evidence": [
+        {
+          "resource": "repo://backend/tests/unit/test_cache_keys.py#L113-L122",
+          "version": "repo-lines-v1:sha256:3a72691a4d2a8320e819ab8142f18bb1cb4848b26c9008947a6e3fce34f4e824:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNmOWU4Y2FkYTMyM2ZkMGVlZDM5M2Q5MmU4MjFhY2E5YWZiOTA3YTc4YmM0NDYwNDU1NDA1ZWU3Zjg1MGNiYmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM3NmUyYmM0MmM4NTIwZDJhYTgyYjlhYWI0MTAwOTM2YTY1ZWY3ZWU2ODdmYTVlNjI1ZDVmY2I2NTFiODZkNzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQxMWFhZWU0NWUxM2Y1NGJlNmQ4MWJjYTk3ZWMwZTIxODlkZjkwZDYwMzQ4YzEzMWViN2MyMmQzODk1OTljMjYifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/vlm/cache.py#L37-L40",
+          "version": "repo-lines-v1:sha256:fd95e6f2f422b618d89a7b87d13377d0837a9760d622d578778b88a635717c57:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTcxMTNiMmRiZDIyNzc5YjlhNjgyZTEzNjI0Y2FmNjZmYmFiZmU2MTBiNzkzMTNjNzYwNzIwYWVmMzRjNmVmNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYzRiM2RjMTQ2M2I5NmRlNTAxYjA2ZTM1ZGY1ZGNhYmIzMzMzNTc5YzlmZGYyNDI0NTFhMDBmZmZkMGY3ZmY5NCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTU4ODdmYTA4ZDA0MDY5NTc1ZDk1ZGQxMjRjMTNlMWY5ZWQ0MWI2N2YwZjkyMzc0N2MxOWMzMzJlNTAyNGU5ZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZmZmZDk4Yjk4NjQyNWIzNjA3MzBkNmIyOTU4NWE4NjQzOGI3NzcyN2UxNWJlYWY4YTNiN2FkNThmNTczOTZjYSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_6f9f21f1ba244abfba440eb196c7a1a2",
+      "statement": "embed_key deliberately has no dim input, because a dimension change is a change of collection rather than of namespace; the collection fingerprint guards that instead.",
+      "evidence": [
+        {
+          "resource": "repo://backend/tests/unit/test_cache_keys.py#L184-L189",
+          "version": "repo-lines-v1:sha256:51f432604d53cea5d57b8073bbbedacf0d860d61f466804b13d438c83774cdb0:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzVhNWQ0OGY3Y2ZhNDllOWE4OWVjYWM1YmZlYjQzNTljZDJjZDY4ZmM5ODdhMjFjY2Q1MWVlYjU5ODJkNDM5OSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODhmMThmNGY0YjdhYWNjYTI4NDg1YjcxMDlmZTBlMjEyMDAxMjhkY2ZhNjVkODgwZjAxODM0ZTU5NzIzYjZhMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMDc4ODBiZTIyNWY3YWQ3NWQ1ZjdlYTAwZGFkNDIwZDZmOTVmYjg0NWJmODg5OWI0N2E1MDllMjQ0MGY5YjVmMCJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/vlm/cache.py#L187-L201",
+          "version": "repo-lines-v1:sha256:f6a44791043551780a1ad872890abdd459db82c2f9b14923860c0c1642d3c977:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhlYmVmN2ZjOWY3Y2U5YzQzNDAyNzk0M2ZjYTAwM2EwZGRhZDE3MGNhZDY1NWRmZTdlMTRlYmYwMTI5NjdkNTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdmNjM5ZmRlOWE2ZjFjMDU3ODVkMDVjNTdlMmY3MGVlMzc3ZDFlNjZkNjc5ZWMwZGVhNmI2NWQ1ODE1ODNmNGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBiMjA5YzFkY2E0MzNlMjFjZjI3YzAxMmExYmE3YmE1NDIyYTBjNzgwZDg5NGUxMzUxZTk4YmNjYzQzM2M4MzAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e4c321fa8d664f6091c0c8192b6e86a0",
+      "statement": "Frozen responses live under three namespaces — facts, extract and read, one per call rather than per model — and the namespace is encoded into the derived control-plane point id so two different calls cannot collide even if their keys did.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/vlm/cache.py#L317-L330",
+          "version": "repo-lines-v1:sha256:e838615497754c35a83bbf3c532e4f9befb8bca7725f443464833aeec012bc2a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyOWQzZGVhMDEyODU0YWNmM2Q2NTBlNjQ2ZTdlNDczOTY4M2I4ZWY4OTgyZGI5YzZlY2QzYzUzZjkzNGNiNTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJkMjliNzMwZTdkMTE3ZmRmOTA2NmNjOWUyZWYxZjJjYmYwZDM4YmI3ZDQxNTFkNjdiN2ExMGQxOGFmNjY5YTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNiMDI4YzI4MTk5ZGQwY2EyMjEwYWQ4MzllMGIxMDViOWRhOWQxMzRlMGZhMzI3YmU1ZmFhZjg0Yjg1OTkzOTEifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/vlm/cache.py#L68-L73",
+          "version": "repo-lines-v1:sha256:6af27b4103cf5dec08e9f3ae6d6a568e1ab0c225c216dea19da02040620a2eb0:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTY5ZDcyOWQ4OTc2MDczOGMyNGJkNmQyZjEwYTA2ODIyYjUwMmJlNTk2M2M4ODgyNGIwOTE4NDE0MzAxMzA5MiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTg1NzM2Y2M3YWViYTY5ODAxMjUzM2E0YWZmYTllNTJlN2JjYjQ2NWFkZmVmYmFlZTA1M2Q0MWIyY2QyY2IyZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiM2MxMzEzZjRjZjUyYzVmM2VmYzVmNWNhMjhkNGMxNTA3ODMxZjlmMjdjYzliNmJlMDdmNzAxYmRkODIwZTIxNCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_423ce574ea6249dfba338204bbe8a3ba",
+      "statement": "FixtureStore is read-only and addresses a response by its key alone with no revision, run id or document id in the path; the only writer into a fixture directory is the module-level write() function, kept off the store so a running process cannot fill its own cache.",
+      "evidence": [
+        {
+          "resource": "repo://backend/tests/unit/test_cache_keys.py#L252-L257",
+          "version": "repo-lines-v1:sha256:df465ca51e6e6ea25b0f3ec67a94ad3165d53c63320de3af5f61f423032aa72b:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMmYwMzdlNDE1MDNhODQxOWNhNjcxNDkwM2NkNjliODZkZGQ5MjdkNDlmMDhjYzA1MzEwNWE3M2YyNmFjOGQ4YyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzhmMmU4NzExMDZkNmE5Y2Y2NDgwOTNhZTIwMzg4ZTI2Mzc3NWIxZmIxYTgwMDY3NDNmYmI2ODBhNzVmNWYxYyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZjI3ZDQ0MGJiYTFjN2IwYzA3YmMxNzIxMTEyMTFjMmY4MjU0ODIwNTQ0OGU3MGJhMzkyMjAzZjNmOGIwYjQ4YSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/vlm/cache.py#L235-L260",
+          "version": "repo-lines-v1:sha256:326fc89fdd256fb3cc147c7777ecf0d9ec02aafa7afa5f2a0e99d6fc824e7767:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdhMTM5OWViZmM4YjZjMTE5YmM0MTcxZjY1YTlmMDQxYzAzN2FiNWZiNjZhMTIyZDg5Y2IxM2U0ZDk5ZTM2MzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZlOTFmZDlkMzNkNTQ0ZWQ1MjAzODkxMzcxNjUyYTc0ODZkZmEzZjU3ODM2NjVmZTJjMTI0NjlhZDc0ZTU2NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjcwY2UzZjI0YWI0N2MyZjVhOWQzMzdmMzc3ZWQ4NTczZmE1NjU4NDA3NjQwMmYxYWYwNTRhM2RlZDYxOTQ2MmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRjMzY3ZGVlYzg0Y2UwYzU4NDJlNzg4OWZiMTQ0OThhOTQ2YzhlNDFiMDQ3ZDZiMjM2NzNhYTJhODg2NGYxYzYifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/vlm/cache.py#L289-L306",
+          "version": "repo-lines-v1:sha256:862243eb1897eabc0d646dc4e7e7ac78fea8eb7076a42f309fe43d597467d962:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkwNjE3NDJmMjJkMzIzZDZjMDc1ZDViNzBhOWUwMTBmZjZiZTU0MWE3YzVkNGFlNWU2NWNhZWI4OTFkMDNlZDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc3NTNjYzc5YTlhZWY3MmRlYjFjMTk5NDM0M2IxMmYyNTEwNWYxYTEyOGEwYzJlN2RjNjdiNmU5YTI3MDAzYjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjliMGJiY2RjNmJhOTM4NjM2MWVlMWRlOWNjZjE2M2MwZjU1NzZmODRkYTM5MjM5MGUwOGE1YmMxZGU5MjIzNzUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_70ac874573134636ad86a98c4f65c426",
+      "statement": "A cache entry keeps the verbatim response body plus finish_reason and usage rather than a processed record, so a downstream change can be re-derived without buying the paid call again.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/vlm/cache.py#L203-L233",
+          "version": "repo-lines-v1:sha256:a9956bec756e8550a748300c48fcd385ba88223b28c25c0cfcce2ab682cf7a11:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2OWExMzk3NWMyNTZlYzgzMjBlMjAxNjA4M2M5NmRmNjM3Y2EzZDM1YmViZGUyMzE0YmVlM2E0NzExYjU2Y2EiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImMzNWVmOTU5MDA1ODcwNjM2NDVlZTkxMmY0MGQ2MTBhOWI5MGE1MDE3MzllMWRhMDc3ODM2NDllOGY5OGE4M2UiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY2ZjBiNDlkYTUxZDk3YzNjMzFiZDM4MWE0ZDcwZGFiOTZlNzYwNzM2MTYxOWRiOWFjOGU3ZmRhYjQyNDY2YzkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_14bd70a38ae04855b326e952b8a2c282",
+      "statement": "The stub backend never falls back to a live call and never fabricates a body: a key absent from the fixture directory raises a typed FixtureMiss naming the namespace, the key and the directory.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/vlm/cache.py#L263-L285",
+          "version": "repo-lines-v1:sha256:989b98b44d7d450c4fa58dff61beba1201ebc41dbb8034e9d22055b3290f93f1:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMyMTJkYzgzZmExMjhjYTc1MWY2ZDdhZDA4YjhmYmFjNmRmZTgxNDE2NWE5Y2ZjNWQ1MzhlNTMzMjM2ODZmYzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk0YjIyOThjZTVhMmIzYWRkNzAyMzI3Yzc5NmZiMjNkNWQ0YmNmZWFkODk3YWE5NDI5NjI1NDEzMzNkZmU5ZjIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFmOWQ0ZGFiYmRmOTNlODE0MTdhMDRkZjU5ZDQ4OTM5ODk5MGQ0ODQ3ZTFiYmE4OWY4ZGU5NmUyZDA1YTZiNTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc3NTNjYzc5YTlhZWY3MmRlYjFjMTk5NDM0M2IxMmYyNTEwNWYxYTEyOGEwYzJlN2RjNjdiNmU5YTI3MDAzYjEifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/vlm/stub.py#L67-L85",
+          "version": "repo-lines-v1:sha256:f19171aa2579e9bef132070e6801aceefa960482cd907199c08b3697de589f8e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFmMzA1NThhYjc1YTVhMDE3MDExZjc5NmFhMWVjYzk5ZGY2NGUzNWYzMDI4NmNhMGE4NzA5OGIwNDAzODg2ZTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE1ZWVmZjNjNDc3NmY1ZmI5Yzk1OTg0ZDFhMTc0NmIxZTU2OGRkNjhkNWVkZTZlNDQ4NWFhNzM1ODhhNDM3ZWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ4OWExMjBjMWEyMzEwMmMzNGZmOTc0OTU1Y2M3ZDhlMzUyZjc0YWI5Y2IzODg3MzgyODQyMDgyNGI4NDIzNWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_04685806e9944cb2b040db0b98d31c23",
+      "statement": "VSIR_VLM=stub with no VSIR_FIXTURE, or with a path that is not a directory, is a named vlm_backend_unavailable refusal at backend construction rather than a skip.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/vlm/stub.py#L44-L66",
+          "version": "repo-lines-v1:sha256:dac7f4a78049cfce518fd81a7d3eb3f939347a0693839dfdb1d407965292740f:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyMGI0NTNmNWUwYzkyZDVmNmMyNTFhNWVhMTk2MGQ3MmYzYmQwNzk1NmFlODU3ZGEyMGUzMWE4OGM1NTk2OWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIyNTdiZGNkMWRiMjAzOGNkM2RiOGVlNjQyMzliZGQ3ZDU4M2Y0NjgzYTQ3YzRlYTYyODUwYjkxOGUwZGY3YjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY2ZGQzYzM3YWE2MjMxMzk4NmQ1MjlhMzA0NjVhODU2MjBlNzE2N2UyZTI3MjAzMjBjODViNTY5MWZmYmYxYTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_378c6b5dc3ba47e0bf7c55630a87b8a4",
+      "statement": "The stub reproduces a provider-side truncation as a truncation: when a frozen response's sidecar records a non-STOP finish reason the stub raises VlmTruncated, so the bisect-and-re-bill repair path is exercised by the replay corpus rather than only by a paid run.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/vlm/stub.py#L73-L85",
+          "version": "repo-lines-v1:sha256:4d84b31d24c2805e8886c891620d9d2998c42e4cdd93c987af6973b52220c434:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNiYzFhODY2ZWVmOWY5MjY5MzJjYTNjMjBmYjEwMTJlZTNhMzEzZTQ3YzFkZGIyODQyNDBhYWQxMDM2NjIyMTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE1ZWVmZjNjNDc3NmY1ZmI5Yzk1OTg0ZDFhMTc0NmIxZTU2OGRkNjhkNWVkZTZlNDQ4NWFhNzM1ODhhNDM3ZWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM4NzgxM2E0MzQ0Yjc5YzMxN2Y5ZDhlMjAxNjRhZjliZDRkMDdjZTM4YWQyYWYwMDcxZDI5ZWYwNWFlMWMxM2MiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_890c9396026c4b98bd3bd2b5ed08c685",
+      "statement": "The live Gemini backend refuses to be constructed without VSIR_VLM_KEY, and holds the credential in a repr=False field so no traceback or log line can carry it.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/vlm/client.py#L315-L350",
+          "version": "repo-lines-v1:sha256:de8ad3c9d4a7774247fc4a78a13c0f15f8b83f394bda1c40e4f0da736704a9f3:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFjODA0N2MzM2NmNTAzODc0ZDMxMTAwODFlNmRhNmRkYzRkYTQ0NjM3ODIwYTczODVmM2U4ZmQ0M2ExNmVlZTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA0YWZiMmM5MmE2YjRhZWI4MDAzMjY2YjZjMjUxNzU4NmI2ZTM2NTIyMzE0MWUwY2JmZDdlNDRjYWMwZjM3YjciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZjMWYwMmZkN2VjMWQ0NjJjMGNiODE4Yjk0OGZmZTRmNzE1YjJjMmM0MzI2MzBjMjMyZGZlMzRkNDI3NDNmYTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjUwNjZjN2JhZDRlOTA5MjQwODM0ZTEyZWZiYjFkNWYyMDg5ZDc1OGViOGY2MmM2YWRmZWFhNDA1OWRjYWMyMjYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0c9397a496174a53bae742d2dfb559aa",
+      "statement": "The model-id pin is re-verified at the point of spend, outside the retry ladder, because a long-lived worker's configuration may never have passed a boot check and a repointed floating alias would leave the cache key unchanged while the model behind it changed.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/vlm/client.py#L352-L370",
+          "version": "repo-lines-v1:sha256:ac607176b973f49a477b49b9461dccf7442d1e1d7330a457a8e4aad99a14ee67:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFmMzA1NThhYjc1YTVhMDE3MDExZjc5NmFhMWVjYzk5ZGY2NGUzNWYzMDI4NmNhMGE4NzA5OGIwNDAzODg2ZTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJkZWE1ZmU2OGY5ZDIyOTc5Y2Y3OWEwOWYwOWZhMTM3NTc4M2Q2MDk0MmQ3NGE1ZGM5ZWQ5NjMyYzdhZDk4ODUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgwNDQ5M2QxYzVhMzM4NmRhZGRjNzUyMTEwODk3OTdiMTI2MGRkZjY4ODgwNjdhYmEyOThmYjllZmZkODYzZTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY3NjEyMDE4OTJmZGU1N2U3ODVkOWM0MTFkZTJlN2I0YWU4OTFlYThiZDY0YWYwOTg0OGEwZTVhOWQzNDllY2YifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/vlm/client.py#L538-L556",
+          "version": "repo-lines-v1:sha256:bfcb9b6dd395cbb0c38734018d63870c84a60e4f7dd40392c78b433517260b03:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVhYmRmZDMwMGExMTdiOTBkZmM3YjgxNGExYjdmYzUwMjM2Yjc5ZTQxNzYxNDMxYzdlNmM2M2JmMWM4NzMyZGUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJlNDA5Yzg2NDhiNTNjYmUxNWRhOWZmNjQ1NTgwYjk5NjA5ZmFlMjg4MmJlNDEwNTcwYzg1M2FjOWY2YTc4NDQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_61f7ab0ac7644b30bc4ce9c20e4a3113",
+      "statement": "A VSIR_VLM_TIER other than standard raises vlm_tier_unsupported before any call is made, and the refusal notes that a run started on standard can be finished on batch without re-billing because the tier is not a key input.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/vlm/client.py#L352-L362",
+          "version": "repo-lines-v1:sha256:903529c6d8abe1762dbd94d8ec7b14e42b6ad2f47b3a43678e968232707a3d3d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFmMzA1NThhYjc1YTVhMDE3MDExZjc5NmFhMWVjYzk5ZGY2NGUzNWYzMDI4NmNhMGE4NzA5OGIwNDAzODg2ZTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFhYmE5OWMyNGVjNDZmYjk1MDUwZGZhZGVlMDVhOTllMzBkYTllMjdmODY5OTViZjQ1NDRmM2U1MjAzMzQ0YjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgwNDQ5M2QxYzVhMzM4NmRhZGRjNzUyMTEwODk3OTdiMTI2MGRkZjY4ODgwNjdhYmEyOThmYjllZmZkODYzZTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjExNDZhMTVkMmUyNzMxZTM4NTUwN2Q3YmI0OWQ3MzRhODJlNTc2YzdkODQ3MTZiODQ1YTk3MDhjY2Y2ZmUwODgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_29b5342fdedb48a8934d519a0c4aa9dc",
+      "statement": "Prompts are part of the release rather than configuration: prompt() refuses a version absent from PROMPT_DIGESTS, and replay never reaches it at all because the prompt version lives in the cache key — which is how fixtures frozen under an older prompt version keep replaying.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/vlm/client.py#L173-L195",
+          "version": "repo-lines-v1:sha256:157d7955d0b94562cf02e05a623cd1bc5f31e7d22d3f4f9fd6da0d41b9430c62:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNlOWI5NzhjNzhhZmI3MjJmMDdiMzZkNjdhMGNmMGRmMjlmMzhhMTZlMGFiODhiODFjMDAxOTUxNTU3ZTNjYzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlmMDM2NWUzYTA2MjhlNTJlZmIyM2FjYmI2OGE0NGZmNWQwMDQ4MDdjMWFiZmM5OGMzNWY1M2JhMzA5MzE1ZDAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY2NWU0MGE2ZGFhZmE0MDU0ODUwZWE2NDc4MGQ3MzZkNjIwYjVmMjdkNzc0NDgyNjQxMGM5NTJmNmI0ZDU5OWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBhNmQ1MzY1NzFkYWU0OGVmNGRhODc5MmQ3OTRmMWY4YTFmZThjNDE3YWM3NWYxNzY3YjQ5YzQ4MDkxZjFjZTAifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/vlm/client.py#L88-L102",
+          "version": "repo-lines-v1:sha256:d4fafca7c37c1d58132408f03838a4fc73915b2a5d7ed32801915185c991ccd1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUzNzhmMzVkZmQxZWRiODNkODI5N2MyYTg1YmY3NjEyNzhkMDA1MjBmNjhjNDc5NWRlZmNiNjczMWU3NmU1YWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjViOWZkZGI2ZWI1NjViMjc0OGQ4YjUyZWYzMTJmOWFlOWM1Yjg4ZTdmMWM0YjlmNzQ5ZjVmY2M5YzZjYTVhNDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM4MTkzNzYwNmVlZTdkYTQ3ZTk3ZTA3NGM2YjEyNDNiYWU5YzZjYzBmYjk0NjJlYjFkNzVjMjg1ODk5NGVjOTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_42c940c1af96462bba3a751677d23c2a",
+      "statement": "The live client's retryable set includes httpx transport failures as well as HTTP statuses, because a connection that never produced a reply cannot have been rejected on its merits — a gap that previously threw away runs after the extraction spend had already been paid.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/vlm/client.py#L104-L131",
+          "version": "repo-lines-v1:sha256:6e64c458a750586bed053480b4b4a2bd3dcba78e028f66c281617df0d6ddc415:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ4YmZmNDU4MTYzZGY3MTI4MjZmMDBmYzkxZjU2MDM0NWY4ZDJiY2IxNDJhZDc5YmYxYzRhYWM1MzNkM2QyOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRjMjBjNjk3ZDE2NmNkOTY3ZDU1NjhlMzM0Y2MyMmZiNWNmMzAwYWU4OTQ3YzExYTFiZTcwYmM4ZjRkZDI5YjgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJjMDRhNmQxN2Y2YzkwMjgwMTVkMzFhYzhkNDYzNGEyOWM5ZDA0MDExN2VlZjg2ZTk4OWYxNGI3ZDNhNWExY2EifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_daf739eef55f480981e7e010f9546d29",
+      "statement": "CachingBackend reads the durable control-plane store before calling the wrapped backend and writes the response back afterwards, and it wraps the stub as well as the live backend so the resume path it exists for is exercised by the free test layers.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/vlm/cached.py#L1-L31",
+          "version": "repo-lines-v1:sha256:7fbef783e60a621bb1302e505811b194c77fec516366fee5381ebe2813f92781:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU4ZTZjYmZkZjI2ZTdjYzBmOTBhOTk0OWRkODNlZWUwMzYxZTViZTk0MmIxNzQwZDk5ZWZiMGMxN2M2ZTcyODkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzMDNlY2RkNGE0ZDEwZjE5YzczZmQ0MmZkMTI0MzdmZDMzNTRhODI2ODE2MDVkYTUyNTVhOTdhMzkwNjhkYmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVjODViMmZmYzg3MDIxYWE5MzZlODg0NmQwNDkxNmNiN2MyODc3OGJkODVjYjAxZGIwNGYyZjg3NDBkMTRjMGEifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/vlm/cached.py#L46-L81",
+          "version": "repo-lines-v1:sha256:2aab2201c466bd6081f82df01fc1ab7b5eb420e2c3c40452761832b7b9b1d871:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZlM2UxZTZlMWMzMTczZWIwMDk0NjQwY2RiNTI2NWM4NDE5ZWYwNTIzMjZiOGExMWQ1OTFiY2ZlZThiZTcxNzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY4ZDk1NjhkMjEzNTA1ODkyNThmYjIzN2YyOTRmODk0N2Q4MWQzODAzYWYzMjdlYWY4OTQ4NTMwMGU2N2MyMmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA3NDk3Y2M4NzBkZDRlY2M0MGUxNmM3M2Y2ZjYxNmQzY2ZkNWJiNTdkMjg0N2E3ZWUwNjM1MTliY2JmY2UwYTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_311bd609505d4510a64389f51036b283",
+      "statement": "A cache write failure is swallowed and logged while a read failure raises, so an unavailable store costs the next run a re-bill rather than turning an outage into unmetered spending.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/vlm/cached.py#L28-L31",
+          "version": "repo-lines-v1:sha256:12a1d1b9baa26bec44ffe6bb295478b10e6136fe8776166042ea5bc40b1b7c4e:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYjc2YzQyMTlkY2VmODAxOTY2NDljZThjNWQ4MWNkYzZiOWUxNmFjYjdlYjBkNmE1ZTZkNjViNjFhM2M4ZWE5NCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTMwM2VjZGQ0YTRkMTBmMTljNzNmZDQyZmQxMjQzN2ZkMzM1NGE4MjY4MTYwNWRhNTI1NWE5N2EzOTA2OGRiYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjZhZjNlYWQzODk2M2RjNjRhZDAwNWFjODk1MGI5NmZkOTk2N2IzYWRiZWJhZjllZjQ3Nzg2NjBmOWVlNjlhOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNWM4NWIyZmZjODcwMjFhYTkzNmU4ODQ2ZDA0OTE2Y2I3YzI4Nzc4YmQ4NWNiMDFkYjA0ZjJmODc0MGQxNGMwYSJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/vlm/cached.py#L67-L77",
+          "version": "repo-lines-v1:sha256:8d459598cdf383701b1740b7808625dc1a361cce65002299b091e5bbd75ad6bc:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE1ZWVmZjNjNDc3NmY1ZmI5Yzk1OTg0ZDFhMTc0NmIxZTU2OGRkNjhkNWVkZTZlNDQ4NWFhNzM1ODhhNDM3ZWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYxZjJiMTA1NTQ5ZjIwN2Q2YmEwOTJiYzQyNGQ0NWI1ZTYzMzdhYzU4ZWMyNmU3Mjk2YTY2ZWEwMTcxYjQzNjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZjMjM3YzUzZDVhNmIzMTVjMDBjZTA0ZTYxMmE0MjZlNTNiMzg4NzBkYjZkNmYzMTJmMGY2MmQ3YjNlMWRiMjQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ce53fe56d2b544c883d0c069fb1ca860",
+      "statement": "Both the cache and the recorder wrap the VLM boundary rather than a pipeline step, so every call is caught by construction — including the extra calls a bisected window makes mid-flight, which a per-step wiring would miss.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/vlm/cached.py#L7-L13",
+          "version": "repo-lines-v1:sha256:17cad8845bb7b9457fe0e85d17d3689e250f11457beda70b160f999e389788bc:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMWU5YzdhYmUxNzM4MGZhNDE2YTMyY2RjOWE0NjMxNDY5MTg4NjM2ODYyMTgzMTY1MjFhNTI2YjExZmViYTIzMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNzhhNTYzYjQ2ZGZkNTkwZjZhZTljMzlkYmZmYmFmODgyZTVjOGU1YzFmYjE4ZGFmYmEzY2ZmZTUxN2QzOWFiMCJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/vlm/record.py#L20-L24",
+          "version": "repo-lines-v1:sha256:f56b12ddff94fa649eae07f19d62c44027673b1cb100b9703cba1f70d93791e8:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjE3NjFmMjY5ZDU1MzQxOTZhMTI4MWZhZDFkNzk3OTUxMGRhYjczMTM3NGM5ZjU2ZDQxZDY5ZTQxZDhhNjBiNiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMWZjODcwODA0YjVhOTY5YmEyMDhmMTA0NWNjZWJlYWVjN2UyNTYyOGNhN2M1Y2E1MWJlNjVmNTg5MzYzM2NkMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYTAzODUwYmJhMWM1YzhjYTUwNWYwNTk4NzFhMjdiYmYzODEzNjNmYjY2MzIxYzdjYjI5OWEwZDg5NTE3MjlkOSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_67ad2b91d3224251862776b40dc031ac",
+      "statement": "Recording is a per-run flag rather than a configuration value, and the recorder never substitutes a body: every response comes from the wrapped backend verbatim and is frozen under the key the call was made with.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/vlm/record.py#L47-L60",
+          "version": "repo-lines-v1:sha256:540193ead8a5232654baea2aaaba318e826d09c13051c580370a632e5cae82f4:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2NDA0MDQyY2E3YTE0ZGJiZjVjZGYzYmMwZjdlMjI3YmJiNzFlYTRlNzFlMzg5NWNlNTJlZWZlYzE5MDlhZDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk2OTc2NzRkYWE3OTc2MTk1ODlkYjdkZGI5YjNjYzRhZjExZmQwNTk1NmJjYWJlZWE0ZjM0ZTU5NmQ3OTA1NjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNmN2JkYTNiYzdlMGE5MTk0NTVmNDVjMTdkODY5ZTMxZGZlNzMxZjVlMzMyMmE4YjY0NzQwYTQ5MTJiNDEyODAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFmMTEyZjdhZTg4YzAxZjEzMzZlZmFhYjFkZWUzNjg5N2ZkY2I3ZDkzZTRhY2Q2YWJjZDk2MjI0ZTA2NjNlZDgifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/vlm/record.py#L8-L31",
+          "version": "repo-lines-v1:sha256:ca585445762c2d6ec821652976495a16d2d03b757fa830f124794b2bd94c4638:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUzODRiZmRiMmRmMzgwYjY1NTdjYzdhNzFkMTY4OTE0MTViY2NhYTg3Njk5NDA2ZTIzNmY3NTJjNjQxNTM4OWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY5M2RiM2Q4MjQ4NzEyOTQwOTY2Zjc0NWZmYTYzYjQyYmRlNDBhZTAyMmI4NGVmM2RhMTRlNjU3Y2I4MTc5ZjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgyM2ViNmIxYWNkYzU3NTY3OTcxMWFlZjFiNWIzMWFjMmFmMGU4ZGNlNjdmZjU1ZTlkYzkxNWVjNjJiODEzODcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_427e7874c7964c0bafa93f2204f848b7",
+      "statement": "StubEmbedder computes a deterministic vector from the composition instead of replaying a frozen one, which lets tests assert both that an unchanged composition re-embeds identically and that a changed composition produces a different vector.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/embed.py#L373-L396",
+          "version": "repo-lines-v1:sha256:e8e1caebb48f03d54b44e9cdad10ec344dd3f7522b0f46ed49250e334a72def8:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2OWExMzk3NWMyNTZlYzgzMjBlMjAxNjA4M2M5NmRmNjM3Y2EzZDM1YmViZGUyMzE0YmVlM2E0NzExYjU2Y2EiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIxYTE2ZGU2N2MxN2MxZjMwODQyYzE3ODFlN2YwNWFkODM2ODNiZDYyOGU5YTJjZTk4MDlmMDM0NDkyZDE1NjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFkNjAwNTk3NTY5ZmM4NTY3YWM4N2FkMTEwMWIwMDU2MWJjNTVlODI0YmY5NTgxZmY3NGUyOTZhODIwZDY3MTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdjNmU0NjU0ODQ4ZjUyYjVmODhiODM1ZmExMzgxYTRkZWUyYjA5ZGVkOWUyYzlmNTQ2ODZhNTBkZGM4ZjdlOWIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7f0d1f9e759741048b3cf42db9a3a000",
+      "statement": "StubEmbedder namespaces its model id as `stub:<model>` so a stub vector and a live vector can never share an embed_key; without the prefix a collection seeded under stub and re-ingested under gemini reused every hash vector and reported them as reused while buying no embedding.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/embed.py#L397-L418",
+          "version": "repo-lines-v1:sha256:e185efdc300f6375f064294b5f774d72eb7ea233a48318e137d5a530ec04d2e4:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkwYjA1NzFhNjZjYjlmYTk2MTNhZTFhYjY1Y2VjNzAwM2ZjZWU0OWFmMjM0ZTUzYzYwNWY4YTg1ZDhkYzhkNTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY3YmM5OTQyODJmZjM2ZDcyZjVlMjM5ZDEzNWM4NWRlNjdiNTExZjY0YmQwMDFiOTYwY2U5YjcwZDQ2ODU0NjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE3YmU3ZjEzYjhhNmExZmVjMTAwYjFkMmM1Yzc4ZGEyNzQ5NGVjMTVkNTk5ZDNiYWRhOWI2ZWY3MTdmNjE4YmEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6014ce1677574686b6d1860df1e0bb65",
+      "statement": "Both live backends build their SDK client lazily behind a lock, because the embedding step fans batches out over a thread pool and an unguarded lazy build lets a second thread orphan the first client, closing the transport under a worker mid-run.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/embed.py#L478-L491",
+          "version": "repo-lines-v1:sha256:187f5b9454b31fd2b9e094369b573ea5eba8fc8325de1ce62683b5a0974ef3a4:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk4MTllOGI5M2Y2ZjM2ODJjNzliNjk4YjA4OWRhYjBhNmIyYTc0NTg1OTE4YmVkNzg5YzAxMjVjNjZmODE3ZDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkzMTJjMzg2MGZlNWQ5YTQyODdiZmMzMzcwMWE4OTNkOGViZjZjYzA5NjRjZWEwOWRhYTQzZDcxMzgwMWM4ZjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM1ZDYzMjI5ZmQ0MTZhN2M2OGMyNjUwNTIzNDRmM2U2MWFmZTIxYmFkZDczMjU5ZjUxNmRmMjY5NjgwYmUwMjEifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/vlm/client.py#L333-L339",
+          "version": "repo-lines-v1:sha256:fdd2659c91ede7d60e1606ba9d4874318b64c3593294276a5fa4739bdf44e0f0:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMmQxZDVhN2I1YWE4N2FhNjQyODg5OTEwMzU2OTg3YmMzZmI1Yjc3ODU5MjkxYzAxNDc1YTZmZGNjNjUzMzhmNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMWJiM2YwMjJhYWZhZDdiMzM2NGM3ZTg2MzJhYmQxNjZkMWNkMGMzNTg0ZGRiMGFmYTczOWNmMTQyNGRiMzI1ZiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_67a9d97f3638462db45421d4288ab1d1",
+      "statement": "VSIR_ALLOW_PAID is read in exactly one application code path — check_spend_allowed at the document upload boundary — where a live-configured release without it is refused 403 spend_not_permitted, while a stub-configured release takes uploads with no switch at all.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/ingest.py#L133-L149",
+          "version": "repo-lines-v1:sha256:3055f3e3750a1ae3501024290262dd51489823ed7863f63aec8432070940bb6c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkNDVkYzM3NTQ3NGI0NzY3M2FlZWMxYzFmZjgxNjVjN2U0ZTNiNzRmNTc4NDY4NmZjZjUwMzI3MmI3NjJjMDEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE0MDBiZGMxZTUzNGJkMmE4YTdkNGJmZWRjODE0MzAyZTVhNjdhYjNhODg2MTFkNDZmMWEyOGZlNTMzNzVmM2UiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg2YzAzMDQ3ZGI4MWU0N2NlZTljZTI1MGZlN2M4NjhjYTg5MTIwZjEzNTRlZGY0MTkzNWU4YWZkZTRlZDZiYjgifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.1",
+    "at": "2026-09-11T14:07:28.402Z"
+  }
+}

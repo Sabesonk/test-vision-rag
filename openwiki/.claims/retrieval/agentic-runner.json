@@ -1,0 +1,298 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:7e3270c2786780207fd85ad1780f0ea5833ceeeaf8c39f9d4a77536fe5f24ace",
+  "claims": [
+    {
+      "id": "claim_b72cf18b0b53484c8e9a741d1c940f6d",
+      "statement": "The runner is a state machine expressed as a transition table that the loop executes, and the successor lookup raises on a pair it has no edge for, so the loop can take no path the table does not contain.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/runner/loop.py#L16-L23",
+          "version": "repo-lines-v1:sha256:5afc7030d7e85243d8eaf7af33e1fe3b1e31440d3fd29dbf5ee39ff42b61c9cd:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYTI0NjZiY2FiZDk3ZjQ0Njc3N2ZmZGViNzM3NjYwYzUwYWYyYjFjMGEzNDcyY2JiYTJkMDQ5YmRmNzY4MjRkOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTAwNGQwY2Y1YzUwNWE5ZTQ3ZTk0OGFmM2E1YmM2YWM1OTM0Y2Y3N2UxMzRiY2Y2NmUwZjkyNTgxYTNmZGZhMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZGVlNmUxYjljMGYxNTNiMTJlZGViYzcyZWEyNTVlNjIxYTFmMmQ3NTE4ZmNjMDlmMDk5N2E4MzJlMzZkMjJmOCJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/runner/triage.py#L318-L333",
+          "version": "repo-lines-v1:sha256:5fff095fa4a09b3d35a7278bd7e6fa35d3ce45f3c21fd658daf434e286afaf4b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYxY2JlNmM2MWZlOTE5NmUxYWM3OTQ3OGMzOTg2MTRlZmQzMmNhOGQ5ZDBkNTIzNDY5NWI1M2JhYjA0NTZlNmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU0NTU2OGJjODU5ZTNkNzEzYTgwNjE4NzdjNThhY2U0YmE0YThlY2NjYzY1NmVkZjJlYjMwMzQwMzYyMWY4MjEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA3ZTYzMWM5MzBhYTQxMzE5YTU2M2M3NzRkN2Y5MTBjYWEzZTE5YWFmNjg4NWViOWM0ZDMwOTgzNGYxMTY0MGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImViYzlkNjgyYTI1MzM4M2ViMjE3Y2VkMGY0NTliZjUzMTljZWFhYjIyNDQxODBjYTE2YTc0N2VkZGE1MGQ0OGUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_36d37ba18ec34c2e92f235efc1018033",
+      "statement": "The safeguard requiring the uncertain pool to be drained before widening scope is enforced by the absence of an edge rather than by ordering in code: widening is reachable only through the drain state, so no later edit can reorder it.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/runner/triage.py#L352-L372",
+          "version": "repo-lines-v1:sha256:13312d80aa6970688dd8f8901b4af3a8eae5503ac3e0c40ebddd64f1153eba83:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEwMjM5NTY5ZTNlMzkwOGRkY2IyM2NjYjQ2OWMxNzNjZmQ5ODA0ZmM3NTYyZWJjZWNjZGUxNDUzZDkwOWFmZjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNhYjYxM2FmY2NjMjFjNjRkMjliNmIzNTI0ODAyNzdmZmNjMzM3NjM0ZDJkYThlMjI5NDFhMjM4ZGY3M2Y5MDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxNjdmNDM2NmU3NjgxZDA4NDJjNmVlODkyMTMyNTkzYWIxN2NlNWQ3ODg0NTFhMjk1OGYzYTg5Y2U3NTU2NzcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3991d7dc49194225a221eb1eb82579d0",
+      "statement": "One transition exists so the vision branch is reachable from the end of the ladder as well as from a descent that found nothing, because a triage that rejects every offered row would otherwise abstain while an unreadable page sits unexamined.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/runner/loop.py#L25-L30",
+          "version": "repo-lines-v1:sha256:1eef44982acd014d00fbfd953dce33ac27461ee16d727edb28e3797deee98f35:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNjc5OGYzNmM2MGNkMWZkMGNlYjM4MGNhYTAzZGU2YWYzZjc3ODMyYWM2YWM0NGVmZmMzOWNlZTQ1NWZjMDE2YSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMGM1MDUxOTJiMzc3N2E1OWE1ZGI3YmE3ZGMxZTlhYWRhZTZjNWRlNzBmZDk4ZDIzZjdhOTI2NWNiZTFkNGNhNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMWViYzIyMzVkOWY2N2MwYzI5MWU4YTc4MzE2MzZiMDFlYWNjMzBlZWU0OTRmZWJiNWNhYThkNDNjODc2YTYyZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMTFlYWI4MWVkYzUwMjMxMmYxYTcxYzE0MjNlMzZlZDNhMzM3Y2I4MDIwYzg2MzYwM2Y4OGMwOTUxYzkxNzgxNiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_230ab815948843dc8e94f9d18ae5e8d3",
+      "statement": "The loop's signals are observations it can make for free from an envelope it already has, so no signal requires a call that was not going to happen anyway.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/runner/triage.py#L334-L351",
+          "version": "repo-lines-v1:sha256:1c2f076fc7fd0316428fce1f547334e629a2bc29d18b9e109a383db06fa94ede:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgzYzRiODVmZDA2MGY1OWExNzNhNDYyY2FmMzJiMTEyYzUwYTIzMTdiMTVhZGE0NDEyZjg3NzY4OTUwYzMyMTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFkYzBjODhlZGFmMGVkYTQ5YzZkM2YyYWI3MDE4YjY5OTFhZGEwOTA3MjEyM2RiOWI3YmIxYTM4NTQ2ZDNjZTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdhN2IwMzQxZjRmYjYzZmM0NDU0Y2QxNTg2MmUzMWVkNjAxMTA5MTlmZDAwYWE4MzU4OGM0ODU1YjhjN2ZkMTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU0OTFkOGY3MDEyYmVkNWVkOGM3MGIyZTZjNzVkNzA0N2FlZWUyYTc1OGRmZDc0ZDdkNjcwZTNmODcxOGIxZGUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_90a8f7f972694402af63298a3885099a",
+      "statement": "A move ceiling bounds the loop and exceeding it raises rather than abstaining, because failing to reach a terminal state is a bug rather than an answer.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/runner/loop.py#L216-L218",
+          "version": "repo-lines-v1:sha256:f2e1c071418e2a53bcd75f914fba0ca301f0e1245912365c2dd9fe31baf0f066:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYTEzNzlhYzAxYTcxNDhhMDQ0NTQ1NjdiMDVjNDQxYTg0OTdlZDAxNTlmNDlkMmMwNjdkNzI5NjliMGUzZGQ5NCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOGMwOGU5NWExNTk0ZWRlYmJkZmFjYzhkMzhlZGJjNWYwODVkMzQzMjQyMGU4ZDRlOTRkY2JiMDM0YmYwYjI3YiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOWE1MzFkMWNlMjcwZDQ4MmUyZjNlODZkZTU5NmNlN2Q0OGQzYzA4OTBiNzVjMmE4N2MwMDlhOGFiMzRkM2YxOCJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/runner/loop.py#L73-L76",
+          "version": "repo-lines-v1:sha256:37d98f8dcc8984b48d980916d86b849a6666de89c58fb720c637b4a44e8b1f10:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTZjNWE0Zjk2NDg2Yjc5MWU5YzI4ZGI1NjBiMzE0MWI1YjM3MjBlNThkYWJlN2Y5NGNhZTUyOGJiODhlNzMwOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjhhY2U3YzlkM2U5ZjljM2JkYjE3NDBlYzRhN2UyODU3ZDA3NGIyOWJjZDBiMDM3ZmZjMmUwNTJjOWQyMTNlYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYzI1MmFkYjA3NTVlNTgxODM4MTkwNjhlMjA5ZmZiYzZlMDJkNmFhOTQzM2Q1Y2RiZTViNzIwMDI4NDVjMDFhNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjZkOGIwMGFhZGNlODdiYWUyNmJlZjBjYzY5NTJjYjAzNDMzOGI2OTU3MDYwMDFiZGRkZjBjNjNkMzIyYTg0ZSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_c416042f6df54ee49542d33efb251822",
+      "statement": "The loop holds no state between questions — it is created per question and discarded, scope and exclusions are parameters, nothing is module-level or cached — so two replicas answering the same question make the same moves.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/runner/loop.py#L31-L36",
+          "version": "repo-lines-v1:sha256:104e8b4f84198ef1c7eae768fe3fc4c9b8957a52603adddbff95293d1b889da2:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTFhZDc2Y2VjNWM0Mzg3ODg5MzJiMzQ1MjI0ZjcyNzM3ZDNhOGM4NzY0ZGVhYWZkZmQyZTc2YTQ5ZDI3NWJlOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzJiMzU4MGNlZGNiZDM0YTA5M2QxYjc3ZjVkMGU1MDViZjM5ZWNiM2JiNDZkYzA1ODFjODg1Y2RjZTEzOTE4MyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNzFmZmZhNGQ2ZGRiNmNiOWU4MTQ3MzQ0ZjA5YjlmNWEyNjVlODQzNDI4YjNkODRkZTIxNDZjY2E4OThlNzdlOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTk0ZTUwNzFmOGE2MDg0N2MxZjljNzU1MTU5Mzk3MDY2YzYxMmYxYThiNDMzYzc0MWYyZGI5NDczM2ZjZDg3NSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_cc244c0381594d41a3598b783a81f1a6",
+      "statement": "Every tool call the runner makes goes through the caller's dispatcher rather than to a tool function directly, so the runner is a caller of the eight tools and never a ninth path into them.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/runner/loop.py#L37-L41",
+          "version": "repo-lines-v1:sha256:c074e0ba0c30836df86e589274987dd4fdf9029669c69cdefdcf3e83a26494c6:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTgzNmNmYjk4YTkzMTVkZGFhZGI4ZGUzNGMzZGE2YTc0OGFlOTE5NDRiYzU1NzZhODc2Y2VjOWRhYWUxN2RkMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZjNmMGUxYmNlYWY0MzJkY2E0ZDRmZDJhYjMyODE5OWJmNjJmNTU5YzUwZDI5NzEzYmM1YTBhYjIxODBmMDQ4ZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjBjMGI1OTg5NWU1Yzc5OWQzZTk5OGI2MDZlMzFjNzg5ZjhmMjRjZmUzOTYyMjdiMjI4NjQ4MWM5MGE4YTkyYiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiM2M4OTQ2M2QzNTliYzc4YzIxZDgwZjgyOTZjNDY3ODhmYWFkYmJkNjQyNDI2NDM0OGYwN2M4YzQ5YzUyNmE5ZCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_852ef0c20fc7455abc181ecc510f9a9d",
+      "statement": "An outage, an exhausted quota or an unusable model answer ends the loop as a typed refusal carrying the tool's own status and code rather than as an abstention, because an outage rendered as \"not found\" is the service's failure delivered as the caller's confidence.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/runner/loop.py#L43-L47",
+          "version": "repo-lines-v1:sha256:b170a5b491ad215d72b966bd68c0570f63c80746302853e85324a4dad608faf9:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTgxMDVjMzNlNWM3NGUwOWZmYmNmNmMzZTg4OWU3YWNmOGI4OWU0YjRjODA1MjcwNWYzOTAxOTk3YjMwZDcyOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTM4NGJmZGIyZGYzODBiNjU1N2NjN2E3MWQxNjg5MTQxNWJjY2FhODc2OTk0MDZlMjM2Zjc1MmM2NDE1Mzg5ZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTMyMGE0ZjhiM2VlMGI4NjVlYTNkYjQwZDYyNDg1N2I2NjczOWQ0NGNhZjNiNDJkNzFmZjY4YjI2MmU2ZWQxOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMWQxNzU2NzZlNTM4MzBjYTU4MjRkODEzZTExMjAyMzBlZGY1Mjk4NjIwZTI2NWVmZGIwZTAyNmZiMmFhNzYzYiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_654adb61a6454a9a8a5ea17318e32acb",
+      "statement": "Triage marks every candidate from its summary row for free before any spend, reading only four fields already present — summary, matching surfaces, grounded rate and text trust — and calling no model, opening no raster and embedding nothing.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/runner/triage.py#L1-L8",
+          "version": "repo-lines-v1:sha256:c5ea5720832801f8b8bd77bf96d149e2d1bb72fb5ddbc5ef998336b6d2e1921f:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzc5NjA3OWI2YWQzMGI2YzJhYTcyNDMzZDBhYzExMWZmMTI1NDE1NDQ3YzQ5ODAwNTZiOGQ4ODdlY2QyNmUxNyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTMxODQwNWVhOGFkZmQ2ZDhlZDU5MTRmZTRkZjQyNjk4MWIyMWVmMzgyOTIyNzRlZWI2ZjcwNDExNDAwYTE0ZCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_88a77c8125af4dbf8433d00531ca803c",
+      "statement": "Triage is tri-state rather than binary because a keep/drop decision discards the fallback pool, leaving a fresh search as the only repair for a wrong drop — the uncertain pool makes an insufficient read cost one more look rather than one more search.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/runner/triage.py#L10-L14",
+          "version": "repo-lines-v1:sha256:a5e8f49566a0067c8662540adb83ae5a3881baffe36dc6ad49fea26c9bf0af1b:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMGVhOWM2ZGIzNWJiMzlmNmJhMDg1ZTY4NzE3N2NmZTAzZjg5NzY2YjE4OWQ4ZTNiMTZlMWY1NGY1ZmI3NGZhMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDA4MjE3NDU2MzI1YTI4NGE4Nzk0NTAyYmIzNzYzOTRiMWJjMjNhYzI0ZDJkYzMwYjI2NzFlNzQ4MzlmYmRjMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYWVlNTA1MWM2YTg3NWQ1ZWI3NTlkMzY0OWM0NzQ4ODI2MTIyZWY1OThkNDllMzUyOWFmN2RhY2M5NzYxMmNjYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTZjN2RmYjJhNzIxOTAwNGU1MzBjYzlhOGVlNWQzNmE5N2FkNjJmOThmNzcwZTVmNmFhMzM2ZGUyN2MwMDk4NSJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/runner/triage.py#L47-L57",
+          "version": "repo-lines-v1:sha256:d61994139979dbaf9c62bdb149f8794c678973029456c69ebeb8cdddb3eccbbe:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhYTVlYTc2MzBmYWQ5YmU0MDU1ZDdjZmFjMTI0M2U2Yzg2NjU3ZjJkNzg4MjEwNjdhMGQ2NmUzMzIwNTExYzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFiZmRlOTZkZjBlYmRhZTAzOWYyMjIzOWNlZThkNTZlYjIyYmMyODM2ZTkxNzAyZDY2ZTc1NTNiY2JmYjk4NzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc5NTYxNjdlN2I1OGIzODc3NjRiMjEwNzU4MzliOGQ4NmRmOTE5YjI0YTg2OWNiMTg1ZTRhNWY0NTMwODAyYzEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_9057e107b8b34bf2bc9238fe0504e9bb",
+      "statement": "Every triage judgement errs toward carrying a candidate forward, because a needlessly uncertain page costs a place in a pool drained only on failure while a wrongly irrelevant page produces an abstention on a corpus that contained the answer.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/runner/triage.py#L20-L25",
+          "version": "repo-lines-v1:sha256:bfeee9fd3323985fc121f7c2f06fc3ee0041f012fd253f02d4e22ea40ec20fa9:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZmUxOTU3Mzc2YWIwZGE0ZWFjYTE4OGE5MTEzMDlkMzc0MThiNTQzNzczMGU2ZmVjNDY0MGQ4NmQ1ZmMzZGYyYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjMzZmI3YzQ4NTRjNjcyZmYwMDQ3ZWM4ZmE5NGFhYzUyYTQ0MWRkYTdiYjAzMjYzMjQ3ZDI2ZTkyODMwODhjMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNmIyZDUzYTQ2NTY3MGFmY2IzOGM1MzAyYTk2ZTIxM2VlM2NiMWNmMGQ5NTIyZGM5NDZlZDBlNWZjYjZlZTg4ZCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_c717151260f44ceba8b9c98ebff57d76",
+      "statement": "Each triage mark carries exactly one reason from a closed list, because a reason nothing sets is a column a reviewer cannot act on.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/runner/triage.py#L58-L68",
+          "version": "repo-lines-v1:sha256:f7adb7cba27da10495aab8d6f1632001afd1b6523eee9aa04995345ed42f1c04:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkxZjg5Y2Y0MTEyNDFiMzQxYjQzN2NjM2YxMzA4ZmU5Mzk3MzMwNDA1ZTM3ODBlN2QyMzU0ZTllZmI4MjRlMzIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA0YjdjZTk0ZjE5MDMwNmI1MTNlYzNlMDllMWZmZWU3M2FlMjczMzc3MWQ3NGMwNzBkNWFiZmFiZDQyNjEyNzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQyOWY3MDRjYzY1MDIwN2NjNzIzMmU5M2MxYTFmNGM1M2UxZTY5MDE3NjMyNDg2M2JmZDE2OGE5ZGVkZmZhYWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE1MzQ0ZWIxNWVjZDcwNzE0MDIyZjRmYWViOGU0NTRmMzM1NzI5ODMzMmMzNDk1ZTg2ODQyN2U1Y2ZkMzM5MWIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_c1ba5ea8578b4ab7bfc6f07e656fb3e7",
+      "statement": "The five safeguards are a single definition read twice — the triage module holds the text and enforces it, and the prompt module prints it — because two statements of a rule stay the same rule only when there is one statement.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/runner/prompt.py#L1-L10",
+          "version": "repo-lines-v1:sha256:6f53834626c7c8aee29c1b8cb586da9e345db412e0baedd8cefcb36ee45de699:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRiMTFhNTQ3ZmE4NTMxOWYzZDY3M2I5ZmU4Y2M5OTgzZDkzY2U5MzhjZWQ4ODExNmJmYmFkZGVmZTEyNzM0NzQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJjMWFlYzZlOWY5ZWRjOGM3MTg2ZjRiNjg2NDM1NjY0ODYyM2I0ODRmNGI5NmU2YjY2NmYxMzE4YWQwMTUwN2QifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/runner/triage.py#L13-L18",
+          "version": "repo-lines-v1:sha256:52caf0c790e45d88eb5a360485e1e7931e9d4f7c8144382943d16c7ccb3f3900:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzExMTAzMjU1YTBlNjNmZDY0ZjZlYzQwZTRiNTdmNjE4MmQ1MjU5M2ViMjA4MTllNWE3YmY0MmU3ZTEyMjY3NiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjFhZjhkMWU0N2UxNGQ1OGU0Njg2NDg3NDNhNTFlZGRkNTI4ZjVlZmY5ZDI4ZTUzZmEyMmE0ODIzMzQ1NDlkYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNTEwYmFiMTFjMmUwZTFlN2MzOTIwNjkyODFmMDQyMWFiZTUxMzk3ZDAwMzQwNTU3MzRhZGMwZWVjNzM3YTJhZSJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/runner/triage.py#L95-L111",
+          "version": "repo-lines-v1:sha256:20ee5e86d15633ccdfc0e1aff2990d4762e2af79c8137940f8fbdb22e1e98f47:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIzNTM5MjU4NjU3MTU5MWIwMDNhYTExMWIxNTkxMzNjMzk4ZDlhOGEyNGUwOGVmY2JiYWI5OGRhYzcxY2IzMzQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhZmJhMDUyN2MzOTUzYzRiNmUwZTViNTczOWJhODM2MTJmODA1M2JjZGM5NDY2NzMwMTkzY2QxZDU5MGI0MDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI4NDYwYTkzMmI1NTUzMDdhY2NjODQ3M2E0MGIzMjk0NGU5MDFmNTVhMTZlNDg0NzZmM2RlN2U3YzczNDYyOGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg5NTc2ZDkzMjFkMDJlOWU2Y2I4OTJlMWQxZmRiOTNlOTc2OTRhY2ZhMjMyNzgwNjI1MjE3MTNjOWQ2MTJlYTQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e0dbc2bf3ce045dda8bc275bf6d2e728",
+      "statement": "Nothing in triage performs matching: term overlap with a summary decides whether to look, never whether a code is printed on a page, and a triage mark can never reach a response as a hit, a citation or a claim.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/runner/triage.py#L27-L31",
+          "version": "repo-lines-v1:sha256:fc80fd8917b7fae1808b85d06549a67668ed341680edad857cf20a2be44c63c3:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZGI5ZTlhZTJmYTA3OTY0NWZjMTYxNmQ0OTZlMDMwOGQxNTFjMzcyN2IzMWFkOTBiMjdmMmY0YjNjNWZjNDdiMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTM4NGJmZGIyZGYzODBiNjU1N2NjN2E3MWQxNjg5MTQxNWJjY2FhODc2OTk0MDZlMjM2Zjc1MmM2NDE1Mzg5ZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNmNkNGI4MDg3NzAyNTIyMmYxZTI0YWRmOGU5MTk5MjdkYmFmZTA5Y2E0ZGQ3NWU4ZmYxNmM1MDEyYWFlNzA1MiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNGUwMmFiMjdlMzdlNWZmOGMyZjJhNGIxMzIwMDYwODQyMDRmY2ZhMmVmM2UxZGMxY2EwOTVkN2QyOGZiOGZhOSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_a50e7d58b24d49d695c50003b72e578a",
+      "statement": "The route between the free look and the paid read is chosen for free before either call with no model call of its own, and defaults to the free route — the paid one is for a caller that cannot see or whose context cannot hold another raster.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/runner/route.py#L1-L21",
+          "version": "repo-lines-v1:sha256:0f91c089e91e42d90ca4f47775bed4ba30101acb703752b2038e5321e745d8a7:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM1ZDMxNzQ4N2Y4MTU0M2VmNTU2OWQ5YzBhNDhkMWRjZjBmZjA0NmZhOGViYzE4MTQxOTNlMWM1NTlhYzgxZjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE3MzM3M2UzM2E3NGZmNDAyNDViODA1MzM1YTJkOTQyMTBmNzYxOWU2OWJlMDY4NjYyNDY5YzkxY2EzMGJjMGMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZlZjg3N2M5ZThiYTEwN2UyOWYyNDY0ZWJjOTljY2QyMzUzZjE1ZjlhYzJiNTljZmVhNGY3MDRlZTY3OWIzOTkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_dc71497ad82e44c19f0524c6dab747fb",
+      "statement": "The automatic per-code stamping lives inside the paid read, so on the free route the agent has read codes off a raster with nothing checking them — which is precisely why the answer gate is server-side and unconditional, and why a route decision is never a trust decision.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/runner/route.py#L23-L29",
+          "version": "repo-lines-v1:sha256:334fa49d383838ba64485d9819c8d35f46f52f4ed09ab85e9b9792745240b87b:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiODViMjc2YTc4ZTFkOWMwOWIwODlhMTdjZDU0ZmZkODE1N2NlMDQ0MTVhMTkxZWU0MmZhMWFhZDEyYzgyMDZjZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDYwNGY3ODQ5ZjgzMmQ3MGU1MjViNzExMDdjNjU5MzAxZmYyMjZjNGIyMGNlZDUwNjg3MWNkN2I1ZGExNzM5NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODA4YmNhYWFkMzc2OGE0YTM4ZjExOWQzYmVlMWU0NGE1NzY4NjhmYjQ0MjA2NGViN2Q3NTU5YTkxZWZlZWUyOSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_3ca565f0cfc748a59b34b80c77244cc1",
+      "statement": "Whether the caller can see is a property of the caller rather than of the deployment, so it arrives as an argument and no session remembers a previous call's capability.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/runner/route.py#L31-L34",
+          "version": "repo-lines-v1:sha256:82755344708dc1f2b0d28fb506506acac7c85898da33a97ed90e70bc1ab0a356:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDQxNzA4ZDRhZTE5Yzg4MWE1NDY0OWZkYzExNmFjODY2YzI2ZDhmNTg4YTU1M2EzYzI3ZTc0NWRjYjk2ZjE5ZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTM4NGJmZGIyZGYzODBiNjU1N2NjN2E3MWQxNjg5MTQxNWJjY2FhODc2OTk0MDZlMjM2Zjc1MmM2NDE1Mzg5ZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNzI3ZDUxMjYzNTkxNjBhMWJkNTA2NDNlNWJlYTMwZGMwZTRjMjU4MGYzMjU1M2JlNGEzNzI3ZTRjZGVmNjU4MiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiN2NmNDE3NTAwNzk1YWE1NDRhMmIzZjYxZTIxMDcxNzE4MzdlMGNlYjhkNWFhM2I3MjViZjUyZDAyOGVlY2YyMyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_03bdab8324fb40c2812b57e4608822be",
+      "statement": "The answer gate runs one verify per (claim, page) pair and folds the verdicts, so the call log answers whether a code was checked against the page it is cited on rather than whether it was checked somewhere.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/runner/answer.py#L333-L365",
+          "version": "repo-lines-v1:sha256:bde733b781202200d6b80ef674754029c28a242a7f74f9b9a93e8b82e8abde69:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhjNmQwZWU5NmQyMWJjYmM1OGNlZWVlODI0MmUzYzdlZjM4ODc3YTNiNDdhYWU0NWQ4NGJiY2VjMTFmNWJiY2IiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYzODVmZmE4OWZlNzY1ZjU0YzJmMDAyMjllODI5NGZmYTRlYzI1ZmI0NmQzYmFkYTYzYzQxZTdiODUyMDgyYTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM4ZjFkNmVjOGQwZTQ4ZmM1OThjZDUzOTgwN2M0ZTY3Yzk2YzgyZjgyYTllYWIyMjlhMDVjMjFjNWEyMWY5MjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU3Mjg4MGMwNTk4NGJkNDkzYWVmMWM3N2RlNDYzYTRkMDljZDE3YmZiNjMwN2JiMGUzZWNmYWI1ZTQ5ZmY2ZmMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_464c23199f3d4dd7bf9489b86426108f",
+      "statement": "The gate is unconditional with no flag to skip it, does not ask which route produced the draft, and re-checks the stamps a paid read already applied rather than trusting them.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/runner/answer.py#L9-L17",
+          "version": "repo-lines-v1:sha256:1dbc7fbca0e9ccf1ff00d6afaf3c3a0dd5efed01c48974c082a37c75abe4c4a5:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiY2I4NmUxMzMzM2I5MGE0ODg3NzAxM2E0YTA4MTgwMjRjZTEyOGFlYzU5ZWNiZjgwMDkzZWVhODBlYzQ4NjYwZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDg1ZWI3NjZkNTQzNTMxNTVlODI4OTNlYzAwY2JjYzczMTZhMDQzOTA5OTRiNmI5NDFmNGYzYjFhOTcyNTUyYiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiY2MyMWFjYWM3MjhhNDQ5ZDI1Y2EzNTA4YzI3Y2U2NmRkYjA4MWEzYWZjZDkxYmZmNjY2ZmNiYzA4MWZlNmIzNCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_5366d2dd98294542a882f19eb4e08e01",
+      "statement": "A claim cited on no page is a rejection, because a code asserted over nothing has nothing to verify it against; and a verifier that fails raises rather than producing an absence.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/runner/answer.py#L350-L362",
+          "version": "repo-lines-v1:sha256:4c92235068feef0f1207af7ada2dfe053fe340334c860be71aefff1bddcd1fd5:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhhZWI3YWFkNDZiNTE5MDQzYmE2ZmFhZTE4ZmFlNTZhYWNkM2ZiMTc5NTU5ODQ0ZWRhM2VjMjRmMWI1MmMxZjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYwMjgyOGM0NDMzNWQyMjU4ZDEzMjM5YzVlZTY0ZThjMmMwYzllZjE4YmFiNTA1NjM2OWFhOTQ1ODhiNWM1MGYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE1MWJkNGM5YTc5NjM1MjhhNGEzNTUwZDM5ZjgxOWM0NTVkNjY1OGZjZTIwY2FjY2U5MzYwYTdlYzkxZGQ4ZjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFkNjAzMDJlYTJiNTdiODQxOWQzZDVmNDQ5NzQyMjllY2MwZGVlMDI1NzVlMzVkOGE0MTkyN2Q5MWU3MjhmNWIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5dcc72cf3d22417cb8616f46588edf15",
+      "statement": "A rejected draft returns no prose and never echoes the rejected code — only the page and the observed tokens present instead — because putting the misread code where a person is reading for an answer is one style change away from rendering it as the answer; the gate logs the distribution rather than the codes for the same reason.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/runner/answer.py#L25-L31",
+          "version": "repo-lines-v1:sha256:3edcbbfef0135a053423455e29eaac963c3a61b20df87270e911ebdcfb13acb7:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZGQzOTY2YTYyZDQ5OWEyYzYzZjhmNGNiYThmYzA0ZDg4YzZmMmJmOTQwNTI2ZjJjN2Q4NGRhYmZhMzQ4NDdmNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTBmNDBlMDdhMTIxYWQ3NjBmMzJmYjQ2OWMxM2QyZjUyYTk0MTUwYmNiNmQ1MjE5MmFjNjY3MzA3NTU5YjA1OSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNTZlZmNiOTAxYzg0MWEwNWYzYmQxZTdlN2VhYzBlOGM3YWVmYTZkYmY2YzQ5NmI4OWNiMGJkMjUyOTFjMGVkYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYmVjZTdmMTNiN2I2YTM1MTZmY2Q0YjU0MzJkODU4ZTVmNWEyNTIwNGU2Njc4ZDkzMTBmMDUzM2U5NTQ3OWY0NSJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/runner/answer.py#L377-L383",
+          "version": "repo-lines-v1:sha256:4fbeba21e9667d982abe6c792ef8f736f98e7e5c06bc1e631bd936807593390e:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjMzOTA4NjEyZTdlNDI2YTg2N2Y0MTJkZmUzNzBmNjc4ZWQ4NTk0NzA0NWNjNWFhODIwMTZmYTI5NzJjM2UxZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjcxNDZlMjFlOWM2OWMyNzEwMTZhYmMxNTQzYmM1MjI3Y2EzY2RkZDlhNTE1OWU3MzU0ODViYWM3YzQxMTExMSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODFiMmFmNDJjNWMwNGQ3MTE3YjdhMGFlNWM5MjQxMjlhYzVlZjViMjlkMjBhYTYyMzY3Y2MyNDFmYzQ4YTNmMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTM3MWZiNDZjZjM5ODU5ZjNlMzIyYWQwODZiOGViNmViYTY4MDc1YTIxYTJiYjY5OWY3MGVhYjgyODA2YzcwNiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_6d90388be0144c8e826a1d43b9ef51b2",
+      "statement": "An abstention is composed from the coverage in three fixed clauses — what was done, the page and document counts, and the gap of unexamined image-only pages with the documents holding them — rather than selected from a list of sentences.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/runner/answer.py#L495-L521",
+          "version": "repo-lines-v1:sha256:da0b9507065d525720494e8b97f37bd41c83eb215439908092a9a636f9ff14c8:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE1ODI5M2RmMzgyNzI5NzJjYjY4MmYxOTE1ZjI1ZmMwNzA0ZTg5MjJlNWFlMGEyMDNjM2NiOTViNzNmYjE4MTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFkN2NhNmQ4OWNhM2FlMTVhNzY2ODk1NGRhYWZlZjQ5ZmE5ZjU5YTQ1MjBiOTY2OWYxOGU3MmFmNzFiNWZmN2MiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIwZmQxNWNmZDQ3MDczYWQ1YzViNWM2ZTFmMzgyMGUxMTE3ZTQ1OGQyYjgyYzdjM2Q1MWYzNmVlNDhiY2Y4ODUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNkY2MzZGE5Zjc1MGI0MjI4YmI0MzdmNzA0NjM3NjVhMzVjNzQwN2QyZDhlNmQ1YTE3YTAxOGE2OWE0NmY1NTAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_22804c840d4e4bd5a9401ee71d4df3d5",
+      "statement": "The phrase asserting absence from the documents is a named constant forbidden while unexamined image-only pages remain, and the check runs on the composed string rather than on the branch that produced it, so a later edit adding a reassuring closing sentence is caught by the same line.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/runner/answer.py#L393-L396",
+          "version": "repo-lines-v1:sha256:1a22f414211282b760622e05d96c780dbf3561cbd76d08988e3924feddc9fabe:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZmE2MGU0OGZiZWUyMmFkMDk3YjlmZGI5MWIyMDBlNzNmOTA1ZTY1ZTkzZjBlYjJhZGM3YTY1OGE2Njg1NzRhMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNzU3MjI4MWE1N2ViYTdhNTBlZTU0M2FkZmU5NzRhOGRlM2FhMTg3N2I3YWI3ODM4ZDcwMzg2MmYyMmU3NDFjOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDIwNzg0ZTMxNTBiZGE1MGRmMzc4MDg4ZDdiY2NhMzY4Y2IzYzFlODY1ZjdkOWI2YTlmZjIzMzA4ODc2MTcwMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZWE2MmMxNzA1OGE2ZTE5ODc1YjM0ZGM4MzNlZjYwM2EwMjJmN2UzNmFiNmY3ODkxNWNkNWYzYTBhYTExOTZiNCJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/runner/answer.py#L548-L560",
+          "version": "repo-lines-v1:sha256:ad92821b5f559c3acc823120a25c98005b0f6d4240c0076f887f27ece2352734:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg4ZjlmYmJiMWRiMGY3MjZiY2QwNjUzMTUxMzBlMDA1MGNhN2QyMDc4ZGQwMTYxNGI4NjFiZmUzNDE0Mjc1ZDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU4NTM5MjdjMGFjZmQ4NmY2M2Q0MmUwZjU4MjY5MTUxZTUzMTVkMjg0YWM1ZDdkMTlhNjQzZTNmOGMwZGNmOTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhjYzRhN2QxY2M3OTZhYmEzZTQ2NzIzMzI3ZjUxN2U5ZjgxMTk4MmQyNTBmMDcwMjk4NmU0YjU3NjRhZDk1ODkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVhZmE4MDY5Yjk2YmVkYWNlMGRhZjg1MzJmNGE2NDQzN2M1ZDliYjYwY2U1M2ZiODk1ZTAzMmVhNTI5ZDc4MGQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_8e4a5eef891b48eeb43693b7b7279c2f",
+      "statement": "When no page was searched at all the abstention says so and draws no conclusion about the corpus, because a completeness claim over zero pages is the same fabricated absence arrived at from the other end.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/runner/answer.py#L521-L534",
+          "version": "repo-lines-v1:sha256:5bd1ca7c1f1e4655ec49f97da0bf04d1bd33a9ab45c87e4886c5f16e369b04b4:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFkN2NhNmQ4OWNhM2FlMTVhNzY2ODk1NGRhYWZlZjQ5ZmE5ZjU5YTQ1MjBiOTY2OWYxOGU3MmFmNzFiNWZmN2MiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg1NTYwOTVhMzc5MzU1ZTgyMWRmOGU1ZGQ5NTg0NGZlNGMwNDBmNmEzZTI0YzE4M2Y4NTMxNjBlMDRhOWJlNDQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg0ZTYwMTNiNDQxOGQwZjBhODAwYjU0NTc0M2JjNzkwMjUwYTdjYjgyZDRhMjAzZGNhMmNhNWQ1N2Q0NWIwMzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM5YTFkMmQxYWIzNjIxYTU1ZGZkZDlmNDRlNTdkMWQ2ZjYyZjhlN2ZmYzNlYWE3NmY2MjdkMTZjMmIwYWJhOWYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_cbd0d65519534d46b307a5c0d6292e19",
+      "statement": "The system prompt is deterministic by construction — the same inputs render byte-identical text and its digest is over those bytes — because a prompt is a cache-key input wherever a released prompt reaches a paid call.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/runner/prompt.py#L17-L22",
+          "version": "repo-lines-v1:sha256:aa6e6f6415b8edad1536abb9cd1699e459591e8b323136ee1612b27e11ce2471:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNzA4ZTYzZjlkMzkxZjZmZTNjYTI5ZTc2YjAzYWFmYjlhNjBjYjc2YjU5OWU5YTdkOTc2ZWVlZDU4YzIxNDZhOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjYwODNlM2U1ZDEzZWE1ODkxMWI0ZmM0ZWIyOGNjZDZhZTZmZDAxNGM1MDBjNTcyOTQxYzA2OTE5YTUxMmQ0OCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYzM1YjFjNGI1MDRiNTEwZDIxZWZmNzE0MzFiMTJmOWFkNGVmYmEwNTQwNWI4YjZjNTlkMDNkMTk5M2ZjMzhlNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjZlOTdkMTk5N2NlMzI1NGUzODA2MTZhY2VhMjdjN2JhYzFlYjdhYTUxOGRiZWEyMTE3YjY4ZjVmOGI1Y2IxZCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_ee1f76289797469faaf056a1dc38b99a",
+      "statement": "The runner prompt lives in Python with its own version label rather than as a digest-pinned packaged file, because it is composed per question from the tools a release serves and the budget in force, and sharing the extraction prompt's version label would re-key every frozen extraction response whenever a safeguard's wording changed.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/runner/prompt.py#L23-L30",
+          "version": "repo-lines-v1:sha256:2144159a3fdffaa8ad56096e3026811030c008aff9c4202e2157e48ba9526466:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZDJlYWFiZjFhNTE4YjkyNjlhNDgyZjFkY2Q5Nzc2YWRmYmZkNjhiNjg5ZTQwYzI1Y2ExZTRkYzY3NzcyNDI2NiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTM4NGJmZGIyZGYzODBiNjU1N2NjN2E3MWQxNjg5MTQxNWJjY2FhODc2OTk0MDZlMjM2Zjc1MmM2NDE1Mzg5ZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTJhNGNiMWRmNzkxNDFiNjIwY2VmZjljMzhkNjhkMGNkN2M3ZDBmOTA1YzdlZWMyMjY5M2YzMzNmM2FiYjA3MSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZWNmYTk2MTU5NjkxNTg3NDg1MmZiOGNhOTdjNDE3YjY4ZDAwNjA5ODMyMjNiZGE1ODM1YjMyNjBiYjEzZmFlNyJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.1",
+    "at": "2026-09-11T14:07:28.402Z"
+  }
+}

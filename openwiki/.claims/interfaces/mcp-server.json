@@ -1,0 +1,174 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:138affc84b046889b0bfd4542fd60ae5bca26a3a0af556a74e464a91a59f54f0",
+  "claims": [
+    {
+      "id": "claim_0f3b6cffb89d491495a5596a9be11b58",
+      "statement": "The MCP server contains no tool logic: it resolves a name in the release's tool table and hands the arguments to the same dispatch function the HTTP tool routes call, with the same runtime.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/mcp/server.py#L10-L16",
+          "version": "repo-lines-v1:sha256:81298d7d9d6734e198e2a941024cc41f02a8dbb3724d8fdcbd18715cd98b3d4b:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDA3NGE5NDViYTliMGIyYmJmYmFmMTEwNWRjZDUzOTg3OTBkOGE5OWJiMzg4OGNlY2U5OTEzN2JmM2NlNzU3NyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDY1NTQ3ODMzOWI2M2JkYjAwNTZmMGZlMTgxYmRlMTk5MjVjNzY3ZTNiMTIwNjcxYzE0MjdlNjgyZmY0MTRiNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjkwOGJkMDQ1Yjc4YWQyNzFiOGYzMTNiZTdmOWQyNTY3YzFkNGY4MmE3YWQ4MGQ1MTU5MDUyYmY0ZDRhZTg4MCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_27bc7d4273084712a823bfc0cd1cd8fc",
+      "statement": "Every safeguard a careless MCP client might ignore — current-revision scoping, the filter gate, the caps, the typed absences and the per-caller quota — is enforced beneath the dispatcher rather than on this surface, so a client has nothing to decline.",
+      "evidence": [
+        {
+          "resource": "repo://backend/tests/api/test_mcp_parity.py#L12-L16",
+          "version": "repo-lines-v1:sha256:82d013b377a8cae0b34d0b6e70119fdaa7770c30484322306aabc471034a2c94:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNjkzOWE5NjVjOWJiZWE3MGZmZjU0MTk2MGY2NGQ1Y2U1ZWNiOWQ4OGE4OWJmMTJiNjY1NzgzODU5ZTAwNTRjMiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOThkYTY0NzFmYmUxYWQ1ZmRjYzA5NWJmMTBiMjQ2MTA5MDg3ZTA1MzBhYzM2NmYyZDg0MTI2MGNjYTM0MzAzOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjZmMDE3MDc5YWE3OTdkODUyZDBiYmIxMjRhZTE4NmY3YmRkNjdkNjhkNDQ5NjQ3YjQ0YThlYWFiZjQzZjFmOCJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/mcp/server.py#L3-L9",
+          "version": "repo-lines-v1:sha256:b82f614ffb70a392728f1d5aa47fa0db8c714c340783e85b3d97739171b4e10d:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMWJjOTNhMTUwOWEwZWFhYmZmNTY2NWM1ZDZhMzhkZDgxNGJhN2FlMGViZDJlNWI0OTZlNGFhOTAzNWY3ZmM0ZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMmEwNDlmOGM5ZTNiMWQzY2M4MTk2MTBlNDNmZGQxZTZkNTkzODVkNGQ1ZTY4ODZkZWNkODlhMGFmYWVmOWZjYyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjIsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNmI2YmMwMTJmOTU3YTU4MTkwYTQxMDQzZDNiMjY2ZjgzOGQ5YjNiZDUwNGJkMTA2Y2VjMDZjYTUxZjcxNjQ4YSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNzlkNmIxNGRjMDI5NDhmZmVhNjhlZGNhYTNkYjE3YTk0NjQ3NzdmM2RmZDFhMGM5NjUzYjhjYjUxNTdjYzU4OSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_ff8faa7848cc41b2b92bcd4ceb2e5ee0",
+      "statement": "A tools/call result is byte-for-byte identical to the HTTP response body for the same request because both call the single serialiser on the same dict, and the test checks bytes rather than equivalent JSON since a re-serialisation is where a second contract starts.",
+      "evidence": [
+        {
+          "resource": "repo://backend/tests/api/test_mcp_parity.py#L5-L11",
+          "version": "repo-lines-v1:sha256:a4447fdc2fbd42668e97cd5ef8907600b0f9833b15d2a21ef205bdf033252702:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNThhOTRiZjU0Y2U4NDZkOWQzNmU2NmQ3N2QxMTU1MThiMzc4ZGU0NDMwOGNmYTdkYWQ2Njc5YjhlZGM0NjI0NCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiN2Y4MzVmODkzY2JjMDE5MmYxMWFkYWQwODM3YzgxZDM0MzQ4ODYwOTU3MWUyODE0OWYyY2ZmNTNkN2I4MGMyYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMmVhNGJiYTJkNGMyNjU2YTA4MTRiNDhiNzYzZDZhMzY2NmY4MjA4ZDA0NjkzMDMwYTNkYTAxZjI4M2E3MDVmZiJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/mcp/server.py#L18-L22",
+          "version": "repo-lines-v1:sha256:ad8b5d4cffea53c82e5769421e774ae4d09e87adfc24d4c2e45c78fade0490a3:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFkNTg4YmY4YWM5ZDhhMTA0ZDEzZmU3MTkyNGQyOTNmZGFhNDY2MzM3NGJhODg5ZDU2OTE3NGE4ZWVkMGMzNiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZWY1YjYxNjgzNGEwZDQxMmU4NWUyZDNhMDhiYjA3NTJlNWE0MzA1ZDBlZDYwZmVjMmQ3ZTc1NDBhODM4ODYxNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODA5MTVkNzRlYTE5YzQ4ZDcwYjAxNTU2YWY2NThlZjE0MDk4ZGFjNTYwYTU3YjY3YmJmOWUzNjVlNzQ3YWM2NCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_cd245c9d2fea449595d6bcc6c8b0dd51",
+      "statement": "An import-graph assertion holds the MCP module to having no query capability of its own — it imports no store query models, no exact-match module and no tool module directly — so the only route to a tool is through the table, and object identity confirms the callable is the one the HTTP route reaches.",
+      "evidence": [
+        {
+          "resource": "repo://backend/tests/api/test_mcp_parity.py#L8-L11",
+          "version": "repo-lines-v1:sha256:2286e1805f648aafad5cb223d75ec8137a93de2f01c99c0a31505297a900eb56:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzc5NmJiOGVhYWUwZmE3OTZiYzliNDgzNjg3M2E3YWEwNjQxN2FiYmQ0OTVkOWJkYTg0YmJhOGZjNzZmMDA0YSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTI5NWZhZWJhNjI1NDIxYmM1NjNmOWJiZGVhMTMzMDQ1NDMzNTIwMmY5NzY4ODEwZTQ5MWM4ZjgwOGMyNmM1NCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMmVhNGJiYTJkNGMyNjU2YTA4MTRiNDhiNzYzZDZhMzY2NmY4MjA4ZDA0NjkzMDMwYTNkYTAxZjI4M2E3MDVmZiJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/mcp/server.py#L13-L16",
+          "version": "repo-lines-v1:sha256:7e3290dff862084b249b4ea2276774755087fa8c7fd4347c94d1510ec977bee0:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDc2NDQxYzg4MWRiY2IyZDJiNjI5YTlkMmIyZDRmYmEzNzUxM2RhMWE5YWQxYjBkODA4NmY4N2M0NjMyODExZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDA3NGE5NDViYTliMGIyYmJmYmFmMTEwNWRjZDUzOTg3OTBkOGE5OWJiMzg4OGNlY2U5OTEzN2JmM2NlNzU3NyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNzlkNmIxNGRjMDI5NDhmZmVhNjhlZGNhYTNkYjE3YTk0NjQ3NzdmM2RmZDFhMGM5NjUzYjhjYjUxNTdjYzU4OSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjkwOGJkMDQ1Yjc4YWQyNzFiOGYzMTNiZTdmOWQyNTY3YzFkNGY4MmE3YWQ4MGQ1MTU5MDUyYmY0ZDRhZTg4MCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_7e8bc6206e744d7c836a32f28e3417f1",
+      "statement": "The stdio parity suite spawns real processes rather than running in-process, because the shared-state property is only meaningful across process boundaries and a spawned process is what an MCP client actually does.",
+      "evidence": [
+        {
+          "resource": "repo://backend/tests/api/test_mcp_parity.py#L17-L19",
+          "version": "repo-lines-v1:sha256:66f017079aa797d852d0bbb124ae186f7bdd67d68d449647b44a8eaabf43f1f8:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjFiNDI3NDI3OWQ4ZWQ1NWZkMzA4OTYyZWY3OWU2M2ZmYWQ0YjM1NmEwOTAxYTg3MzIxYmFiYWFlMGQwNzNkOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMTczOWM4MGRkNGI2NTAwNzE3MzI3ZDQwODlkOTg4MjY3YTVjMTRjMWIxMzQ1YTRkYzg5MjU4NzkyNzFmMmJjZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDZkNWFhMjMxMTdmYmE1NmQ2NWYxZDgwNTI5MDRiOGY4NWJjZWU3ZWI5ODFkZTFhNDZhZDZhYWE5NTkxMGE2ZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYmVjZTdmMTNiN2I2YTM1MTZmY2Q0YjU0MzJkODU4ZTVmNWEyNTIwNGU2Njc4ZDkzMTBmMDUzM2U5NTQ3OWY0NSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_63e1e04ca12a4bb898df0a146546b550",
+      "statement": "Each MCP tool declaration publishes the tool's own Pydantic model as its input schema rather than a hand-written copy, because a second declaration fails silently — a client validating against a stale schema is refused by a server that never advertised the change.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/mcp/server.py#L97-L113",
+          "version": "repo-lines-v1:sha256:7f3506fc94136a7594c394b93647f3c4851c39cfb758eb849c80131cbb02d068:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjllZTE5ODhjMTI0MTBkMjlmNDMyM2MxZmZmNjY0NjA0MWM0ZDVmMzQzYTQ3Mzc1NWJkOGYwZWQxYjFlYmMyZjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJkMjliNzMwZTdkMTE3ZmRmOTA2NmNjOWUyZWYxZjJjYmYwZDM4YmI3ZDQxNTFkNjdiN2ExMGQxOGFmNjY5YTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk0MzhjY2VlZDYyMTIzYjU1OGVjNWVhZDIyNGY4OWJlZGU0YWZjZjFjZTA3OTc4NDQ2MTQ4Y2RmNjNlN2M0Y2IifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_695134cfd4fc4dd8b85a727d5fb607db",
+      "statement": "The corpus is exposed as a resource rather than a ninth tool because the eight tools are an agent's moves, and MCP's resource concept is context a client reads rather than an action the model chooses to take.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/mcp/server.py#L115-L126",
+          "version": "repo-lines-v1:sha256:ace5ec7a70a6db5007fc9e913853b6720d61aecdf4aa5da989d0c617111c4878:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMwMTczMTMwYjAwYjQzNmQ4ZDhhM2U3YThhNDU1MzE2ODNiYzhjNzU3MjJiYWYwNjhlOWM2OWZkNDMzZjViMTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjlhODJlYmU5ZWQ0MDdjM2E2YmE0YjAwMzQyOTJiYWE1MmMxMWNlNWFlMjg2MTA3NDAyZGU0NzkyZWVlY2FjZmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjExOWM3NmJmYWFhM2M2ODI4MTM4MjJjYzRhZWQ3ZDgzZGMwNDI2ZmUxZjRmMGQ4MTdiNjhkNmEyMmJlYTk4YWIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_4f372666aadf4a7ba0ae5889435bd6f0",
+      "statement": "resources/list serves one concrete corpus resource and declares the per-document URIs as templates, so listing stays O(1) instead of costing a facet and a scroll per document and flooding a client's picker on a large corpus.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/mcp/server.py#L128-L160",
+          "version": "repo-lines-v1:sha256:9c80388a7ac8e3bc940858cbab8c6957f582db46a88f58f4c19a498b87a7f002:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM2MTA0ODQ0Y2E0MDlhYmNiMWIzNDBkM2E0ZDdlMDFkYTYwNDg3MDc2YTUzNzY3MjhhODc2OWMyNDk4MzlmMzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQxZTY2OGMxZTRiZmJhMTMxZDhiNTBlMDViOTIyODdmZGE4YWFlMmFhZDQ5MTA4ZTk4YTY1OWUzMDIwZWRmMDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE3NTQxNGJhODBiNzNkYzYyMmE3ODBkMjdiZDdlZmE3NGE5ZWQzYTk5NjM4ZjE5MDBlNjllMWUxNWE3MTEyMDQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJmMGYyN2JlMDQ3ZWNmYmIxNTQ4NjVlODllNzhjMjNhODI1OGM1NWViMDM0MDgxY2E5YWE3NTBkZjliNDc5ZjEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7e9aa22d5daa4288829b25a882132168",
+      "statement": "Because a resource is read whole with no limit parameter on a URI, the document bound is fixed in code and a larger corpus is browsed over HTTP where the caller can page.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/mcp/server.py#L133-L138",
+          "version": "repo-lines-v1:sha256:890cc10aee871108f14f28f83cbb0061e3a4fad7819a3d48d5856793dc611bc4:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiM2E3YzM5ZmJmMTFlNjhmNDY2Y2NiYjY3NDI2NTEyN2E2ZWU5ZjQwMGM2YzY4N2QwYmQxYjI3MDUwODk1N2Y3OCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZDkwZmFlYjI1ODU4Y2ZmZTQwYWE2YjYxOTAzYzg5MDI3MmRkZTQwMDJmZDcxNDgwMDRjNGQ4NzY5YmQzMmQ1ZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNWU3YjJhOThlMDFjMjhmNDhlOWQwNGFkZTg3YjdmNWU1MThhNzdhZmQ4ZGQ3MzNiZGE0M2NiYjFlYzA1M2QyOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNzQ0ZWU5NjE0NWYxMDUyYmQ5OTA2YjYyZTRiMzJmODIzNjg1NGExNzc4ZDU0NzU1YzhkNDhlYWI3NDVhNWE4NiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_06932a2aae78447a8af31cc00e4e5c40",
+      "statement": "MCP resources resolve through the same management functions the HTTP corpus routes call, so a resource's numbers and the route's numbers cannot differ — they are one function called twice — and resources are read-only partly because a client fetches them without the model choosing to.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/mcp/server.py#L124-L126",
+          "version": "repo-lines-v1:sha256:2b5f208c3c7cf254151e3849b5acf1cd91af58c92622ce73a152d9af8a1d4eec:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiN2Q3ZThhMjE4YjY5OWIyOWJkNWYyMjlmYWE3MzE3YTBiZDI0MGY0MGNiY2ZkNWE1MjU1YzI2YTFjMTI3OGU3OCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZWNlOGMzNjNkNGZiYWQ0MDQ4N2UzZWZkMjQ2MDcxZjlhZTIyODFkMjQyNTI3YWM0OTg3NDAzZmQzOTEwMGJlNyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMTE5Yzc2YmZhYWEzYzY4MjgxMzgyMmNjNGFlZDdkODNkYzA0MjZmZTFmNGYwZDgxN2I2OGQ2YTIyYmVhOThhYiJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/mcp/server.py#L186-L205",
+          "version": "repo-lines-v1:sha256:f6d71654e3519ad1ca254057d7b2e6aaef8647fe143d64f6ff316fc9a0ea8ac0:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI1NDBlNWIyZWFlZGUyYzMxOTAxZDIzNDgyN2I5MmRiYTQzNDNjMGZiMmNkNDk0MjkyMTU5MWJmMzU5MzU4MzYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVmNjAzOGZkMWIxMDE4MDZhYWQzNDFiMGMzOTA3NjZiMjA1MzMwYjM0OGI2NjFjYWI2NjY3YzgxZGYyNmFlODUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjlhODJlYmU5ZWQ0MDdjM2E2YmE0YjAwMzQyOTJiYWE1MmMxMWNlNWFlMjg2MTA3NDAyZGU0NzkyZWVlY2FjZmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMzMGFmYjA1N2I2ZDIxMDIwYjg1MzkzMDhiMTdjNDg2Y2U1YzZkYzIxNGRjOTYzOGZiYjJiMjkyMDk1ZTE3OWMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_bbb58f02463e4208ad338a21b57ecd88",
+      "statement": "The SSE transport is mounted on the serving app inside the app factory after the auth middleware, so it binds the serving port and both of its paths are default-deny like every other non-probe path rather than by a decision taken in the MCP module.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/mcp/server.py#L311-L321",
+          "version": "repo-lines-v1:sha256:74b959ee569b8d1c7bcc32756c790272a41a19ea5d27f3074f076f5a56d38675:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2ZDZlNzAzMTVkMTNjYTM1MWI3M2E3NjNkZTlhMjM4MmE0Yjg2OWE2NGNmYzRjZDA4ZDRkNDI2NTJhYmE1ZDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhkYjI0OTk0NTQwZThiMmFjNTdjYWUyMTRiN2I2ZDdmOGE2NGUyOTc5OTk0ODMzMTkwMDlkZTYzNzE5MTE2M2UiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRmYzc3OGFlMzhmYjY1ZWRiY2M5MWI1Mzg1NzczMjRlNDIwZjBjOThjMzBiNzliMWUyYWNkNmZjYmVkZDQwOTgifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/mcp/server.py#L76-L82",
+          "version": "repo-lines-v1:sha256:591758975323af77fa03230738fb536c318a125e61e6ca2b9c3e26574eeda97d:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTBhZjNhYzY5NzdkMjA2YWMwZTEwYzczODc0YTQ1ZTNlOTgwZGQyNWY2NDM3N2I2NmNmZTc5ZWFkNDViNDRjNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiM2QxNjhlZDUyNTBjODRiN2EwZGMyOWNiNmFhMzg2MWEwZTUyOGM1MjlkNDI5NzQxMDk2MDc2MTI4MjkxYTdlNyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjA5YTM0ZWI3OTkwMmNjMjQzNmI3ODU4ZDcwZjFlZTAzMGI3YmEzMTE2ZjczMTk3M2M5ZTYyMGVmMDc3Y2FjMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiN2ZmMzQwMDllMGViODFiNTljODBlYjliZmY0ZDVkNmIxZDA5Y2UzNmI0ODg3YzE2NmVhYWEzY2QxMjc0ODhmMyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_1ca18d2ab54841bab9461291e23b147a",
+      "statement": "An SSE connection reads the authenticated caller identity once when the stream opens, so two clients with two tokens are two callers with two budgets on one process and neither can name itself.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/mcp/server.py#L322-L336",
+          "version": "repo-lines-v1:sha256:26824ccf69ae2150ead195236b7f13f9edf4a6c401e87c04db2f9c5080cab9f8:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA1ZjZhMTBhYWMyYzA0YjZlMTBiYjgxYjA1ZTQyMWY1ZDliNDcyYmQ2MGUzMzc3M2RjZjg5MWYzZWZkYTE5NTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE0OWI2ZmRjYjhmMzliYzA0ODI2ZjcwOTZmNDhmOTY3MzczZjYyMzZkYmNlZTM1ODcwYjc0ZTczNWRkZjU1NTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYwNzVmYzhjMzY1YmNiMGI2ODgwOTRkY2VhZmVmNWVhMDVmNmYyNzUyM2UyMmM2YThmMDYzYjJjMmI5MGFkNjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY2NTgwMmI2MDUwZjhmZjkyYTkyMTFiYTlmYmRmNTJhYTdhNTYwNjYwZjVjMWNlMmRlOTdkNzc3MmYwZTE1MGUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d981521942164a9795517e128a948217",
+      "statement": "The stdio transport is a one-off process of the release that needs no credential and carries a stable local process name into the audit line and budget ledger, because an operator who can run it could equally run a publish.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/mcp/server.py#L28-L31",
+          "version": "repo-lines-v1:sha256:3e73e3c126bcae01fbd1eb9d11b7aa747ab81d87e0eeb7c4e25313e652a0f5a1:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMTFiZDdkOTI3NjNkYzdiYzRjZTkzNWM3ZDA0ODNlMDlkYzdjMGM5YjU0ODc1YmFhZGQ4YzE0OTgzMjg3ZmVmYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjVhN2Y1ZWYyMWNjOGZmYmE1MDA0NWJmOThlN2Y4OWM0NzI2MDg4M2U4YmYzYThiOGRkMDc4NTg2MTNmNjNmMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiY2RkMThiNGE3ZjBmZWM1ODUyN2Q2YjBlZjIxMjQ1YzhjZDE5N2FhZmQ4YTZhNjZmMjI0OTk4OTk1ZDMzNzNmNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOWYxNWY2NGZmMGFkNjUzMjQyYjcxMWE1NWMzMGFlZGZlM2EzOGFiZmNhMzIwN2EyNDM3MDY0ZGZlZGJkOTQ1ZSJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/mcp/server.py#L354-L360",
+          "version": "repo-lines-v1:sha256:b3dfe03e702265d391b52b4987ed3bdccfba5a778aa917e1f17f0c590ad95a6a:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiN2NmZmY0ZGM5OGMyZDg5ZjJhYTA3ZTg4NDY2NzRlZGJlNTFiZGE0NjZkMGE2YTA1MTFhYjAyOWY3NGM0MWIxOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMWNhOGYzODRkMDFlYmM1OTU0NTBmY2IwYzg2N2U5MTkxZDZmZWNlNzMyMjNlMWU4NDY0MjAyM2FjNjUwODQyMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMjBkMmFmNGVlNDc0NjdlZWY2ZTBhYzdjYmMzNTllNTg5Y2ZmNTQ2YmUzYTAzZjExMWE2NGNiNDg5MjAyMDBhMyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_84d4e27079b348fda27c9df55f4306f7",
+      "statement": "An SSE session requires transport affinity for its JSON-RPC channel but not state affinity: scope and exclusions are parameters, the effective scope is echoed back, and a client reconnecting to a different replica gets identical answers because neither replica remembers anything.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/mcp/server.py#L33-L43",
+          "version": "repo-lines-v1:sha256:460088d4409215c7c59f651f5f43896ec9e47d495a764b6fe20141fcc05728c4:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyNjkyYTY5YWYzMjdmMTY3ODAzM2NmMGQxOTRiYzAxMTMwMTRkZmJlOWRiNjcwNDYzZmFkNmFlMjg1YjEyMTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzMDNlY2RkNGE0ZDEwZjE5YzczZmQ0MmZkMTI0MzdmZDMzNTRhODI2ODE2MDVkYTUyNTVhOTdhMzkwNjhkYmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgxNmVlZjdmMTEwZWMxMjBiNGRmMjRkMmU0YzVlZjkxM2E4NWE3Y2MxNTRhY2M5ZmFkNjU1NTg2NmE3ZjYyNzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMGY0MTM0Nzc0MTFjY2UyYjlhNjI5ZTQzNTM3NjAwOGJjMjhiY2VhNTQ1ZTY5MTA2NzBhNTMwMmRkYTViYmYifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.1",
+    "at": "2026-09-11T14:07:28.402Z"
+  }
+}

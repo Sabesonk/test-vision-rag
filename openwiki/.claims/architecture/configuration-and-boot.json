@@ -1,0 +1,264 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:aea2345d8477a18f74c72a35f9b12c5320524452fef8cd4d23016bf3272f70fa",
+  "claims": [
+    {
+      "id": "claim_4fe8e1e1dba7420aaac295d5415cd4f6",
+      "statement": "Configuration reaches a VSIR process only through the environment: load_config reads a mapping (os.environ by default) and returns a frozen Config dataclass, and no module reads the .env file, which is an example a developer sources into a shell.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/config.py#L108-L112",
+          "version": "repo-lines-v1:sha256:0e0a6db18c5ddc48352a80eafdd9aa255669e45d053d0aff0f3c642dcd191fe6:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOWE2YWExYjE4ZGMyNGNhNjVmOWU1YTcxOThmYWFmNGFlZTkyYTg3MDIzMWVkYjhjZDA1NTA2ODNkMjc1ODAzYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMDNmYjk5ZjRkYWNiN2UzYmU0MjUyZWE1Y2UwMmIwZTYzOTVmOGNhMGEzYjBjYmJmNzJiNjUzMGQ3ODNkOGU4YiJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/config.py#L272-L322",
+          "version": "repo-lines-v1:sha256:8c47be139c19f562f0e91ed5d776b4ec60141c2763748a0354096b7db17ff180:eyJzZWxlY3RlZExpbmVDb3VudCI6NTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU5YWNkYTcwMWQzZDVjY2QxYzZkZDViNGM4OWI0OGI3YjBmNTU1NjIwNDk2ZDBmMDhlZTViMDVlMDJmZmZmMTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYwOWIxYzhiMmI1ZDBkODVkMzlhMjE2MGNmNzQ5ZGUwMDBlYWQyMzQ2NjBlNDY0YzEyYjM5ZTM1NzU1M2U2MGUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_26d11a5267234ed198f56c7c0fff740a",
+      "statement": "Values that do not vary by deployment — the two raster dpi values, embedding parameters, the fusion surface weights and RRF constant, page caps, the BM25 constants, COMPOSITION_VERSION and SPARSE_VERSION — are module constants in config.py and are not readable from the environment.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/config.py#L26-L62",
+          "version": "repo-lines-v1:sha256:7051722c819bb87730ce05ac2d78fd0cf036d8d5c5f7784f4efff9ad976f01bc:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZmZmQ4ZWZmMmY5OGQxMjBmODgxNDg1MzdiNGM5M2VjODAxZDhjZWQzZmEyMmMxNzJhYTM3ZjNlMjQxYzVmZTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjkxNzViZGQ0MTFlYzVjZGJhZDE5MDRkNmM5ZTVhMTcwZDc0NmI0ZmQ1OTZlNzk0ZjYzNjI2NTE2MzBhOTRmMmQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_9cea408c0e2444c7b7e333dbf7a79483",
+      "statement": "The twelve variables in REQUIRED_ENV have no fallback: an unset or blank value raises MissingConfig naming the variable, and an out-of-range or unparseable value raises InvalidConfig naming the variable and the reason, so no configured value is ever silently coerced to a default.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/config.py#L228-L270",
+          "version": "repo-lines-v1:sha256:03fefdc3e07c6bb79e3573b5c1d89034ecfa36a390543bc2601377b3a423a847:eyJzZWxlY3RlZExpbmVDb3VudCI6NDMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVmY2E3NDVhOGRhMTRkNDRkNGU5YTM2Nzk1OWU2ZmQ4OWY5M2RmZDBjYjczMWE1ZGE2NjczOGFiNzZjZTNiYjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFjNDQwZjA4YzdhN2RkYmYwYmRiNDgyNjA3NmI1NDc1ZjFhYjYzOGZkNGNkZTIwN2ZjMGVhYWQwYWIzYzgyNGEifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/config.py#L272-L322",
+          "version": "repo-lines-v1:sha256:8c47be139c19f562f0e91ed5d776b4ec60141c2763748a0354096b7db17ff180:eyJzZWxlY3RlZExpbmVDb3VudCI6NTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU5YWNkYTcwMWQzZDVjY2QxYzZkZDViNGM4OWI0OGI3YjBmNTU1NjIwNDk2ZDBmMDhlZTViMDVlMDJmZmZmMTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYwOWIxYzhiMmI1ZDBkODVkMzlhMjE2MGNmNzQ5ZGUwMDBlYWQyMzQ2NjBlNDY0YzEyYjM5ZTM1NzU1M2U2MGUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/config.py#L64-L77",
+          "version": "repo-lines-v1:sha256:7a139e2b96dc3e7fcbf3aeaf2d2a75edf50489df20dd1cb3a22620a011c27ce2:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEyNTkzMWNhMjMwNTA4OGFkYzRkMzdjZGNkMzVkYzEyZDk5NDQzN2VkZmU2NDNhY2I5NWQ4YTNkODA3ZjBkNWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhZmJhMDUyN2MzOTUzYzRiNmUwZTViNTczOWJhODM2MTJmODA1M2JjZGM5NDY2NzMwMTkzY2QxZDU5MGI0MDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhjYzZhMWFhOTE0OTU1NTkyNjM4YzAwNmZlNDk4OGE3MDJmMzg2YzdjNzc3ZTAyMzkxNjBjZjZhZDRkYjlhMzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBiMGJmOGE0YjEzODUxMWVkOGI3NzViMTAxYWQ2ZDAyODJjZjgyMDAyYjdiMWZjZGQxY2M3Mjg0ZDhlNDBjMGEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_9254bf17740d4a93ae716764be8d49f2",
+      "statement": "The embedding dimension is part of the served collection name — pages_collection is `{VSIR_COLLECTION}_{VSIR_EMBED_DIM}` — so two dimensions are two separate collections rather than two named vectors inside one.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/config.py#L146-L150",
+          "version": "repo-lines-v1:sha256:5880c622beffc02433f32669dfa991d3964a65d9f4677e3c29ae3953f0897a25:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjNkMDBjZjI3MDk2NGQ0NGExM2RmYWM4NzUyYjA5ZmNjNDM1YjBmMTliMzE2YWJjZjgxYTdhYTY0YmIxMjJkNiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiN2M3NTMyOTRiNTVjNDdjOTllMzZjOGU4ZjkwNzJmODA0ZTg3MDhmMzc1MTAzOTlmNDg1MDQ5ZWJmOGFkZjE5ZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzg2NWI4MDViNjUyZWU5YmRkMmM5YWE0Y2U4NTU1ZjI4ZTI3MmZhNjRmY2ExMjA3ZjUwMzg0Y2U3YmVhODYzZiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_4aae59fcde1d4ac999a57f9b156810e8",
+      "statement": "Config.fingerprint is the five-field recipe a collection's vectors were made under (embed_model, dim, distance, composition_version, sparse_version), and fingerprint_id is a sha256 digest of its canonical JSON form.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/config.py#L151-L176",
+          "version": "repo-lines-v1:sha256:83c21e0057322f73244fb5d937058a3d3ff55c10fa72f390c39f601421b1f38c:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYzZDAwY2YyNzA5NjRkNDRhMTNkZmFjODc1MmIwOWZjYzQzNWIwZjE5YjMxNmFiY2Y4MWE3YWE2NGJiMTIyZDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQzZDY1OTExMDRkMmJiZDY4NDc2YzkxNmU2OGRiNjI1MDc1M2Q4MzBlN2NlODc0ZGM4MDk4MzYxNzgyMzZlYjciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgzZjkzZTM2MTA2NzgzNmYzMDFmNzE1OTVhZTNhZDFjZGY0ZWFmMWQ2ZDEzOWViMTNlN2YyZTYwOTk5ODUxNTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU2NTUxODM5OTU2ODJkYTRjYzNhZTExNmJlMjgwNmMwMzY1NTU3NmY5Y2NhZTU4NWRkZjAyOWEwNzY2ZDk0YWMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6af804cc70bd4d0f820f7e078f579b9b",
+      "statement": "Replay mode is a derived property of configuration alone — Config.replay is exactly `vlm == \"stub\" and bool(fixture_dir)` — rather than a code branch or a test-only flag.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/config.py#L180-L183",
+          "version": "repo-lines-v1:sha256:ba0d852822822eb1cd02d24c23bcb6a2ecf3ee86926b107f5c3b09434379a653:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjNkMDBjZjI3MDk2NGQ0NGExM2RmYWM4NzUyYjA5ZmNjNDM1YjBmMTliMzE2YWJjZjgxYTdhYTY0YmIxMjJkNiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMGViODQzZWY5MTA0YzIzZGY0NjY0ZjlhNjYxMjNkNDFmNjU4Y2IzYmI5NTQ3NWMxZWJiMWZmNTNiZWJjODgxMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTY1NTE4Mzk5NTY4MmRhNGNjM2FlMTE2YmUyODA2YzAzNjU1NTc2ZjljY2FlNTg1ZGRmMDI5YTA3NjZkOTRhYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDU2MmUxMTMwMGI4Y2YyMDJjYjdlNmZiYzJmZjU3Y2QwZTY5OWJkMWE1YWM0M2VjMDFiZDYwY2ZhMWMzMTJjZCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_39456142f6c646d0b67ed29fba3c058d",
+      "statement": "Credentials cannot reach a log line by accident: api_tokens and vlm_key are declared repr=False on the frozen dataclass, Config.redacted() reports them only as a token count and a presence boolean, and scrub_url strips userinfo from the Qdrant URL.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/config.py#L142-L145",
+          "version": "repo-lines-v1:sha256:52605e83fb611d42e1d3f4e183c24a2535be51ccdb80a64a9e5bd1e485aebf47:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzgyMjc2ZmY3YzMyZTFlMjEwODRhNDY2Yzg0NGY1Mzk3MTQ0ZTI2YjA4N2E1MTQ1ZGY5Y2Y4ZDY5ZjEyODhiMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzM4MWZmY2NmMTFhOTIwYzlkYWIwNjFkODRmMWYwYmNiYzYzMGNjNWEwMjJhMjM2MWRmNDA2MmE5NDg4OWZmZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMDgyOTg2YWY1YTRhZjlkODIzNTEyNTNiYTExM2Y4NjhiYmMwZmMwMjMwY2VlYzlkM2E4YzRlOWUzNDNlOWNiYyJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/config.py#L184-L215",
+          "version": "repo-lines-v1:sha256:6dfb7e6b3b16225fde0fa6eb95e7caa5186226a4b708bd905caf8f41e90627a6:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ3Zjk2NzJlNDUzNmFlM2UwM2QxNzBiOGYxZTk2NTJiODJkZTk5NTkyZmViZTEwY2ZkNmU3NTkzMTUzZjA5ZWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQxYzZkYjMyMzQyODQ2OTA4NmZkY2E0NGQ2Y2QzZTJjZTUwMTlmMzYyNmY2Yzg5NWE0NjQxMGNhNjQyNjQ3Y2YifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/config.py#L217-L228",
+          "version": "repo-lines-v1:sha256:2fcf993105f4519521c8f16d363be5ec6c2d6aae35ec2e978dedaeee074b2e80:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI4NzlhNGIwMGRkNmE2OWQyNjIzZjY0OTk5NGMzZWZlNDI1ZTA2ZGZhZTFhY2M1MjQxM2MwOGJkYzFhMmJlMjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBmOGNmNmU2MjBjMDg2ZDAzMTIyYzIxNThkMTY2ODZkMmIzYzBkZGE3YjY1ZDdkMjc4YjVkNWFlOGE2MDMxMmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgzNjBlMGZiYTIzODQwNTZiNGNhNTM1ZDBiYTA4YWFjMDAxN2VjODBiMzJkYTcyY2M2ZDliMWMyZDdjY2YxOTAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_73b41ff8ad8f4c08b4d9e238de814b57",
+      "statement": "The logging layer redacts on field name rather than value, blanking any field whose name contains token, secret, password, authorization, credential or bearer plus the exact names key, vlm_key and auth, so a new call site cannot leak a credential by forgetting to redact.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/logging.py#L27-L31",
+          "version": "repo-lines-v1:sha256:8c45b2c53a32a15bc799e2c899e8af80b5561ef2c660d7d2bcdd59df19e8c6a0:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzA2ZGRjOGI5YTczYzc5OTg3MmNmM2UzZWE4NmU1NzY5MDE4MTcwZjc5ZjAyNDBmMDI3YWY2NjkwZWJiZmExYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjA0MzI0NDQ1ZmU3ZGY1NjIyMTJlMzM0NDBjOGMyZjIxMDVmZTE5MTI2M2IxNGM4NTYyNjk5MTMyMmNhZjYxYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNzBhMWRlNTI4MDhhOGFlMjYyMTE3M2EwNjY2ZmIyYTg4NzJmMmE3ODJiNTFjODU3NGQ0YjgwYWQ5ZDEwYzY5OCJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/logging.py#L66-L70",
+          "version": "repo-lines-v1:sha256:40edc9e6cfce9b6f94b32b8bfa6cf66b2ecbc4f9a2a599dd37c8efd2cbd584ac:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTNmZTIwODdiYmQ1ZjRlNjZiOTI4MmU0ZjA5ZTVjNDQ3YTlkMWIwYTU5YzIxZTIyN2Y4ODEyMjZjNjIzZTUzNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZDllOTAxMjlkZWUxMGIwN2FhYjIyMjkzMmYyY2QwZDA4NmEzMGQ4NzUwM2U3ZTZiZjZiZjFhODM2OTlhZDVlZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZGM2NWE2ODE5NWYxY2Y5NDQ5YWQzZDk3YTU1NGI2OGIwMGM5MGQ5YWJhYTJlY2JjOWFhM2Q1M2E1NzIwYzkyMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNTc2N2RiM2FkZDY3ZTE2Njk4NTlkNmFkNzk2NjE4NWFiMjIyZDE2N2VlNjJmNjcxNmRjNWE0N2EwZjBlZjlkMCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_d1ce6a13fefa43ce932f72d9c90b4be4",
+      "statement": "`vsir doctor` and server start run the identical ordered BOOT_CHECKS tuple, so a configuration the CLI refuses cannot be one the server accepts; the CLI turns failures into an exit code and the server raises BootRefused before a port is bound.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/doctor.py#L337-L347",
+          "version": "repo-lines-v1:sha256:315ff024cbd14c81e38c259013145823f32a7253a35e1a70b0e9c9a3d0cd25eb:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQwNWIwMTEzMjRhMzYwYjA3YmJjY2Y4MDZlZDE1OWMzZmVmNTlhYmNkNTIzY2U3ZDg3M2RkYmUyNmExYTA3OTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhjYzRhN2QxY2M3OTZhYmEzZTQ2NzIzMzI3ZjUxN2U5ZjgxMTk4MmQyNTBmMDcwMjk4NmU0YjU3NjRhZDk1ODkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk0ODdmODEwZDZkYjFiNjY4OGVjMGM0NzU4MDE4YzI4MTdlZGZjYzFiM2NjMmZlNDNjNzIxYmNkNzM4YjljOWUifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/doctor.py#L406-L441",
+          "version": "repo-lines-v1:sha256:1058c5fc6f251d2ad4c33eeb23b68c5cc88f147f3aa1bf940c7db4f879710c03:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjljMzgxYzM1NmY5YzljYzBjMGZmNDUzMThmZjVhNTRkNzdiZDM3N2M3NzI2YjFlNzg2YmI0M2E3OTQ5MzNhNzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRmZTY3OTc1MDI1M2I0OWNiMTBkZjZiN2E3MDVlODQ0MWRiMDE3ZTE2ZjVhNDkzZmUzYTQwNzAxNmYwZDM0MWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjlkMWVmOWFmZjljM2I0NTUwMzliZDg1ZTY1NWJhYjc4NDk1NzUyMDBlNWZlZGQ5MDk0NGZkMDliMTY5YmJhOGEifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/serve/app.py#L1186-L1191",
+          "version": "repo-lines-v1:sha256:47e3610017596f65c61c4dd1491ce73bd1dee408995ebbf8376ae788b0a26c27:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzBjMWYxODhmMTQyZWQ3YTgyNDY4MGIyMDcxNzJjNTUxOWJjNjE0YTQ4ZmRhN2NmMTY3ZWRiOGRkZjc5OTU2YyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOWQyNTY0ZWQ5YWRmNmJjMjI0MTBlMGY4ZGZhNWIzZWIwOGI1ZmE0OWVjYjg1ODJhYTlkNzQ3YWQwNmM3MTBhZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDJlNTMwMjAyMDJjYjVhODI3NDVkNzRiZWY5OTVmNWJjODk2YTI5Njg5Y2NhZjcxYjZjZDEyNzIwNTVkMzI3MSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZmFkZThjMTJjZDZiYWU1M2EzZmYzMzcwMTU5OWY0NDVmZGQwNzg0YmIyN2FlODhjZDBjZmI0NDlkMTRlOTA0OCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_dea30d2b82714b6b8e15ddafe53f802e",
+      "statement": "run_boot_checks executes every check even after one fails, so a refusal reports all failing checks rather than stopping at the first.",
+      "evidence": [
+        {
+          "resource": "repo://backend/tests/unit/test_doctor.py#L206-L216",
+          "version": "repo-lines-v1:sha256:5ec11f0bd4832ad6e06787bb80a46282e0f4756defe3ede41b99b5025871ee2a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJmMzMwMDI3NGQzNmM4ZmU5MDE5YzAxNGM1NzExNzhkZjAxZDI5NGRiYjQyNDhmNjc3NDJhNWE3MDFkZjI1OTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk4NDIzNzIwYWJhZDAyYWZjMjY1NWU4M2JhZmI1NTNjZjVhZDU5NWFlYzIxMjMzNGI0ZTA5YWNlYjNjNDZkNTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc5Y2Y4YmE3OGU4OTkwZTI3ZGNjZTcwMTBmZjYwZmJhYjUyZmJiMDczNWIwNGNiZDZhMWZlM2E4YWE4ZGZlOTcifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/doctor.py#L350-L362",
+          "version": "repo-lines-v1:sha256:94555914f3f115dcd74309042c3acde5b5e8af366da73572ecd5763c0da52ce8:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM4OGQ1Y2FlMDg2YzgzYTBkN2QwOTA4MGNlN2E0NjlmOWRjNmM2YmY2M2M3YzQ2Yzk0MGViYTUyNGI5MGFlMjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImExMjY0ZmFjZDU0NjIyZDdhYjQ3ZTVlNzAyNGRhNGEzOGVkYjc1OWM0NDk2ZmI0MGFjNDQzMjY4OTYwMWQ2NjciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIxODg0NThmYzYyMGYwYWYzMDcyY2Y0NDJlMWZkNWQwYWZlYWJiMDRkZWE4YWFmOTEzNjJlOGYxNjNmZjRhYTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEwYmZjNzI3YTIwMjAwMGIwZWJkMTc3M2JmNzE2M2FjNGE3ZjVjYTlkMmMwYTZjNTc0NTU3NzNjM2RkYmYwMDgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_8116f03b87654ac48da902a8b854738a",
+      "statement": "A model id ending in `-latest` is refused at boot for either VSIR_VLM_MODEL or VSIR_EMBED_MODEL, because a floating alias silently changes what the cache keys and the collection fingerprint describe.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/config.py#L78-L83",
+          "version": "repo-lines-v1:sha256:266e3061e85f778abe24320ae44dbc5bf4c5a5fb24541980ce43bbb21623f359:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzkyMGJjOGM2MzU4ZWQ1NmU3NWNhMWUxMGVhMDZmZTM5YmYwODc3YzI2NmE0YmE2ZGI0MmUyYzNlN2EwMmIzOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZmQ4NTliMjk0YmYyNDAyMjA3NjA0MDFhNTY4NjFlMDBmYmY0NDA1YjBhMzkwZDg2NDAwOTU0MDE0NzE2NmE2NyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDU5N2UxOTBkZjc1YzkwNTAzMDA1Y2JkM2U0MjRmZWNkMmU0ODE2OTNiYjZkNjk1OTEyNGE5MzJjNDU4ZGEyZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNzlmNTEwOWZmYjQwNmYyZWUzYzM5NWFhNzIwY2Y5MzQ3NDdkY2U2YmMxY2YwZTQ2ZmNjODY1N2Q1ZDk2MjgxMCJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/doctor.py#L135-L159",
+          "version": "repo-lines-v1:sha256:80c19e14d13c1c37e4a3c2521a6fa18781cf2882426ea0572f76c353aef493c0:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI4MGQwMWIzNDhlZWYwYjgxMTJjMDEwNmZmZWM3N2YyOTdkYTk2ODUzYjZlY2UzN2RhMTcyOGVjMTdhNWIwMTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4MWNhYzQxMDE2MzZiZGE2NjFiYmUwZGI5MjdlZDEyYWJlYmViZGVlMzhmMjE4YzllMjExZGQ4YTJjNDczZjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZkNDVjNGI1OTIzYjBkYTI1YWE1M2I4ZWFlY2VkMmNiZWM5MjcyMTFkY2M0MWNhNWQ0MDcxOWUwZTE3Mzg2OWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjUzODE2ZTBlNWFjNjY5MTFmYzAxOTVjNTk5ZmM0YWIxODllNTdhNTNjOGNhZjU2YmQ0NDFmZTkxZTJmYjZmYjUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_779540fed45943c78de41f8798c336e8",
+      "statement": "VSIR_VLM_KEY is optional to load_config but is appended to the required list by the boot check exactly when VSIR_VLM is gemini, so replay mode runs with no credential while a live release cannot start without one.",
+      "evidence": [
+        {
+          "resource": "repo://backend/tests/unit/test_doctor.py#L196-L205",
+          "version": "repo-lines-v1:sha256:4e91a8b4c0222e0057bd230d980638fc53709491091181a8d3c9b3126423879d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFmNzFjZWVmMmI5MjhhMThhNDkwYzUyN2I0ZmFiYjMxMjY1ZGZiMzAwNjI5NTA1NjAxMDFjYjJiMWIzYjY4NmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI4MzdmZDc4NTdiYjJlZmRiY2UyMGZmMDhjMjEzMDdhYTNlNDdmN2JhYzVhMThkMWM5M2JiMmJmODEyNzUyNmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJjYWQ1OWYyOGY2OWI2YTJhNTdkZjYyZDc4MjQxNGY1NDU1OTUxNTVhYmI0N2I0ZjU0NDE2YWY4MDc4YzA3MzIifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/doctor.py#L116-L133",
+          "version": "repo-lines-v1:sha256:f155543dce41644202e61ccae9512c7664f71367b00226aeac91b448e2ef52da:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI4YzE4ZjYwOTc1OGNjMTQ1OTg4NWUzNzRmMDc4MTVjM2M1MDE4ODFkMWYyN2Q2ODE3YjBlZTBjMjIwNTQ4NTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhjYjU4MDQ4NzYwOGI4ZTU4ZjE0ZmQ0NTNhZTQ3NGY3ODY3MmIzZGJlMjg0ZmIxOTAxYmEyNzRhYjE2NDU4YzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNmYmU2NjlhZjFhMDRhOGIyODA1Y2UwYTc1YzY1NmEzMGQ4M2M1YWIzZDdkMDE3N2EzODdhNmM1Y2EwZjcyOTcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a3af53d5a4234a29921266aebefc496b",
+      "statement": "A boot check has three statuses and they carry two different policies: boot refuses on FAIL only, while readiness is red on FAIL or UNAVAILABLE, so an unreachable Qdrant or an absent collection cannot turn a backing-service outage into a restart loop.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/doctor.py#L100-L113",
+          "version": "repo-lines-v1:sha256:0ce36ae0d27f8769748e0ac8a2a00fba5cec945c445b82ee1cff18fc1a0ae1ad:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJhMmY5ZjBiNThhMzljZmMyNzI3OWJkMmNiNmRlOWZjMzYzZWI0NTAxNjQ1NThmMmIyMDMxOTI4YjUxOTMyN2QiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA5Y2MwYTFhZjQwMDk3ZmFjODc2ZDc1MWMzMGU3OGM5MjRjOGE0N2FmY2M2YjY2MWZjZTMyMGQ0NjhiMGVhNDYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM3MjFlN2FlZGE5NTQzOWM4OGE2YWEyOTRjYmEzZWNhNjQxZDU1YmU0YjU0M2E5MGVmNmQ0MzBjNTg2ZTI5ZWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjUwNTA0Y2RiNDcwZTJhMGE0ZTNmMzE1ZmU4NWRjNDJjMjYxZTcxYTQxN2E3OWYyMzQxN2QxZDE2ZGE5ODEzNTkifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/doctor.py#L22-L30",
+          "version": "repo-lines-v1:sha256:1abd10f98569592617154ab2fc437bf2fea165607bd4125c0a9b1c226fc63c36:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMWJkNTlkNzg4NTA0MDY0ZWRlMjJjNTRkYWMxZjZhZDIyNzU1OTMyNjUxZDc2MzhhYjgyOWFjYjBiZmViMmRiMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTM4NGJmZGIyZGYzODBiNjU1N2NjN2E3MWQxNjg5MTQxNWJjY2FhODc2OTk0MDZlMjM2Zjc1MmM2NDE1Mzg5ZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTdkMmQ5NDg5MTk0ZWRiYzcyMDAwZWM5NzdkNmM4MGE0OTQwZTQ4ZTVlODBiMmQ1ZDA0ODU5MTg3NDc0ODk5ZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZGMxYzU2N2UxNzRjNzhkZDI3Mjc0NGNhYzMwYTA0ODA2MGMxODc2NWE3M2Y2ZWYzNmFiYjIyODIxNWE2NjNlNCJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/doctor.py#L60-L70",
+          "version": "repo-lines-v1:sha256:85197838f832e0ba46d01707f6cb53913439729be6ac46a53ec6dc127926d60e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgxZTBlNzZlYzVjMjNkYjFiYzkxNzg5YTJlYzVjMWIwN2I3ZDkyZGNhNmU3ZGJhNTkzYTA4OGQ3OTY1YjZiZTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI5ZGU0MGIxOWUwYmFkNzEzNDJjNmFiODJiYTI5MjcwNjJiMjZkNzI0Yzk3MTY4ZDU0ZDU2YzIxMGExOWIwZDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU0OWJmZjg0MGQ4NDZhY2U0NzQ5OTgxMDFlMDdmOWY4NjgzNjU3NzhlOTllNDZkM2ZiOTRhZjQ0ZDM1NTVhNDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImMwMzM4MjM1Yzc3MmMxNTU2MGQ0YTdkM2I1ZDMxYjBkYjA2NmM3ZDg3MzAzNzUwNDExMGZkYzc1ZDg3YjYyNDcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_54471aaf342e47d18dff8e04fc6be381",
+      "statement": "check_collection_schema asserts the live payload schema against the single INDEXED dict and fails the boot only when the collection exists and disagrees; a collection that does not exist yet is UNAVAILABLE with reason index_not_ready and names `vsir doctor --create-collection` as the remedy.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/doctor.py#L203-L253",
+          "version": "repo-lines-v1:sha256:b85f9c4f69108e99dc8731f3e287fbf5e963261f8b4c6654d1ccd7e97c2b8f24:eyJzZWxlY3RlZExpbmVDb3VudCI6NTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkwYmIwZGMwOTgzNTI4MDE1YzdlYWFiZDBiNzM5ZjE3MjlkODI1NDgxMmMwZTE3M2M5ZmM2ZDk5MTBjZDg1YjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFlNzE2OTQxNjUwZDIxNDVhMWI5MmRlZTk4YzcyZjFmYjdjODlkMzljZTdmZDg3NzY1OGE4MmY2NTE1YjdhZDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJlMmNlZjZjODRjZjRhYWQyZWI5MWQyNWFlMTQyZDYwY2ZkM2QzMDQ2ZTI3NjJmZjIzMGExMjAwZGYwNjk0ZTIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_dc1306e7f17245fdbd04db9cda03305c",
+      "statement": "check_collection_fingerprint compares the configured recipe against a record in the control plane rather than the collection, because embed_model and composition_version are not observable from a Qdrant collection; a mismatch refuses the boot since a serving process would otherwise embed queries with one model and compare them against vectors made by another.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/doctor.py#L255-L334",
+          "version": "repo-lines-v1:sha256:27c7af2a56cc2ad93f6b11d63f5ceb3acffdf80a34f690493b16b3cade4da9ab:eyJzZWxlY3RlZExpbmVDb3VudCI6ODAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA5YWEyZTA3ODIxM2Q2ZDA1ZThiMWUyMjg0NjFjOTU2NTYyZGQxZGJiZDE5NTA3NTBkZjM1ODAyZDkxOTI2N2IiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk1YTRmMzlhMDY3ZDIwODlkOTQxMjczZmE1MzZlNjY2ZWZkNzgyNDdhNTZjYTNhZDYxMWMzMjBjZGQ0YmUyYWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY5ZTk5MzI3YWI5ZTgzYTc1MjdiZWViYzNmMTQ4ZTI4NjQxMzQyM2E4ZjVkZmMzZjU1MWUyM2RiOWY4Y2U0MzMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6d80ae9e68ca4790aa057dc62845a016",
+      "statement": "A pages collection that has never been ingested into has no fingerprint record and passes the fingerprint check, while a stored record that exists but cannot answer the comparison is treated as drift and fails.",
+      "evidence": [
+        {
+          "resource": "repo://backend/tests/unit/test_doctor.py#L505-L525",
+          "version": "repo-lines-v1:sha256:bc8aef4278b74d93183fce0b26cbc05dc0fb3f8b71129ff34b90e8fd6798adeb:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRhNWJmZmU2MDExMGFhYjk4YWVjYzVjZjcwYjk5Njg5MTcwMTkzZDNlYzg4Y2EyN2ZlYjk0MzEzMTRhNmY4YjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdjMjIzMjA1MjU4Y2M4YTQ3OTg2YjQyODBlNmI2NDI1YjcxZmVhNTJmMDU5MmI1ODNiYjA4YWMxNWFjNTlhYmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg0NGQyN2QxYmY5ZThiN2I0MzRlZjEwZWNhZGFkMjlkMWUwY2IyNGI4MDgyMTEzZjM3MDA3OWM1YmFhZWIxYzgifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/doctor.py#L306-L334",
+          "version": "repo-lines-v1:sha256:101a671de189f3c2d2b18b9ef3a8389e1226e0388db67e0bb0d42e9d631c8da6:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU3MGRhMDMyZmJmZGJkMWI0MjRlODE0YzIxMmFlNTg0ODRlNzZmNTdkYzU2ZGJmZDEzYmY4MDM3MzZkMzI0YjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRmZDIxNmFiYjU1MzhjNjI5MDhiY2FlYThiMTA0OWU5ZjY2MTljYjIyZjBjMzRiYzkzYzBmNzFkOWE5YmJiOWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY5ZTk5MzI3YWI5ZTgzYTc1MjdiZWViYzNmMTQ4ZTI4NjQxMzQyM2E4ZjVkZmMzZjU1MWUyM2RiOWY4Y2U0MzMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_fb23d0d10ba84fa794cab315c228655f",
+      "statement": "GET /ready re-runs the full boot check list on every probe in a worker thread rather than reusing the start-up result, so a schema or fingerprint that drifts under a running process turns that instance red instead of leaving it answering.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/app.py#L1386-L1396",
+          "version": "repo-lines-v1:sha256:48ca47a6f6cfaed0cb18b40a595d45b127cdb307f9f59e4e839d99983b7aec47:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzNWE4NTAzYzdmZTYzNGQwYTlmNDYxMGM1M2VjNmRhYzI4MDZmOTU3ZmIyN2NmMTIzNTAwYzIxNDE2M2Y2YjAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRhY2FlMGJlMjliM2UzMWVkODM2YTc5ZjIyN2NiZjk3NjhlZWFkNGE2ZjczMTQyNDJlYmUwMWRmOWZiMDA1ZTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU3NmFkMmFjOTAzMWI2MzQ1ZDIxZWUxODc1ZmFlZGQ2NzM2ZGY5YzNiMTUxODk0ZmZkMTU1OWQ1ZGMxZDMzMTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjlmOWFhZDVjOWMxMWNlMmI2MTFmZDk5NzFlOGFlMTQ2ZDg1NTUxMDg1YmUwNTMxMTY1OTY3OGFkYWY4M2I1MjQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_26786c5bc44049acadb211274ca50c5d",
+      "statement": "`vsir doctor --create-collection` builds the pages collection from INDEXED and then runs the assertion in one command, as an admin process of the same image rather than a branch inside the server.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/doctor.py#L365-L403",
+          "version": "repo-lines-v1:sha256:9425b700a1e1b1846c908b1ccbd7a2065cdcb63dc8b4ba2a235b910ff888f949:eyJzZWxlY3RlZExpbmVDb3VudCI6MzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEwYmMzODliOWYyYjJlNDMwYmYzZjgwNTMyNjAzZjBiMzdhMTI5MWZiZjZiNzE0NjQ5YjY5MTE0ZGJhYjlkN2MiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM5YzY3NDY1ODNlMmU0NTNlMDAyM2UwZTUyNzA2MmMwMmIyMGExZGFiNDY4MGY3MWYyY2FhNGZkZWFiZDE3M2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE4Zjk5MjEyYmZhYWQ1ZDYwMWU4NjlhMGQ2ODk5YTdmNDg5NjUxNmNjMDNkMTBhNmE4YTMxZmY1YTUwZTg4ZTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVlZjI1ZjUwZTAwOWNjMTZkODc3ZDRhZTQyZDFhYmExZjlmZWUyOWFjNDFiOTVlYWMzYmY3Njc0ZTI1NWI2NzUifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/doctor.py#L480-L495",
+          "version": "repo-lines-v1:sha256:8d2662df77edb84db3604f51420c77fbf1de359b30cc8fb9d6b5f5a1c3f303bb:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUzNzU4YjEzYjJhZjIwNDU0ODVlZTcwYmZkM2Y2ZTEwYmIwN2YxOGI3MTE1ZjhmYTQxZTA2ZTkzNDg1ODQwYmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFjZDFlYzYyMTI1ZGI1Y2ZkNmM3ZjliYzE1Mzc4ZTQ2ZmYzOWE3OTk3ZWIxOTFlMjcwNDQxYTljNTIwYjIyMGEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA0MGFkMTg4MzI5ZWM2YTRiZTU3Zjk1ZjZkYWI5YTM3NDQ2YTliZjhmMDg2MGExNDI3NjhlYWQ2OGZkMWUwZTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI5ZDhhY2RjMmNjNTA0YzlmZDgwMTc1ODQ5MWI4MGE0MWJlYTFlMWM0OWU5ZDMyZDE2YjcwYWU5YTQzYmI4ZjUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_cfac9ea915bc436a93329dda23d14e4f",
+      "statement": "The doctor exit event distinguishes a checked pass from an unchecked one: doctor_ok is emitted only when every check concluded, doctor_inconclusive when any check was UNAVAILABLE, and doctor_refused with failed_checks on a refusal.",
+      "evidence": [
+        {
+          "resource": "repo://backend/tests/unit/test_doctor.py#L95-L120",
+          "version": "repo-lines-v1:sha256:2d16f3338357ecd54c0e0dd0d24fe0cb67bd22fee5308d1c2886e02efefb0b1a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUzMzQ3YjA4N2U5OGM0YjJiNTc4NjA1NWU1MjhmNDY0NTE5M2M1ZjgxN2FjZDJhMDBkMjBhMTdkMTYzZTFiZDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdlNjQ0OWUwZWMwOTM3MmNkZGY0YjEyZGVkNjRlZWE0OWFjNTk2MDg3NjkwN2RhYzU4ZDYwNWY5ZWQyNTZiZDciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNiYWQwOGZhOTliZWE3NTA1ZTZiYTRmODg1Zjc1MWE3ZWQ1MjAyYThlODQ4NmRhMjZmNzk3NjIwZDIwZjg0MWQifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/doctor.py#L480-L508",
+          "version": "repo-lines-v1:sha256:ecd9835aeb1a303f912058bf01d606f208df39bb1931cd12e9999d60ff82293f:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUzNzU4YjEzYjJhZjIwNDU0ODVlZTcwYmZkM2Y2ZTEwYmIwN2YxOGI3MTE1ZjhmYTQxZTA2ZTkzNDg1ODQwYmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE2MjMzYjNmZmVhMzJhMjNkZjUzMDY1MzQzNDhmMmRlZTc3NmE1YTZmNzRmYjUzMzE3NWRkYzUzOWE4ZmU0NjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA0MGFkMTg4MzI5ZWM2YTRiZTU3Zjk1ZjZkYWI5YTM3NDQ2YTliZjhmMDg2MGExNDI3NjhlYWQ2OGZkMWUwZTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.1",
+    "at": "2026-09-11T14:07:28.402Z"
+  }
+}

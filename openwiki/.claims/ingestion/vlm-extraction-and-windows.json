@@ -1,0 +1,236 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:2ccf678379a67e4a1a3cc82a7a8878d606defe6947fbd59e1a8a654523b7217e",
+  "claims": [
+    {
+      "id": "claim_40e89e63189545359d20423e458a3c89",
+      "statement": "A window is a page range created by the model's attention limit, deleted again by stitching, and never a retrieval boundary — window (attention), section (semantics) and page (index) stay separate granularities throughout.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/window.py#L1-L6",
+          "version": "repo-lines-v1:sha256:898aecc64e91f83e159857a05d15f0641ebda482f1ae645b0ca730b1ec5acc91:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYmRmM2QzZWI3YzRhNmZlZThmMTQ3ZmJkN2IzNjVmYzE3YzJlNTAxMTU5NGVlZmZiMWViMjJhYzFiZTUyOTczZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNzMzMmFiYTkzYjZmMDdiMTJhN2ZiM2ZiYTA2MTRkYjEyNWU0ZGVlNmI5ZTBlNzg1ZTc1NDI2NDY5Yjg3N2NlMCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_9b91b7bafee64ec0b7840951d947760b",
+      "statement": "The window ladder has three rungs — whole document, chapter-aligned, and folded at the cap — and every rung produces windows of at most the cap covering the document exactly once and is parallel; the rung number records only where the boundaries came from.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/window.py#L354-L380",
+          "version": "repo-lines-v1:sha256:06886d30cace2f8b61eca634632db3aeb2cb1e7895f2054eb5583bae742d9e81:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg5NTkwOTkyOTNlZWVjNzBjNThkMTNhMWE2YWQ2MTY1MGQ0ZjJjMzZkNjM0ZjQ0NmI0YWE2Zjg1NjJlZWNkZWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRmMGNlZTM4NDRkZDRlMTZhNmM0NzFlNjg0MDBiOTQ5MWZjMjkzNjE2Y2Q2NmM3NTg3M2NjYThhNTc1MjBmOTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEzNzJiM2NiNjhjOWU5Njk2ODYyMmRlMjUzZDAzOGZmYzJiMTQ5YWRjNDVjMDc2MzFkZDQyYzY1MjU4MjkxNDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/ingest/window.py#L9-L12",
+          "version": "repo-lines-v1:sha256:0bbf2e2e5654e6c70b51a908ecb39d97bb74f2211eb4ac52f082afe7f9ba5207:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDU3NTViNGNkMDFlMTIxZmZjZDdiNWJmNTliMmMyODZkZGZhZjJjZjlmYzdhYjExZWY2NGE5NGYxZTM2Y2YxNiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOTkzMzUzOThjN2NiYzRkODIyMzMxNGI2ZThlYTE1ZjA3ZDE3NzY0YzVkYzkyOWE2ZjZhODBkM2I5OWQwYTQyOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDQ1Y2QxZjYyNDU4OTdhYjg4MjNmMDJiYTVlNjk5ZGIyYjRlYTQzZjI3MDhhMzJjZGEzNjI5MzAwMjgzNDg0NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDg2YjAzNzY4NzViYmVkMTQ5OWZlNWIwNzU0NWJlMTBkOGNmYmFkZWZlOWI5MjU4Y2IzNmNhM2MzZTdkNTA3OSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_6420ee65bf764435be9cb3839c6f9100",
+      "statement": "An inline byte ceiling rules the whole-document rung out for a file too large to hand over in one piece even when its page count would fit under the cap.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/window.py#L338-L353",
+          "version": "repo-lines-v1:sha256:36622af78e4d4349050db0c5e46a0150e4967f643d92916e0f7484007b72be61:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ4NTIxMmRjMDFmZGJkNGIzMWJhNWIxMWRhZGFlNWU4YjQ4MDU1OGVmZTVjZGMxY2NiMWExYTM2MjhkNGY2NjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjViMjNkYzZiNjdlYmEyOGM2NTU0MDUxOWE4NWZkOGE0NTQ3ZTAxMzBiYmViZjI3MGE3MWM2N2I2MzAyOTZhYmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU5ZWQ3YzM4NWZkZDRkOTg2N2E2NTQ2YmUxNDRhY2ZiMGExNjc5MGM3MGY1OWVjMGNlNTE4NmIyYTUwZGM5OTMifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/ingest/window.py#L60-L63",
+          "version": "repo-lines-v1:sha256:3e0fd58bb5d978f881fbf8e5aafaf9014079ecb871d766ccde9e4a5b251aa659:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYjlmNGY0YzViM2M2N2Q1OTQ2MWUwMDY4Zjg4YzRmNjM5ZTNjMWJiZmRjMjJiMjhmNzNjMjYwZTZiMmU5YzhiZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDU3NjhkOGNkY2QwZjBlMWJlNTljYWFlZTMzOGYwMTQ4YzczYmU5ZTdjZGIwNzBmOTVlNjgwMDVmM2ZkM2JjMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzk5M2UwZGEwZTlkMDlhYjExZjg2OTNlZmFlYmNhMWZjMTgxZDQ5NzhhMjI4ODc5N2QyY2E0MWJlYjMyYmQwOSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_0ae593c543f246918d19052657423f17",
+      "statement": "The fold-at-the-cap rung was restored because the carry chain that justified excluding it disappeared when section extent was removed from the model's output: presence is reported per page and extent is computed after the folds are gone, so two windows that never saw each other reassemble one section.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/window.py#L13-L22",
+          "version": "repo-lines-v1:sha256:f1ae76416da3ea60b290674ffa21109d46e352d1cf9729bc913a0a76513c22a1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIzMDZhM2MwZTNmN2E3ZjhmNmE0YWZlODEyNzU5NmVhNTkwOWIyOTIyNWU1YWM1MmQ3MTRkODZmYzdlZGU2ZjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjlkZWUwNTYwMTc5MGIzY2U0MzEyYWE3ZmY1ZjQ3YTM1YWZhNDYyNDBmMTA3YzZmMDhkMTQ2N2Q0NDA3YWE1ODgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgyNjIwZmExMTRiODhlZmM0MzU5YzliZjZiMTg4YmEwMjU5MDMyZmUwNzI0YTQwMjhiYzc2MWQ5NDA5YmNiMDgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_928e0fc040bc4bfd8d37b32b99d63bf7",
+      "statement": "Excluding the fold-at-the-cap rung refused 14 documents and 2,719 pages — 49% of a 202-file, 5,578-page working corpus — with eleven of the fourteen declaring no outline at all, including the pilot document, which therefore failed one step before the spend it was waiting on.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/window.py#L24-L31",
+          "version": "repo-lines-v1:sha256:e5a98050392b24ec25ce84761564c29ce0839a160ad22fd9929018b8ca4bdfba:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNzA4NTJhYzYyNTdhYjY4NDg1ODliZTI5MmZiMWZmMmZkM2U5MTQ1ODQ4MWEzZWQxYjRlNDIwNWEzMGYwNmViYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiY2VjMGVkNTk5NmFhZTA0Nzc5ZjU3YjE0YjBlY2Q2ZTQyMjdmNDM5MzE3YTM3NDc2NWIwNzQ1OTdmMDMwOGQ0NyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjY2NjFmYmM5ODQwNGJhNGI3YWZkNGIzNzVjYjEyOGRjZjI3NWM3NTU1YjdhZGEzMzVmYjc2YTVhYjdkNDZkNyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_bfb79cb92fa54797878b583b21111f43",
+      "statement": "Windows are bounded below as well as above: a chapter smaller than a third of the cap is folded into its neighbour, because bounding only from above billed one call per sheet on a densely outlined file that declared 8,187 bookmarks over 592 pages.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/window.py#L33-L38",
+          "version": "repo-lines-v1:sha256:15a9f46dcd188b8ce71b023a3f9faa394a01d30c04d01c7f795b2fda55c20425:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiM2E1NTUwMmY0NzQ5OWUxOGI3MDk5MDljMzZhOTE2ODRhMzIxNWQzMjdhYjJhNjFhYzcyNzYxMmU0YWVlM2M3YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOWQ1MWM2ZDkxYjAxMGI1ZjQxYTgzODdhNDBhZjExM2Q4MTRmOTc2MzQwMTA5ZDQ0NDA2M2NlYmVkMmYwNDQ5ZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiY2M2MWFkNDA2OGM5NTRiZmEyMTc0N2IyZjAwNTljOTdhMmRlYTgzOGE3Y2Y2MzliNDE0YmYxNWI5Zjk5OWZjNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYTRmYTUzZTNjNWJjZTg5NzQ2NDdhZDgyYzIxZDg0YjJjNzk1MDU0MWNiYzBmNDYxOWU2MDdiNTk4ODI2NjgwMSJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/ingest/window.py#L69-L79",
+          "version": "repo-lines-v1:sha256:453fdb34f82cda9d0c77347febd6394b5eeeefe203959ae018d209a7fe71ef06:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhhYWFkYTgyZjIyOWI3MDVjNzdmMzExMWJhNWM0ODc3ODkyMDZmN2NiZmIxYzJlNDFkZTcxY2FiNzJlZjAwZjQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjllMzA1MjNmMzEzMGUzYmQxZWRmMGQ2MzQyMjRhMWU3NWYzZWIyMTkyYTg0ZDNjNGRmOTkyYjdlYzkzMGUyNjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg3OTY1YWE0YTdkOGM3ZjZmODdlODUxOGY0NmZmYzY2NzIxNDhlY2Q1MzZkYzQ0OTI0ZTU5NjZiN2Q2MjhlYTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYwNDg2MjAxMzE3ZjU1YjQ0NDczMmQ2OTZiYTIwM2U4ZDc3ZGM5Y2UwZmYwZjJhNTNjN2U0MjcwMThkYWMwMTQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_4098314267334cbda11a097468082a5f",
+      "statement": "The packer applies a floor on the merge rather than filling to the cap, because a chapter-aligned plan that packs to the cap has taken its boundaries from the cap and is the fold rung wearing the chapter rung's number.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/window.py#L307-L337",
+          "version": "repo-lines-v1:sha256:0288241871626f6dd63946e516d7d543662b5472134bdbe00786e42855b32141:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE5OTZmMjBjNDMyYjAwZWI0OWE1YjcyZWI3YmI1MjI5NjRkYjE4ZmVmYWZhYjZiZGZlN2VjMGQ4NWM2MDk2NWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFiMjc1YmJmZjVjYjM3YzNiZjk2YmEyMzRjNDliMDcxNjk4NjM2NDY3ZDZmMzJkODU0NTI1NWI2ZjNiNTczMjgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYxZWQ0NzJiOWU1YTlhM2NiODllMDQwNDQ5NGE2NjBmZTUxOWEyYzY2NmZmNzE5NTYzNGQyMzY1MDU2NGJmNGIifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/ingest/window.py#L36-L38",
+          "version": "repo-lines-v1:sha256:90c7764044a7e78097cafc9c3ba3cc085c91c963d7ca0fc3a8d3da176571f6d3:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjZhYzQzODVmMmZkMTU4OWRkZDdjZmIwYjA1OThkNGEzZTZjOTdjNTAwYmIzMDJkYjlhOTMyOGU5MGQyZTE3MyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOWQ1MWM2ZDkxYjAxMGI1ZjQxYTgzODdhNDBhZjExM2Q4MTRmOTc2MzQwMTA5ZDQ0NDA2M2NlYmVkMmYwNDQ5ZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjczZTEwMWI2NDVmOGQyMTJjZDc2MmYyMWY0NDlkNzQ5MmUxNWU2N2JjOWEzMjExNmNiMDA1OTlkYzk2NmVmYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYTRmYTUzZTNjNWJjZTg5NzQ2NDdhZDgyYzIxZDg0YjJjNzk1MDU0MWNiYzBmNDYxOWU2MDdiNTk4ODI2NjgwMSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_ef8f4f35250f4d7982c7743f69b6f6a6",
+      "statement": "The extraction schema deliberately contains no identifier grammar, classification enum, regex taxonomy or per-corpus keyword list, and the page-kind list describes what a sheet of paper is rather than what this corpus contains — a model-returned kind outside the list is normalised rather than re-billing the window.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/extract.py#L6-L13",
+          "version": "repo-lines-v1:sha256:d6f669002cfc8dc7a6c937d286324fbbbb1cdbddd630079ce8f5de48963e1d3f:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiN2M3ODlmY2E3NzkwNTdmOGI2NzE1Y2NmNDYxZTYxMmVjZTZkYTY1ZDI0MzNkODc4ZTU5ZTBkNzE2YmE1NDExNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDVlOGRmYWY4ODZlODdmMzg5MjRhZDUyZjIzNmI4MTAxNjNiNTZjMmNmYjJkY2Q3ZjA0MzE2YTVlNTExZjYyMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTFlYWNlMmZkMmVhZTBhYzA3NWJjOTczYWViZDMzZWFiZWVmYzdmYjUyYWU2N2Y1YjcwODAxODVmNDAyOWI0NCJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/ingest/extract.py#L60-L69",
+          "version": "repo-lines-v1:sha256:bbd61462ed99c99ddcf6a20f7ee3c0960b904d8af89ae9ca7cc810c4384446c4:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI1MmUyYzYxMzI2MzA2YmIxMjM3M2FmYzZkY2I2ZDRlYjk0MDA1ODg0NjA4YWFmZjI0ZmRjZjlhNDk5MzYzMWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI2NDYzZjg5MjI5MWMyMWMwN2FiMjViNWE2MGQzMDJjZTdjYmNkY2Q4ZWNhYWIzYTJiODM3NDdlMDY1YjM2OGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBlOTdjMzdjM2IyZWE0Y2UxOTI1MDc4ZmM3ZDAzNWRjZGM2OGM0NWQ1ZjFiZWE2MTU1NTQ4NmJlZDg5NzllZGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNhMTgwYzM4NTdiZDVjM2VmMGIyYzU3NzBhM2RkMzQ2YTc1Mzg5MGU4NmM2YzQ2ODY2OWFlNzA3NmUwNDlmMTgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6111ca11c5e247f9b7bad0c6f4efb862",
+      "statement": "Extraction asks for section presence per page and never for extent, because a fold can cut through a section and the model on one side cannot see the other, so any span it reported would be a confident guess.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/extract.py#L15-L21",
+          "version": "repo-lines-v1:sha256:76e019afde3f9aa734e9019da2f55820f50549004d8f4beea5577520cee1287e:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDQwZjM3MTEzNTdlNjUxNTA3YWZlY2UwMTlkMzE5NTlhYTA1MWJiMGE3MDVkOGFlZjljN2IxYTAxMDYzZDQ5OSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZmE2MzBmYTU0YzY1YmU0YWExNTJhMTJhODU1OGYzMzM4NjVlYzkyMDViNjZlY2ZlZmQ5YTI5ZWU4NDgxOTllYSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_27aee44002ef4cfb85dbd23bfdbcd722",
+      "statement": "The model returns structure and codes but never page text, because the text comes from the PDF library at the probe step — which is what makes the next step able to check the model's codes against what is actually printed.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/extract.py#L22-L26",
+          "version": "repo-lines-v1:sha256:6a238bf2691ab0458b048d1caee38a09fd1f8ac484df55244d68c19f8fc68d61:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNGU0YWQyMjFjZjdhMDU4NzBmYWQwYmU1ZmU5NTJlZDk5OWFjODNiZjY3NTlmN2M2NjExOWRmOGMwNDk5NTE3ZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOTRmZTcxMGU1MGY2YzI5MzAwNTYyMGYyNGVkZjc0OGI0NmZkYThlMTNjYmM1NzNiMjVlMDZiODYwZjJkYzFlNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZjE2Nzc1NzYxNWQ1YmIxMDI5MTNkMDU0OTEwMWJlNDQzNmFlOTQ2OTUzMDM5ZTIyNjQ2ZTZkYzAzZGJhYTg3MyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjkyMzFhMTkxMDBjNDU1MzcyYzU0NGI0OTY1ODUxNzA4NTE1ODU1MjVmMmE5MzY1M2Q2NjI1MWZiY2VlZGVlOCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_eb0348029ecc43fba98383b3155ab798",
+      "statement": "What is cached is the verbatim response body rather than the derived page record, so every downstream derivation change can be re-run for free instead of requiring the paid call to be bought again.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/extract.py#L27-L32",
+          "version": "repo-lines-v1:sha256:47282c1ec36dfff66c0f96cee3b9288fbf4aaff6cb3a80639370b504a6abcb7b:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYTVkZTU2YjZiYTI3NDY1ZTg2M2QyOTFhODY3Njk5MTNhN2UwNzMwYjIxNDkzMjVlYTFmYTlmMTFkMjIzZTlkMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjE0N2M0NDZiNWQ0NWEwNDNhNDE2N2U0MDg1ZWZhMGQ1MDY5MTM1ODc2MDc5ODY5YzIyMjFhMjNhYWNjODlmZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTFkZTFjY2M1NTYwMjFlNDg5NmMyNTFjM2QzZGRkYjVhZWE1Njg4OGQxMjJkNTU4ODJhNjM4YTgxZDI4NDg5YyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYmExNTYyNTUyZjE2MzY0YzQ0YWEyZmE5MjY0MzU1ZDFlZGIyZGI0YTg2NDY1Njk5MTQ3ZGFhODZiZjEwNTBiOSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_52934817418648aea7f1b68d91e8199e",
+      "statement": "Four triggers bisect a window and re-bill it — the output ceiling, an unterminated body, a schema-invalid body, and a page-index set that is not exactly 1..N — and the pipeline never pads, never guesses the offset and never accepts a partial window.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/extract.py#L268-L299",
+          "version": "repo-lines-v1:sha256:2fc3e49fc9ce6f8cbcc763601aa38f835ccbfc6ed5f2621fdc681fd506d69a1e:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMxNjM5YThiMTllZjE5NWJkOGUzNjhiNTY5MjA5MmI1ODNmOGJhY2Y4YWIzY2EyZmE3YzI5YmU0MTc4MzM2OTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhjYzRhN2QxY2M3OTZhYmEzZTQ2NzIzMzI3ZjUxN2U5ZjgxMTk4MmQyNTBmMDcwMjk4NmU0YjU3NjRhZDk1ODkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQxOTI2NDU4ZTRkNGMyMDIwMjNhOTc1YzY1MTcyMDE1Njc5MzkwOGRhMzhjYjE3NjhmNjhmYTJkMDY2ZjEwYjcifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/ingest/extract.py#L33-L39",
+          "version": "repo-lines-v1:sha256:f71a6094506ee429c4eda8265ae8e99d3188e1ce4ae80f49a27d4b661f4e697c:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDJmZmM2YzMwY2U0YTNmNTc2ZDQ1ODYzODJhZmQ0ZjUwNjBjZTA1M2ZlZjUxNTIyYTkyMWY5ZDI0MzFlMmM0ZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTM4NGJmZGIyZGYzODBiNjU1N2NjN2E3MWQxNjg5MTQxNWJjY2FhODc2OTk0MDZlMjM2Zjc1MmM2NDE1Mzg5ZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNTIwNDFhYmE1NGRlMzgwMDZhOTJmZWYwYmJiYzU3MmViYTg1ODhjODQxNmNjMDdmZjQ5ZDNlNGZlMDBkYWU3MyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDUwMmViMjg5ZTg2YTJmNjhkMTU4YmRkNTNiYTZkNmM1NWM2M2Y3MDg1NGYyYzkxODUyZTNjNjZiYmU5MGJjZCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_74b86ab0e335444b8aa5f00b121b812c",
+      "statement": "Bisection's floor is a single page, which raises a typed unsplittable-window refusal; there is no recursion-depth counter, because the terminus is that page rather than a limit.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/extract.py#L36-L39",
+          "version": "repo-lines-v1:sha256:251806a2f234c54e83ded0f078cecbcc009f03b30ed4ca2caf18c413e220fce3:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzI4ZGJlNWUzOTg0OWExMzBkYzlkOWQ1OGM4ODdkYTAzZjUwY2E4N2ExNTBhMzEzNWViZjE3MzU4MTY2MzRiYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTM4NGJmZGIyZGYzODBiNjU1N2NjN2E3MWQxNjg5MTQxNWJjY2FhODc2OTk0MDZlMjM2Zjc1MmM2NDE1Mzg5ZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYmExNTYyNTUyZjE2MzY0YzQ0YWEyZmE5MjY0MzU1ZDFlZGIyZGI0YTg2NDY1Njk5MTQ3ZGFhODZiZjEwNTBiOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDUwMmViMjg5ZTg2YTJmNjhkMTU4YmRkNTNiYTZkNmM1NWM2M2Y3MDg1NGYyYzkxODUyZTNjNjZiYmU5MGJjZCJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/ingest/window.py#L245-L260",
+          "version": "repo-lines-v1:sha256:d6674289d5b54f99273b0478e9a39c4924dfa526562b6a4e5b1be6d46d8c8d40:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg5N2UwNGI2ZTI0NDJkNjUyNTJmNjAzZjdmYzhlZmFjMzA4NTFiMGEyZDJlOWZkNDE1ZWMxNGEyNmNlNjUxYWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZhM2M3MzZmMGFlZGM5NGQ5Y2U2MjU0Y2RhMjEyMmUwOTIxZDIxOTg4Y2Q1ZTBmNTJiNTY3OGI0MzljZGZjMjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMwNzNiOTRhMWZjNDIxZjYxYjBlNDNjYzg3M2NkNTc5YzUxZmE4OWZlYjUwOTlmMTE0ZWUzMjk1ZWIzZTI4NDcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_fcaf90f78f4846758ae0022b8fdae1b1",
+      "statement": "The structural offset check requires the window's page indices to be exactly 1..N each once, and is implemented by one function shared between extraction and derivation so a single function owns the question.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/extract.py#L241-L265",
+          "version": "repo-lines-v1:sha256:48d273caf243b6f8f3f507c83c948e01d0eebc26c779021eecb6a34a26ee24b2:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2NTQ5MTYzZmVjYTkwOWQzOWRiNTE2NGRmZDE3OWNmNTQyNjdhMjI3ZWE3OTk4NGY1ZTIyZjNiMTlhMDFiNjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBjN2Y2NDg0OTQ3MTlkOTdjNjE4NjM4MTc3NmY1NDBiOTVjODE1ZmNlNmUxMzk2N2U3NjllYWM1MDZkY2VkNWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjlmMmU4NGVmYTY2ZTQxOTczYzZjNTMxOGQ5YzUxNTdhY2NmMmM4MzJmMTkzMmMwMTMxZjlmOTI1ODdjN2I3YjMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1af0b40297cf49b5a985fb5115c86b87",
+      "statement": "The structural check runs before the observational one because an index set that is not 1..N makes the absolute page of every form meaningless, leaving nothing sound for the second check to run on.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/derive.py#L240-L245",
+          "version": "repo-lines-v1:sha256:f7d8afebf4580995456ccf0eb0e46c407b46eac27d13d1ad920ce3db6ca0a275:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTY4NGQ0OTgzM2VkMzIzNDM4NTQyZTExMTI0OWEwYzA0Yzk0MDBmNTRkYzE2OTBkMmY4NTNlYWM0NmUyMzhhNiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDJmMGE5ODYwNzNlNWMwMzA5YTk1NjlkMTlmOTI4YmUzMDVjYzJhMWFlNjFjZjhmN2RlOTg1ZjlkNWU5NWQyYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMTJhNDFkZjY3MWJjNmQ1ZjFkYmU5ZWM2ZThlNWY5NzViZjZmYjFkZjIzMDllNjg1NGQ4NzhhMTAwMTBhOTQyNyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_d133460a65df4fbd9ab7845a1dc63893",
+      "statement": "The observational offset check classifies every page of the window into three states — confirms itself, witness, or printed nowhere — and the printed-nowhere case is evidence of nothing, because on one legacy window 29 of 30 labels are printed nowhere and counting them as agreement would silence the one page that can see.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/derive.py#L246-L257",
+          "version": "repo-lines-v1:sha256:4695d406d4cb108715487e00697621d4c0268959545de809ddb9a010cfa3d83b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkNDQ5MmY1YWE0NjMwOTM5MzhmMDA0NGM2YmI0MjY5MjMwMWQ3MDhiMWQ5YzkyYTQ1Y2RkYTRiYzMzZmFhMmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUzYzJhY2JiMTYyOWU0ODk5NGQzZDlkZDEwN2IzYWFiZTIyYmI5MmZhOTMyMjc2MzZmYTU4YTkzMzBiNjEyYWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE5ODgyYmI3ZGJhYzBlMWMxNjg2NzJjMzQ4Mzk3MWEyNzNlYTU1NDY5NTgzNjgwNjQwYzI3ODYwNDQxNjc5NjAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_2ed2c091d2974181a25d4c6e0ca6a950",
+      "statement": "A window is refused for offset when witnesses reach two, or when there is one witness and no page confirms its own label — the second clause being necessary so that bisecting a genuinely shifted window reaches the unsplittable refusal instead of terminating by accepting its single pages.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/derive.py#L258-L269",
+          "version": "repo-lines-v1:sha256:5ce984a760f87e5fe078c40254e4b820983f9e57011c9c6738f1a34f56e20f30:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA0MjExN2FkYWFhNTMyZGNhNjkwMmU4ZGRmOGZiZmQ5ODU4ZTE3NTFhNzhiOGI1ODUxMjQ0MDQzMzkxMGY3MDEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU2ZDUxM2JhYzg3YjA2ZmJjY2YzZGMwNTk5NTY3Y2ZkMTcyOTc4Yzk5NzBmZjk1ZDY1OWRhNDQ3ZWZkOTk4MDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFmNWM5N2YzZGU1NzBkMmI0NGM0ZjIxMmU5YjI4Mjk0OTkwYjAzZDZkYTY2NTNlNDQzMjQxOTY3YjEwNjgzMGYifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/ingest/derive.py#L86-L87",
+          "version": "repo-lines-v1:sha256:3e36905fa2677c45900cf8f7f9ce05d3a0b51806aa9a0a3b28140f787dfcdac1:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzRhMGNjZmExNWI4YjE1OWY4ODE5YzczNThjNzZiZjdkZGM4N2M1ZDRiYjMwM2E4MzIwZDYzMDE5NjMxMTc5NiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYmM1MDNhNTJlNWE5MWVmNWQ1ZDhlNGNjZmY3MjM0OTgxYTYwODVkYjY1NGFjYjkxZjAwNjU3MmVkNWMwNDVlYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiN2RkYzFlYmQ0MTA1MjlmMDhjYzhhMDkxY2FiMmU1NmRiMDIyYzk4MzRkZTM5NGEzMzczODhlZWE4NzE5ZDRhMCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_a28e1e533bbe41b59516ee0aead400dd",
+      "statement": "A single-witness rule was wrong because the neighbour check reads the whole document rather than the window, making the predicate invariant under bisection so a false positive costs the document plus roughly eight paid windows; measured over the real corpus one witness fires on 22 pages across 11 of the 98 documents declaring page labels, every one a false positive.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/derive.py#L20-L28",
+          "version": "repo-lines-v1:sha256:91f6dee3fd642f545e9f4930206f04301cc3e6b06d97867544fda2eb0b47c1d6:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZGM0ZWJkYjJiZWVkMWQ0YmNkNmQ1ZmE0MmQ3NWQ2YjU0MDc2NGNjYmZjMmY0NzVkODBmNmRkZWQ1NDJlNWMzOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjMwMDgxMWE0MjNhNGQ5NjNlNjljZWExYmY2MWEzMWM4ZTExYzg3YzhkMjdlZjU2NmRlMGYwYmQwZmQ2YTY2ZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNWZjZjE5ZTYxZGEyYWRiMmRiMTU4OWRmMDRhOTVjYmEyMDIyM2RmMDFiMzBjZTc5ZjI1MDI0MzY5YzZkZDI2YSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_45bff2f8d3bf4af98b9b891e4344789f",
+      "statement": "A tolerated single witness is logged rather than swallowed, with the fields the refusal would have carried, so a corpus sweep can count them without re-running the check.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/derive.py#L270-L273",
+          "version": "repo-lines-v1:sha256:fc68b502aae4cae5070770a65f99b0f5a2a2a6a9ae8c9123172c633576338670:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTgzNTJjZGQxZDdmNjY4ZTNlOTAzNGVmNmZkNTljZTI4Y2VhOWMyNDc4NTcxOTZkMzY1NTQxZWQzY2Y4ZDEyYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTZhNzE1MjU3MmVlODRmMTA5MDZjNzRiOWYyYTkyNDM0ZGRhYjBlM2M0MjgxM2IwNGU1OTdlZmNlYzk1MWIyNiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNzM4NGVhMjY4YzlmNGY5M2E1YmY0NWU1YWVhM2Q2ZmVmYzQwMWFhOTJlZDg1MDRmYzRiMGZhYWYxOGVlNjA3MiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMWU5ZjM5NWNiNzJhZWQxMzRkOGJlZjUwMzIyMjRhNjQwOTFlMTRiMDdhN2RhNDc4NTFlNzMzNDFiYzZjZjVjYyJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/ingest/derive.py#L300-L305",
+          "version": "repo-lines-v1:sha256:ed3bd0cfe6b5b8f482cd33a9e1d0c1a5c53fb61c21d6628bfe22e3707445681c:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTYwMTUxMDM2ZjIxNDVmZTkwZDVmMWM5NmFiMWIzZmVhNjYzNDg5YzQ0MWYxOWY1ZmY3MDVkOGZmOGNjNjhiOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYzI0MjU0MThiYzg4N2E4Y2U5Y2M3NWRhYzZmNjAyZmQzM2Q0M2M4N2ZlM2JiMTU5ZTdkODZjMmEwODdhZGQyNSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMmI3ZDViNzM0ZTA0NDkwYzM4YzUzMmU4OThmY2FhMDAxM2FkOTNhOTc5NzlmMTBmOGY1MDYyNDM4ZWQ3Njg3MSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjUwZjBjMGVmZDg2OTlhN2QwM2ViOTYyZTk0MmRmNGE2MzA4ZWNmNTc5YjE0MjM2MGQzNTMxZDM4MjUzMWVmYyJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.1",
+    "at": "2026-09-11T14:07:28.402Z"
+  }
+}

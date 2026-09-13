@@ -1,0 +1,264 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:c9941067888194318a17e8a106967b47569542e3fb57d47cf0f065b5fbe2f1ad",
+  "claims": [
+    {
+      "id": "claim_13b4b2b93cfc4357bd640512e9c02fdc",
+      "statement": "The release's tool table lists the eight tools in ladder order rather than alphabetically — three narrowing rungs, jump, follow, check, look, and only then the step that spends — because an agent reading the tool list is choosing a move.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/app.py#L901-L953",
+          "version": "repo-lines-v1:sha256:315db6200f56245694e7d13c4d6ca74d56e40e254b07b2dcc45e0772cac7822f:eyJzZWxlY3RlZExpbmVDb3VudCI6NTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEyYmY0ODhhNjBjN2MyMDE5YjFhMTZiNjZhYTU3OWZlM2JkYTE4MWFmYmFkZmVkY2Y3NWM4NmY1MjJjZDA5OWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQzZDE3MWRlNzU0MzFhMDIxYTBkOTRmYTc2ZmFiZjBkNzEzOWM4OThjMWEwYjQ0YjQzY2E2MDkwM2ZhMWI4NDUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYxNWFmMjlmZWY0MjljMjhmZWY3MjRkZmVmYzFhNGU2YjE4NmY3NGQ1ZjcwZTU0MDg0YzUwOTM3MmRmOTYwZGYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6683b02712b44a148de623bc37452d11",
+      "statement": "The tool table is a function returning a fresh dict per app rather than a module constant, because a module-level dict would be one object shared by every app in the process.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/app.py#L901-L915",
+          "version": "repo-lines-v1:sha256:6f70abd95adb0aff4b5a70319974a3c2096347eafb50bf3b9f6b31775f611c13:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEyYmY0ODhhNjBjN2MyMDE5YjFhMTZiNjZhYTU3OWZlM2JkYTE4MWFmYmFkZmVkY2Y3NWM4NmY1MjJjZDA5OWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlkMTM1MWI5ZmMyMjcxNmZjNjIwM2U4ZjhmMzUyOWYxYWIzZTBjYzFkNzFlZTU4ZmE1YzU0MTM4NmI4YTVhNzAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQzZDE3MWRlNzU0MzFhMDIxYTBkOTRmYTc2ZmFiZjBkNzEzOWM4OThjMWEwYjQ0YjQzY2E2MDkwM2ZhMWI4NDUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJmOGY3YjRlYjBjYTYxMDM5NDUzMGY1OGY0N2JiNWJkZjc3MzdjZmEwNzUyMmZmNjBiMzcyMjQzODUyZmU3ZjIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_2ba2dfb7c173444193452baab3bbd6fc",
+      "statement": "Each tool row declares the envelope it returns so the route can publish it, but that type is never applied as a framework response model — the route returns the serialiser's raw bytes, because byte-identity between transports is only meaningful with exactly one serialiser on the path.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/app.py#L497-L512",
+          "version": "repo-lines-v1:sha256:9f7657f6c6b63949fea4f4fd5e2f1f6633a3384237ef2343929b1b24d2734e63:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ1YWY0MjQ1YzY1ZGU2ZGMwNDY5MGMxZjA4MmFlOTdiM2E3NTc3OTA0MWVmZjUzYjIzMzVlMzc4NGFlMWJhZWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA0ZTlhMWZiYTZlNDdiNDgxOWE1OGE1YzIzOTZkYjk3Y2E5YTkzNjM1MzUyZDk3NTI2ZjczMDg1MzE3NzE2NDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjcwY2UzZjI0YWI0N2MyZjVhOWQzMzdmMzc3ZWQ4NTczZmE1NjU4NDA3NjQwMmYxYWYwNTRhM2RlZDYxOTQ2MmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzNjMyNjlmMWUwYjcxZjcxNWQ0NzQxM2YzZWFlODhlYWFiNWJkOTZlODViZDBlMjY1YWE2ZDliODhlZTM2NTYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0ce2fdd392d64685bfce2d78c176841d",
+      "statement": "A tool's description is one string used as both the protocol tool description and the route summary, because a tool described two ways is a tool two clients understand differently.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/app.py#L520-L524",
+          "version": "repo-lines-v1:sha256:65229c335bf0314ff438417a79e476b07ff5f42e93592abb2c7e1f04260c3c83:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTc0MjgzNmUzMmZmMzEzMzkyNjdiY2RlMDk2NzIxNTY1OGEwMTY0MDlmOWJmMDM1ZDJiNjliMDRmYzI1YzkxZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNzA3NDQ5NGVjZjQ5ZWU4YTU0ZTlhODQ4Y2NlNzY1YjUyMmViZTI4ZThmMWZkMTg4ZmRmNzBjNjNiOWI2MTA4YiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMjkzMzAwMTcyM2JmOWU2YjFkMDdhZmNiYWY5OWJiY2U2YTIzNmU3NDljZWNjNjBiN2MyYWQzODIyM2M0OGE3OSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_4d5505d88a0a4bcf958b26e35edc15a6",
+      "statement": "The dispatcher's runtime carries no transport — configuration, a search client, the very tool dict rather than a copy, and memoised backend handles — so registering a tool registers it once for every surface.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/app.py#L526-L550",
+          "version": "repo-lines-v1:sha256:05f9bedc5a4c4533672e7a9fb29491b26eda0987a94bd05cc77c7a831560a3eb:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVhNTdiMGI3MmVlMWY4MjM3NzM4MmRhNjAyZTE2NDJlZTA5OGVkM2E1ZWEyMjViYTNiYTVmMWRhYzUyOWE0ZWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2OWExMzk3NWMyNTZlYzgzMjBlMjAxNjA4M2M5NmRmNjM3Y2EzZDM1YmViZGUyMzE0YmVlM2E0NzExYjU2Y2EiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjcwY2UzZjI0YWI0N2MyZjVhOWQzMzdmMzc3ZWQ4NTczZmE1NjU4NDA3NjQwMmYxYWYwNTRhM2RlZDYxOTQ2MmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRlNGE4MTIzYWMwOGE2Nzk3YzdjNDkwNTI0NTU0YzdmMzIzZjhmYzI5YmYxYzAzMmJhYmRiNzZiZTI1OGYzZTIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a2247b6728674d89bc776ca9dbec27cc",
+      "statement": "A tool outcome carries an HTTP status even when no HTTP is involved, because that is the vocabulary the bounds and outage rules are written in, and the protocol surface maps it onto its own error flag rather than inventing a second failure taxonomy.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/app.py#L551-L565",
+          "version": "repo-lines-v1:sha256:bf849faaac040e530da9c49499b83f52ee4a68bacc1118d71788224e3f6213be:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZlYzg5ZjU3N2RkOTJkOTA3NjljZTFiMjA2NTRiNzlmMjIwZDkzNGJmNDg3ZjJhNTgyNDU0M2ZhOTFlOThkNzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdkNjBmM2YyYWU3NjU0NDBmOGFhOTZjYzQ1MGU5ZTRjOWYzMmFiNjUxYTZmN2RiNjlmMTEyM2FjNjA0ZTQ3OGIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjcwY2UzZjI0YWI0N2MyZjVhOWQzMzdmMzc3ZWQ4NTczZmE1NjU4NDA3NjQwMmYxYWYwNTRhM2RlZDYxOTQ2MmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM1NDNlZDFlZjhhYzY4MmZmYjA3ZWJhZDcxNmNhYTkxY2E4ODNhMTgxNThmNTNiNDMxYmE3MTU5NDQxNGM4ODMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d1c29f24e7c346faba6d7d6137fda624",
+      "statement": "Only the spending tool declares a precheck, and it runs before the quota is charged so that a caller naming too many pages is not charged a read to be told so.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/app.py#L1093-L1101",
+          "version": "repo-lines-v1:sha256:ba1e6fb06abfdbc1a3ec4864990feecbbea6ec909dd924ce223e75b9cd14baa9:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg4OWE2MmU1OTIwZWM3MGMyODE1MWFlZGE1ZTE0N2IwYTg2MjUwMGIxYzZkMWEzYmM1MzZhYjJmOTdlMWNhZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiM2YzMDI4YjE1NGE4NWRjNWYxY2I3MjhmZmRmMTRhZjRiMDc1Mzc0NjI0MjNiZjk4M2JlNDk5MjU5ODkyNWQyZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTRlOTBiM2E2M2Y3YzBlMzg2YzI0M2ZlNmFlNzEwMDAzY2M5MzRjOGU0ZWNlNzZjZDQyNWZlYzBkYmI4NjkwYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNGY4ZjhiMzZiYjc2N2EwMzViM2EyZTVmYTE3ZDhmNDFiZmQ2YWVkNDMyZTUwNjZiOGI5YzI4NWU2ODkxOTdjNyJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/serve/app.py#L514-L519",
+          "version": "repo-lines-v1:sha256:c32d5cf44a5392c9f3b32b668be5335e503a55bb730cb953f52a2b705cc9470e:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNzdhY2RhYzdkNmU3NDliMWQyZGIxZDAzMjIxZjNjODBmY2M2N2QyODYwMjgwNmY3ZjUxYmYzNTA4NWFjZmYyYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYzE1ZTkzMTRhN2E4ODY3NTUzODExMWZmNDEzNDkyYzM2NmNiZDdjYWE2ZjBjNDYyZjQxNmI0MzFkMDgxMDY0OSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMWZmZTY0YTMwYzQ4OTVmZDllODgyNjdmNWRhZGE3MTFiZDQzZmIwNTZkNzY5YTZiMmY0NWNmM2ZiY2MwOGRmMSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOWI4ZjIyNzUzZGRkN2QzMjU0ZmYyNDE0MjZmOGIwNmQ4MDliM2NlNjZhNjI3NGE0ZWJiYTNkMmM0MDUxMTc0YiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_dd0a8a40d9794f1fae544fa485ee23e5",
+      "statement": "The tool request models carry no Pydantic numeric or pattern constraints by design, because each bound must produce its own switchable code and a framework constraint would turn a named refusal into a generic validation error naming a JSON pointer.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/inputs.py#L23-L30",
+          "version": "repo-lines-v1:sha256:c4489135c43536b718b69ecd8ffcd1c9890fc613ed6ac56b7548dee93b19abc7:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYjc0MmFhNWM0MjY2ZGZlOWEzNmYyODg4YTNlNmY4Y2E4Y2RlMTc3NGE3NjJmNGQzNTQyZWQ0NGE1YjcyNTNjZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMmQzMjg3ZGVjYzc2MDBmYjczNGU4MDFmODUyM2JiMWUwMzQyNjVjZTVlMjcwOGQ4Y2ZlZjhlNGQ1NDgzZDQ4ZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOWJjYmJiNDkxOTI0ZDJmYjI4OWE5NDA0YWQ3Y2Q0MTRhOTA1NDgwNGUzODczMmVjOWFmMzg4M2U3NjUxMjE5YiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_9091b37d263f4a51a7c8a8573a5fb1df",
+      "statement": "Every request field carries a real description rather than a source comment, because the schema is published to both transports and a note visible only to a developer reading the source is invisible to the model calling the tool.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/inputs.py#L6-L15",
+          "version": "repo-lines-v1:sha256:2bd78db97889430ada61a1e4ad47027e7c0e912086b3df1733fad9cddb4bcc9d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA4NmQ4YzQyNTdjMjgzY2Y1YTRjOGRlZTE1ZDM2NjVhOTJjNTAxMGE5NTY3MWU2NzA3ZmQ1MGNjMDM0YmIxMDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBlMGQ3MGMzODI0MzM1YjczYTFiNmE2MDRlZjMyYzliOWMzNTNlZTA4ZmY0NjU4ZjZlZmNiZjlmMzVkNGZlOGIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_834b92edd40e42f1b9672d88b165ea6f",
+      "statement": "lookup is a phrase filter over the page's own extracted text, whose single writer is the ingest probe, so a hit is verified by construction and a code the model invented is unfindable rather than merely unlikely to be found.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/tools/lookup.py#L11-L20",
+          "version": "repo-lines-v1:sha256:22c27bc1c3344c495f0fdb0c93c075746c8ea231522d2bc1c893a3f1fa096463:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ1ZTY3M2Y0ODNkMTQzOWQ0ZTk1Y2Y3NWYwNzU4NGIyZDRjNzJiYTU5ZDIxOWM3MTViMmFhYzE1MTZiYmE1MjIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZjMzkwNzA5NGFiNTg0NjE4OGI4ZGFhYzY3NjQzOWRlZmEwZDljZjRiYTA0ZjQ5NTY0OWY2NjZhM2NkYmJlZGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM5MDk1ZGRmOTg3MDMwMmU0ZmYwMWRhYTJmNmE2NzI3NzFkNDlmMzRlZDM0MGE4OTUwYTcwNzZiYjFjZDk4YzMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7cca0c7b517d458d8897258790d79843",
+      "statement": "lookup does not rank, returns a set in reading order with total as the size of the set rather than the number returned, keeps the cap from touching the weakness signal, and never merges the opt-in model-claimed surface into the verified hits.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/tools/lookup.py#L22-L33",
+          "version": "repo-lines-v1:sha256:77810fdba324677548f5cb8c430dd704a58751dafd3eaa7741c613a2030a1686:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5YjcxNDhmMTlmYjkwMjczNDJlYTk0MGY1MDdmYTdhYjA0M2E0MWQxYmM5N2IzMmE3MjcyOWRhMjNhZjU0NTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ3NGFmYTFlNGU3Y2ZlODM3MWMzMThkOGNlNTJiZWM1MmU0YTgzZmNlN2ViZDU4MTIyM2MxZjM5NjUzZmI3MTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImMxY2MxMzMyODRjMzQ4MTVlNmJiZmZiMjEzMWYyMjgxZDg1ZGNkNjAzOTg3Y2ZhM2ViYTQ4MTIwYTU3NmMzM2MifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3a1849bc974049ea91ba859177cbd3c1",
+      "statement": "resolve returns a printed label's page id together with whether the page's own text prints that label and whether the label was interpolated from the pages either side rather than read off this one.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/tools/resolve.py#L1-L12",
+          "version": "repo-lines-v1:sha256:b4d0c348edf1127c04daaf8d22ba1baafdf9e04390e0eee5f2a3b1706f7dfa2f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM5MzhlMjk2NTRhZjY2NTMxZTI0NGMwMWM4NDRlNDI3MWQ5NTc2Y2I2YmI1YmJlY2VkYjQwZjA0OGI3YzRiMTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRjOTFkNzRkN2JmNGZkMWJmYmE5NGVmN2E2ZTJiNGYxN2Q0NDdkYTQ2ZjFmZjFlOTJiNzZhNzY0ZTE4NmU5Y2YifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_536956a872da4905a67961e648c9a220",
+      "statement": "An ambiguous printed label returns every candidate rather than a silent pick, and a page whose own label is ambiguous answers to every reading of it — because a resolver that chooses for the agent is how a cross-reference is followed to the wrong page and then cited.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/tools/resolve.py#L12-L20",
+          "version": "repo-lines-v1:sha256:346b49ed4169434b1f0f53af13f59efe5b274d7d2285acafb8293a86cf854d93:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMWZlYTgyMWNiOWVmYzVmMzBlNmMwMTQ1ZjBlOTFhZDMwMzZlNDk0ZGRjMWQ4YzQ5MmViOGQwN2ZjMWMyZTgxYyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYzc3MzJlNjM5MmMyMGUwZjAwN2M4YjY5YzZhMjgxY2FkYjNmZjg3MmEwMTRiZjc4MTI4MWQ0MzcyOGNjYTU4NCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDlmOWU5NDQ2MmQ2Yzg4ZDNhYjIzNjExNGZjYTdlOTAwZTg0YzM0MjJkMTU1NmEwZTg2ZjgxOWVlN2U5M2VmNiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_13c93b7c5ee34a6c92ae11b9b49ef0b1",
+      "statement": "resolve does its selecting in the index — a phrase query plus a facet — rather than scrolling a fixed number of points and filtering in Python, which previously reported not-found about pages beyond the scroll bound that were never looked at.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/tools/resolve.py#L22-L35",
+          "version": "repo-lines-v1:sha256:b6e0bdce770c4ecc8bd346505caf93ec5d57c45e32855fafc0a6831a34950a33:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ5YTM5YzY4YWY3OTlkMGQyOTI1NzVjMTJhZDkwNDQwOTRmYTkyZmQ1ODQ1MDI0MTJmYWQ0NjM2ZTEzYzcxZDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2ZWY1YTNiOWZjM2Y5NzNjZjU1ZDU2YzdhYWJiNTQ2ZGI0YWY1NDY0MzQwNmU3ODI1NTkzNTMyM2RiOTIzNzEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkwODg5NzdhMzhjMjYzMmE0MDBkMDBlZjkzNzRkYzk3NmU0ZjZjMzQ4MGQ4NGNmODA0YjA1ZDIzZWMwMjk0YWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNjNjVkZTc3YjI4YTUyYTA1Njk1MmQ5NTM5MjNlMDgwMTM2NDI4ZjY0ZTQ0NWNhZmZkODdhZGYxZDkyODJkMTYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_81859cc25a0d4b17b515b3fcec800fec",
+      "statement": "When a citation as typed matches nothing, resolve probes its digit-bearing words as labels in their own right and still confirms each candidate against the whole citation.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/tools/resolve.py#L37-L41",
+          "version": "repo-lines-v1:sha256:d033232686d8e5d63519c3eaf16e5911cc3063f50f77b1f8addd4fa75d2babec:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZGRmZGU3ZmE3NjRjMmQyZTU4MTBlMGUxNGRlMTEwMWM0ZWI5OTkwMjA2NDZjZmNmMTBiOGQxYTZjOGRlMmUwMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMWYzODRkNWZkN2FjMTZhNDdhNTRjNTAyZTZiM2NjOWEzNzlmZDQzMGYwYTFhZWVjNzllNDcxOWVjMzM2N2RkYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODNlNDYyZDIxMTdmYjk2M2RmYTIwMGNiNzgzMDhmMzliMTk1MjU4NzVlMTIwZTFmODljMzBjMTZhOGE2MTBlNyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMWMyMTQxMDJkZjlmZDg0YWJjZjk1MzBiNmQ3MTljZTBkMTk2NjI0MDA4M2M3MWU3YzcyMjU5ZThlZjljZTg5OSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_02446a0ff0d341d9bcc3fbc3e6cb5a4b",
+      "statement": "verify is a thin wrapper whose every verdict comes from the shared verification function asking the same question lookup asks, scoped to one page — so the tool that found a page and the check that confirms it cannot disagree.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/tools/verify.py#L1-L13",
+          "version": "repo-lines-v1:sha256:e3e49990ee02d354fe3d2eafa146184483acd9fd69d29127cf7bb813b26f860e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJiMTg1ZTNmZmFhYjA4NzliOTExMzg5ZTRiM2RhNGE1YjNkOTM1MThmYTI0NWIxNmNiYzQ3M2FlOWZkN2M1MjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjViMzlhNGRmYmZhNWY2OTU3NzllNjA0NDdlYjY3ZmM2ZjY5YjhmZDU1OWM3YTgxNTY1MzhjYmJhYzQ3Yzk0ZmYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_93f8049e7ea6441f9293e3bd6fd2252b",
+      "statement": "verify returns the call-ran envelope family precisely so that three legitimately absent claims are a successful call whose answer is no, which in the search family would be an empty result indistinguishable from an outage.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/tools/verify.py#L15-L20",
+          "version": "repo-lines-v1:sha256:5b9fa57d71a004f9ca915a27d61eb311b628b719a4f42966367e207912e8df3d:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYmI2YmRjOTcyYWNmODFjNGNiNTZkMDZkMjdhYjc4YmNlZDJjMDUwNGUyZDJjNTA1NjMzZjYxOGQxOGYyZTE3ZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYThiYjBlNWY1YzBiMjFhYTIzNDkwMzgwYjQ2ZjZmMmRmMmZjZDZkYmEzNzE4NjRjNzhjMDMyNGU1NWQwZjFjYyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzk4MjA5MmZkZmJiZTg2ZjQ0NmYzNTkwNTMwYWU3ZjFkZmMwMzFlYjhmMDE2NTczZjQ1MzliY2RlZGMyYzZjYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMjA1ZDNmNWJmZDdmYTRlYzMyNzI0NmMzMzhiYmIzNWI1NGNhZmRlNDYzMjgxYjNmYjZmY2Q5NDc2ZTU4NzdiZCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_c6a5c7fbd20f491b8354b26e653d4724",
+      "statement": "An unknown page id is a 404 and an unparseable one a 400 rather than either being a verdict, because saved citations arrive from outside the service; and verify accepts no image, since a photograph may find a page but can never confirm a code.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/tools/verify.py#L22-L32",
+          "version": "repo-lines-v1:sha256:3f5303b3aa30825104ae996b6879ff9daa156eccf8b42f99814d002f2052adb9:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYyMmJiMzU5Zjk4ZDM2YTY4YmM4YjU1N2EwZmIwMjY0NmM4NDZlNGZjMzZiYjc2OGNjNTVkNmNiNTQxMWY5M2EiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUzODRiZmRiMmRmMzgwYjY1NTdjYzdhNzFkMTY4OTE0MTViY2NhYTg3Njk5NDA2ZTIzNmY3NTJjNjQxNTM4OWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJkN2IxYWE4NzI2Y2E1ZDRkNzBkZDVlMWUwN2QxZmVlMTgyYTAzM2M0MzA0ZTliMTI5Y2U5ZGI2NjA4NTNhOGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIxN2VjY2IwYzE1ZGYzYWZhZGEyNzZlZjI1YjVjNTA0MTM1M2ExMTJhYjE0Njk0MWI0ZTg5M2RkNDI4ZjZmYWIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_07030ca7bf5d44c0bfe1264bd7e3ddbf",
+      "statement": "fetch returns material rather than an answer — pixels, text and summary of pages the caller chose — reasons about nothing and calls no model, which is what lets an agent choose a page and only then decide whether it is worth money.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/tools/fetch.py#L1-L12",
+          "version": "repo-lines-v1:sha256:7035e4859388af2e0009404bb6abd65dc50c73c7e329ee535493b104eb942764:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJiZWYzYmRhYmU1NmY1ZmNiYjUwZDVjM2JlOGEzYmQ4YTM2MDgxZjlmMjc5NTEzMWZiZmNiMDRhYTI0NThiNGEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY0ZmEyMDM5NjAxZDZjOWFlYTYzMzMxZGMwNzljZGMwNThlOTFhOTBmMDI4MzI0MDMwMTljM2RhNDY5MWIzNWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRlZjdmMjllYjc5Y2U4ZjgwODdhNDAxZmQ0YzI2YzM4N2ViNzM1ZmFkZWFkYmE2MmJjZDk1MGYwZDNiZGFlNTcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_580469f6c8ac4cc882c257d88d9554e8",
+      "statement": "fetch is never empty and never partial: either every named page comes back or the call is a typed refusal, because a caller that asked about six pages and reasoned over five would not know which one it never saw.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/tools/fetch.py#L14-L20",
+          "version": "repo-lines-v1:sha256:2e9961049ed63fe18506454456e110aec445ce6e7e34565f7e7c038c96aeed1a:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYTlkMTkxOTkwMDczNDlkNDM5NGI2MWU1ODI2MjcyMGM0ODA5NTg5YjZkNzE5YTg2ODU0Njk2YzRmNjg0MjI0NSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjFiMDc0NjIwZTMyNDU5N2Y2YWQ1YzQ2NTM2OTA1MjA4ODAxMzEyY2YwMTNlOGZmMTJiMDU3NWU5MzA2OWQ4YiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjhmYjM3MWJkYTFjYmFiNmI2YWRmZDQ5Y2UyNWVhMzA3OTdhYjJkNzA1ZWM3MWQyOWNlN2U5MjMyMGVlNTY0ZSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_8c9dc9b5c66f4f7f9c7c840ebb31260c",
+      "statement": "fetch settles every bound from predicted page sizes before rendering anything, because a budget enforced after the allocation has already paid for what it refuses.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/tools/fetch.py#L22-L26",
+          "version": "repo-lines-v1:sha256:cf2a4aa1221d2221b1680fd902918fbd5e2c7ca627bea2656af71bc8405bb1c7:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiN2EyOGI2ODQ1MjM4NjdmZTMxMDM5MzNmYTRiZDk5MjQ4N2VjNWExZDIzZTc2ZTZhNWE2OTY2Njk3NWVlZDdiYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTM4NGJmZGIyZGYzODBiNjU1N2NjN2E3MWQxNjg5MTQxNWJjY2FhODc2OTk0MDZlMjM2Zjc1MmM2NDE1Mzg5ZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjM2MWMyZjMyNDcyMzAzOGQyMDcxN2FjZmI5MDM3ODMxMWNjNDNjN2FhODc0NzFjMDhhZDZhN2Q1OTljOTAwMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNmMwZjRiMmJlODNkYzI0ZTRmNzg4NTQ3MzEzZDQxZjU1ZDdjYTJkNDc0YmI1ZjQwNjIyYzRmZjlhZjM2MWUzZSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_f13390b5ba6d413fbc348ee22421ee8d",
+      "statement": "read stamps every code it returns against the page's own text using the shared verification path rather than a second implementation, reports unverifiable on a page with no text layer, and makes sufficiency mandatory because \"these pages do not answer this\" and \"the answer is no\" are different instructions.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/tools/read.py#L19-L32",
+          "version": "repo-lines-v1:sha256:1d958443204a8a554777e5c16ace6624d783f4a1fb3f2cf3fa8416462fa58aa6:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzZDkwNmFmODRiNzgyYTFiMmY1NTRlZTA2MDZmMzNhNzdjZTEzZmRkNzEzY2MxOTRhYTM5NGExMTcyZDE1OTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjllNmVmNmI1YTdjODlmZWRiYzdiNDgyOTZhNDU0NWUwYWM4M2U5OTMyM2YyN2RkMDMxZmU1Y2EzZDEzNDM4YTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZmOTg1OTUwOWNkMDVkNmRiYzYxODExOTc1MmMwYWQxMTc4ZWM2MDAxNDRjMjRlOTliNTA2ZTljMTAyZTAyZWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZmMmUzNGVkMThkYWQxNWE4YTE1N2IyN2Y5YWQ5Mjg2N2RiYzAzNTdiNWE4ZThhMjFhMjRjYWFlOWY0YmQzNWMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1ce20b60e2764d79957902774f070126",
+      "statement": "read withholds and classifies nothing: a code that failed its check is returned stamped rather than removed, because dropping it hides the transcription error from the only party that can act on it.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/tools/read.py#L33-L37",
+          "version": "repo-lines-v1:sha256:6097fcf6d460038db47afe512f8e7462d7a9421a84d588f3f7fd768046bcf726:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzIxMjJlYzY3ZDdlOWIwM2JmNjY2NTcyNjNkZDJlN2NhZjZmNzg0OWU2OGQ2NWQyMTNlYjJiMTBiNDY4YjUwZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTZjMjEyMzdiYmQ5MzIwOThmMTY1ZmE0MWQ5YjVhYjc4ZTU4YmFlYzBmZDNkNGYwMGExYWIyNjQ0ZWFhNmNlYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjhlNzk2NTllZTFkNjE1MGRjMjI2NmFjZTc0ZTI5ODc3MzVjODBlMmIxNDQwMDBmNDVjYTU1NGM4MmRmM2I3NyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_c215ad52fd194803ac49eeb090e5e072",
+      "statement": "read's dpi is pinned server-side and is not a parameter because it is a cache-key input — a caller able to raise it could bill the same question three times for one answer — while the free look tool is where a caller chooses a dpi.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/tools/read.py#L39-L42",
+          "version": "repo-lines-v1:sha256:31a2b6a6ab3dcbea577db46c2fbcf6ba357f1192218f2869e07a73978dbfd1b5:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTY2NTRhNmMzYWEwNDA1YzJiOTE3ODMxMWMwYzFkMzIxMzc0NDM3MWRkYTZmNjViZTk3MDI3Mjk4ZGM1YmViZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjBhZDFkZDI5NjM4NmRmMTAzZTBiZDdlMTNiYzliZGQxNTQyZGZhMjU2NzY3NWM0YjFlNWJmMDZlMTBiZmExZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiM2Q3NzI1ZWQyNGJjNTQ2NDcyMTg3YjZmYWVkMWY1MTc1Njc1YWI4NTQ5YzA5MDM5NzJkNDk4MDIzMDdlNjg1MyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMmViMmM3NzE1ZWM2ZTFhMTY5ZWU2N2ZjMGFlZjg1ODZiMGVjMmRkZDA0NGVkYjJhOWQ4MTA0MGZlYzRlYjY4OCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_5e3666a649214f22a95917b25f4f7e5f",
+      "statement": "read performs no retrieval judgement: it chooses no page, ranks nothing, suggests nothing and returns no next move — an engine that picked its own evidence would be the answerer.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/tools/read.py#L44-L48",
+          "version": "repo-lines-v1:sha256:260082cd7bacc02645413bd9316408babfa55773089ddcf55bbbe8d683f72b58:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZDUwYjI3YThiMDlmODQ2MWFhMGU4NTc4M2I1NzViZjhlMjM0Yzc4MDEyY2ZlZDRmOWE1YzcyNWFjNmIxMGE3ZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjQ5OGVhN2FhY2JkNDc5MWU0YzZmYmE3Mjk0MzYwODU1YTM1ZTA5NDliYjkzYjIxNmJjZDAxYzY2Y2VhYWZhNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZmY3OWIxZDBkYTIwZjAxOTkzODM2NTdiZGUxY2Q5ZWVjOTdiNTBiYTQwYjUzNTllODNhYWFlMzg2YzU1ZTBiOSJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.1",
+    "at": "2026-09-11T14:07:28.402Z"
+  }
+}

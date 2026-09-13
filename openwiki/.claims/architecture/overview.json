@@ -1,0 +1,160 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:ea04d4ecb0e9005defdfc4ac80d270b4edb943c52624dbcfd934f7300a150585",
+  "claims": [
+    {
+      "id": "claim_471e0862cd624ad6b337ccf1b4138942",
+      "statement": "The addressable retrieval unit is the page and there is no chunk anywhere in the system: a window is a page range created only by the model's attention limit, deleted again by stitching, and never a retrieval boundary.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/app.py#L849-L856",
+          "version": "repo-lines-v1:sha256:361a36f5599a507a353823bb99fb8421d220a7c82ee56566506468e5c2ab0658:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMmViMDYyNmYxNDQ2Y2QyNzFkMGZmYWFjNDZlYWY4NWZjYzgzNjA3MDhkN2I0YzRjYmMzYzkwMWNlMGEzZDk4MSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZDI2ZWQxNzk0MWMzMzgxYThmMzAzNTJhOWNkOGFmZmI1NGU5MGUzY2QwYjVmZmMxNjNjYzg2YmQwMDUxMjg5ZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZjUzMmNiZjIwNzFlYWU4ZTMwOTk1YmNiOTNlN2NlY2YxYTViY2I3ZWNiYTAzNWU2MTZjOTZiYTY3ZDE3MzIxYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNTNmZjkxN2E5MGJiNDQ3MDkyMmYwNmU4YWEzNzAwZjJjNzc4NTU5Yzk1MjViYzczYTg3N2MzMGRiYzY5NTA4NyJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/serve/manage.py#L28-L36",
+          "version": "repo-lines-v1:sha256:e46c3c362273465015989be17c15516afcd3a49baa3d4e1a0c9464a7b5c29847:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjFjZDg4YmI0NmJkZmM3NDQwOTNjZTk2MWNhZjUxNTU3ZjMwYTU0N2U3NmIxNTA1Zjg2ZjVkNjc1MjYxNjMzMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTM4NGJmZGIyZGYzODBiNjU1N2NjN2E3MWQxNjg5MTQxNWJjY2FhODc2OTk0MDZlMjM2Zjc1MmM2NDE1Mzg5ZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNmI3OGU5MzYxM2IyM2U5YTAxMzhmZDM4OWYwNDAwNzAwNDY3M2M4MDcwMDVkMmNkOGQyM2QxN2E1YjVkMGJmMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMmU5ODkwMzI5M2JkNzlkODkzY2M1MTdhMzE2NjJkZDQzYjJkMmJmNjFkMDFiNzA2ODZiMmNhZGZiODBkMjk5ZSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_f505eab84927402db1a7503edcce8d8f",
+      "statement": "The ingest pipeline is eleven named ordered steps (manifest, probe, render, facts, window, extract, derive, stitch, embed, index, publish) driven by one CLI command, and exactly three of them — embed, index and publish — require a reachable Qdrant, so with no store they refuse rather than re-billing vectors the index already holds.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/cli.py#L589-L601",
+          "version": "repo-lines-v1:sha256:e5ef97aa773e74b86e6020f1b8b703612f2217a2417bb268c61956efaa02ed60:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE4ODBiYWQ5ZmM5MDJkOTg2OWVlMTUyMWJhYmFhZDk0YjQwOGMyMWExYTg2ZjllZDU5ZmY1YzdjNzEzZjk5ZTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY0MGIxMDk1ZGFiMjgwYmIzMzY5MGQwY2E0ZmI3MzUxMTU2MDFhZjA2ZTI5ODdhZmQyMjQ0NTBmZWRiOTA0ODEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_9a18172830384815b29e654ee47aea3f",
+      "statement": "Step 10 writes one Qdrant point per page carrying three surfaces — the fused dense vector, a lexical sparse surface over extracted text, and a captions sparse surface over the model's summaries and topics.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/indexed.py#L47-L52",
+          "version": "repo-lines-v1:sha256:b3fd7a234d6a2714498051598f7038006dfe342830e109fc891b1eb0d9e80990:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYTBkNmE1MTg2OTliNzQ0NDQ3YzU3N2YwYjNiNGE2YTQzODdiZTEwMjM2ZmVhZmE4NWIyNjU4MjE4YThkZjU4OSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDc4OWFjMjg4ZjgyZGY5NmE2YmFhNTdlNWUyMDIwZjE4OTg2YWRiOWM2MzA0NWRiMTIxNDMzODFhMjJiYWZjYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjgwMTkyNTFkZjAzMmM4OTk0ZmRmYTk4NmEwZWQ5ODA4MTVlMzYxZGZlZDhlZTE2OTIyMDJmYzg3MTNkMDMxMyJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/ingest/index.py#L1-L8",
+          "version": "repo-lines-v1:sha256:542384ce47e7e26a6328687aab0fad98d488f91a2517bf99928b70d5a6fb879c:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMTM5OGFlNzg2Y2NjYzZiN2MyZGNmMzZhNzZjYTU0NTQ0MDAwMDdkYzExMjQ5NTJiZGY5OGMyOWY2MzllMmI2ZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjk0ODM3YjQ5OWRmYWQ1N2Q3YTg0MWVjZGVhOTNkMGNlYWFlNWM0NDRhMzI0MGJmZDVkY2NiNzRmNWM0YWFiNiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_2b0d2927acfd41ac9e2d22418808f9db",
+      "statement": "Every page point is written with is_current false and only the publish step flips it, and the index module refuses a record that arrives already claiming otherwise, so a run that has not passed its gates cannot answer.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/index.py#L27-L30",
+          "version": "repo-lines-v1:sha256:ab2443ab77287dc92112326a20b1540fd86307b2124735cbbd9ffb2875a30ab5:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTMxYjhjYzcwZWIyMzFjYTE4MDZhMzJlZjBmNGNjNTkxNzc5ZjQ1NTIxM2RkMDIwZmQ2ZDkyN2YwM2M0MzkxOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDk4MzcxZDM1NGFhYTliOTllNWY0MTIyMmE2OWNlOTgyOWFjY2JkM2M0YjU5MWE5ZGFlYTY1M2ZhNWJjMWI0NCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzY0MWViN2YyY2I3NzMzZTYwOWUwZTQ4ZGVhNjQzMTc2MmIzYjYwMjlmYjQ2NTZhZTcyNmVkYTA5MWQwNjk0ZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMThkODlmZDk1MTRmYjU2MTRlNTY0YjNlYWJkMTI3ZDIwNWIyZTZlYTVjNmQ3Y2IzMjI3Yzc0ZGQ5YmZlZDdmZSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_e6d11e90596b46c68f2c2ed679cd6768",
+      "statement": "The collection fingerprint is checked as the first action of an upsert rather than only at boot, so a mismatch writes zero points — because a long-lived ingest worker can hold a configuration that never passed a boot check.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/index.py#L35-L38",
+          "version": "repo-lines-v1:sha256:6ea046aa3a979a7672bd50ac0a979c6dec04a02c5d97238ec1d81700aa5b91ba:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYTEyMDIxMmNhNjdhMGRlOTljZDU2MjJkNzc2YzM5MDZjN2VjZmJkMGFmNTk2OTRlMTM0NWMzYjExMzc5MjM1MyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjYwNWM4NzJiMGI0MjdkOGRlMmMyMjYwMzhjZjE5NWVjYmNjMGNiMWI4ZjQyNDk3YjQ0OWUyNjEzZjlkMzEyZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYmFiZTYzYzdiYTQ5ZTdiOTY4Zjg5OTdhY2I0NGJhOWM5YWZkNmQ0MDcwNTBiMTk4NjZkYzE0NmU2NjBmYWVjZCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_ad5e29c8af394190a12875e46cc96cbd",
+      "statement": "No page payload may name a file on disk: index.py refuses the payload keys image_path, image_url and render_path at the write, because rasters are re-rendered on demand rather than stored.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/index.py#L31-L34",
+          "version": "repo-lines-v1:sha256:79898d42baeaeb636c58957900daf2e9aa4e260c75b44c4c6e045eebb63e5deb:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiN2Y0OTdmNmJjYjJkNDc5NzU0ZjE1ZGY1MzZjY2U3YTA5Y2NkMTkxMGE3NzE4ZGZmMTM4MWRlNmY3MTA4MmQyZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOGFlYTI3M2RkMTdiMTk4MWYyMWYzNWYyYzJiYTgyNWEyYjMzNTMxMTgwMDEzNDRhZWZlODcyNWRiNTAxZmNhMSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzJjOTg2ODM3MmVlMWVkNmFlMTdhODE2MjMxYmVlZTZjNDZmZGU4MjhjMWY0YmU5ZTE3MmMzZDMxZGRjMTQ0MCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDk4MmNiNWI4MDcwMGFhODQ5ODAyNmY0N2YxMWQyZGMzYzYzZWY5ZTE3MGRjZTU4NGFmMDNmOTRlMWNhNDBmMiJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/ingest/index.py#L62-L68",
+          "version": "repo-lines-v1:sha256:0ad8d02cf5628e2f8c6d9943aec2c9baa52440a495c9548333fe43091d96f036:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzkzYjlkYmIzYzliYTA1ZDYxZDU2MzE1MTk5ZWQ1OWQyMWVlNDdlMmM1ZDA5OWQxZDIyNzkyMzVjY2RkZGUxOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMWExNmJkZDVmOTRlZDQ2OGFlYTM4MWNkMjUxZDYzOTNmM2FkZGU3YWNhNTU2YTE4MWRkNGY0YTMzMWNjNzRlOCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOGZjZjk2NmE0Y2Y2ZTEwN2UyMTY1NGQxNmJiMWUxZmU1YzIxOGFmY2NkZWU4MjJiZGM1Y2MyZWVmOWE4Yzk0YiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiY2MyMjIyNDg4MmQxNDBkMTRjMzc0OTk1NjBlMTQ2YjUxZmZmOTlmZmI3ZjcxN2Y3NzA5ZTQwYzJlMmIyMmNkMyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_e1bd81728d774ccb92a784a2b7a5d850",
+      "statement": "The pages collection is itself the embedding cache: the index module reads the vector and embed_key already stored on a page's point so an unchanged page is not re-embedded, which closes the caching need without adding state anywhere else.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/index.py#L40-L44",
+          "version": "repo-lines-v1:sha256:4f82559e218f2f503cce28298d361a9207c4e67ce9f97c948364eb21732fc68d:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNWRiZGZiM2UxYzRlMDM2OWNiZGFmNGUyY2M4ZjcxMTBkMGRkMzRmZjBkODcyOGYxZGJhMDU1M2RhOGRjNTNlYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTM4NGJmZGIyZGYzODBiNjU1N2NjN2E3MWQxNjg5MTQxNWJjY2FhODc2OTk0MDZlMjM2Zjc1MmM2NDE1Mzg5ZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODc1ZTAyYjc3MWViNzk2MDg2NmVmYWFkZDRkN2ExZDIwNTU4MjkzOTIxN2JiM2JmYzFkNzg4Y2EwZGNkNTkwNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYzI4Y2NhZWJlODE2OGE1MmY1OWEyYmEyYWZlOWMyOGIxMzI5OWE3NzZhNjgxMTFhOTQwZjhmZmI2NTRhZWVhNCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_619dce61ec8344b68bb80195a7c1972c",
+      "statement": "A single module-level INDEXED dict creates the payload indexes, gates every caller filter, and is asserted against the live collection at boot; a filter on a field absent from it is a typed 400 rather than an unindexed scan that would silently return a smaller answer.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/indexed.py#L1-L19",
+          "version": "repo-lines-v1:sha256:011376e0d7720c1b34f85729ed567648282aba6ee5bd3c391bb1a248a7e6c07b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjczNDQ0M2YwZWQwMzU5YjdhNTY4NWM2NWU0NDAyMzYwMTI1YWE5NjUxNzE5NzBhM2IxMWVmNWViMjU0ZTk5M2MiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFhYmZkOTdiNDkzMzk1YjY1NWQ5MzNiMTA5NWNjNTgyZDdiMjY5MDYxOWE1ZDkyZDI4NDg2YWYzMzgyNThlNzEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJlY2U3ZjEzYjdiNmEzNTE2ZmNkNGI1NDMyZDg1OGU1ZjVhMjUyMDRlNjY3OGQ5MzEwZjA1MzNlOTU0NzlmNDUifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/core/indexed.py#L30-L45",
+          "version": "repo-lines-v1:sha256:57c4501174cbbb170cbafd46c7b49fb8735fa5f98002cf8c3b6f7bc0b9ba897a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhlN2ZlZThiOTUwMzE0MTNlOGUzM2UzNGI2MzZjMThlYTRiMDM0YTQxODhlZGM4YjZhZjg0ZDhlYmQ1NzAxOTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY0MzVlNDdiYjcxYzQ5NWZlMDE1MzlmMmU5MDVlNDk1NTQ5MTM3M2MyM2Y5N2ZkNDJkODg2ODA4NDRhZDY3ZTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk5NDY5Y2RmMjdkOGI2MjIyYWFhNWYzOGYyMDhiZjE3ZGZlZGViMzlhNTFmMzdlNWJjMGZkNWI0ZDQ2Yjg4OTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQyZmRjMzkwNTBlMDJjYWYyZmE3MTRlYTgyMmEzYjQxZDNlMDdiYjhiYzIzOTMwYjFmYjIyY2ZiZTc0NmY1ZmEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_89d8abdcb266470ab9d319d0cb2b5c98",
+      "statement": "The two text surfaces text and vlm_codes are indexed with phrase matching and a minimum token length of one, which turns a printed identifier such as \"SF 1.1A\" into an ordered phrase instead of a bag of common tokens.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/indexed.py#L46-L47",
+          "version": "repo-lines-v1:sha256:be6bc58f48968fe8a367dd77b31b1adebe41cd54d011ccaf31c084357b178afb:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTBkNmE1MTg2OTliNzQ0NDQ3YzU3N2YwYjNiNGE2YTQzODdiZTEwMjM2ZmVhZmE4NWIyNjU4MjE4YThkZjU4OSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNWUzMTFjYjk1ZTJiMDBlOTYyMDkyNGJmMTQ0MDlkMzA3ZTdlMjVjYWU0MDBhYzcxOGI3N2M3MzE3Yjg0ZDExYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNzAwMWY1YWMzNDVlNTNiOTFiMWIwNThkYjZhOTJkZmY1MmRhOTkzMmVjNDZlNzY2YTBiNDUwODg0MzVhNDMyZCJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/core/indexed.py#L56-L70",
+          "version": "repo-lines-v1:sha256:f93f7c9befec47e7629e2d3143eb64791b69bbce4562162af52d8911a241b1fe:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMzY2FlNDAxYzY2YWYxMWFiN2VlYjAzZTlhMjYzNTVkZTYxNzRjMjRiYTdhN2M2ZjljZWY5YTNkNjBjMDEzODEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY4MDE5MjUxZGYwMzJjODk5NGZkZmE5ODZhMGVkOTgwODE1ZTM2MWRmZWQ4ZWUxNjkyMjAyZmM4NzEzZDAzMTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA1MGNmYzBkOGUyM2Y0NDUxZGMzMjIxMTZhNTZjNDBjYTM4NzcwZjE3ZWExZDQyMWRkNGZmZjE5YWY0NTliNTYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_629fb057b0124e8c92c964397039c2ad",
+      "statement": "dispatch() is the single entry point for every transport: it resolves the tool name against the release's table, validates arguments against that tool's own Pydantic model with extra=forbid, and then calls run_tool — so HTTP, MCP and the CLI share one validator and one implementation.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/app.py#L1130-L1169",
+          "version": "repo-lines-v1:sha256:5a73f2bb00c868e9dafc7df4388484589e1654d116e52a178b90a97ebb04f69b:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUwZjQzYWE4ZTAyOWM1YzI5OGZhMmVkMzA0NmI3MGJhMzk3YTNkY2EyOTliYWNmZmRkMmU5MTg1ODViN2Y2MDgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJiYzY1OGQ5YmIxOTdhNmU5ZTc1NDY4MzUwM2U0NTNkMWFlNDdlMWJlZWI1Mjg0YjBjMmQyM2Q2M2VkMTE2Y2EiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI4YjYxZGY5NDFkZWJlZDhkNjk1NGE4ZjgyNjIwM2M5MDQ2ODAzYjJkZmFjZDU2M2JlMGQ5MWJlYjM5MzgxNGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ4MzZiODllMmEwNjMyNWE4ZDlmNzg4NDFhNWQ5ZjA0M2ZjZGNlYmZlN2Q5YWVjNDJhZmZmNjlkMjBiNmY0YjgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_27cffc5cd2b041e785c1f8a71b2273f5",
+      "statement": "A tool name absent from the table is a typed 404 listing the tools that are served, rather than an empty result or an unimplemented-shaped silence.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/app.py#L1148-L1157",
+          "version": "repo-lines-v1:sha256:40d0235583502ae6b75f88e610a0a8f5770c29d06e6c7cf74986299004f44c35:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ2ZmYxYWY2NWZjMTJiMmYxZjk5MWVlZGQwY2ZjNmNhODUwMzljMjViNDE1Y2E4ZWE4Y2JkZGM0NmIwNzVlOWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImViNmU1YTczMzliNDQ5OTM5MWY3ZWU5MDE1Y2UxYjQ2Y2I1MTdiZDZjZWQ2MjhiZTNiZTBlNzMwOTRhMmUzNWMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFhNDlmOTEyYzMyMGQyYzE1ZGQ5M2U1MGVlY2IxMmE1ZjI0MWYwMjZjNTMxZjRiOTY3ZjFhMmNhOGUyNjQzNmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMwNWJlYTkxYjIzMmJiZTMwYmQ3MTQ1ZmMxMDExMDlhNzFjYmYzNzVlNDBkZWU0YmJkMjBjZDBmNzllNDBmM2YifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_29f36b225f3549038ca40fe7c930515f",
+      "statement": "run_tool applies the cross-cutting policy in a fixed order — request-only precheck, budget charge for the one spending tool, the call, reads_remaining stamped by the dispatcher, then the audit line — so no tool can carry its own idea of budgeting or of which failures are which.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/app.py#L1076-L1128",
+          "version": "repo-lines-v1:sha256:237d3132f1f2188ee855250efea42baf8c4fcc67a9d9a4ff462ea1697670499d:eyJzZWxlY3RlZExpbmVDb3VudCI6NTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM1ODZmZDJkNmMxYzZmMjRkMDNkMWRmNjJkMTcyMGIyZjFiZjE3Y2Q1YWQ3NDMxMjVmNWQ2M2EwN2JjMDZkMjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIzN2ZkOTcyYjVmNGY3MTI3NjQwOWE5NjA1OTc2YWY1ZTRiYjA2MGQxMTExMTBhMDMwMmM1NzlhMzc1MWI0YWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQyNmJmNzQwNGJiYzFmZDk4MDYyN2JhMDJhYzdmZWQxZTkzNzQxYTcyYTlhZGY1NTNiZmQyYmIwNjI4YTUzZWIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_71c286113169499e8e4fe65ffae67069",
+      "statement": "The CLI is the supported operational surface by design: each command of the operations table is a subparser, an action that cannot be expressed as a vsir subcommand is not a supported operation, and a refusal is a non-zero exit with a named reason rather than a partial success.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/cli.py#L1-L11",
+          "version": "repo-lines-v1:sha256:bae0b0d2ce686c9490fa692906dbe73c438486edb99c8863b21918f0f363ef4c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBhMTQyOGM5M2I4MzJhN2JmZmJhOWYwMWYyMjM3YjBmMmY1NDRkMTk4YzY2YzE1NzBhZmQ5ZmE4YmU3NGE4MmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzMDNlY2RkNGE0ZDEwZjE5YzczZmQ0MmZkMTI0MzdmZDMzNTRhODI2ODE2MDVkYTUyNTVhOTdhMzkwNjhkYmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU4Njc4OGRjOTUzMWE3ZjkxOGVkOWYxZDY3ODY5NGFhYTNmZWYzN2UxNjE2MDdiYTQxOWUzZThkMWEwNmJjNzgifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.1",
+    "at": "2026-09-11T14:07:28.402Z"
+  }
+}

@@ -1,0 +1,214 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:0c802dc758b2c456d8dbef18a1945aba9fc3b976fd27e495a956474631eafdc5",
+  "claims": [
+    {
+      "id": "claim_afbba9797efc4d11bc51578cb2604453",
+      "statement": "The console is same-origin by proxy rather than by CORS: the API base is a proxy target rather than a URL the browser sees, which avoids widening the credential's attack surface, keeps the service's relative raster URLs resolvable, and lets the container's internal hostname be a correct target without ever reaching a browser.",
+      "evidence": [
+        {
+          "resource": "repo://frontend/vite.config.ts#L1-L20",
+          "version": "repo-lines-v1:sha256:fd73caeabfe365fd1cde0182f077a2bf8c74b00cf68387ec1e51bd9ba2336b07:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFlZGNhOTQ0NjMwM2JjYzA5YWY4ZDMyOWEyNzU0ZGVhNDAxZGFhNmEzYmNjMmMxNDc2MTQxODc3NDhlYzBiOWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM2OTRiMTEzZWZmMTAxNWRlOTYwYzdkZWFmOTZiNzAxM2FmMjliNGFiZmUwYjlhZjZhODNmZjExOGYxYWYwN2UiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc0MzQ3Y2FmZjJiZjE4ZjUxMmE0YTA0NGJhOGEyZjBkYzQ3MzM0NDk3YzJkZjZmNzJlOTY2YzUyMDkxYmFlODAifQ"
+        },
+        {
+          "resource": "repo://frontend/vite.config.ts#L30-L48",
+          "version": "repo-lines-v1:sha256:449330e233f6976575a0841d4c4eeb979dd0c94ca8b44469b3a1ffc96fa0eb05:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhZmJhMDUyN2MzOTUzYzRiNmUwZTViNTczOWJhODM2MTJmODA1M2JjZGM5NDY2NzMwMTkzY2QxZDU5MGI0MDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYxOTdkODk0MDk1NGI5YzgzNzU3NmMxNWU3MmI1N2NkYjkyNDEwMmQyMjI1NWQzN2ZmZWY5MWNjYzJkNmU2MjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE1Yzk5ZDFkNWE4MTI3ODNkZDJiODBkZTcyMmYwZTkxYjc4Y2E4YTk2NzNlZWU3NjBkNzNlNjQ0Mzk5YjQxNDMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_879a2d57175c452ea570d94b02d6e54c",
+      "statement": "The proxied API paths are listed explicitly rather than globbed, because a catch-all proxy would swallow the app's own routes and present a 404 as an API error.",
+      "evidence": [
+        {
+          "resource": "repo://frontend/vite.config.ts#L32-L48",
+          "version": "repo-lines-v1:sha256:eaa7d5bf297f6059ddeb4bc7818ad07c7b42cceb41de32928d861e05125409d5:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhZmJhMDUyN2MzOTUzYzRiNmUwZTViNTczOWJhODM2MTJmODA1M2JjZGM5NDY2NzMwMTkzY2QxZDU5MGI0MDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVjODhkMDBhNTRiYzU2NWRiOTMxZDYyMmFjMWNkNDVlZjkxZDc3OTg3MjI5ZjgwNTNjNGFiNDc5MjEyY2MxNjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE1Yzk5ZDFkNWE4MTI3ODNkZDJiODBkZTcyMmYwZTkxYjc4Y2E4YTk2NzNlZWU3NjBkNzNlNjQ0Mzk5YjQxNDMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_df6228a6e2f64aa08271e950da5c81de",
+      "statement": "The proxy is configured on both the dev server and the preview server, because the built image runs preview — otherwise the app would work in development and 404 in Docker.",
+      "evidence": [
+        {
+          "resource": "repo://frontend/vite.config.ts#L50-L56",
+          "version": "repo-lines-v1:sha256:c1bd21df4f8211f0ad240a765b2d5fdd969ccc9b6457b872fa1736a2bfbb15df:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYjJjZWNiMTQ0YTQ2ZjVkY2YxMmE2MTY5ZmNlZWQ3Njk1ZTgyOTRiMDkwZGU3NmYzNjYxY2RkMDI0OTMwMDE0NyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTkzNmRmN2E1YTNhYWYxODBjZmZkMWQ2NWM2NDZlZjZhZWEzNTJjYzI3Nzc0Njg2MTk5Y2Q4ZmIzZTg5OWM3YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjdhNDVmMjU0NWVjMmJlYWU4N2UzMDM1YzZmMjdhZGU0ZDQ5YTQ5ZWUyMjEwMWVjYzhjMTc3NWRhMDFkNWE5OCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDRjMDQyMTU5NmJmMTdlZTc1Y2IwODhkNzhmMmRlMGRiM2MyN2JmMGE1MTllYzY4Mjg5ZjM5MmNiMmViMWQwOCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_3efaaeafd9cb46d5a84534318ca693a5",
+      "statement": "The bearer token is typed into the page and held in sessionStorage rather than built into the bundle, because a build-time token variable would be substituted at build time and shipped to every browser that loads the app.",
+      "evidence": [
+        {
+          "resource": "repo://frontend/src/auth/token.ts#L1-L12",
+          "version": "repo-lines-v1:sha256:6e8c16dfebf59d49489d99132d89e1b5fc87f2373807531a4935cccc2e79d5a5:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3MmE0MjkzODJiMmUxNDcxOGUwZTM3YjA1NzBhOGExNzAyOTkxZmNkODQ5OGNkODQwNjBhOGJmNGYwNTAxN2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIyNmQ3MzBjODQzMjExYmUxZTA2OWM0ZjE4ZjAzY2RkNTRhZGJkODExMjIzODlmMGYzYmY2NTFmMzlkM2MwNWEifQ"
+        },
+        {
+          "resource": "repo://frontend/vite.config.ts#L22-L26",
+          "version": "repo-lines-v1:sha256:9f7b4f527b6aa8f4333f0dcdb93c32981f3a56210d3be37caf78a46ff584921c:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOWM0MTZhYWRhMjE0ZTYwYTg0MDY2NzJiM2M5YjZiYmYwZTc3YzIwMzIwZjJkYmM5YWRmMjg1Y2NhNTFjODQ4ZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNWM3ZDg2MzAzOTg1NmI3NTIyZTlhMjRkYTFjNDdmYjYyYzE0NDM1MTdkMTFiNmI3Y2ZjOTFkYjcyY2FmYzBkZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjE5N2Q4OTQwOTU0YjljODM3NTc2YzE1ZTcyYjU3Y2RiOTI0MTAyZDIyMjU1ZDM3ZmZlZjkxY2NjMmQ2ZTYyNCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_e2fd320699a24a21b4acd3695c0b4d06",
+      "statement": "Session storage access is wrapped in try/catch because private browsing modes throw, and an unauthenticated console is still usable — the operator retypes the token — so it degrades rather than fails.",
+      "evidence": [
+        {
+          "resource": "repo://frontend/src/auth/token.ts#L16-L33",
+          "version": "repo-lines-v1:sha256:89944a55fa7afe84eaf240c83c5414091c34178c5340a92f86862019d3897cc1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZmN2FkN2U3YWQ3MDc4NmVjYjJiMTI3YjdlMDVkMzM1MjhlOTIyZTViNmEwNjBkOTJhOWVjZTAwYWQzMmZmOGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIyNmQ3MzBjODQzMjExYmUxZTA2OWM0ZjE4ZjAzY2RkNTRhZGJkODExMjIzODlmMGYzYmY2NTFmMzlkM2MwNWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f2130df94331447c9de2e85eaee3d7bb",
+      "statement": "Page rasters are fetched with the authorization header and turned into object URLs rather than handed to an img src, because an img element sends no header and the alternative would put the token in a query string that lands in access logs, referrers and screenshots.",
+      "evidence": [
+        {
+          "resource": "repo://frontend/src/hooks/useRaster.ts#L1-L12",
+          "version": "repo-lines-v1:sha256:d80f916a88c448eadb00166c668dfd1e1329d31d269ed15956478b5df7128260:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3NjY0Zjk4N2JlZGJiZTExMjIxNTBlYjNiMjM2YTRmNTJlNjU2YTIzMjI3Y2I1MGE4MDYzYTk2MTRlYTNlNmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYzODhmZmU3YjUxY2ZjNTliZDEyYzUyYmZhNGExNDhiZDgyN2E5ZGEzMGUxYjZhOTJkMDY3NzQxNzYwYjhkZTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_8b9473e764834a3b8de54114f268b978",
+      "statement": "Raster ownership is split so neither half outlives the other: the query cache owns the blob so two components share one download, and an effect owns the object URL and revokes it on change or unmount; a raster at a given dpi and region is treated as immutable and never refetched on focus.",
+      "evidence": [
+        {
+          "resource": "repo://frontend/src/hooks/useRaster.ts#L10-L12",
+          "version": "repo-lines-v1:sha256:0266ad2447ad523ecb91d0c710df9bdfca2a5a5574f68127bdf26aa56d927c93:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYmExMDYwZjI4OWFjNWI0NDQxYzRhMWZhMmJiNTQ5N2RiMDIyMzAyMzNiMzQ1YjY5ZGE0ZGE4NzdhNmNkOTM3MCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjc2NjRmOTg3YmVkYmJlMTEyMjE1MGViM2IyMzZhNGY1MmU2NTZhMjMyMjdjYjUwYTgwNjNhOTYxNGVhM2U2ZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOGY5NzI5NjYyMDE2OGVhYWY0ODI2NTkxNGRiNTFiNzc1YzJlNWFhMGVkZTEyOWY5NTkzZjg5NTFjY2FjMmQ4NyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjM4OGZmZTdiNTFjZmM1OWJkMTJjNTJiZmE0YTE0OGJkODI3YTlkYTMwZTFiNmE5MmQwNjc3NDE3NjBiOGRlMSJ9"
+        },
+        {
+          "resource": "repo://frontend/src/hooks/useRaster.ts#L27-L40",
+          "version": "repo-lines-v1:sha256:20d85a2473ee526c8423058faae766d924226f3ed10ec8bf9999c3e88f0cb10f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEwZGFkOWYxMjYzMjI2ODlhYTJkNmQ1NWNiMzhiNGIxMjIwZDExY2M5MjRiNWYzNzUwMjExNGRkYWVhMWQxMjQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNlNDZkYWZhYjA5ZjE3MDhmNDc3MGE0ZjJhZDc2MTBjYTJjNTYzNTcxNWNlZjEzNTRhYWI2ZWM3YjBhZTEwNDYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgwNGEwYjM4MDQ3NzVlNWMwOTIyZDFlZDZjMWNiMjY3OTBkN2EyMDUyODczN2IwYzdkZWZkZjhjODhhOTI2ZGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZhM2EyNjg1MmY0YmM4MjVlOGIwZDllYjZlYTAzZTA3MTZhYjdiOWQ5MmJjYWIxNjlhMzFjNWU5OGI4YWZhZDMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_8ed00f1e97d04905b07eb5ae6e87275e",
+      "statement": "The typed API client enforces three properties in one place — every request carries the token, a non-2xx becomes a typed error carrying the service's own code, and the inline flag is pinned false on every fetch so no component can undo it.",
+      "evidence": [
+        {
+          "resource": "repo://frontend/src/api/client.ts#L1-L21",
+          "version": "repo-lines-v1:sha256:665536c339a65d354048402f351436076de00c65d76824a12da9d29cad673df8:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMxYjdmOTA3OGU5ZTRlMWE0OWRiZDk4MmZiZmIxYWU5ZmVlMzU5NDlhNjhhNTdiN2FiNWE4NGE5ZDcyZTA1MmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk3ZTBkYjhlMDU2MGFmNGVlZTc5MjczMjEyZmNlM2I0ZmMxYWM4MGJmNDI0NjRhYTI2MDcxZmExYjlhNGM3MzIifQ"
+        },
+        {
+          "resource": "repo://frontend/src/api/client.ts#L138-L155",
+          "version": "repo-lines-v1:sha256:5735f77908c3ac6c4b7a5893b9624839362477d4e88c2dd52ba522a686500baf:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIxYTMwNGYyMzBkNzA5ZDFlNzAwZTAyODA4Njg5MWI4MTNlODYyODk4NjQ0YzE0MTA3M2Q4Yjc1MDIwZmZmMjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ5MzEyN2JkNzBjZDg1OGRjOWZlYTQ0NWU2MjA1Mjc4NWQyNjZhZDllYWI3NmU0M2Q2OWQ5NjBlYzIwYzg2NGMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_12f1e732c97e461090c4c02db6d9c900",
+      "statement": "A failed call renders the service's own error code and detail plus whether it is retryable, because rendering a store outage as an empty list would tell an operator the corpus holds nothing — the same confusion the typed absences exist to prevent, one layer up.",
+      "evidence": [
+        {
+          "resource": "repo://frontend/src/components/Banner.tsx#L1-L27",
+          "version": "repo-lines-v1:sha256:1841d47467f8a7e5d405b6ed069512c5d7795787dfdf43859c5f12f5b464aa1a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM2ZGYyZmY2NzAyMTA5NTIyNTQxYmI2MzJhYjE1ZTJkNDlmNmIyNTUxOWFiZjI0MWQyODBkNDk4Y2QxNDM1OTMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_caef4e9ab72e43f79fdb6f65f201b470",
+      "statement": "The status badges keep the absences visually distinct with different action lines, because \"searched and absent\" and \"those pages have no text layer\" are two different instructions — abstain versus escalate to vision.",
+      "evidence": [
+        {
+          "resource": "repo://frontend/src/lib/badges.ts#L17-L22",
+          "version": "repo-lines-v1:sha256:d7385477c13a9c8fa48a467f5f7a47c091acf97f17ed0f39c388fe2e5efd4fb4:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNjIzY2I0YzEzZDY3NzU5ZDU0Zjc2NzFkNDQwMzQ5NzJkMDkwM2EzOWQwOGFmYWU3M2JiOTgxZWI5YWIwZGNmMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjIzY2I0YzEzZDY3NzU5ZDU0Zjc2NzFkNDQwMzQ5NzJkMDkwM2EzOWQwOGFmYWU3M2JiOTgxZWI5YWIwZGNmMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiM2JhMDVmMWNjMDIzMjE1NzdhMTRiNTNkMDFiZTlmYWNkMTEwYTAxODM3M2VlNWQxMmQ2MWY2MmJmN2U3MjcxMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTFmNWI4ZjAzNjI2OTc3YWRjNDg2Y2I0MzE4ZmE0NTc4ZDY3Mjg1NTRmNjAzZjMyYTU0ZTAxZjFkZGUyNWYwMSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_381e40d0b7354f3f9da5ce98e548f64f",
+      "statement": "An abstention renders as neither an error nor an empty result: the count of unexamined image-only pages is the headline of a warning and the documents holding them are named, because while that count is above zero the system may not claim the corpus was exhausted.",
+      "evidence": [
+        {
+          "resource": "repo://frontend/src/components/AgentPanel/AbstentionCard.tsx#L1-L13",
+          "version": "repo-lines-v1:sha256:15cdc9e83e6ea8f95f16bf6ff53dc49b10a81df77e1a7b0637e3c596f12a2478:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3MmE0MjkzODJiMmUxNDcxOGUwZTM3YjA1NzBhOGExNzAyOTkxZmNkODQ5OGNkODQwNjBhOGJmNGYwNTAxN2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI4MjQyYWI2NDQ5OThjYzI1ZDdjOTg2NGU5OGFlMzUxMDVmNDg3YjZhOTcyMGEzZWUyZjY0OTI4ZTVlZDcwYWYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_cff4b5d31b51448baae2e1fb1f3d0178",
+      "statement": "Only two of the three claim states render a badge: verified and read-from-image; a code the gate found absent rejects the whole draft, so the badge mapping returns nothing for it and there is no component able to render one.",
+      "evidence": [
+        {
+          "resource": "repo://frontend/src/lib/badges.ts#L1-L16",
+          "version": "repo-lines-v1:sha256:ef737d065619e06e5e8681267086b64c67da9ee51a57a354f6edec0683b4707d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNmZmJmNTc2MmJjMjlmMTIyNzJhN2VhODViNzczMDRkMjI3NjJkYTlmMGFlZTA0MzQ0MjBiNTdiYzJlYmIwM2EiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNmMzFmYTFmZmQ2M2Q4YTcxODRjNDEyNmM5MTA0M2IwMTgzOTc2YTEzMTdlNTFiMjRhMTA0NjUwMzYzYTgzYzgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_765ee69d20dd401f8314733307b450cb",
+      "statement": "Components ask for a tone name rather than a colour value, and the stylesheet turns the tone into a CSS variable.",
+      "evidence": [
+        {
+          "resource": "repo://frontend/src/lib/badges.ts#L23-L25",
+          "version": "repo-lines-v1:sha256:91f5b8f03626977adc486cb4318fa4578d6728554f603f32a54e01f1dde25f01:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNzUxYWU0NGJjYjU0MDY2ZDY2MWRlNGEzMGMwZDcyNDFjNzgyNjJmNGVmNGRjZmFiMTI3NzFlYTk2MWE4MGFlNyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOTcyYTQyOTM4MmIyZTE0NzE4ZTBlMzdiMDU3MGE4YTE3MDI5OTFmY2Q4NDk4Y2Q4NDA2MGE4YmY0ZjA1MDE3YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMGNiMzFiNzQ3NWJmYmFhMWVjZWMxNzFjNDYyODlmOTg1MDlkNjVhYWE4OTZkZmE4NzVkM2YyNTk3NGI2NTE1ZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTRlOTIyNDkwYTU2MzRhNDI5YTUxMDAwM2I3NGI1OWMwMGYyMWMxZjA5N2RlNDYwOWE2MTc0NTNjN2E1Y2ViZiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_db86ec2228924c30911d1a8200ceb705",
+      "statement": "The ask call is a mutation rather than a query, because a query may be repeated by the client library on focus, reconnect or remount, and this call runs the loop that may take the paid route — a question must be asked because somebody asked it.",
+      "evidence": [
+        {
+          "resource": "repo://frontend/src/hooks/useAsk.ts#L1-L9",
+          "version": "repo-lines-v1:sha256:e934ee68341d5384cc959c6d836875ee00414f879a2da5f86df137fccb10252f:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZWFmMjJjZjA3MzI1OTJjMjQ3MTQxY2JlNjFlZmExMTAxMjYxMmY1YTMxMjJiOWFmOWJiYWY1MmY1NzI0ZDE5NCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOTcyYTQyOTM4MmIyZTE0NzE4ZTBlMzdiMDU3MGE4YTE3MDI5OTFmY2Q4NDk4Y2Q4NDA2MGE4YmY0ZjA1MDE3YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOWExMTRlMWM4MGEyNzkxYjEyMDI5YzE2OTlmNzQxNTRiMDVhYThmYmU5MWQ2M2NjMGNhNzIwYmI1NGNkNjcyMiJ9"
+        },
+        {
+          "resource": "repo://frontend/src/hooks/useAsk.ts#L20-L25",
+          "version": "repo-lines-v1:sha256:9b73cc9df94001814ee569772e1b718ee1a7bd490a908a4921adb3e7ad11a261:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNGYyYTJmOTk2ZjA4ZTY4MGJkMjkyMTM1YTZmYTQ5NzhiZGEyNmU2MDJkODRmMzNjYjFkNTk0Nzc1ZDQzMDRiNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZGVlYjEyODBiZGQ2YjUxNzk4MDljYTZmZmVkMzlkN2JhNWNlOGU1NWY0MWQ2YzE4ZDNhMzk0MjI4NGZlMDUwZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYmU4OGFmMzdlYzEwZTIyYzJlYThiNWFiM2QwMWVmNzYwZTY0OTIxMDAyODQ2MGQwMTJhN2JhN2I1MzcwMzQzNyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_43aee07f8add4952ba9ab658dc5865f1",
+      "statement": "The zoom ladder is kept as pure state so that climbing up clears every rung below — a document id left behind would silently scope the next search to a binder no longer on screen — and so a citation can jump straight to a page from a component that knows only a page id.",
+      "evidence": [
+        {
+          "resource": "repo://frontend/src/lib/ladder.ts#L1-L16",
+          "version": "repo-lines-v1:sha256:7b23bdee8421154d47c4e146809067486758e599269c9f227f0592fe9c6dcb14:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3MmE0MjkzODJiMmUxNDcxOGUwZTM3YjA1NzBhOGExNzAyOTkxZmNkODQ5OGNkODQwNjBhOGJmNGYwNTAxN2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhiODk5NTAyMDQ2ZGNlZDhiZGZhNTk3MmJmNWExZTE2ZjdkOWIwYjdmM2Y5YmI0MjRlN2IzNDAyM2FhMjMzMWMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a5332056501d496ca0450c3fad3f6d8a",
+      "statement": "A frontend conformance suite enforces the rules no compiler catches — no written any, no raw hex colour in a component, and no inline flag or image-bytes read outside the declaring type — and first asserts that its scanner actually reached the source, because a check that silently stops finding things is worse than none.",
+      "evidence": [
+        {
+          "resource": "repo://frontend/src/conformance.test.ts#L1-L19",
+          "version": "repo-lines-v1:sha256:e33d39c9416785ab8bfeca9cb464bd557ed9ea5e871cdb27d406fff5cbbaf5a1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3MmE0MjkzODJiMmUxNDcxOGUwZTM3YjA1NzBhOGExNzAyOTkxZmNkODQ5OGNkODQwNjBhOGJmNGYwNTAxN2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAzYmJjMGQ4YmY0YjYwYzJhNTA2ZTk4YzcxODcyMzg4MDhlZjAxNzgzZGNlNzVlNjAzNTExYzkzZWU2MDA3MDQifQ"
+        },
+        {
+          "resource": "repo://frontend/src/conformance.test.ts#L38-L45",
+          "version": "repo-lines-v1:sha256:60322a6e2ed991c5d0ae1cd1e5088a4d7754e09d3bb0412ce5ffeb9fdade2c05:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjUzNzczMWYxZjdiMTE5OWMwYWNhODQ2MGUyNWE1MjM2NWVhNjUwNjFmNjgxMGY1Y2IwYmIzNDNkMGQ4YjNkOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTRlYzVjODEzNTE1MzI4NzRmZTg3NDMwZTk1NzExYTQ3ZmIxY2ZiOTdiYTViMGFkODc2NDM4ODcyNTliOGU4NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODY2ZGFlNjg0MmIwNjUyNTM2ZWU4YWViNzEyZTZkODllMmQ1MmEyNmU5YzIyMjE0ZmQ0YWQ5YjFkNjM4YTg3NCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_34b2e9b743ba49adb062b8bc0aed6b08",
+      "statement": "A backend test compares the console's TypeScript envelope types against the Pydantic models field by field in both directions, deliberately instead of code generation — a generator is a build step someone forgets to re-run and can only catch a field the service added, not a field the console believes in that the service never sends.",
+      "evidence": [
+        {
+          "resource": "repo://backend/tests/unit/test_frontend_client_contract.py#L1-L18",
+          "version": "repo-lines-v1:sha256:306858c6dcd12d3e1c54c8c2842cc8992c36035ccca805e5e9e417f4c8993b22:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI2MzAxMTEzZjc1ZDY5ODE0OTk5ZTkyZmU1NDgwM2YyODBiMWEwN2RhYzNkM2ZlZGYwMzM3Y2UyMDBjN2I5YzYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBjMjAzNDlhNTIwMDQ5OWVhZjc2YWJkOWMyZmU1YjA4Y2M4ZWM5YTYwMWIzYmIwYTkzYTA2NDM4MzM3YmY1Y2YiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjUwNzI2M2JmOGIyZjgwMzE0OGM5YzYwYTA1ZTI0NTFjNzNlZmFlZjc3MWY2ZjU1Y2ZiNWNmOGVhYTdhZTE1ZmMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_12ea654aa9d24c7d914cf8e5e6b9dc90",
+      "statement": "That contract test also pins three strings a person reads rather than shapes a compiler checks — the schema version, the two badge labels and the amber warning — because a paraphrase in the browser would silently change a product contract in the one place nobody greps.",
+      "evidence": [
+        {
+          "resource": "repo://backend/tests/unit/test_frontend_client_contract.py#L19-L28",
+          "version": "repo-lines-v1:sha256:48698332632319b57d222801068c61bc532655a1a337b0807bf1bbc230204eca:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlmYzU0MGRjZTc5NmU2ZDFkOTFjYzFmMzgzZDMxMjcxMzFjY2E4OTQyZTY3ZDg1NGI4ZTJmNzRmNWMyNTFhYTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUzODRiZmRiMmRmMzgwYjY1NTdjYzdhNzFkMTY4OTE0MTViY2NhYTg3Njk5NDA2ZTIzNmY3NTJjNjQxNTM4OWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZiMGYzYTU5NDA1MDdhNjkwOWRkZmMxMTAxOTA3M2JlYzIyOTU2OTAyYWY2MTQ4YjYwYWE2Y2VjNGVlZjAwNDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFjOGMyOTk5YTBlOWU1NmZkOTc0NTA1ODZmNTE5MzJkMzFjN2FkYzU4NzU3Yjk5ZGI5ZmEzYjAwN2FjYmQzMmYifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.1",
+    "at": "2026-09-11T14:07:28.402Z"
+  }
+}

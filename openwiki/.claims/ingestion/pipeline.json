@@ -1,0 +1,232 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:4b8be6373f5c70fe58e69f9eb260b290bcd0a4e5724259d9fc2524d654df5a4a",
+  "claims": [
+    {
+      "id": "claim_ff263c322d4f4478b7c7a69c40532148",
+      "statement": "The ingest pipeline is eleven named steps driven by one command with an --until flag that can stop after any of them, so each step is reviewable on its own.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/cli.py#L3620-L3628",
+          "version": "repo-lines-v1:sha256:477533fa33da26e0cd27dbc62094d972a47a8239ff1826dc9e3c3685e8bbc277:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTE5ZDExNDcxY2RiYjJmZTllYTI2MzE4NzNhN2NhYjhiNTVmNTc5ZTg3YTMwYjUzZmNlNTkwY2I3Yjc1ZmEzYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTI2ZjRlYzJmYTdlNjRmZDMyNDNmMjhhMTgzMDU0MDNiOTYzOTQzMDIxOTUxNzM5MGYwNThiNjM2NmQwOGZmNyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYzNjNjdhODVmODIxYTViYTJjZTJhMWJkNTUxNTViMzg0OGUyNTc5OGQyN2MwYzU1Njg4NmY3NmFiMzdkNWQ2YSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMTVjOWIxMDFhMzM5N2RjYmZlMGQzZWFiZTMwOGMzMjBmOGVhN2NlOGNjMDlkNzIzMDhhYTJiNWIxZWQxMjg3YyJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/cli.py#L589-L595",
+          "version": "repo-lines-v1:sha256:fa0ff24e09c6b5cf70585b8eb8ed428c5f1b2ebff0c2c6bcbd64d2e43e004fe2:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMGZhZTI0NWRlMjBlNWQwMzdhYjc2NWY4YWZkZmQ1ZDkxNGZiODI1YzE3NTg0YTZmNGNiYjA2NGU0ZmU0ZTRjYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTg4MGJhZDlmYzkwMmQ5ODY5ZWUxNTIxYmFiYWFkOTRiNDA4YzIxYTFhODZmOWVkNTlmZjVjN2M3MTNmOTllOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTk3YzZmNDkzMjMyMDFlZjllMGY2MWQ5YzgyOTk5YTEyNzgzOTJhNDcxNWM0ZmVlOTk1MThhMmYzYzkwNGRhNCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_25ab72b9abd042da8ff41d616774d78b",
+      "statement": "Exactly three steps — embed, index and publish — require a reachable Qdrant and refuse without one, because step 09 reads the embedding cache off the index, step 10 writes to it and step 11 flips visibility, so running them blind would re-bill every vector the index already holds.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/cli.py#L596-L601",
+          "version": "repo-lines-v1:sha256:88a9d9fe6ea7e4ff4d38c441400db7efbdd0ea6fe8e68dd584b796f74a709af1:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZmZkNDEwOTFiZmFkZTVkOWU0MzY3YmVlNTFkNGVlMjE2Njg4YmVhMDRjMmQxODBkODY3NWE3NzIyZGMyNjVlMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiM2YwODExYzMyNjFmYWEzYzcyY2M3NTc2NWVmMTczMGJhNzQ5M2VmNTdiYWI4OGNiZGRhMzdjOWRmMmM1MTBiMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjQwYjEwOTVkYWIyODBiYjMzNjkwZDBjYTRmYjczNTExNTYwMWFmMDZlMjk4N2FmZDIyNDQ1MGZlZGI5MDQ4MSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_7115d90affc34e3c98b9de2e9d854807",
+      "statement": "A store-backed run claims its run point at step 01, before the first model call, so an unreachable store is named before anything is spent and a run that dies mid-flight still exists in a state that says so.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/cli.py#L896-L906",
+          "version": "repo-lines-v1:sha256:02b4ea520f556fd95a4867c640f70b6c35077ec024c89090a6e99d65cf2557b9:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgxMzE2MGRmNDVlNDQ3YjM3OTZmZjEwNTBmYmQ3ZmI1Mzc1NWZjNGQ3NmNmM2YzYzM3MWIzMDkxOWY1MTkxODEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUxMGQ3Nzk2OThiYzRkODk5YTcxMDcwOTlkNDRhODkwZDdhYmY2OTIxYWQ0ZjFhYmRjNThhMjE0M2I4ZGYxOTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA5MTMyNzVhOGY2ODRhMTc4ZjA4NjU2ODU2N2M3MjIxNzcwMGMzMjAzNTk1YTk4M2E3NmI5ZDhjNDcxOThkNzUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIxMDM0ZTEzNDIzNzY1ZTIyM2Y4YzBjMWExYmVhMjdiOThjNGRjOWViNGZjNmI2NWY2ZGRiYThkNDM5MjRlMzEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_dcbc7d98444946e2acb51a3ae2541279",
+      "statement": "Resuming a run against a different document is refused by name, because it would write this document's pages under that run's id and the publish step would then flip a set of points nobody intended.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/cli.py#L907-L917",
+          "version": "repo-lines-v1:sha256:f1c9f1b86401ac3c1d562b1722c32092a26b51ff5550f2601586d599d5c79a70:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFiMmNhNTBkNTM3NzBlMzg0NTYzNGQ4ZTI2M2Y1ODViZjFhMTZkNTExOGNjYzY3YTg1M2ZhMTk4ZmEwZWNmNmEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkYjNkNWI1YzNkYzRkNzcyNjcyMzZjZTRiNDhkZGMzNDY1ZDc5ZTM1YzE4YjFiMzFlZjYxZjhjMGI1YjEzNWQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ2ZjRjZjQ1NDhmYjM5YzRkOGU3NWE1ZjgzNjM3NjFlZTVkZGI4YmU5M2MwNTYyMTEyZTI0YzdmZTU5MmZlY2MiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRiN2Y4YmQwYzBkOTJhMDFiZTJmNTFlNTM5ZDMwMDc1NDlhZmUxZTcyMDY0YzNlZTAwOTlmZTkwZDdlMDFmOTAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_05e31c1b63044b2a8e0df23d243e22ed",
+      "statement": "Step 01 derives document identity only from the filename, the file's own metadata and the uploader, and contains no grammar of any kind — no regex, taxonomy or keyword list — because a classifier at the door would be unversioned corpus knowledge in front of every later step.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/manifest.py#L1-L18",
+          "version": "repo-lines-v1:sha256:79724da03d64fcd311dda51a47838dcc105a71f094da513931b521bb07cb3010:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE2MzRjNDE1ZWJlMDMxY2JmNzY1M2E5ODI3ZTY5YjQ3N2NmYWI3YWUzZjYxY2JhNzRjMTgwNzNhYzZkMWMzMTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM0Y2I3MTE1ZGMxOTM2ZDA0OTI5MDdhMGViMTczMDA1MjJiYmZmOWNkOTFhNjg3N2UzZDBhZDdlZTlmYzMxZDQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_83c11600b8dd4fb0b33bfcec3d396885",
+      "statement": "An undeclared facet is recorded as undeclared rather than as its truthy default, and the same applies to the revision, so a later step can distinguish \"the operator said unknown\" from \"nobody said anything\" — the distinction whose absence previously discarded the model's own classification.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/manifest.py#L19-L30",
+          "version": "repo-lines-v1:sha256:121a1fabfa02d9c739be27a26c57518cf15e345dbf39f64309d3b5ad5e47e21a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImExOGI4MzczOGJlZmMyNzcxYjRhOGNiOGYzMjBhZjZkNmU5MTdlMDIyM2QyYjExNzI1NDlmZTE0YWJiY2I2ZDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzMDNlY2RkNGE0ZDEwZjE5YzczZmQ0MmZkMTI0MzdmZDMzNTRhODI2ODE2MDVkYTUyNTVhOTdhMzkwNjhkYmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdjMDdhYzk1MTAzZGUxNDQyYTUzMzQ3N2FmYTE4MGJhMTI4YTE2ZGFkMjFmNmQ3NDQxOWY1MWE2N2YxMmYzNzkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVjODViMmZmYzg3MDIxYWE5MzZlODg0NmQwNDkxNmNiN2MyODc3OGJkODVjYjAxZGIwNGYyZjg3NDBkMTRjMGEifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/ingest/manifest.py#L40-L48",
+          "version": "repo-lines-v1:sha256:a402b61d6448631015191ada277099e09472d304a6809c373573c9e3174734be:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTVmNjI3N2EwY2M5ZTM4NDZhMTUyODJiZGU3N2ViNzVmYzQwNjRiMmEyZGI5YTQyODEwNGFlYWIzZTc0YTc1NCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDZhNDg3YWM4NGIyZmEyNjZhMjI1NjhjMzJmMjlkOTRjZGQxYWJiZTZhZTBkNGYyYzI0MzE0MTg2NDAyYWY3NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTM4M2M3OWE5NzU4OGViMzI1Njk0YmNiMmExMjZiMjI2NmE1OWUwMTUxNDJkOGM1NzUxODIzZTZhNTZmNzlhMCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_476231e0dc7d4812a40376e372764a43",
+      "statement": "Step 02 is the only writer of the text payload field, always extracts from the full page with no clip argument, and a conformance grep keeps the extraction call out of every other module so a second extractor cannot appear.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/probe.py#L1-L19",
+          "version": "repo-lines-v1:sha256:434ac77a6691ae17e227e07d8f1b740ba93269f082157f11d8fea2da82b100e0:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJmZTEwYTMwZWVhYzNhYmFiZGRkYTViNjA2NzY4YzQ4OTA4ZTgyOWZjYTk1OGFiMGU3MTQ5NTA3MDM2YjZiZGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM1YjJlM2M4MjcxM2U3ODBiNTg4ODI4YTRhYmM2M2IwNWRjMDBmMDg3ZWQxYTUzZmZiMjQ1NDc3NmY2M2NmOTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImMxMGUxMDI0ODUwN2JlMTUwYWI3Y2IzNTg2MWMyNTRmOTRkNzY5MGVlOWQ2NDcwMTg0MTU3N2ZmZDBlY2U0NWMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_905b26c4ffc64010b2cc4404cd32459f",
+      "statement": "Text extraction is unconditional rather than gated on a document-level has-text sample, because that guard destroyed the text of every mixed document — a scanned cover over a born-digital body averages below the threshold on a front sample — while per-page extraction already returns empty for a page without a text layer.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/probe.py#L18-L27",
+          "version": "repo-lines-v1:sha256:b77c0efedb62e1c258f6ab0fbe9681d4246de433d18ddb7ec7a0e1cb768b69e2:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMzNDQ5Mzk4NTU2NDNjMDg3NGU4OTU2YTgxYWU5ZTJmYjY1Zjg3NGVhNmU2YTQzNGU1ZWUyMmZiMmRmZTQ5MjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRjNThlNjFlNGYyN2ZiMWYzMWY0ZGEyNzdhOGI1ZmYyNjczMmM5MTVhYzBlZThmNWIwOGYwNDcwOGI4MzNhYTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU1NGQwMzBkYTNhNzQ4MGRmYzZiMWY4ZmI0NTUzYmI2NmJiNDNhMzliNTFmMjE3NTU4ZWNmYzMxNjdiNWE1MDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg2MmQ1YjBmNzRlY2FiMjU3ZWI4MmI3MjdmMzQ4NDE2ZTBlYTg3NzA5Y2VkZjc0MDFhMTY4YjQwNDFmZWM4MzMifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/ingest/probe.py#L44-L49",
+          "version": "repo-lines-v1:sha256:d76328871f81db8ed7ae722c4fdbb9007664952c5391b9a191751bf8da6917ca:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTYxYTBjZjVmNGM5NzJmN2U3OTQwYTM0Y2E1YTgwZjRjYTgwNWU2MzU0MjYxOWNkMzA5MGMxNTJlOGU1ZThjNiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjJiOTQwZGVkZTdhMmEyMGE5MDFmZDUzZmIxOWE5NDNlOTk5MzVlZTg2YWEyZmI2M2E3MzE2NDc2MmJkNWFkNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYWVmMjVjYTYyNTQ0M2YxMDA1Y2M4NGUxNWViYTRkOWE0ZTZjMDkzMTZiOTU4OTk3YmVlZWM1MzE1YTNhMzBjMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZmUwMTQwMmZlN2Y0ZTJjMjRlYzY0ZGExMDE5NmNkMTYyODVkZjdhYWQ2MjJmZjMxODBlZWVmNDZmMWE4MjllNyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_dd6a41d079684af0bb6f7bc882de197a",
+      "statement": "There is deliberately no OCR: the text layer is evidence for whether a code is printed on a page, and an OCR guess in a corpus of one-character-apart codes would verify a hallucinated code — so a scanned page yields nothing and is disclosed as not searchable.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/probe.py#L28-L34",
+          "version": "repo-lines-v1:sha256:be5d029caf3fa8869d43982cd47fc07683f81a3b158d98329c829cce7b9d989a:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMTQyOGU1NmYzNTlhY2MzOTg1OTk2MWFiZjdlZTJkYzk3ZWVkNmE5ZDY0YmZmYTczMmVlYzYxMzcwMDRiZWJjNiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTI4OGFmMTMwOGUzYjM4MmU1MmVhYjAxNTQyNzIxYjlmN2IyMGJkODllMzdkMDM4NjU4ZmEwM2ZhMjMzNDFjOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTAyZTViMDdhMGI2ODNmMTE3NWQxNmVkNWZlNTg4YTE3OGVjODA3OWQwMDIwNjczMzg3MTkzZjk5ZTNhYjJlNCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_976f7b4e77be47cca26f5f371b5f7071",
+      "statement": "The PDF library version is recorded on every page because it is the single point of truth for exact search, making a version bump a re-run of the crop and offset fixtures rather than a silent change.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/probe.py#L38-L42",
+          "version": "repo-lines-v1:sha256:d8d36154d75b8af6787f94d23941dc31284001ed98148bc0b534d03794609f3c:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzkzNjcxODgzNTZjNTVjZDczNTM3YzViOTg2N2YwYzc0NGIwYTk5NWViN2RiMjNlMzY1ZDMzOTU5MTVhYzg2ZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTAyZTViMDdhMGI2ODNmMTE3NWQxNmVkNWZlNTg4YTE3OGVjODA3OWQwMDIwNjczMzg3MTkzZjk5ZTNhYjJlNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODVmMTI5ZThlYmY2ZTQ1NjZhZWM3NTczY2I1NWE5OTA0NzlhNDBjZmViZTYwNGMwYjg1NzhiMzFiMjI1ZmYzMCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_3ddea7794a9e4d0e818bfe464322af60",
+      "statement": "The source document is deposited into the document store at step 02 and nowhere else, because doc_id and revision are only authoritative after step 01 and the content hash only exists after step 02 — and since the HTTP upload route runs this same subcommand, an upload deposits through exactly that line.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/cli.py#L943-L955",
+          "version": "repo-lines-v1:sha256:1ce97dd38f7f73aa25dc0e1947e1090bdd27eb67047cb2e0e651e7d275e0f1c9:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJiMTJkOTU0ZWUxNmE3MzM0NjZiNzMzZDM0OTM3YjY0MmRiM2MxYTAwYzAxMjlkOWZjNjRiMTA5ZDQ4NjljNjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQyMmQ5YjNlNzczOGUzYjAzM2Q1ZDU5N2UyNThjN2E0ZGRkM2VjN2UyMzY0N2M2NGZkNTYyZjk5OWRkYWVjNjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFhOTNmNzRhOTk5ZGRkODhjOTYyOGFmMWJkN2NlNTk5MmQyNWIyNDY0MTVmZmViODgwNjE4YTdiMDZjMWNhM2EiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjUxZjJlYjExY2ViNmYyNDA1MTMwZjE5ZGUwZWU3ZTVlOGFjY2MzZmZjN2I4YmY1ODZhZDc0NmQ4MmQzOTQzNjYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a0fbf7a3403145dea89728a3bc065eaa",
+      "statement": "Rasters are rendered in memory and never written down, replacing an earlier design that wrote every page at both dpi values before validation — which produced stale record paths that failed every page read and instances whose answers depended on files other replicas lacked.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/render.py#L1-L14",
+          "version": "repo-lines-v1:sha256:645e05f1b37dda2d77fabf957e1f129fe714e4bed531cda50ad72b662c0862ea:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQxNWU5OWNhN2UyODk4ZmI4NDM4NDYzZjc5NzE3MDcyODQxYTIxOWQ2YWIwZDg0YTk1ZGY1MDA5YmZiNDcxZjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFkMzNlZDY2MmZkOWM5MjQ1NjBkMTZlNjg4Yzg0MDVhODEwMjI4MjNhMWUwNTdjNDcwZGIwNGM3NmYzMzc3ZDQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk4OGU5MDczN2M5YjJlNjYxZjVkYzc4Zjg4YTc2ODg2ZTI1NzEwZjY4MzhlYTY3MDBmMTUxMzI0YzAzMzI3NTkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_384f8cff892e4d44b20b80b6004fc141",
+      "statement": "Two dpi values serve three uses: 150 is the raster that gets embedded, 220 is pinned and shared by extraction and by read because it is a cache-key input a caller cannot change, and the fetch tiers feed no key and are cache-only.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/render.py#L15-L23",
+          "version": "repo-lines-v1:sha256:dd86cc632907532834a2c383ae9a03ecf8c31594ee70a60eabd7a8d1771630ce:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMTFlODVkZjY0NzhiN2FjOWJmN2ZkYjdhNjk5MzIwOGEzNGM3YmNjY2JiZTg4ODg1NTJlYjY5ZjlmYzEzMDVkMiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTJjMTI0NzI0OWZmMmM5MzJhOGQ0MzY3ZDE1ZDE2MzYzMzg3YjA3ZmRlMDA3NjU1ZDRmYTJjNjg4MDUwYjM5YiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDZiMWYxMmEzY2U5NWUyZWYyN2I3YTE4M2FiNjdmMzU1MDEzM2IzMmY2ZDg0MzU4MDBiYWIxZTM4ZmM0ZmZhOSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_25cde03740cf4b5ea5057dd70fb58371",
+      "statement": "Step 07 runs two independent offset checks — a structural one decided by the same function step 06 uses, and an observational one comparing a model-read printed page number against that page's own text — and a failure bisects rather than emitting records for a window whose pages cannot be placed.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/derive.py#L8-L21",
+          "version": "repo-lines-v1:sha256:2acfee9be50334db3062ef43c356dbc677c07d89cc1ec86fd630ca480e405c01:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI1NTg1YWU0YmM4NWRmOWYxMzJjNmM5Y2ZlYjIxMzhkZDZiNTc1ODcxYjA3Nzg4OWE0YjVlZDljZTg3ZWFiMWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQyZmE5NWU3MzIzZmQ2NmUxNTQ2OTgxNDI2YTNmMWQyMmVhMzUyZmE4MzdjN2RmOTJhNTk0NGY1MWUxOTg1NzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM4ZmM5ZmY5MzRjMDNmMGYzZGFjZmU3YWViY2FiZDViZmQ2MzM2NTU3ZDNkODhjZjI4OTllNTg0OTdhNDEwMGYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_b6aef8a8d68d4324a1cb0fecf86b06ab",
+      "statement": "A single offset witness is deliberately not enough to raise: the neighbour check reads the whole document so the predicate is invariant under bisection, and over the real corpus one witness fires on 22 pages across 11 of the 98 documents declaring page labels, every one a false positive — so the check requires two witnesses, or one when nothing in the window confirms its own label.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/derive.py#L22-L38",
+          "version": "repo-lines-v1:sha256:41f7e776f4a821f3cd3b318df0ea9f59c427e2ff91bc8d91412ed341e19ab4cb:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIzYTk2ZDVlZWIzY2MyMmE5MThiODAwYTYxMWZlMmUzZjA1OTcwY2FkOTg4ZDZhOTQzNzUxNWI1YWFlODM3NjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM0ZTU4ODM3YTYwMWVkMWZlYmM5MTkyZTFhNDI3NTc0OTc4YTA0YTE2ZTgxZDQwNzcxMzM2ZGU0MzUzOTJkNzIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUwODI3N2U1MDlmNWMzOWI5ZTAyMmZmYzdlYzc1NjVjNmM5OTg1ZWQ5MDg2YjkyNzM2Mjk5OWRlMWJkMGM5MDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVjZDgxNDI1NTgyOGU1ODQwYWYxNjEwMDZjOTc0MTljYTBmMzg4Y2YzNWZiOTQxNGRjMDQxNmZkYzliNGJiOWQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_75e7b40944074815add3e7b94408a44f",
+      "statement": "The allowlist gate is gone from derivation: there is no identifier grammar, classification or keyword list, because a code is findable only by being in the page text that the probe alone writes — what survives of the gate's purpose is the grounded rate and the list of codes the text backs.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/derive.py#L40-L47",
+          "version": "repo-lines-v1:sha256:6e66584bf3ac79a9f3e9d75daae76ff5b686dc06677ec9f3ef8f8e8f4297a0d5:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiM2M5NDg4NzU3NDE3ZDMwZmI0ZTA3ZDE3NjlmZWNmODBjMjcxYmVmNDAxYmRkZjE3YTVkODI3YTlhYTgyZDg1NyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjIyOTQxOTEwMDE3YmUwMDY0YjE1NmQyZTRmNDQxM2UxMWRmMjE5ODBlYjhjMjMyMTQwYWI0YjZiZDVhMTUwMSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjg5ODZmYzkxNGQ2ZmUyNWIwZjA0ZTlhN2Q1ZjMzMTRiODg1NmQ4M2VhYjg1ZWFhNDFmOTJhYzRmNjc0NjMzNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNTk3MmY2YzVlZWNhYTBjMjc2ZDE5Mzg5Y2MwNGIwNGMzODQ1YzViZTZkYTRmZGI5MTliMGI2MTUxNTJlMGY0YSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_8e1afc0b1f0c47a889216327d797c2fa",
+      "statement": "Reattribution moves a code the model reported on one page to an adjacent page only when the code is absent from the reporting page's text and present in exactly one neighbour's text within the same window, recording where it came from; a code printed nowhere stays put and counts against that page's grounded rate.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/derive.py#L49-L55",
+          "version": "repo-lines-v1:sha256:4bb38c0561919a02b7f105e212deb5b996f065eeff7eb7d77f28548b80724663:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiODFkYzEyNTc2NmQ3MGVjOGQxOGVhMWVhNTI5NDQ3YTU0ZmJkMDM1NjlkZWFkNzM3NjQ3M2QxNTc5YmEyMGI5MiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDExMzE2NTdhZDNmOTNhYzk3Yjc2N2UwYTdiYjZjYjU0NjdiMzRjYzliM2UzMjkwZDRhMDAwMjVmZDk5OTE3YSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiN2RjNzkxMDQ2Y2ZmY2Q4ZjUwMTM0ODYzNjA3YjU2ZmY5ZTg1ZmJlMmM2OGE5NzllNzMwODMxNjEwMWMyMzlhOSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_8ba970d66e994730b48be04b4916d9ce",
+      "statement": "Stitching is the only place section extent is created, because a window fold can cut through a section and the call on one side cannot see the other — the model reports presence per page, and extent is the min and max over sightings once every window has returned.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/stitch.py#L8-L24",
+          "version": "repo-lines-v1:sha256:b8e973b7fc719a83dd11687851a8142ff3237b58d9025eb73611a15aab85c3f4:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2YjllOTUzNzZjY2Q3ZTY5YjliZGNlZDAxOTk4ODM2YWIwZmM5NThiZGJiNmMyNmM0YTY0MTEyNmJhMzBjYWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI1YjBiODY5ZjFhNDEzNTQzN2QwNzQwNGVlNTA5Mjc1YWFjMGUxMjI3ZTFmODUzN2JmOGQ1NzM4NjE4Njg3MGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgzNTg5NWQ5OTM4MzNjNmIxMWE4OWY0MmY1M2JmOGYwNmEwYjg1MWQ5NTVjZWUwYjQyYzcxYjc2YzkxNDk5MWYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_c3e30fdb7b464d818a15bc08e50c35d2",
+      "statement": "Stitching counts the pages declaring a section head and treats anything other than exactly one as uncertain, and keeps the page range and the observed page set separately so a section observed across a gap does not claim the missing page — the gap is disclosed rather than smoothed over.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/stitch.py#L26-L33",
+          "version": "repo-lines-v1:sha256:29acced84ffcfdcb007b5e208f9c7b93e4e1de027fd87b7bc9de4809ceb1ed3f:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYWE1ZTFjNjU5NWZkY2ZkNTkzMmExMTNlZTlkMGIxNTMwZDQ3YjQ0NDBjYjBhZGMzMTBiZTk2NDJkNTQxNjY2MiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTVmODdmYTJjYWQxYTQyNDI3YjIwNWM4ODA4MGE2MTRkODZkNzVmNjNmZmM5MzQ4YTdkOGI2Y2EwOGI3MWFmYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjBjMjhlYmFkZDUxZGFjODQ5NzkzZTA4ZWE5MzFkMTljNTg1M2YwNDhiYzFhZjg3ZWU0ZjBlMmMxZDQwNjdhNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYWFlN2MxMGEzMzNhNzA1OWNmZjY0NmUyNzNhZmFlMmE0YTg0YjFhN2ZiMWVhMWVmMDlkNGQ1MzY3MGU1N2Y1ZSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_64f3110a07e046b9afa6965f5d203ace",
+      "statement": "Stitching writes series_id alongside section_id because a section_id carries the revision and a scope expressed with one dies at the next revision, and both are keyword arrays so a page straddling two sections carries both ids.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/stitch.py#L35-L40",
+          "version": "repo-lines-v1:sha256:ecbf5747c7bdb53ea5153eeea9d71436172a5ba9471dd3f4888462edd4d2f695:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjliZDQ4NWI1NmRkMzkyODc4MzMyNWEwZTliZDllMmU4M2ZhY2ZkNjA0ZDRmOTdjNTk2N2M2OTU3ZTdjOGI2OSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNzkyM2ZiNzNmNDQ5ZWZmMzNiNmFmYjM3NDYxYzYzMzIwOTk2MjViMjU2NmNkNGMxZWExN2Y3NmQzZjU2YzA3MCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNmNkODk5MjFhNGJjYjgzOTMzYTQ3MGJkMTliNWI4ODI0YjkwYmYyNjhmYjE4NGJiZTJmM2Q5ZDc5MTVmNTk4MyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_a89bffe7dbc34823bc833c4899aeb0ea",
+      "statement": "Step 11 prints the full gate table before acting, so a held document is held for a named reason with its worst pages listed, and records the run's cost — embeddings billed and reused, model calls and cache hits — onto the run record.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/cli.py#L1292-L1330",
+          "version": "repo-lines-v1:sha256:f93c215b00b524e10e6a5d03f2c39c5978372c6d55999e5dda7c6e9b062e2988:eyJzZWxlY3RlZExpbmVDb3VudCI6MzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlkNTZjMmQ2YTViMTFjNjM5NjY1MTcyZGI5ZWVhNjk4YzFkMzM4ZTM5ZDUwNTQ4NmI3MzlmMmMwZmQ2ZjExNWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNhYzFhZDVhODU3MDA5NzhmYWNjMjc4NTZmYTViMmMyNDdkNGM0ZDQ5MDA0MWE4NmRkYjgxMzM4ZDViNDExM2QiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc5Njk1ZTg2NjlkZDM1OTViYTRhMzI3MmU1OWI4OWUzZmQxYzEzYzA4YzZlYTBjODQxMGNhMmE4MDc0MDMwNzIifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.1",
+    "at": "2026-09-11T14:07:28.402Z"
+  }
+}

@@ -1,0 +1,180 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:bf004dfb5e86801736f3d9cce75a4cf0d7d46268e84dd285a5a976de1406a582",
+  "claims": [
+    {
+      "id": "claim_80522e7987f4493f85ef5717e28e2d32",
+      "statement": "One image serves the web process, ingest work and one-off admin commands, with the vsir binary as the entrypoint — so the web service is a subcommand whose boot self-check runs before anything binds, and a misconfigured stack fails to start rather than serving.",
+      "evidence": [
+        {
+          "resource": "repo://backend/Dockerfile#L1-L12",
+          "version": "repo-lines-v1:sha256:1a5e4cb89a4bd11547dc800e93ec1d8fdc5ad9f08d2e5a334f6125519c373658:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdlYjQ4YmQ3NThhMDRiMjU4MGM2MDIxYTg2ZGZiY2UyMTFmMDE1YTFkZDVjYzRmMzljMTNiNmVjZmUxNTcyOTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ0YjY0ZWU3Y2FjNWRkNWEyM2I1NzU4MTE2ZmY3M2U2ZDg2OTljNDdiNDg2MWM2N2E2YTliNGFkZDI0MzdjYWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRmN2QzY2NmNzA2NmQ3MGU0NDFmZTZkYjViYzk0ODc2Mzk4OTM4MGQ0MmE0NWU5ZTBlYjcyNGVkYjRiNWY5ZjUifQ"
+        },
+        {
+          "resource": "repo://backend/Dockerfile#L64-L72",
+          "version": "repo-lines-v1:sha256:3e4f1aa38e7c2b1835d158d04c0d1e84ac6396d115760145752136149effe0db:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYzFhODQwMzMyMjA0OWMzOTQwOGEzYTExZjU4MDI4ZWE2NGYyNzIzZmEwNzNjM2QxOGE5M2MyN2ZmYmQzZDc3MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDI4ODg4MWFmNmQ5NDJlYTI0M2RkMTA0M2RhZDJmNGQ0OWMyYjg2YjBhMDM5MDM0MmU1NWI2OTQ5MWE3MzY4ZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        },
+        {
+          "resource": "repo://docker-compose.test.yml#L41-L51",
+          "version": "repo-lines-v1:sha256:7a5762ad849e7d30f99577e5757736b587166f38aa45124725a9366691a64b96:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjczOWUxNWVlY2MxMTFiYThiZTQ1Y2EyYmY1OTVmOTlmNmQzNDBkNDI3OTA2ZjRlNTlhNmJjNzJkMjgwMjI3MDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkxMzc1MDIxYjQxODBkNjU1YzcwMjRmZDA1ZWE2MTRlZjYyYmY3NDIzNjFmODQ0YWNlZjAwNjI3NDdjZjNmYzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJmOTJiYjExNTFhNGQ2MmM0NTZlOTViNDVlYmVkYzgwOGJhMzM5MWFjYWRiOGMwMThlNDhlZTg4ODQ1Yzc2ZjgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAwNzgwMzMxM2FhMDMyNjdkM2NkMGE4MjA5YjJjN2U0ZDE4YmViN2FlYzJjN2U0OTBkY2FiZjI2NjYxMmQ4OWQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_15731a0be8e547329630ee0880045df1",
+      "statement": "The image base is pinned by digest rather than tag, dependencies are installed from a hash-pinned lock file with --require-hashes so a substituted artefact fails the build, and the build stage's virtualenv is copied forward so no build tooling survives into the runtime layer.",
+      "evidence": [
+        {
+          "resource": "repo://backend/Dockerfile#L13-L35",
+          "version": "repo-lines-v1:sha256:12aa647619202c240850f393c4c93bfd0b03d7f07d620733b80b088d46e9bee7:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMyYzQ4NThlMjJjYzJjOTY3YjQyMTUwZmE1NTA1NjJhMmM4MzljMmNlYmNhYWI5MWNhYmRmNmY0ZGEwMjAwMjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY4OWNjNWFjNWQ4YmVjNTdlYzljMGVlOGU5NGYxOWQ4MmYwMDI2Yjc5MzE4ZmEzNmQ2OGJkNWY2NDZlZGVkODgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ3NGI2OGI5NDRmYjJmNzQzMWQ4NDViMDQxZDczMWQxZGNlODY2ZTNmZGYyM2U4MTUzMTAyYTNiYmEwNTYxMWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNkYWYxNmFkZTllOGRhYTM3ZDdkOGIxMTIwZTBlNGM3NDJhMWY0Yjg4MmI5M2RlZTNhMjkxMDdiMzcyYzFjYjQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_8aa28e84402e40d49ef7ab34ca38a888",
+      "statement": "The runtime image runs as a non-root uid with no login shell and carries no configuration or secret, which is what makes running it with a read-only root filesystem and a writable tmpfs viable.",
+      "evidence": [
+        {
+          "resource": "repo://backend/Dockerfile#L37-L52",
+          "version": "repo-lines-v1:sha256:2f649978aa9529d6208a920c2471a0b664f4d1c6b74998ebd87d55ad5f2f397c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhiYjhlNGUwODliYTg5ZWZjZmEwMzg4YjRmNTZmYTgxOGMyMjBhNDZkZTQ0ZGZiMjAzMWZmM2VhMGZkMjM0NGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBmZjZjYzg4Yjg0NGFiM2M4ZTM0NWE5ZDMyYTczZGJlNzc4NWM0MzVhYmM0NGM0ZDgzMjZhYmNjM2JlMTM1YTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdiZTg2ZjE1Zjg1NTI5NzBjMDc1Y2JmZTZjNjZkOWU1MTg4YTZjYjg5MDZmZGViMDUwM2Y1OWRiMjdjNzU5ZDgifQ"
+        },
+        {
+          "resource": "repo://backend/Dockerfile#L66-L69",
+          "version": "repo-lines-v1:sha256:15dea45820f6aaad1cd404a6bf5e8667b4237cdcda4554f3619ed2c4954c2fd2:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNGZhNmM0ZDdhY2JkYTU3NTU1ZjQ5MDcwZmUyMWQ2YmY3MDMyNGU3ZTc2YzZhN2JlMjg4MmYwNWMxZGY0ZjBmOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZjM1MmY3ZmY0ZGRiYmY4ZTIxNjIwMTU3MjE0NDE2MjRhNWFhYjIwODlkY2NlMjFjMjE3MGZmODJjZGE2ZTZkNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDE4ODdlNDczYjA2NzMzNDg3NDk4Mjg0YmRlM2Y3OTNjZThkMGJjZDIzZjg5YjU1NjcyYTY5MjM2ZjkxYmNhZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYzQ0Nzc1YTc3ODYyN2YwMzRmZTNlNDEzNTM1YzUzMjFlMmFlYjcxYTcyZjQyN2Y4YTlkYzJiZjc0YjdiNzU4YiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_2878d2df5a4d4faebf03d6db5e67df21",
+      "statement": "The document store's mount point is created and chowned in the image itself, because Docker initialises a fresh named volume from whatever is at the mount point — ownership included — so with nothing there the directory is root-owned and the container cannot write to its own volume; it is the one writable path outside tmpfs a read-only root allows.",
+      "evidence": [
+        {
+          "resource": "repo://backend/Dockerfile#L54-L62",
+          "version": "repo-lines-v1:sha256:815fe2bfb0cb987d25d225f0a06f1c604e881ecb80a575bf71097e3c8ce99d8c:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOWUxZjY4OGE5MDVmZmIyY2QyYTI0YTJjYWEyODM4OTQ4ZWZhYjM5NjQ1YWY5YzUxNDRmYjI5MzA3NmFjODk2NiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTY5NDQ4NzcxYzFmY2UwYTY0YmMyYzk5MmIxNjdmMmY0NTg0MzhjN2IxNDFiNzMxN2Q1YTg2ZTE0NTc4NDkwNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDE4ODdlNDczYjA2NzMzNDg3NDk4Mjg0YmRlM2Y3OTNjZThkMGJjZDIzZjg5YjU1NjcyYTY5MjM2ZjkxYmNhZiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_47d7d2ca9dbd4cd3b2be899d549b125c",
+      "statement": "The console image pins its base by digest, installs from the lockfile so a mismatch fails the build, and serves with the framework's preview server rather than a static file server — because the API proxy is declared on the preview server too, keeping the container same-origin with the service.",
+      "evidence": [
+        {
+          "resource": "repo://frontend/Dockerfile#L1-L20",
+          "version": "repo-lines-v1:sha256:4a0cf506876b82fc4cc0fd5602da6fd9e07cac8a5e9e474af23e43e905f53c4f:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdlYjQ4YmQ3NThhMDRiMjU4MGM2MDIxYTg2ZGZiY2UyMTFmMDE1YTFkZDVjYzRmMzljMTNiNmVjZmUxNTcyOTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBkODYzYzBhNjExZTA0YmRlMGZmMTM5ZGNlNTcxOTcxOTc1OWVkOGEzMWVkMTJiOTk2YWEzODJjMzI1YmVjYTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcxYmU0ODRjNTFkNDAzZGViZTQyMTI0MjZlNWM0YzRlNjMxMWU0N2FhYzcwNmI2ODI2ZjI3MWY2ZDIzOGFlYzEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_4993bbdaad6448eaaa0f6bc42fd2a9f0",
+      "statement": "The dev stack publishes deliberately unusual loopback-bound ports — the store on 6353 and the API on 8055 — because the machine already runs a store on the conventional ports, and a stack that quietly answered from the wrong instance is worse than one that will not start.",
+      "evidence": [
+        {
+          "resource": "repo://docker-compose.yml#L11-L15",
+          "version": "repo-lines-v1:sha256:4362014e197c214eb9d701f60fd9acca01a044f2576106f7d110188ecded1994:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzJjNDg1OGUyMmNjMmM5NjdiNDIxNTBmYTU1MDU2MmEyYzgzOWMyY2ViY2FhYjkxY2FiZGY2ZjRkYTAyMDAyMiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzJjNDg1OGUyMmNjMmM5NjdiNDIxNTBmYTU1MDU2MmEyYzgzOWMyY2ViY2FhYjkxY2FiZGY2ZjRkYTAyMDAyMiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMWM1MGJkM2FmMjI5OTkzZjQwMDYzZmRmZjgyOGI0NTk2NTg2ZjEwNzUyMTFiM2M2ODNhZWNjZTI3MGU4YmYzZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNTA3OTg3OTQwNzM2ZGIyODBlYzg3ZGE2ZTk1M2NjNjE0NjkxZTAxYzEyNzRmZDYyNGFmNzc0Zjg5MmRhOGZiNCJ9"
+        },
+        {
+          "resource": "repo://docker-compose.yml#L136-L139",
+          "version": "repo-lines-v1:sha256:39200877b9a8fbe27a9fea7490f6cc11d6c50c029cdf9397ecf6165dc0e71770:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTRiYzI2YTQ4YjNiOWZjODUyNjIyMGQ5MTVjZDM4ZTdiYWY0MjkyYmQ5MmVmYWIwNDdjNmJmNjA3YzcyZWU1YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOThiNDdjYTE0YzhhNWRjYTM1OWQzYmZmYzQxM2U4MmM1NmNmZTI4MDc2YWYwNGE4MWY5YWVlMGVhOTQ4MDU3NCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMGRmNmIwM2NkMGE5Y2QyODAyOGUyMmE5ODZkOGQ0ZDUzNWFkOTZkZGEyZTY5ZDE1MzM3MWVjNGQ3MmU1Njg4YiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNWViYmM3MWYwYWM4YjQxYmRhODg1NWZlYmExZjZlNGUyMmE4ZjlhNmJkMmY5YmM1YzgwM2U4YTVkNDZlOTFjYyJ9"
+        },
+        {
+          "resource": "repo://docker-compose.yml#L29-L35",
+          "version": "repo-lines-v1:sha256:2f3652b21f5606cea7c6fc70347f0945acd3d6f670f0068d969f60740d78f158:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTBhNTI5ZDQ4Y2U3YjY4OTYwMDM4ZmIxNGU5M2ZiZWVhOGJiMWZmOTYzYzk3ZTk0OGMyNDVhN2UyODJkOTEyNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEzZjRkOTY2MWU5ZDJjM2UxYTI4OWU1ODMyMjk5YmVhMTRjZGI2NGJmODg2NjFkZjcxN2IxMmZhMDJkMDExZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiM2ZlMzNkZmRhZjAxZTRmM2VjYWY2OWI0NzBlMGNlMmZhNjI0MmFmODVjYmMzM2M4YWU3ZWQ3MTFmZjM2MTcyMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMjI0ZmQ5Yjg4NTFlNzUxMzE0ZGJiZmZlYTAxZmE1ZWVlNWZlYmEzNDI2NDEyZjQ2YTFlMjY5NmZkMWZkOGVmNCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_39eff22e9d2f4a28811b9c5f6e46b200",
+      "statement": "A one-off init service creates the collection before the server can boot, because the server refuses a payload schema that does not match the index schema and \"does not exist\" does not match — and it is an admin process of the same image rather than a branch inside the server.",
+      "evidence": [
+        {
+          "resource": "repo://docker-compose.yml#L46-L57",
+          "version": "repo-lines-v1:sha256:76b9551d833ccb500a3d6415d834c653dce8062ab073aa5f620a46b56c74e3ea:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU0NDBlMDRjYWNlMTVjYTM4YzExZjUxNzVmMWU2OGM3ZWEyOWMzNThiMzFmYjQwNTUwMWFkNmQ4MmUyMGI5Y2QiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY0N2I0ZGRlNWMwMTIyZDI4MzAzMDU5NWUzM2MxOTFiZGY3NzA5ZTQ1ZjE3MmUyYWRjZDYyZTFkNWY4NjA1ZGYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYzMGQ3MzAyYTQzNzhiOWYwN2JhYjM4NTZkZDY5ZDM0YmU5ZTE1Mzc0NzgxZWRjYjIyYTgxOWNlNmQyZGViZmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMyNDMyNWM5MjVkOWVkNDBhYWI4ZWVjMjUwMWYwMDUzNWY5YzYwYWE3YzA5YTdlZmQ4NTQ1NzEwYTRkZmQxMjEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f07f5898dd8e4608b1ca8467d27b49a5",
+      "statement": "The dev stack mounts the corpus and fixtures read-only — nothing in the pipeline writes there because exports stream from the index — and mounts the document store writable as a host directory rather than a named volume, so ingested PDFs are visible where the operator works instead of inside a Docker VM.",
+      "evidence": [
+        {
+          "resource": "repo://docker-compose.yml#L103-L121",
+          "version": "repo-lines-v1:sha256:be00e5056f02d9f578f68d240dfee76201f6c063953a1c4e7dbd31f0f5b85498:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU4ODMyNmM4NjQ4ZTM4NWNkYzVlODcwOWMxMTY4YzA5YmNlN2M4MjQ0MTczNzQwYWRjY2NjNTBhZDk1Yzc5YWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk4YjQ3Y2ExNGM4YTVkY2EzNTlkM2JmZmM0MTNlODJjNTZjZmUyODA3NmFmMDRhODFmOWFlZTBlYTk0ODA1NzQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjcwMzkzZGJjMjBmYTY2MWQ1OGYwOGM0NTM2M2M4ZDhiMjQyNzIzMzFmZWNhYThjYWUzYWMzMDE5ZjhiNTYzMjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjczNGVjOGZkN2NiODA3MTBhYTBjMTM0ZjgxMTNmYjdmNjIwMjRiODBjZDI1ZWFiMTk5MjlmNTkyMjBjM2QzNzcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3a49d64fe6b7471a82f7227eb4e0ef8e",
+      "statement": "The VLM credential is absent from the image and from the compose file, interpolated from the environment and read only under the live backend.",
+      "evidence": [
+        {
+          "resource": "repo://docker-compose.yml#L99-L102",
+          "version": "repo-lines-v1:sha256:e05b796bb56d3639967d432644e6539eb2fb466f34f0fc7bf1a510b21f438a1c:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNWI3NmM2MWQ4MWZkY2Q1ZTRkM2NkMDQ1YjcxZWQ1NzU1ZWZjZjkwYzAwZDdkY2YxYWQ1ODJmNTRmODE0YmMyZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMWQ5ZTI5ODA1MTIxOThlODQ3NmFmOGY5NDM2MmRiNDUwMjBhOTJmM2YyYjFkZGIwYjM1MzdhNGZkNDA5MmQwOCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiM2E5YzI0ZjkzZDgwZGVjNzJmMzJhNzhlMWZkNTQ3NzcwZjA4YzM5Mjg3NWYzMjJhZTE1ZjU3Y2EzNzJiMTc2ZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDU0MGZiMmRjYTIxMjE3OTBiYTQ0YzIxNWJjMjhlMzJmNWVkZDUwMDQ2NGU0NzY3MGM3NWI4M2E2NDA2MGIzZSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_3559d3aa50654e9990a0133c44be5fa7",
+      "statement": "The test store is published on 6335 and never 6334, because 6334 is the dev instance's gRPC port and colliding with it would let a test run read and wipe dev data; the store version is pinned identically across dev, test and production because a differing store is a correctness difference.",
+      "evidence": [
+        {
+          "resource": "repo://docker-compose.test.yml#L20-L30",
+          "version": "repo-lines-v1:sha256:dd909f5e60d9a96e59384f77b7dcc1f180a3d1246c72f4c404ae5e73143581e7:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIyY2EwN2Y4OTI5ZDRlYWM2MGNlYTA0NDMwYWIzMTJmMWI4MTg4ZDJkZDk0OTIyNzE4YjAzMWUzYzBhOTk4MGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc3MGY4ODIyMmJkYjFhMjE3NjA5MDExMTE0YTljOTk1Y2NhNjA2NTc1ZjZlMTZiZmRlNGIzMDVkNWU5ZDg1NzQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU3M2RjZjFmYWIxYjBhMTg2Zjc5ZWI3ZWY2NDc3OGI4ZWM1YjM5MjI1N2VhNGYwYWQ5NmVlZTE0NThlYmQxNmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjlhMzQzZjlmOGI0ODMwNGY0MmM3NjQyYjcwZjc2N2MxYjlmNzBiYWRhMTRkMTdjYjNhMWJlODBjZWFlNDUwZmEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_8124547be8914ebdaa4d2a6956287d1d",
+      "statement": "The test stack reads its bearer token from a test-specific variable rather than the production one, because compose interpolates from the developer's own environment file and the suites assert about the credential the container was handed — while the dev stack deliberately reads the same variable the CLI and a direct server run read, so one machine has one token.",
+      "evidence": [
+        {
+          "resource": "repo://docker-compose.test.yml#L41-L48",
+          "version": "repo-lines-v1:sha256:f8a682af8ebac719da458507a0f83bb4a9915deaf08d414d069f207743386acf:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNzM5ZTE1ZWVjYzExMWJhOGJlNDVjYTJiZjU5NWY5OWY2ZDM0MGQ0Mjc5MDZmNGU1OWE2YmM3MmQyODAyMjcwNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNzcwYWIzMTkzYjFjZDBkYmQwZmFiNmQ3Njk1ZmI5NDAzZTVhMmUzYWI4NzdmNmJlOGIzNzQ2MDAxMmQ3YjFiMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMmY5MmJiMTE1MWE0ZDYyYzQ1NmU5NWI0NWViZWRjODA4YmEzMzkxYWNhZGI4YzAxOGU0OGVlODg4NDVjNzZmOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOWY4MTYyYmEyZTA1MGE5MzhjNWQyNzlmY2E5MjcwMDJjZWVhZjdmNjZiZWIwMDQ4OTMwMTcxNDgzZWEzYjc1OSJ9"
+        },
+        {
+          "resource": "repo://docker-compose.yml#L78-L85",
+          "version": "repo-lines-v1:sha256:8dd67b877fa63d07c592e889cdb71803852751396735a5a4e9e3ac121b8bce67:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTM5MGZhODQyODVhYThhZDczMWQwOTA2NTI1N2MyYzY0ZmRiMTI2NjE4ZWQyMTFlOWExZjcyOGNiNTU0OTA5NSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNWY1OTZlMjE5Y2FmMmIzMTkxMDUxYTliM2NmNGY2NzM5ZDk5OGM5Y2UyODVlNmIyYWRkNDZiMTk4N2ZhYTU5MyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMGQ5M2Y5MzBjYWJiYmY3MTVjNzQ0N2FiNTdjN2MxMGFlZDYyM2RiN2IxMWQ4OGRiOTJjNjIyODQ4NzE4ZTI1NyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjBkY2IwNjlkODYxOTgwYmU5OThlODU5MGNhODYxYjRkOThiMzUyNmQ2NTk1ZWUyMjg3N2NmNGZlYjhlNmI4ZiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_3675cf5d47c0499f98fe202d9add804c",
+      "statement": "The end-to-end services — the one-off init and seed runs and the console — sit behind a compose profile so they are not started by an ordinary API test run.",
+      "evidence": [
+        {
+          "resource": "repo://docker-compose.test.yml#L129-L133",
+          "version": "repo-lines-v1:sha256:f2c65752addbbec19a770632296b75c6cce59e9399438f3a46064cdf96d30c31:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiY2JjMzYwOTNiZTgyMTIwODhlZDY3Mjk2MTliYTA3MTA3YTY5YWYyNTllOTNlNGFiMjczZDBhMGNiYjBlMTExZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTIxNTcyMThlODBmOTAzNDVhYWFkZDYwN2M1ZGUzZjkxMTgxMmQwZmMzYzVjYTkzYzJiY2Y1MTkxM2FmMmJkNiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNzcwNTNhMDNiYjdjYTg2NmYyODc5MTUzNzc2Zjc2Y2Y0ZDY5ZmMxNmEwMmFhZDZhOWFkZTk3NTk0Njk4MGE3OCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNGE4NjJmYTg5MWI3YWNhM2RkODZlZGI1MmYzMGM3MGQzZDViNDRlYzliMGMyMTg4NmVkMjI4YzA0NDUzZjQxZiJ9"
+        },
+        {
+          "resource": "repo://docker-compose.test.yml#L145-L149",
+          "version": "repo-lines-v1:sha256:1f6bbe4ff72abb543d4569d29560b81c84efef02727e85c95fb97f1a093055b3:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjhjMTNjNGIwZWFiYTBhZjNhMjkzNjRiM2M5MmVkMGZhMDg1YzhhYzZmY2Y1NjhiZmRiOTJlMzUyNWNjN2FkMiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiY2JhODI0OWRmMzc3NWVmNDFlNTM5NmQzMWI4MGJjYmY0ZTc0ZjIyOWFmYzQyZjdkYjAxNzc2ZmQwNzMxZjMzYyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDE4MTA2YWJmMmY2NWM4NmE2M2NiNzkwZmI1OWJhZDVlY2EyZTY4NzEwM2M5ZmQzNmVmYWY3MTZkZTMzZTQ5ZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDI5YTY1MTAxYjNmMzI2NmUyMGM3NDliZGRiMWIzZDIxNDRhMDNkZjYwZTU1ZDVlOWEwZjZjZWE5ZjgyZWJkNiJ9"
+        },
+        {
+          "resource": "repo://docker-compose.test.yml#L170-L176",
+          "version": "repo-lines-v1:sha256:e300654a3d4712789aa79dc724cbe5e085a3a804764a8530c69b43f45adaca95:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZWQyMDBkNTcyNjc4ZmVlOGVmM2ZjMWUyNTkwZjAxZTFiNjg3YThmNTQ1NjAzZTBlNWQ1ZjExNzkyMWVmOTA1NiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTIxNTcyMThlODBmOTAzNDVhYWFkZDYwN2M1ZGUzZjkxMTgxMmQwZmMzYzVjYTkzYzJiY2Y1MTkxM2FmMmJkNiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNTIxMjkyZjUxMzAxZDZmYWQzMDJmYzAwNzBlNzZlYzJjYTM1YWY5MGE1ZWJlOTcxZmQwNDZjNDYzMDU1NDNiZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTBmMzI2NTc2MGNiMWQzNjQwYmZmYzEzMTY2YTdjNjM1NDZmMzQyMWUxZGE3ODNmMDNlZWQzNDliYWY1ZDYyYiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_ca22c8d42c60484bb115697c74627959",
+      "statement": "The stack script wraps the dev stack with up, status, seed, logs, an arbitrary vsir subcommand in the stack's own image, and down with an optional wipe — resolving the running container's token lazily because before the stack is up there is no container to ask, and reading JSON with a small Python helper rather than requiring a JSON CLI tool.",
+      "evidence": [
+        {
+          "resource": "repo://scripts/stack.sh#L1-L15",
+          "version": "repo-lines-v1:sha256:3c9250c1fd5ac5b3f5a2e9a4566cca2b483c6ca2a30c4dd7a3c87896b001fcbb:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFkOTVmYzA0YTgwYzk1MmY0OWNlNDE4ODYyN2M1M2IwZmJlOGM0NDA0MWI5NTJkNTkyYWNkMWRlOTk4NjE0NjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg4ZmM2MzM2NjdkMDMwMDczMWJkZDg0NDcyZGM0MjRlMWY5YzY0MTc1ZWEyYmFkYjY2NjQ3MmQ5MWFlYjRlZmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVjNjBkMjQyNDY5ZDNmMTMzYTM0ZDU2MTdkZWFjNzhkMTVkZTVkYWY2NDE3Y2JmNGY5NWE0MDQ5NTA5YTNhODUifQ"
+        },
+        {
+          "resource": "repo://scripts/stack.sh#L232-L243",
+          "version": "repo-lines-v1:sha256:3dcc051655e94e4b5fed5e250e16c61cda18b0b53cddcfd166fdb2f37d2df33a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYjAwZmY4NTkwNzA0NjliN2ExZGYzNzZkMGZjY2FhZWIzYjRlZjViY2RmNmE5Y2NhZjZhOWUyNDM1ZDUyN2IiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM0YTJiZWNmZjhhZmIzNGRiMjYwZGFiYzk2OTE1ZmZlY2ZkZTg0ODkyOTU0MWM2MTkzZGU2ZDE2NGMyMWU4ZGEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZkNzJiZDkxNDQwMzA4ZTgzYjg1ZWE0MmRiMTEyYjNkNThkY2IyZjg1NGZhYTBjNDIwOGYyZDkwZWY5YjVmZGUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://scripts/stack.sh#L41-L57",
+          "version": "repo-lines-v1:sha256:7e25e5361e36831b738588be1801231f3e200ffb19fafa80a1d48babc2d2f6c0:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU3MzlmNDJhNDE5MzAzOTg1OTlkZDY1ZTYzODgxZjRjNTliMmVlODUxNzNiZGRiYWIxNTQzMzA3NDliODcxOGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ0MTk0YmEyOTRhZTRkNzk0MzY4OTE2OWU4MGUzYjliNmZmYzQwMTZiZGJiNDJjMDQ4ZTM1MjU3YzQ0NjZiN2QiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZlNDE0NTVhMmEzZWJlNGEyYTlhOWQ1M2RlMDdiMzI1YWYyZTc2NTc2NTZhOWRjZDExNzBiYTEyOTM5ZGUwYjkifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.1",
+    "at": "2026-09-11T14:07:28.402Z"
+  }
+}

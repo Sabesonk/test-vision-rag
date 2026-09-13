@@ -1,0 +1,252 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:5b392f4c2d28ebe58e7978c1f5e00fe4b51eee57e1754a4073350e8666c479bd",
+  "claims": [
+    {
+      "id": "claim_86e3891eb85147e9b884ccb2aac704e1",
+      "statement": "exact_filter is the only exact-match code path in the codebase — lookup, verify, the answer gate and the ingest-time codes_in_text derivation all call it — so the tool that finds a page and the check that confirms it cannot disagree about whether a code is printed there.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/exact.py#L1-L21",
+          "version": "repo-lines-v1:sha256:5ae28a52033bebbc7150f72a4cd47feef525350c2bd96e48e1509050cef8e2ce:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc5NTE2ZDFiNzFiZmIxYzgyYTczNjhiYjUzMTI3YjQ0OTUzN2MwODhhNjg3YjFlMTI1MGY5MTkwOTJiOTEzMzMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdjMWJjYzljOGMzMjg3YWQ5MjA0MjNlYzc3YWVhMGZjM2YyNTVlOTc1ZjU4OTM2ODRhYjViZWNiNjFkNmM2ZDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJlY2U3ZjEzYjdiNmEzNTE2ZmNkNGI1NDMyZDg1OGU1ZjVhMjUyMDRlNjY3OGQ5MzEwZjA1MzNlOTU0NzlmNDUifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/core/exact.py#L73-L99",
+          "version": "repo-lines-v1:sha256:29fede0a709be838dd8d8652e1b3e5ea6363c5d37a6b6f4d2da37719a5566888:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNjNThkMDU0YTgzNjM0MzcyODM0OTZiMTI3MTY2OGY5NTM2M2I2MTVhMGExNDgxMjc3MWJmZDNhYjk1NGQ5NTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ5ZThhOGYwMDYyMDcxMDcyMTJhOWFjYWM4ZWMyOTY2ODBkZmRiZjdlMGQyMDU2YWIyN2M3MGY2OWIxYzI5YTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVkMDJjOGJlMDZhYWVhNGUyMWMxZjgzOThhYTYzNjM4ODA1NTRhM2ZlOGFlNDQwY2UxOWE5NzRkODVlNDlmOTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjExZjg4NGI4YzFlYThlNGEwOTNlMjQ4ZGVhMWFmN2MyNjA1NWI0NTE2NjEyZjJiNjIzNjQ3Y2M3ODEwZjMzMDcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7004f6c468e2495187c135b6389c64fd",
+      "statement": "The exact filter is a disjunction of MatchPhrase conditions over the label's variants, so matching is ordered and contiguous rather than any-order token matching; MatchText and MatchTextAny are banned under serve/ by a conformance grep because any-order matching would return every page mentioning a common token.",
+      "evidence": [
+        {
+          "resource": "repo://backend/tests/unit/test_conformance.py#L140-L147",
+          "version": "repo-lines-v1:sha256:aa3971cb9b20211eaaf34c312239381abdb452665fa9a003a112e5b7b3e37f0d:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYmJjYjRmYWVhZTQwZTg3Njg0ZjVjZmU4ZjViOWM5ZWM2NDdjNmYyODViZWM0OTg1MjQzMzEwOWJjYzY4YjFkNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTIxMjkwZjk0ODM0NWIyM2NkZTQ1OWNlM2NkOTg4YzEzOTUyOGUyYjUwMGFmZjJhZDJlNmVkMDgxZmZmNTI3NiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjVmY2M1MzMxOTczYzU4ODNkZDdlMjFkYzA5MzhiNWM3ZWE0ZDU4ZjgwZTBmM2JmMThjMDcwMGRkYWM5ZDc0OCJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/core/exact.py#L84-L99",
+          "version": "repo-lines-v1:sha256:3f8971a440431557f62ac4527eb72e15e6d55b0cdd3583621141798c599c2c26:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyMDhjYzA0MTgwMTk0ZDJhZDY3NTg2ZWIxYTVhODdiODllYWM3OTZkNDc3YjEwNmI2YjQ0M2JlMzFlMjNhNDgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ5ZThhOGYwMDYyMDcxMDcyMTJhOWFjYWM4ZWMyOTY2ODBkZmRiZjdlMGQyMDU2YWIyN2M3MGY2OWIxYzI5YTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE5NmQxOGU3NDEzMWE0ZDliNDM3MGJjY2ViZjlkYzVhMDMzOWFmNTJhODlhNzYwMDMyZWNjNDBjYjU5ZGI0YzkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjExZjg4NGI4YzFlYThlNGEwOTNlMjQ4ZGVhMWFmN2MyNjA1NWI0NTE2NjEyZjJiNjIzNjQ3Y2M3ODEwZjMzMDcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0db7495c84d54049b6c5a17a38dd4bb9",
+      "statement": "exact_filter takes the text surface as a parameter rather than existing as two functions: `text` is written only by the ingest probe and is verified by construction, while `vlm_codes` is the opt-in surface whose hits are permanently unverified.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/exact.py#L73-L85",
+          "version": "repo-lines-v1:sha256:4d9694091d58408a3805b0772e8d3e64daeddffc556687c2d5d0ff04075d6307:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNjNThkMDU0YTgzNjM0MzcyODM0OTZiMTI3MTY2OGY5NTM2M2I2MTVhMGExNDgxMjc3MWJmZDNhYjk1NGQ5NTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY4OTAyOWEyZTUyNjA5ZjU0OGRkYmNkMWM0NTFjOTI5ODhkMzcyNjhmNGVhYWE3OWEzMzlkYTlmNzNiNmM1MjciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVkMDJjOGJlMDZhYWVhNGUyMWMxZjgzOThhYTYzNjM4ODA1NTRhM2ZlOGFlNDQwY2UxOWE5NzRkODVlNDlmOTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEzMjA3ZTM4MTdmYTdjMDE2OTRkOGM2YTEwNDI1NzM4ZDEyZWU1NzZmODk1MDg0ZmM5Y2RkMjliNzMyNzExMDQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_2532791ec6364c4cb089b4626028c29a",
+      "statement": "exact_filter deliberately does not add an is_current condition; each tool injects current-revision scoping itself so the constraint stays visible at the call site.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/exact.py#L18-L20",
+          "version": "repo-lines-v1:sha256:3ba435f0162b8951c3e17113d04126da65e7af83093055de29958eb236dab0b9:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYTg2YmFhNWVlZjQ4MjYzYjAzZmViZmEzYTRiODQwZGUzN2ZhMmExNGU0ODcwYjY4YTliYWM0ZWQzNGQ1MTAxNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNzUyOWFiZmI5YTRkNGVjYjI1ZGFlZDIyMDA2ZDhiMTVlMmViMDBlNTU2NzIxODVlMTAyZGYzYjRlNjQ0YzQzZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNThhNzFkMDU0ZjZlNWI2MTZjNWYxZDUyZDY5YTRiNjc3N2E2Njg3YzQ3ZTdiMDhjYTg4NzE2ZmY5YWI3MTFjOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMGViYzJjNmVhOWM5ZDdlMzA4OTA1MzIxZDE5MjI0NjI2NmNhNDc4ZjkwM2I3YTZiYTZmM2IwZmIzMjE4NzcwOCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_3065f549e7544975891da1a5fdfa2453",
+      "statement": "variants() returns at most three spellings of the same characters — whitespace-collapsed, whitespace-removed, and re-spaced at letter/digit boundaries — deduplicated and order-preserving, so a label already single-shape yields fewer than three.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/variants.py#L41-L58",
+          "version": "repo-lines-v1:sha256:30530665e189eeba876d00855bdb6a6ced034c4116e20d6c8d187bd0dad0f924:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3YTc3MWIwMmUzMWFkMDY2NTRhY2ViMzY1NzU4YmFlMzg4ZmM2MDBhZThkYThlNGYzMWRjY2RhMzkzYjQ2MDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNiMWM2MWI2MjkwYzkyOTc3MGRmMGU3ZjIyNDA5ZTM1Y2FlYjg0ZDVlMmRmYWRkMzg2MzAzZTgwOTBkZTU3MTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVkMDQ5MWJhMDMzZmRmNmYyYmFjZWI0NjYzYzQwNTg2NzdiYzA5M2FkYTljM2M1OTI0N2I0ZjVlY2M1MTczYjkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_02b0c4b815a74c46b132456b1eb8a6c1",
+      "statement": "A variant may only re-space characters and may never add, drop or change one, which makes it structurally impossible for a lookup on one code to return a different code; preserves_characters() exposes that property as a callable predicate rather than leaving it only in a test.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/variants.py#L1-L17",
+          "version": "repo-lines-v1:sha256:db2e2b200fc4a08eaa43065825d6eba82f07fd36956bb9e7c347504cf6d915a4:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVkNjY2MTBiY2NjMWVkZmYwOWUxNDhiZTg5ZjEzNzIyYjc0ZDRkMTk0NzMwZGViODRkMWZmMTA2MmFmZGIwOGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzMDNlY2RkNGE0ZDEwZjE5YzczZmQ0MmZkMTI0MzdmZDMzNTRhODI2ODE2MDVkYTUyNTVhOTdhMzkwNjhkYmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFkYjQzNjM0NTNhNDU4MDA2ZWY4MzY3YWYyZTMxMmVhODU0NzY3OTBjODQxODViN2ZiY2Y1OTY0MDI3ODk0ZWEifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/core/variants.py#L59-L66",
+          "version": "repo-lines-v1:sha256:8bb7feb86355073d70d2e0b953af89d274eadf97aa059d47bcab3557727e3dde:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiODM5MWQ3NjgxZWFhMDIxMWMyM2Q1MTEwMDQwZmE3OWMyNzc4OWRkY2NiYzIzMDZlYmY3N2E5YTliOTUyOGI2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjg4MGI3YTI5YzhjYmEzZjA0ZWY4Njc2ODk5MzQyOTIwZjNhYTk1YjFiZGY0ZWFjN2VlNDc4NDBmZTZkN2UzOCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzZmYmYwYWU1YWMyMTIwNjExNWQwOTk1ZTQxMWVkNjdjOTBhZjAxNzk5ZmE4OWU2MjllNGM3NDk2YzliYmIwYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_76c87cdaec6f4d4c8c85ce1dee6f436b",
+      "statement": "Whitespace collapsing and letter/digit boundary spacing are the only permitted string normalisation in the codebase: there is no identifier grammar, no normalisation table and no per-corpus regex.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/variants.py#L14-L18",
+          "version": "repo-lines-v1:sha256:80fca4ccb3d8ab071e57473ab38854690ed48869806c8d2bc919f780ec70e572:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYTkzNjFiMWJkM2VjYjU0YWVjOWM2YjI5ZTcyNTNmMWVjZGMwMzY5N2NkNmQ3YWI2MDhkYzc2MTBiNTJkNDY5NiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTM4NGJmZGIyZGYzODBiNjU1N2NjN2E3MWQxNjg5MTQxNWJjY2FhODc2OTk0MDZlMjM2Zjc1MmM2NDE1Mzg5ZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMGE4NWE0ZjkzZThhM2Q5ODc2NzY4MzUwYTg3ZWFjYWZlZGUxNDU2YTc2ZDcwMDM5MTRmOGM1YmRhZWU4NWU1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMDg2ZDlmZjY3Nzc4MDFjMmI3MDM3OTI4Y2Y3NTk1YzRiMWJhZjFmMWY5YjFiM2M2N2Q3MDA3YTFkMjBiOTcyMiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_ea1b677298fc4752a45dd239c056bee6",
+      "statement": "No similarity measure exists anywhere: conformance tests refuse a declared fuzzy-matching dependency, refuse fuzzy matching from the standard library, and refuse any model field named score.",
+      "evidence": [
+        {
+          "resource": "repo://backend/tests/unit/test_conformance.py#L149-L170",
+          "version": "repo-lines-v1:sha256:9b7b1927ebb1ef26496fe65e02cbb14d066d6eb5b8237776a3a28af0d0d4f076:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyNjBlNmVjYWI0Nzg0NjE0NzRkNzE2YzZjYWU1N2I0ZmI4ODA4N2FjNDU0NGMwMTdmYzFmYTZiYWNhY2E1MDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJlODUxYjAwYTNhOGJmNzMyYTM5Mjk4OTQ0Nzc2ZDYzMDJlZTY3YzVkMzkzMjU5NGRiMTcxMzNjMzRkOTQxNTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjliZDUwNmI0MjRjYmNkZjE5NjNjMGEyMGJiNjI2MzllNWE0NzM5MDRlY2NhZDc4OWQ4NjMyNzIwYWM3MzljZWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQwNjhjMjFjMDZiOTUzZDM4NjFkODk2ZGQwNTUzM2FhY2M1MjYxYmEyNmU5NGI3MjBiNTk3NzFiYTViODY5MzIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7bef34e8eb84468b9bede3b35fa96820",
+      "statement": "tok() mirrors Qdrant's WORD tokenizer rather than a project-specific regex, because verify reasons in Python about what the index matched and a one-token disagreement would make verify report present where the index found nothing — invisibly, since both halves are individually sensible.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/tok.py#L1-L17",
+          "version": "repo-lines-v1:sha256:f402549dade39be2f0de3cb431e95f7f0024104d3ae81ffa567afa0b654bc8b0:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVkZWE3MjI0NGViYTlkNzVmZGNhOTM5NDIxYTllMjg1ODhiNmJlNjFkZTM0ODY3ODBjZDMxZDkwMWM2ZmI3MzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzMDNlY2RkNGE0ZDEwZjE5YzczZmQ0MmZkMTI0MzdmZDMzNTRhODI2ODE2MDVkYTUyNTVhOTdhMzkwNjhkYmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjllNDFmNGUyZjdjZWQwOTg2YjU5NTQxNGRjMDZmN2I1Yzk2MTA4ODE1MWZjNjgyNWQ5OTM1MzVhZGQ3MzNhOGIifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/core/tok.py#L36-L56",
+          "version": "repo-lines-v1:sha256:35d73ffd4df1ffd916be1449db1ae1e05e0eb8a627e9767abf54533ec0894e17:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI1YmJhNTZkZjAxOWM1ODQ4ZDliZDA1MzViNDdiOWY0MzBhYzY0NDg5N2FhZTlhNzc4Mzk5MzJiNDYzNThmYjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY4Yzc2ZTdlYjY1NDIzMzkxZDE2ZjJkZjM3MDJkMWY0Y2QxYWJkNjRiYTE2MjljZjQ0ZTUwN2YwZGI2Yjc0MDciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjExYmJiMjZhMzdmZWYwNDQ5YmU0OGRjNTM0ODJjNjM1OTBlMDViMWRjZDAwMmNlODA0OGRkM2U3NWFmMjk5OTQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1b98433845ae4e4d8d6f44d6d458b61c",
+      "statement": "The previous implementation's tokenisation behaviours are deliberately not ported: keeping a punctuated identifier as one token, and joining adjacent tokens — the latter would have made a two-token sequence matchable as a unit, a match this system must not be able to make.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/tok.py#L58-L64",
+          "version": "repo-lines-v1:sha256:c674a6aa401f09ca77f91566f9f624caf88782f018d16424c156960aabdc7cb8:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMmRiNDU5ZDk5ZGI2M2RmYTQzODI5YjZhMGU0NzQ1YjRiZjAxY2UwMDc3ZDFmOTdhODI2YWIzY2M0ZGJjOTY0NiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiM2QyNmY4YmZhM2E2ODgwMDQwZjAyMGYwOWIyOGUxMzI1MjkxOWM1OGMxOGFlYzJmNTM1N2UxY2I5NzZjNDgzNyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/core/tok.py#L9-L17",
+          "version": "repo-lines-v1:sha256:a9f36706790ff1a9516209b1dabb2c5bc14f829c3dd8fe68a3bf027f4653dd4d:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiM2M1OWU5YWYyNTgxYjQzMmYwZjJlODExMTc5ZTA1OWZhYjAzYWQxODA5YjNjMjUzOGQyNzkzZTM2ZGZlNWNjMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTMwM2VjZGQ0YTRkMTBmMTljNzNmZDQyZmQxMjQzN2ZkMzM1NGE4MjY4MTYwNWRhNTI1NWE5N2EzOTA2OGRiYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDZjZGI3YTdmZmMzMGIzNWNkNjM3NTlkYTc3N2I3YzkwOTEwNGE5NDQ4NzM2ODBkOWI3NjA4MGQ5YmYxNzM1OSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOWU0MWY0ZTJmN2NlZDA5ODZiNTk1NDE0ZGMwNmY3YjVjOTYxMDg4MTUxZmM2ODI1ZDk5MzUzNWFkZDczM2E4YiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_564adfbf15aa4efa8a75dd177c0a9f08",
+      "statement": "contains_phrase and printed_in ask the identical exact-match question of a string in hand, using the same variants, the same tokeniser and a contiguous-run test, so derivation and the near-miss generator can check a code before a page is indexed at all.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/exact.py#L114-L152",
+          "version": "repo-lines-v1:sha256:15e1005c55c07ed571580f64675a2d7ec1ce39550d7b2647cae2c1d98726cf05:eyJzZWxlY3RlZExpbmVDb3VudCI6MzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZkODYyZGJlOGI1YTVmNDZkZGM2ZWUxNmM5NjI1ODQ5YzhkOGQ5MDA1MzVlOTdiMmM2NGFlNzAwZTdhNDRkOWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVkZThmNTg5MzEwZGMxM2YxMjQ0NDI3MjZjN2Y3NzA0ODFlOTVkOGI2Nzk2NzE5ZTkwN2JhOWY4MzllYjg0OGUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUyZDY4ZDMwM2FlOGYwNWVhZTczYTA3YWExODg4ZmE1MTY3ZDY2YjJhNGQwOTRkMTlmYmIzNWM1MTE5ZmQ1OTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5681a6f7a81e4594b9acd7be78438cf1",
+      "statement": "Verification is performed per (claim, page) pair and page_checks returns the whole matrix, because a draft citing two pages must not be able to borrow the neighbouring page's evidence; the matrix rather than the folded verdict is what the answer gate consumes.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/verify.py#L128-L147",
+          "version": "repo-lines-v1:sha256:8358c8938b84d9a924beaf7d38b240ac9692617a79ae744a2ac926d7fd3aa3cb:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE4MmI5Nzk5NjZhMWJkMjRhNTYyNTIxZDBhOThhNDQ0OGYwODFjNGQ1MDI3NWY1NjhlMGNmNjE4NGM2YzUxZDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYwMGJkNGU5NWU0NTBjYTM3NzgxMDIyOGI3YWEzNTI5NGE3N2I1ZTEyZWZmNDU3YjFhY2Q0MzY0ZGJmYjEwODUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE4YjczMmZiOWI1ZmUyNWNlYTFlMGZkNDc3YTNiMTkzNjgwNTVlMzhlOGIzNmVkMjAxMjE2NDQwYjJkY2YyNjkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5b323719971041d186eaaf77fdb3df70",
+      "statement": "A page is uncheckable when it is not current, has no text layer, or carries an untrusted extraction, and each of those yields unverifiable with a named reason rather than absent — because reporting absent about a page nobody could read converts the system's blind spot into the caller's confident denial.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/verify.py#L103-L125",
+          "version": "repo-lines-v1:sha256:67b0ebc6181207ddc9ac9dd79133995a527cb506bfa2f1db34d0f16d58d5d5cc:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg0YWE4NjAyYmE4ODkxZTcwYzQ3NjJkZDI2MmIzNDViY2Q1YTJiMWFlOGYzNzkxOTIwYjlmNGU2MGI5NWZmMDEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU4OWFlM2YxMWJlZWMzN2YwYTBiZjhiZDE5ZTRjZWZjYTQ5OTNiY2M1NmIwNDA5NzcwYjRkMTQwN2VkNjg4NDYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUyZDY4ZDMwM2FlOGYwNWVhZTczYTA3YWExODg4ZmE1MTY3ZDY2YjJhNGQwOTRkMTlmYmIzNWM1MTE5ZmQ1OTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJjYzQyMzk0M2RlYTEwNmM2ZmIwNjhhYmY5MjZmMTQ5M2IxNzE5MzllZGQzYjg5MzA4ZDZjODQzMjRhMDhhZjQifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/core/verify.py#L40-L53",
+          "version": "repo-lines-v1:sha256:af5b60f7702384e9f8853d1f0a3185054f551566407501f07b0c755b2b35b2f9:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIzZmRlZGQzMGYyNGY3ZjAzZTFjOTE2YTczMDNjZDllNjhmYzA0NTkyZmRjZmM0ZGQ3NjlhZmI2ZGRjYTM3NmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI5ZjZkODg5ZTdkNTk2NmU0ZDViMjVjYjUyYWQ1M2VjOWU0NmUyZTFkMDFkNGU5Zjg5Yzk3MjZmN2IyZmViZjIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZiMDFkZDZjMmUzMGZjYTZjMzdkNjc3MjdkMzA1YjllMTNkOTc1MzliYjY5MjQzZTMzYWQ0YTY3MDBlNDBmNzciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY5ZWM1ZjE5ZDJmY2Y2MzllZGNhZjgwZjJhM2Q4MDc1NWVhZWY1NmEyNDMxOWI2OTk2OTBhM2ZhZTQ4NDQxOGQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_4d65783412bf453abfab28176c3f99a7",
+      "statement": "The fold gives present when any page carries the code and names only those pages; absent only when at least one page was actually checked, naming those pages and carrying present_instead; and unverifiable otherwise, with a shared reason or `mixed` where the pages disagree.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/verify.py#L150-L177",
+          "version": "repo-lines-v1:sha256:fc12612188e64d59df38cbd910d9c6b071a816572b26f5e559f73c202b6e3670:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI5ODVkNjgwZmU3N2JkYWJiYmI5ZjVjY2ZjYmYwODZmOWJiZmZmZmJmOTgzYTM3MGMyNDQ0YTQ2OGRlNjYyYjAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRmYmQwMDkzMTRiYzI3MDg0MTY3MzRhMDJhZTVmZjM5YTFlNDhhMDUwYmU5MWY0M2IyZmFhOTIwMDJjNjJiZmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdhNmRmMmMzOTA1OTYzNjZkMTg0ZDg1NmEwMDVmZGMxNTJhN2I3ODVjNjk3MmM5YTdkYWU1NjJjMmRjMDg4ZTYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_948de948c5f24d4d8391b597e60233b8",
+      "statement": "A page_id absent from the collection raises PageNotFound and is answered as a 404 rather than any verdict, because an absent verdict about a nonexistent page would be a statement about nothing.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/verify.py#L56-L67",
+          "version": "repo-lines-v1:sha256:5ce571bff75b777cf57f944ae53d0a6584fb67d46735fd0f2882d36ba0b410a0:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ0ODU0ZThmYTdmZTljYTFkODQyMGU3MjViY2NkYmM3NmJkNDMxNzBmMmQ4N2MwNzAzYmMzMWRmM2RjMDk3OGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQyZjg3NWVhMjkxOWY1NzA5MjliNDNkMTg1OTYxYzc2OTczMzgyY2VhYTdjYjViZWYwZTdmNTIyYmQxN2FmZGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJjMGJkNjcxZTRjZWNkOTM3YjFiM2VjNGQ5Y2JhOTY4MGFjYTc5MzY2OTkwN2Y2NGIxYTkyYzYzNTI5NWNhMGYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_4fddf9fa56fd426dbc041e5773616d2d",
+      "statement": "present_instead is a bounded prefix lookup rather than a distance: at most two characters are truncated from the claim, no prefix shorter than two characters is tried, at most five results are returned, the claim itself is excluded, and the disclosure is labelled \"different part\" rather than a suggested match.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/present_instead.py#L1-L30",
+          "version": "repo-lines-v1:sha256:f4d1e7aa7981d4786c805ad293fc4de71d60a15b76a9eb417edf65031ab57292:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJiZmRhNTI5YzM2ZWIxYmI1OWQ5OWNkNDFmNGU3MGE3YjI2NzMxYzhhMTQ2YjdjNTMzMzBlMjcyMWM3YTEwNmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQyNzc1NmZmZDQ4ODhkNTE1NDEyM2EzNDE1NTk3NDFlNjE1MTA2YzkwMjhmN2M4ZjI5ZjRkMTMwYzhkNTExMmEifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/core/present_instead.py#L34-L48",
+          "version": "repo-lines-v1:sha256:6946c381364a79acfb851b40afbd56c327b2faff608496726fd340e649ff46e6:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE2NDIzMmRjZWFhYzUwYmU0ZTg2MDk5OTAxYWE3NDU1NmU5YjI5OTBkOWJmODIyMjc1ZDNlNGIxZDIyY2E4NGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQyNzc1NmZmZDQ4ODhkNTE1NDEyM2EzNDE1NTk3NDFlNjE1MTA2YzkwMjhmN2M4ZjI5ZjRkMTMwYzhkNTExMmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU1MjRiN2YwMDE1OGQyMjQ4NzRlMDhkOTI2NDYwZTA4NTUwNGQ0ODcwNjdmOWE4MWI1NTc1NWRmN2FkNjllNTIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_8e3d0198a80944e7927ffd254d0fd0f8",
+      "statement": "The observed-token inventory is unreachable from lookup by module boundary: serve/tools/lookup.py does not import core/observed_tokens.py and a test asserts its import graph never will, because a lookup able to consult the inventory could return a near miss as a hit.",
+      "evidence": [
+        {
+          "resource": "repo://backend/tests/unit/test_lookup_pure.py#L400-L410",
+          "version": "repo-lines-v1:sha256:b5ffebcd7d352fc03f14d554474898edd3f6c463c39a7b5287cdfb92c8322bcf:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFlNmM1OTgzMTU3MDZmM2JhYmY5Mjc0YTRmNGY5Y2I0NjJkY2NjMWU5NzAwMjk3Mzk2N2YyZTlmMmVjN2ZkYzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNmY2U4NmNlOTNhMTI0M2M3Nzg0ZDk5ZDViMzM5NTVhYjQ0YzVkNmEyMzQ2MWRlMDAwNzBiNjFiZmEzODU2OTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU3N2NjYWEyOGE3YjMyZjgwZTIwNDc5YTE2OGI5MWVkYmYxMTQyOWQ2MDQyNjU4NzNlNjUwYjk1YWQ4NmMwMjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQyNWJiMTUzOTE2MDY2YmMwNDg2ODRjYjQwOGI1YWY0MmQ4OTlkNmJiODhlMTliZTU4ODU3MzQ2YzBmMjBkOGMifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/serve/tools/lookup.py#L34-L37",
+          "version": "repo-lines-v1:sha256:22abe617cc89160ef4eb75f8884de70904c6ee1e608c5314a754528f938a3de6:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTg3NzI0NmNkMDkyOGY3ZDE4NmU4NjUzMjQ3MTc0NDI5MTllMTkwYTBkNjE3MjI5YTAxODZjMjU0YzMzYzBiNiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTA4ZDM2M2NhMzQzZWM4NzIzMGJiZGM4MWVkNTk1Njg0MDE5ZjRiMDUzZGFjYTA1YWU1YThlYTRhNzNkYWYzYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOWY1MDM4YWZmMzQ2MTRmYTg1ZTMwYTIwNzdjYWZiNTE0NjVkYjU1OTY4YzMwZWE4YjhkNjMzZGRiODVkMDdlNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYmVjZTdmMTNiN2I2YTM1MTZmY2Q0YjU0MzJkODU4ZTVmNWEyNTIwNGU2Njc4ZDkzMTBmMDUzM2U5NTQ3OWY0NSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_8a4b570582cc4ec69b4e780148fe3fa0",
+      "statement": "The observed-token inventory is built from the extracted text field only — never from model-claimed codes — and only searchable pages contribute, so neither an unbacked model claim nor a garbled extraction's debris can be disclosed as what is present instead.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/observed_tokens.py#L1-L34",
+          "version": "repo-lines-v1:sha256:17cc6f5338f3f3c26676491d660c48c983858b71ac506101be384a2d5ce65f5d:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYxMjJmMjA3ZTllM2JhYTRlYTc1ODI0MTA2N2E3YjA5YTAwZTYzODg3ZGM0NTE3NzU4ZDE3N2Q3MjU5MzFmZWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUxM2E2NzcxOTE5NDgyZDdiMzc4ZWRmM2E4NjFkN2EyYjk0NTU4OGUxMjM5N2JhMmJhZTNiNzc5MGMzODU5ZmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk3OTAyYTJlNGNmZDExYWZlODk3NTgwZWI3ZjQzNzlmNTU3OWZjNWU4NzJiNWYyYTk4MjAyMTNjNjM5YjIxOTYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d3a30e2241be4ac799988f250b18af13",
+      "statement": "The code-like heuristic is deliberately crude — a token containing at least one digit — rather than an identifier grammar, because a miss costs a disclosure beside an already-absent verdict rather than an answer.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/observed_tokens.py#L47-L57",
+          "version": "repo-lines-v1:sha256:f59cf5b4c3fe364cbd3c0e56201f5c86a1edbafce69fda08626708f6669f10d3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYzZjAwOTg5MWJhY2M1MTJiOTFmNjc1N2IyYzkzNjdlNTk3ZDYxNDhiZmQ5NTQ1MmU4NGJiNjEwMTMzZDg1ZWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJlMzVmYWY5MTM3NDA2YmZhOWYwNWRiMGU4Yzc5MjhmMmFhNjE4ODA4YTk3YjFhODJmN2Q3NjcyMjI2MWYyNGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImMzNGZlZDU2NzVjNmJmODZkYzc2MzQ1YjA1MDBhYmNhZTc2YzgwMWVhZTI4YmNjZGM0NGIyZDA5YjgxMGU5NTAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_10a4187449cf41989fe107a1c17fb7d9",
+      "statement": "When no document-level inventory is supplied, verification builds a local inventory from the pages named in the call and returns none when those pages span more than one document, so a code from one binder cannot be disclosed as what is present instead on a page of another.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/verify.py#L179-L196",
+          "version": "repo-lines-v1:sha256:93c33c0a840019fb4297122deafd1497ed0f42e8d7c7ee9e68b7867a7e611662:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc5Yzc5YTk3MDk3YWQ0MDhiODkxYjE0ZTk0YzI0NGVjZjg3MDBjODNiZTdkOWI2YWJlMGM0ODNiMDQyYmZiZDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZjYjkyNTNiN2ZmOTE5MzY1NDcwNDM0ZDU4YWUwNTlhM2UyNWQ3OTZlNDVlY2FkZDJmMDEwNTMyZjE2MmNhY2MiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhhNTMyMjFhODE0NDZhMDE5OTgwODAwMTE1YjEwNmU0MWE5NGI3MjY2NDU3Y2Q2YzI2YjdlMTJlNTY4NjU0MjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE1NjI5M2ZiNGQ3YzYzMjE2ODllMDNiZmVhZWI3ZjFjYTEyODIwMWExYzQxYTNjYjMyMjk3MmQ2ZTdjNTFlM2MifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_36583f9094b84239af6ab447fe1cbdf5",
+      "statement": "Near misses are generated by substituting exactly one character — never an insertion, deletion or transposition — deterministically with no RNG, and every candidate is excluded if any of its variants is printed anywhere in the corpus text, so a mutation that lands on a genuinely printed phrase is not mistaken for a near miss.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/core/nearmiss.py#L13-L31",
+          "version": "repo-lines-v1:sha256:89c72ded4ccf7bf01b0af9129e52249512942783f29583057f6c8506e89b544a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ2YTQ2OGJjNTVkMWYyYTcyZjJhMTlmYzJjMzJiYjcwZDVlNWY0MzllYjYxODcwMmM4NzRkYjEzOWJkMTVkM2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM0ZmVkZDQwYjcxMmU5NGNmMGFhNzM0Y2NlZTY1NWU3MDNlYzM0ZGY3OTMwZWRlYTY3NjAyZTE4Y2JkNWM4NDciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM4ZDc3NDAwYzkwMmY0ZWNlNDViMGFmMWUzMDZmODVkMWZlZTE5NWVmNGEyYzljMWZlYTg0NmJkZGY0Y2UyMTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJlY2U3ZjEzYjdiNmEzNTE2ZmNkNGI1NDMyZDg1OGU1ZjVhMjUyMDRlNjY3OGQ5MzEwZjA1MzNlOTU0NzlmNDUifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.1",
+    "at": "2026-09-11T14:07:28.402Z"
+  }
+}

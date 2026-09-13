@@ -1,0 +1,278 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:c36c5b5c5c60bce66e6e23b5c697a9177b1d8c5d84131dd078dbb3812a5eaaae",
+  "claims": [
+    {
+      "id": "claim_a11975a5e2fe4285912771fc94648f06",
+      "statement": "Authentication is default-deny ASGI middleware keyed on path rather than a per-route dependency, so a route added later is protected before it is written — protection is not something a route opts into.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/auth.py#L15-L23",
+          "version": "repo-lines-v1:sha256:2b100b307a775de152bcf54b8087c1650b978d38c4a2eb367c1b18e3f4f98ae7:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYmVjYzYwYmM1MmFlYmRiN2JlOTA5M2MyYWRkOGI2ZDdiZDVmZWVkOTZkZTFkMTEwZmI4ZTVjNmZjOTcwMTU1NyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTAwMmI4MDQ1ODMxODQxMThhNTBhNTY3ZWUzODhhMTY1NzA5YTYyZGI3ZWYxZTQ2YzhjODRjMjY5ZTkzMDQxOCJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/serve/auth.py#L248-L260",
+          "version": "repo-lines-v1:sha256:5fa429df1449240dad4caea4a8d92585b785e4304b2ce65ab24bb2f99c82a967:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZjNTEzY2IyMjI0NGNmNDgyNTE4ZjYxZGFlZDIwNjJkZmZmZTU2ZjJhZDZiODE1YzQxNDNjNTk1OTk4YWFmNDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJmNTAxNjdlMWJhY2Y2MTFhYTllZGQwYzllZDM4OWI5MTYwZDdjNzJkYzdkZTk4M2JhM2I2ZmMxM2Y2NWRhYWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ0M2I2NGI3YTBlOTUxOGM4OTBkOWRjZWFiMzUyODI1NTkyN2U5YzA3YTZhZWY3MjJkNmEyNDBhMGVkNTY0YWYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_031699d200354d39a016b24bbe8d361c",
+      "statement": "The unauthenticated surface is three separate sets — probes, documentation pages, and the console page — kept distinct because each is free for a different reason and may only grow for its own; anything returning corpus data, a run, a raster or prose belongs in none of them.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/auth.py#L52-L91",
+          "version": "repo-lines-v1:sha256:13ed8381e4288326cb4f1622b65a001e0306041cf9979b586ad274540f26761d:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjExYjlmNmQ0MGY2ZDNhMjljY2YxOTZlY2Q5NWM3OTg3NTE0NDIxNGI5MzY4MmI1MTlkMTRkNTIzNDNmYzA5NGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM3ODM2NTMyMGE1MjU5YTk5YWEyNjA5MDkyZTRmNjFiMDY2MTY1ZThjOTIzMzRmNmJiMTYyOGE2YmI3ODUwOTQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_2a5a9169ca57432a9f1c50b122f3adc3",
+      "statement": "The documentation and console paths are free because a browser cannot attach an Authorization header to a plain navigation, and serving them authorises nothing: the published document declares a bearer requirement on every operation.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/auth.py#L57-L83",
+          "version": "repo-lines-v1:sha256:d6ee6fb8fb0078e8356ea4277b3d2b0e45957842619b6c328ab3e9cee514f699:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM4NDk1MDk0YzhiODBjMDViYWEzYzNlMTI3M2I0MmEzYjc0MDEyMWQ4MmU2YzFjNTdhMjBlZGJlY2RmODJkYTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhkNWE5MWVhZmQ1NjU3NDI5Y2JjNGEyMGVmY2NlMGRlZDcyOGEyNDU0Mzc5OGE3NmUyNDJmZjAzYjE5MzZhZjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg5NDFiZTYzNDZmOGU3MTc2MzkwYmU2ZWIwMTZkZDJhNzNjMzRhNDdjMmVhMWU1M2FhMzdjZmI1ZDEwMWM3YzIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjUwY2NjYzFjOGEwNjZmNzZlMmI5NWJmNWU3NmFlYTg5MjE1Mjc4OTc3OTc4YWNiOTQyNTZmODg3NTY1YmE1OTIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1bd66339803e4d3ab193b99f3af43e4c",
+      "statement": "Caller identity is derived from the presented token alone — there is no user header, query parameter or body field — because a caller who could name itself could name somebody else in the log whose purpose is to record who spent the money; client identity headers are read only to report that they were ignored.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/auth.py#L24-L30",
+          "version": "repo-lines-v1:sha256:b2642abec8a7277a7fdf828a5a1cf995e4fe35fff893949109726e2686e6dfe5:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiODc1ODg0Y2I2Y2YzODQ3YWZlODk1YjMzZDBkZjQ4YjhkMjhhZjY3MjM3NTY0YjE1YWFlOWE2ODk0MDk2YWY1NSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjZmZTBhNmNmYjgzZWIyMGI2M2VmZDUzYTYyY2UzN2I5ODZmYWE1ZjEyNTlhYjY5MzJkNjVkNTFlZTA4YzFjNyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYzlkOWNjYmFhNjUzNDM5NThmMTI3YzQxZWE5NTM2ZGRhMThiZDYyNzFmYjdkNjc1ODFjNDY4NmYzNDhiNmNmYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTMwZjY1MmUyYTc3ZTFkNGFjZWMyNTFkNTE2ZDRlMDQ2MTNmOTZlOTY1YTNjZmZhNWM3N2ExODk4YzYyYjQyMCJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/serve/auth.py#L96-L99",
+          "version": "repo-lines-v1:sha256:d710e52153934231e5c04e6ddb8e9ddeab5af4566cea0a996dfa88f13f911a50:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYWQwNmM0NGE4ODcxYmUzN2QzYWYzZWM3N2Q0NzYyMTg5NjFhZDMzYjQ4NWNhY2YwYjVhNzljZmQ4ODMxYjYyYiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMDE0NTE1YzE4MjE3MzY4MTNjNWNkMGRjYzk4NDllZTkwMjM1MGY0ODYyZDliNDllMzQzMmI0MzgwMzE5MmM3ZiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_cd5a64c681e44a3c8802fc3430bd78e8",
+      "statement": "A presented token is reduced to a domain-separated SHA-256 prefix and compared against digests of the configured tokens, so the comparison is between hashes rather than secrets and the identity reaching an audit line is by construction not the credential.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/auth.py#L155-L165",
+          "version": "repo-lines-v1:sha256:e16bafd732a5baafed1d5e85db287d4d7a70361f96fb6877ec0999457237e11b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc2NWQ3ZTZkOWE4OGMxNDQxMTY5ODY3MDBiMmQwMzYzNzA5MjZlNTRkMGMyYTdjODZhMTJlZGI5MTljNjUyN2IiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjEzOTRiZjIyYTgxZjM0NjY3MTAyOGM5MWMwYjg2NjgyMmUxMzNjNTkxM2Q4NmMxMWY5MjdjNDczMGY5NmVjMjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIyYWVkYjUyMmMxMzk1ZjMxMTc2YzE0NTU0MGVkYjAwZDYzZDE4NzRhNjgxM2VlOWIwZTg1ZmU5NTYwYmIzN2UifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/serve/auth.py#L31-L43",
+          "version": "repo-lines-v1:sha256:dd559f011667d524bba0fa001a3dc19fa43c9e6db2bdd917450a62eafd547165:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQwMzQ3MzUxZmU2NDIyYjkwNjA4MTY5MzFjNGNmNTRmODk0OGExODIyYTUyNWMwMjM3Mzc4ZTNkZmM1YmNjOGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUzODRiZmRiMmRmMzgwYjY1NTdjYzdhNzFkMTY4OTE0MTViY2NhYTg3Njk5NDA2ZTIzNmY3NTJjNjQxNTM4OWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJkNDYwMWI4NGMyYTJlMzQ5MjQxZDNlZDIwZjhlYTJlOGY1ZTUyNTk0OGMxMzE0YjIyNjdkNTE3NjJjMTc0OGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBiYjRmNGMzMWI4ZmE0NjdjN2ZkYjY4MjBhNmNmYmM5ODFjZWViNjM2OTgxMjBhMWJkODBmNTRhOTVjYjNhNzQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a978cfb967b448419873ad67d130d7cd",
+      "statement": "Liveness touches no backing service and stays green whether the store is up or down, because a liveness probe that failed on a backing-service outage would turn that outage into a fleet-wide restart loop.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/app.py#L1371-L1375",
+          "version": "repo-lines-v1:sha256:7b35ea9a556e7a8e417ded571192b89b7454ab5a972951326c4284f33e279d1a:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMTkxY2UyYmNlZDNlMTkxNzAwZDRlYzNmMDE5MjJlY2QwYThmOWI0NjQ1YmU1YzE5MDM1Njg0NzczODQ1MjdlMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTQ4OWIxNzA5YjRkMzUxYzEwMzY5OWFiNTdlMGMyOTcwOGVhZDgwYzQ2MmJlNzk4YTM2NjhlZjhjYTBlNmFjOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMjhiODhlZTJjOTRkMzE1ZTdiYWJjZmU5ZjQ0NTIxZjU3NDI4NzFkNmVhNDM1YjQ0MGNhMDU4MDAwZjBkNGJmYyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_73b2196dfa904ebba97975136929f975",
+      "statement": "Readiness re-runs the whole boot check list per probe in a worker thread and goes red on a failure or on a check that could not conclude, carrying a named reason that distinguishes somebody else's outage from a deployment awaiting its first ingest.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/app.py#L1376-L1416",
+          "version": "repo-lines-v1:sha256:e93db457be1f80aafcd6648bb5113d90601366cc5e76e42b9bcdc7f716427605:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc1NzJkN2U4Mjc4MTE1NmQyZDkzOGNlMmNlM2VjYjliYWEzODYwMWE2ODQ1ZWFkOGRiYTYyMGJjNGVkY2RiZGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5MDlhNTNhNjE4ZDAyOGUxZDMwMDBjMGE3YWJjZWVjYmU1ZmIzN2Y0ZTUxMWVmZTQ2NjQzZmFkNmU2Njg3MmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUwNWQxYmFlM2Q5OTBiYWQ3ZjEyYTUwZDA3NmVkMzNjN2E4NzU0MjY5OTMyZjAzMDM3YmNhMzk3NzVjZGQwNmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEyNGYxNTQyYjc3YjhiZDVmZjQ4MjUyOTIxNjY1MzliZGVjMGMzN2I5NTQyODk0ZTNlZGMwMGNiYjhiMTNmNWEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_48fca40be4b647fea8dc4eb50c4ffce7",
+      "statement": "Each of the eight tools has its own route and the generic tool route stays registered beneath them; the named routes exist for the published description rather than for dispatch, because one generic operation with an untyped body gave integrators a single untyped call for eight tools with nothing in common.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/app.py#L1418-L1442",
+          "version": "repo-lines-v1:sha256:88e8bcd7af23e9a622ca9828e06b8ce4a3ad4351e023762c582cbd6f152c35df:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBjMWY0MTZkZGVkMjcwNzc5MTA3MDBjMDdmYmFhZTcxODRmZDAxNjc5NzE2MzgxMWIyMDk0MmYxYjA3YmRhNGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFiZGI4ZDI3MjRjOTlkYWM5NmUxYzRlMDE0MjdlODRhZDE4MjRhZDlkNmRjN2IxODM5MDA0YWUyZGU0Njg1YWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRiMDA1OWVmM2NhYmU1MzhhYjk5N2JjZWYxYzgwZjRiZTc5NjVkN2VlZmIwODQ0ZmQwNDg0YjRlMDBmMDAzMjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJjNjY5MTQ1NGUxOTkxYTEzMzM2NTZiZTE3N2NhZGU2OTFhMDE5YWU1MDU4NzlmZDRiOWY2OTE5MzgyMTUyOTcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_48c00dff369a496994d83b4b36e9f5b5",
+      "statement": "The per-tool routes are generated from the tool table in a loop as thin closures over one transport, so a tool cannot get a route without being in the table or be in the table without getting a route, and registration order lets the generic route catch every unknown name as a typed 404.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/app.py#L1430-L1442",
+          "version": "repo-lines-v1:sha256:049cf3f208be187cfa3223a3ba41884a683edcc948488ffbb6e46836cc6648cd:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc0N2NjZmJiZmQyYzU5OGQ3NWRhZjBhMTBkYzhkNTIzYTJlMDI0NDc4ZTA3YzM5NWZjZWUzMmI5NmNkZDg3NDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFiZGI4ZDI3MjRjOTlkYWM5NmUxYzRlMDE0MjdlODRhZDE4MjRhZDlkNmRjN2IxODM5MDA0YWUyZGU0Njg1YWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjcyMzhmZmE5MzI2ZTY2MDIzYjEzZmZmMDU3MGM5NDg2OWI2YTUwNjFlZDMzMGU3ODkzN2VkNzQ3ZDNmNGM5YzciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJjNjY5MTQ1NGUxOTkxYTEzMzM2NTZiZTE3N2NhZGU2OTFhMDE5YWU1MDU4NzlmZDRiOWY2OTE5MzgyMTUyOTcifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/serve/app.py#L1495-L1530",
+          "version": "repo-lines-v1:sha256:7c7bb0005c2c85b47823686d2e3d048fe2c8cab5fef9c63280a08f0974b0baee:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE0MjFkNGY3ZGY5NmM2ZWVlOGZkOTg5NzI3YWE0MTZlMzk5ZjA3NjRkMGU4ODBkM2U1NjI0YmZkNGQ2MzkyNDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIyYTlkZjZhNmE5Mzc1ZDA1M2FhYzk3YzE5MTgyYjIyNWVkNzI0ZDJhMjQwOTY1OTAzMzhlN2ZmMjZkNzNmMjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRlMDdmZDk4ZDg3MWQzMjI3NzJlODkxODA0MzMxNTQzNGRmMmQ2MjEyYzA2NjY5ODQ3NDQxOTU3NmQyODc2M2MifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3e604379519b4e97801738155ee1d019",
+      "statement": "The ask route validates its body in the route rather than through a typed framework parameter — whose failure would be a 422 with a JSON pointer instead of a switchable code — and runs the loop in a worker thread because it makes a series of blocking calls.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/app.py#L1651-L1662",
+          "version": "repo-lines-v1:sha256:5f32aee07c13d388ed2192b8e15e03570860ff45d13af2cfffa3fb76f3488d5b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA0ODVlMmQzMDA5Y2Q4ZDdhNTkwYzFmMWMxYTdjNDU5ZWI1ZGYzYmM0YTI1MzFiMjhmYmIyNzIyZmZiNmNkNzMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE0MGM1YzY4MmE0ZDRhZjUyNmQ5NTM1NDA1M2ZkNjVlMTgzNjE0MmExYjlmZjFmM2ZjZTg4NjA0ZTU5MzZkMGYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNhY2EyNmMxMDMzNGVhYWM5YzZkZWEwOWYyMjVmYzQ0NDIzNzNlYmYwNzAxZThhMjA2ZWE0OTZiMWRhYTJlZGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZjNmE4OTBkN2JkZmI4NTZkMjRiZGZkOThiMDY0ZjFmMzM4NWQzZDRkZDQ1N2IyZDIzMTZiYWNjMTVjMmVmYTMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_48ea23679886407fb340a72fa8b89d05",
+      "statement": "The corpus management routes are queries over the collections ingestion already writes, computing nothing ingestion did not record and storing nothing of their own, so they cannot drift from what a search sees and every replica answers identically.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/manage.py#L10-L16",
+          "version": "repo-lines-v1:sha256:cc1db0087a1c8d4a46a2ec47333be45e34b7378dd1a4c73eb247816192cd8973:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiN2JmZjljMmVhMTA1Y2U4OWVlNjQzODYxMTViNGJmYjQ2YmM5NzRjYzY2Zjg0ODU2ZjRmZjNhMGE4OTBiMmI5ZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNmU4OTFlYjBkNjZjYzUyMmM2OGFkOTk2MjMzMDkyZTk3Y2E1OTIxZTU1NzY1NWY1ODY2MjM2MThiNDA0ODBiZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzBiM2NhZGJkMTkzNTcxNDYyYmM2MGU3MDhmY2RiMzAwOTI1MGUxNzEyMTRmMzg0M2E2MjIxNDhmM2NlNTBhYiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_982b89cdade34825ae55acaf9431844c",
+      "statement": "The corpus surface uses exact counts throughout at some latency cost, because a management surface is where somebody decides whether an ingest was correct and an estimated page count short by two is indistinguishable from an ingest that dropped two pages.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/manage.py#L18-L23",
+          "version": "repo-lines-v1:sha256:379540d8c585e6fe3c0e47e0e58a40b6dd63c635f9b216abf7d5223f6bb7eb65:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNjQ3NTZjNTA3ZTBlZjE5ZmY1M2VkN2Y4MWQxM2E0ZTY3MDNiM2MxODZmYzJlMzhmY2ZlNDk0YjMwOTkwOTkyOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOTFiOTNiZTVlYmE1N2Q1YmE1YjA2ZmNiMzAyOTIwYTYxOTQwNDA3ZTQxYjkzNzU0YzM4ZTA4MGMwODI2YzJmOCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTZmYTFjYWU1M2UxMzJlMjgxMzAzN2I0NjMyNjhhZjg3MWQ1MDcwZDMyYTM5NGE1NTJhMWZmNzlkNzNhMjdjMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNzA5Njg0NjliYjU1MzVmNzc0OTY0ZDBkYWRkNmIyN2NhYTQ5NjFjNjViYmM5N2M0NGZiN2RhNzUzZmYwZTY2OCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_ae18f27747c94e80967fbd29ee5a599c",
+      "statement": "Nothing on the corpus surface mutates: retirement runs inside a publish where the run record is its evidence, and a bare retire endpoint would be the one call on this surface that silently changes what every future search returns.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/manage.py#L24-L28",
+          "version": "repo-lines-v1:sha256:2ecb6a6fd2b75587bf8254bd1eafb028270858dae9032ff5b3db2d9f3810ccc5:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTJiOGRjNmRmNTcwMGUzMWZlNDkwZTc2NDcyYTgxMzgyNDg5NGQzYjdhZjgyNWY2NTQ1MjE3M2E0Zjc0Y2IyZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZjFjZDg4YmI0NmJkZmM3NDQwOTNjZTk2MWNhZjUxNTU3ZjMwYTU0N2U3NmIxNTA1Zjg2ZjVkNjc1MjYxNjMzMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYWNkNTM5NTA5NzMyM2M5ZTM1ZDlhOGIwYzM4ZjgxNDllMDA5ZDFmMjU2MDU2NDFhYjYwNjcxODBlNTk3ZWVlMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNTJhZWQ3MmM1YzgwZTI0Mzc0NGE4NTEwM2IxMDQwMGM1MDQ4ODFkZWQ3YTNiNjZjZDZlZGJiNmFiOGQ1NjdmMyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_023c002048844141a98a68624edae039",
+      "statement": "Run exports are streamed from the index with nothing written to the instance's filesystem, and the first line is pulled before the response starts so an unknown artefact is a typed 404 rather than a 200 whose body turns out to be a traceback.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/app.py#L2050-L2088",
+          "version": "repo-lines-v1:sha256:85c7716682653a59cf5cd7dbf0118a7de3cf7c31043ee110caa238473f1c07c8:eyJzZWxlY3RlZExpbmVDb3VudCI6MzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhkN2I5NzVhOTQwY2MyOWI5MzcxYTE3NDYyYzI4ZjE5ZDBmNDgwMTkwM2VkODYyNWQzYTliOWE3NWE1NGRlN2IiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE5ZjE1NDczZmU2NDcwMDNkM2E4ZTBhNDkxYTg3YzM3MTI0ODEwMDM5NDFlNmQ3ZDA0Nzc4MTRmNTNlZTNlMzgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRhMGZkM2U1NWFiMWNlM2RkZTgxNGVhNDQ5Yjk4MTk3MDljMmUzYjIzM2IzNTYzZThkYzdiN2YyNTM0OWYwNjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZhODIyNDdmMDIzZTkxNzBlODA1YThjMjc5MmJlOTdkY2Q2OGU4NWYyNmE4OTMwOWVjNzcyYzA4Mzg0YTc3MWUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e77533d003d34017927c06c07d557b71",
+      "statement": "The metrics endpoint computes its gauges from the control plane on each scrape rather than from in-process counters, because a counter in memory reports a different number per replica and resets on every deploy — measuring the deployment rather than the corpus.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/app.py#L2091-L2107",
+          "version": "repo-lines-v1:sha256:f6d87a8fd782289d76927429fa2953cd551f550d88ec981e3c7cab178ec65734:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEyZTc4MGRhZjFhOGFkODJhMTQzMzk5YTJiOTIyZjhjZTg5ZGE1OTIwZDQ0ZTA3MzM3NGI0NmI3NjY4ZGFmYWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQwZTIyZjJmZjJhNTg0YzI5YjdjYzc0YjAzY2ZhNjcxYzNkMjQ5MjIzMTRmM2U5N2FlNjViYTM1YTAxMmQ1ZjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgyYzgzMTVjZTNiZGMyMzI2MTVlNWYwNzg5MDg4YmJiMDhhMDU3NDc4NjFlZDcyM2IwZjNlZWUyMmI2Y2ExODAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY3NDhjM2FmN2Q2MTU3ZTYxMmRiZTQyNWRjNmYxMTIwODAxNjQ2MjliYWZhZDRiNWYyYTdiNDUxN2QwOTNiZDAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_fb06da93747941bcbe9ff6ebc20debd2",
+      "statement": "The document upload route does not implement ingestion: it spools the bytes, refuses what it can cheaply, and runs the same subcommand an operator would from the same image — answering 202 with a run id whose progress is polled from the control plane, so a poll works from any replica.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/ingest.py#L1-L16",
+          "version": "repo-lines-v1:sha256:321117008227a3e23fbc16d292f875c931f836230dd904f30d2373be6d4f71aa:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUyNzk4NjUyZWI1MDE3MzEyMzhkZGNlMjEzZGRhMmViMTY3MDI5MjExZWU4MzI1NGEyMjYzODg5MGQ2OTc5ZTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjUyMjEwNDkyNjUxNjU0YzllODA0N2VkZDUzY2NmYTU2ZTk0ZDE0MGJlOWYxNzkwYTNjOTczMDhhYWY0YjU5OWEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6d3ce51ad2874474b2d9c2ab0c76b630",
+      "statement": "The upload route states two properties it gives up: the web process becomes briefly stateful because the PDF library needs a file, with the spool deleted when the child exits and the durable copy held by the document store; and the spend decision moves to whoever can reach the port, which is why a live-configured release refuses without the paid switch — a per-release switch rather than a per-caller scope.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/ingest.py#L17-L40",
+          "version": "repo-lines-v1:sha256:ebc3a46001b85786563e4d305232e30b7bc5252b9185e154c30bd7662dee610b:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3MjZlMzc4OTJlYTIyYWJhZWMyNjczZjhhMzU5ZDkyZTk4NjhkNGRjMzFkYjE3NjJmYjVjOTU4ODZiNmQzODciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQwN2NhNDkxMzE2YWZiMWY5ZTZhZDliMjU2ZGNmM2QzYWRmYTc2ZGEwMTVkOGU0NjEwNzc4MDU5MWNmYzY3MGYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI4OGQ5ZTNiOTlmNDBiNjE0N2Q5M2Y5NTI3MTk5MGJmMDBhZjg0YmVlZjBiMzVjNTI4N2Q5NDk2ZTM0ZDIyYWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJlY2U3ZjEzYjdiNmEzNTE2ZmNkNGI1NDMyZDg1OGU1ZjVhMjUyMDRlNjY3OGQ5MzEwZjA1MzNlOTU0NzlmNDUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_382a5d7784e343fcbc646080cb27ecc8",
+      "statement": "The read quota is held as a point in the control plane rather than in process memory, because the web process scales horizontally and an in-memory counter becomes one counter per replica that resets on every deploy.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/budget.py#L1-L12",
+          "version": "repo-lines-v1:sha256:93c6d98d7218ebeacd459c5c149e5e2ebd87d934c1d55e62bd81c6cfc788f966:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQzZWIzZTFkNDBmNDY1MjUzMmZlODUxNWE0ZjAxZDc0ZGFkYmJjNzUzZDdlYjRjODAxODI5ZDVlOGQ2MDU4YzIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI4M2RhNDFjZWU4MzJkNDI0ZGZjZWM1MTA2M2MwMDhlNDQ5Yzk1YzFlYTQ3MjM5NGUzMDg0OWU4YzFmNzc3MTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMwZjFmYjNkNGMyNzBlMGE1ODk1ZDBkZTc1MmFjZDExMDYzOTM3ODA1YWQ2NWJmMTM5OWQwNWViMDM5OWU3NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_79fddd79540949f2b7ca81e115a7bbfc",
+      "statement": "The budget ledger is explicitly advisory for the same reason the ingest lease is: with no compare-and-swap two concurrent reads from one caller can both observe the same remaining count, bounding the over-spend by that caller's own concurrency and making it a cost bug rather than a correctness bug.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/budget.py#L14-L20",
+          "version": "repo-lines-v1:sha256:e640461e0314b9f0222b160a7cdd33de5721b52a30eb7f5c171d334adfe6337a:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYjIwNDk5NDg5NWY2MTgyZmJhZTJjNDE2ODViOTlkMzc0Y2I0MGYxYzhkMjgxMGNiZGI2NzdiMDM5ODdmZDBmMiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjY3MjlhNDZhZGQ4ZmUwYWE0YjA4NTY5MDFlNTg3YTAwODYwNzg0OTE0MjYxYWVjOTE2YmNjZDc0MThmM2EyNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDhlZGZkY2YwODM5NzljNzFlNDQ2MzA5MDc5MzU2MDc5Y2UwMTBjZDAxZTE4YzJmNmMwYzI3NDdkMDk4OGYwNyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_7d149f24d7734aafb415b482bb2e8be0",
+      "statement": "The quota window is a UTC day whose period key is part of the point id, so a new day is a new point with no sweeper, cron or expiry to get wrong; exhaustion is a 429 rather than a truncated result.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/budget.py#L22-L30",
+          "version": "repo-lines-v1:sha256:ff0e2055f1a8ae490473d0fb263989586c40385140db7025298b7f664f4a1804:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzIzMzhmODJhODU5Y2NmYmMwMDA3NDU2ZGUwNzRhZDI2N2Y3YTYwMThiN2UzMzM5NzJkYjFkMDFiMGEzNzAzNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTMwM2VjZGQ0YTRkMTBmMTljNzNmZDQyZmQxMjQzN2ZkMzM1NGE4MjY4MTYwNWRhNTI1NWE5N2EzOTA2OGRiYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjhiZTE5Zjc3NDdhMTAwODkwNzNmNjYxMDhmYjE0MzgxMjZjNjViNWVkOWM0MjFlZmQ5ZTFiZjcxZDNkZTBmOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTc5ZjQ5Zjk3YjI3ZWE3NjY1Mzc5ZDEwM2QxZjY3MjI5ZWY3M2U5ZmYyNjI5M2NmYmNkMmQ3ODAzMTU1ZjE0NiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_6b55c638f42445188fb360077bcdb251",
+      "statement": "Exactly one audit line is emitted per read and per fetch with exactly ten fields, and the line model forbids extra fields so the schema cannot be widened with document content — an audit stream carrying page text would be a copy of the corpus in a log aggregator.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/audit.py#L1-L7",
+          "version": "repo-lines-v1:sha256:dde66c06b6be854e345f45b76982dd203ebec718e6533bfbe894c36d7732d567:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiN2YxZTZkZTNlNTZjZTdjZWI3NGQ2N2QyZjRkOGQwODEwODA0NTIwYTI2NTNjYTMzYWUyMGYyZTYyMWNlZjI3MyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMWYxM2JlYTRjNDYwNDdlZjQ3ZTVjZmQ3MGZlYTI2MGFmNjJhNjYzYTA2ODVlMmJiMzdhNTE4YWMzYTVmOWRjMCJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/serve/audit.py#L21-L26",
+          "version": "repo-lines-v1:sha256:7f6e7cfcc2d63015b8b283a4ddebb3eb01bd8e021b29af5cc25ae85fa2d208d9:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMTBlY2ZkMGMyMmE4NzhkNmJlMzJhNzFlZTllNzViMjhjYzg1YTFkM2I2YzEwZDQ1YWIwN2ZjZDVkODFmMzk5NCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNTcxZWM2YTdlNWQ0YTE4NjI1ZjQ0Y2EyYzJmMzQ0YzgwNTVhN2MyMGUxYzEzNTZkNThhY2MwOTc1ZDU3ODAwNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODdlN2M2OTVkODhlODNjMjk4NGRlYmVjZWU3YmVlYjAyYzY2N2ZmODE1YTdlMGU5MzM1ZTY4MWUwY2U3OTk5ZCJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/serve/audit.py#L85-L95",
+          "version": "repo-lines-v1:sha256:25f462cafbfc70ee5adcd5d57c8fb1c039b09bba92113be803fb8cab329fe552:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkwY2JmMTQyMzhjNWYwZjY3ZjIyMDhhNDBlOTNkZDA3YzNmNDVhNWFjZGZmNzM5MWRmMTViMDljMDQ3ZGQwNDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI1ZGQ5MWQwZDk1MzEwYWE3ODZiYmJlNmVhY2Q4ODNmNzg1NjVmOTU5OGFkNTIxNWYxMGM5MWRmYmVjMjc1YzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNmYTAxYmM5NzM4MWI1NDI2MzA5YTgwOWVlZWQ2OTkxNTJiZTNmMGIyNDgxOTM1Mjk4ZGVmYjY4N2E4MzU2ZTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE2NzcyMzE4OWI1NTM4NjhlM2JiNjdkMWU1Njk2MjlkNDcyYjkyNTQ0M2VlODdhMWIyNGFkYWJjNDA2Y2Q4ODUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_feef6e1cd17d4b8ab0467930eb15a015",
+      "statement": "Cost information goes in the audit line and never in a response body, because the operator's question about who spent what and the agent's question about how many reads remain are different questions that get different channels.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/audit.py#L8-L14",
+          "version": "repo-lines-v1:sha256:092237f266215491029e4faf40ee4656d1a5884a789f2e4efc4ea00472f034ed:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiODIzYmVmZDZjOGMxMzdjMTRiNDQ0OWM3ODEwZjZkNjVkYjJkMzU5MzMxNjE5MjhjZjdmN2I0ZDdkYmI4MGNhNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTJhZTU4NTg5NGIzMGNiYzBhNjMzNjQ4MTE0YjlmZmE3MjExYmNjMWVhNGEyMTkwZTZiOTIwOTM2NTk0YjI0ZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNTBiZTFlMGM1YWI5OWIzYmY1ZjMwZjUzMDlhMDZmM2QxM2MzNzNmMmFkZDM0ZWFiMjdjOWQzNThiNTcyNTZhYiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_252e16ca46214c8c88fcface044f73e1",
+      "statement": "Only the two consuming tools are audited while free tools log at debug level, because a line per free call would bury the records that matter.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/audit.py#L15-L20",
+          "version": "repo-lines-v1:sha256:1d8cfd85ba32106369dc06f645499ed2695f51e73794ab2b9c3f744d39dd159c:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOWMzMGNlMTc1YTgwNDEwZGI2MDU3MWFjZWViODE2ZmNmZWUwNDMwOTFjNDliZDZiMTk3NjFmZjFiMGRiZjBjMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTliNGY1OTJjNGE4NTk2YzJmMGY5YzljNTBmNDY1ZjZjZTM3NjkyZDI2NjgyOWIxNTU3ODBiZTJjNWExNGJjNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZmE3MzNkYjk3ZTdlMWFmZThhYjQwZDc2YTczNGQyY2VhYTYxOGNlZjgyNDBiMzZlMDQwODVkMWMwYjI0YjZjNSJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/serve/audit.py#L57-L60",
+          "version": "repo-lines-v1:sha256:a2966f115fa2cd4be57ff2950c7a7e0e17ff9d0693196e9aaa4f6b147ef6285f:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOGUxN2E4N2Y3NzVkZmFkZGEzNWY4NWMyMmZhOTY4NTEwYzE4ZTAxMGI4OWU5MDMxYzU0Mjg2OGU4NzVhZjhmZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDYyNDMwZTUxMGZjYzlmODFhNGMwZTE2ZTVkYWNiMGFlYzQ5MGFlZjg4ODQzOTk5NzE1ZmVmM2IyYTRiNDhjNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMmQyOWI3MzBlN2QxMTdmZGY5MDY2Y2M5ZTJlZjFmMmNiZjBkMzhiYjdkNDE1MWQ2N2I3YTEwZDE4YWY2NjlhMSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_406391088c9045c29b6852af09e572c4",
+      "statement": "The audit fields are nested under a single key rather than spread across the log record, because the redactor blanks credential-shaped field names and a top-level token count would be emitted as redacted.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/serve/audit.py#L27-L33",
+          "version": "repo-lines-v1:sha256:7b2dc406f33573cea5d286b218bd83446f86a3f57e1227caa28dbe53a6874129:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYmU1YzJmYzM3ZTU1MzM2NTIzNmU5OTgyNDgxN2NiZmE0ZWVlODA4ZmI4ZTljMDJlN2ZjNjBmYjViNmVjOWZmZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTMwM2VjZGQ0YTRkMTBmMTljNzNmZDQyZmQxMjQzN2ZkMzM1NGE4MjY4MTYwNWRhNTI1NWE5N2EzOTA2OGRiYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNTQzNDBiODAyYTI3MzNiOWI3MmRkNWU4NzA3NTFhNDU0ZDBiODZmOTQxNDZlZDFkYmQ2ZDllYTQxOGRmZDA1ZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMjBlZjdiMDk4YjE5OGQ5ZGIzODBkZjRkNmFiOTBkYzgwYTE2YWU0MDcxYjkxM2MxMTk4ZGI4ZDI4YjNkNzkxNSJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.1",
+    "at": "2026-09-11T14:07:28.402Z"
+  }
+}

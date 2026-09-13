@@ -1,0 +1,296 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:d085f33cc3888683e84759e300b6af2b294ed5955bd55d21e463df820dfbd3ee",
+  "claims": [
+    {
+      "id": "claim_fb08f75b6f31461a8c84a2e3574b13d7",
+      "statement": "Each page is embedded as its own types.Content rather than as an element of a bare list, because the embedding API returns a single aggregated vector for a bare list — so the returned count is verified and a per-item fallback exists; the aggregation is used deliberately within a page and refused between pages.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/embed.py#L1-L22",
+          "version": "repo-lines-v1:sha256:55ea262f8d504ae8b79ce244177211b99687a8427eff3be61bf6381f1c20dacf:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc1OTFmMTdjMDI1OTk3M2NmYTRiNjY2ZmRhZjcxNjg1ZGJiMzA5NWUzYmI5MjFlZDc5MmNhMTAzZTI4NTFlMWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM3YmUwNWFiNzBkMjk3NzBhMzRjZmY5YjdjMTEyNzA2ZWJjNjBlMzVkMmViMThiYmI2ZjljN2EzOTM3NWIzODAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjliZThiODdlYTYwZWM3OTJhMWZlNGZiMzAwNGNhOGFiZDU4NjY1NjJjMWRiZTZkMzFhM2Q5NDBlMjRmZjA5MTAifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/ingest/embed.py#L196-L206",
+          "version": "repo-lines-v1:sha256:3b0eb93666d568d8eb047367f5cdc845860f9a3d7b01b92e9687b503f33e2015:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE2Y2E3YjIwYmU4ZDZmNmYxOTExYTg5NGFjZDRkM2FhM2Q1NWI4NjYwMzVkZmRlNGFmZTY2Y2I0ODM4YWY1OWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU4ZjQ0MjA3ZGYxYWM2MDg0MWM0NWZhNTBlYTEwZWZiZTJmMWYyMjEwZTNhMzRmNWJkZTIxY2FlYjQzMmU2MjgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ce99f3f70f784ceaa7ea75c0b7d483b1",
+      "statement": "The dense composition is an ordered list of separate text parts — document title, section titles, one summary part per language, topics, codes, bounded page text — with the page raster last, never a concatenated blob, so a two-language page contributes two summary parts rather than one blended string.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/embed.py#L149-L172",
+          "version": "repo-lines-v1:sha256:c8dcd83438a78f94f924142faedd19de4c96e217389345a537a0559ab088fa02:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAwYjFlM2IwY2ZlY2QzYzIwZGVjOTBlMmM2MDZmMzk0NTUwYjJiOGViYWMzZjRlZWZhNDU1ODg1ZmQzYzE5YmEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFmODFmODBmMDAwNGFhZWMzMGVlMTcyODQxODY0NDI2ZTAyMjIzMGEyODJhOTk4M2U3OGYwY2MwMzUxYWY4ODIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY4Y2E0OTc4NjZmNzllNTUxYTA1NjNlZDJjNGQ2M2QwNGY3M2Q4NDNkMWRmYTc4OThmNWJkNWIyMDFmMTE5MzMifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/ingest/embed.py#L23-L31",
+          "version": "repo-lines-v1:sha256:1df897ea22ae173719adf20521575810df9cb2033e65543f36283c70cc29212e:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZGY5NDNlN2I0OTI4ODBiNWRkMzE4ODExYTIwYzMwYThkZmNmNTZmNzMwMTVmYTU2NGMyYWVlODIyZjViYzM3ZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYTIxODc3N2RjNjVhMTY5MjA2MjVlZTRhMWQxMjA5ZWFlNDkxMGFkNzYyYjVhYjMzMDI3YmY3YzlkNzg1ZmM2MiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_65efd161b93c4a63a085dde9b48440a1",
+      "statement": "The embed cache key is a digest of the composition object itself, serialised as JSON rather than a joined string because two different part lists could concatenate to one string, with the raster entering by digest so a re-render or a corrected page misses the cache; dpi is deliberately excluded since it cannot change without changing the pixels.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/embed.py#L173-L195",
+          "version": "repo-lines-v1:sha256:2be8752316e323f522dab1b74d7770380c90c7b13c5c60ee17048856a3e99dd6:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYzZDAwY2YyNzA5NjRkNDRhMTNkZmFjODc1MmIwOWZjYzQzNWIwZjE5YjMxNmFiY2Y4MWE3YWE2NGJiMTIyZDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE5MDU4YzAwMGJhZDZmMzk2MmY0ZmY3Y2YzZDVjNzFiYzY1NjJiOTJjZTJlNjgwNmE4ZjYxOWIyMGFiMzAzYWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRiZTJhN2RjNmIyNGY0ZmNmZTVkN2QxOTM3NzkzMDk4NjFlNzBhN2UxMTg2ZjViYjIxYWRlYjEyZmJiYmNhY2UiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA4ZDkyYjVhYzUxODRlNjFmYjI4NmNlYTIyYmQ5ZGVmYmRhMzFjMjViNWE3MjJmYzc5ODc0NzgwOTViODIyNjAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_4b20ea7ee1bd4d6a8011ceb8e9046be4",
+      "statement": "Text truncation during composition is counted rather than silent, so a corpus that begins losing page tails becomes visible.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/embed.py#L164-L168",
+          "version": "repo-lines-v1:sha256:9b93b51963cbbf2805bfa1796a5408da8dd628e1c3ceeec276b714c099c3b057:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNzYwZDM3MjgwZTkyMzNiYjE1ZjlmZjM4YzJkZTJjMjA1N2Q3YWM0Y2UyOTBhNjY2ZWI0OGVkNjBiZDM3NzU4NiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYzcwMjE5Y2IyODBiYjI0MDc5NWVhNTRmYzdhNWE3MWFjYTcxY2RmY2I4NTgyOTBmMzQwMzgwNTYwOTk5OWNhZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiN2YzOWM1NDMzNWJmYzU1MDZhNjI5NjM3ZTY2ZDM1ZDk4ZDRkM2I0YmZkMzc2MjJhYmQwODI2YWU0ZTljNGYxNyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOWVkOTQwMTA2ZTA1NGEyNzg2NTg1YWJhMWY3MDQxZmMzMTVhYjY2MzkxNDI1MzY1NzNmMmZhYjBiMjc2OTA0NiJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/ingest/embed.py#L41-L46",
+          "version": "repo-lines-v1:sha256:8f7c1f9668d0ca4486f2dc300b167e5a303dff90c635dfe260cb80291cb7cd60:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzVkODA2YTdhYmQ1N2U5NDE2MWZiY2UwZDQ3NzM1MGRkMWY3MjA1NzNkZGNkODliMTAyOGZhMmFmYmI1ZTlkMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDU3YWNiZGY1ZTlkMjE3MGUwMjdhZjM2YmZhNDViZjZmNDUxZjQ5NmRkMTNkNDMwMDg3M2Y2ZGQ2OWU4Njg0MiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjg1YzVhODA5MGQ3OTMzMDAyMTllMDgxNzc0NDkzMzllMjNjYTRhODkwMzk0Mjk1OTVlYWM0MzA3OGI5M2E1MCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMDZlNTg4ODE4N2QzYzZmYmM4NTFmM2M3Y2E2NTU1MWE2NmFmMjEwZGYwZmI4M2IwODI5MDg5NWU3OGVkZTg1ZSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_6aca09d0a7d746a692b9066eda779db4",
+      "statement": "The printed page label is deliberately not part of the dense composition, because resolving a printed label is answered from an indexed facet rather than by nearest-neighbour search.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/embed.py#L47-L51",
+          "version": "repo-lines-v1:sha256:50e7efc92214af3eb7400f8f1d63fceb7e03e2a39db37f3ce7f130c588573f6a:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNWQ2NjA2M2QzNmU1YTY1NTgzNzk5ZDJmYThlMTIwMzIzNmY2ODViYzBmZTBmMmM2OGNmZmU0Nzk3ZTI3ZGI3MiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNWI2MTViY2ZlOWVmZmVjYzgxMzBiMTkyNDg5OTAwOGQ0ZmVjYWQyOWI2MzE2YWNkODRjMDRlYWFhOGVjOWMyNSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNWM5N2YwODM3Yjg5NzUzZTI3MWZiMGZhODQxMDkxNTBkMmM0ZDljN2M4YWNiZGY0MmIzZjc4NWE3OGFhOTRkMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMmFiZTU5ODAwYzFmMWY1NDgwY2VhZWM3OTQ5NzhjYjQ4YWYwNzY2NDUzZTUyNDA2OWMwZWVkOGY4NTBhZTA2OSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_5b39d56c8a784095bbbd162225e64406",
+      "statement": "embed_document reuses a stored vector only when its embed_key matches the freshly computed one and its length matches the configured dimension — meaning composition, composition version and embedding model all agree — and re-bills every other page.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/embed.py#L719-L748",
+          "version": "repo-lines-v1:sha256:4bab1e27f9a83bad6fdd5a4de1e45a20a01cab503697be635e7ffddce0a66a00:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjExY2RlYTQyOTZlODM4ZDg2OTczMjhhZWY2YjQzYmU0NGViMmU1NWUyY2UzOTVlOWQ4NDlmMjJkZTA4ZGExN2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNjNmM1MjBhN2VlY2VmOWIyNzc1Njk1ZmIwZTRkYTRhNjVhZjZjM2M1YzIzNDZhNmRmYThkNjVlMTIyZDdlMzIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI5ODQwMzczNjEzOGJmNmNjMzNkMWEyN2NkZTQ2ZmUxMmFiYzMxZjM2ZjdkZGQ5YTcxNGZjZmZkNTg4YjFkMjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYyMWUzZjM4YjQ1ZTgyMDQ2M2FmZThkNzdjN2NmODhkOTk1NTNmNjliYmU2MTA4MDhiMWU3ZGQxYjU3ZTI3Y2QifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7157ad75a2654eceb7ad2846d440a82c",
+      "statement": "The embedding cache is the pages collection itself: the stored vector and its embed_key are read back off the page's own point, so caching adds no state anywhere else.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/embed.py#L33-L39",
+          "version": "repo-lines-v1:sha256:0d113ecdbd3e8448727aede206320a1b881a961879a80195749a99d363f9bf76:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiODIwYWZhZGE1YWRiNDZiODc2MDczYTExYTExYTE1YTNmMmU3ZDU5N2Q4MjMxODI3MmMyYWIyMWUxNTNlOTIzYyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiM2JiYzY3YjVkNmU5Y2UyZDk4ZjFmZTRiNTNkZGU5NjJkYjljYjhhYmE5NGYwNTZiNjVjNjVjYzM1NjhlMDBjYiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZGRiN2RiNjljNDJhYWFjYTIzZjY1MWUwN2ZjOWJkMWZhMWY0NDg4NWNjYzRmMzg4YmMxYjA1ZGM1YjE3YjhkNiJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/ingest/index.py#L40-L44",
+          "version": "repo-lines-v1:sha256:4f82559e218f2f503cce28298d361a9207c4e67ce9f97c948364eb21732fc68d:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNWRiZGZiM2UxYzRlMDM2OWNiZGFmNGUyY2M4ZjcxMTBkMGRkMzRmZjBkODcyOGYxZGJhMDU1M2RhOGRjNTNlYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTM4NGJmZGIyZGYzODBiNjU1N2NjN2E3MWQxNjg5MTQxNWJjY2FhODc2OTk0MDZlMjM2Zjc1MmM2NDE1Mzg5ZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODc1ZTAyYjc3MWViNzk2MDg2NmVmYWFkZDRkN2ExZDIwNTU4MjkzOTIxN2JiM2JmYzFkNzg4Y2EwZGNkNTkwNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYzI4Y2NhZWJlODE2OGE1MmY1OWEyYmEyYWZlOWMyOGIxMzI5OWE3NzZhNjgxMTFhOTQwZjhmZmI2NTRhZWVhNCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_bf1b3e1244564cad9117adc5dd44be42",
+      "statement": "A batch that returns a different number of vectors than it was given raises rather than being zipped into silence, and a returned vector whose length disagrees with the collection dimension raises naming the page.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/embed.py#L749-L763",
+          "version": "repo-lines-v1:sha256:5920038cb89d115a8bcd45a1c596d2b72a64572729ab01e9a4f384a03419a8f3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFhNWVkY2FkMWYxMzIyY2U2Y2ZlNTllMjQ5MWMwMDY1Y2NjMTczZjIxMjU3N2UzZDJkMGEwY2NjNzU3MGU1NTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc3MzJiMGEyMGQzNzhjMGE0N2Q3OGY1MWJjNjI0M2FmNGVkNTUyNGI5ODBhOTU2ZGY5NWZiMzY3NWZlZjI3ODciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIxMmJjYmQ0YzgzODU2YmFjMmZlODBkNzQ4NGFhYTEzOWE2NTdkMjk4OTRlZjhhOWY0NGRlMGQwODI1YTM5NDQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7a1acf87771342bab7e78f26b709a139",
+      "statement": "The sparse document side stores BM25's term-frequency component while Qdrant supplies the IDF factor at query time, which is what keeps ingesting a new document from staling every sparse vector already in the index.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/sparse.py#L1-L25",
+          "version": "repo-lines-v1:sha256:4eff95cf8c01b969ffd3586028a970ec5c263ddd9722a6a481985119e52ccea0:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI1MjA1YjVhMzc5NjNjMjEwMGNmZDRmYjJmNDFkNDA2YjA3Yzg4NWE4MDRhZGNlN2JkYTczNDBlMjZkYTA5ZDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQwOTdjNzI0MzliYWUxNzk4MDllYTczMTVmNGFjZjhiODI1YzlkZTU1Zjk4Mzk4MzQ1YTgyZTMyNzQyMzdhNmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE0M2ZkYTA2MjhjZmZkNzQ4YzE2NmI1ZDg3MTI0OTc3ZDExMDg0ZDBhNWNiYjMzMjM1MTZkZTIwYWQxMDE2NDEifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/ingest/sparse.py#L86-L99",
+          "version": "repo-lines-v1:sha256:a206ef3c9d801d172184b0ab843d2e8ca6f25c5c115b1775ca4ffdb42bf6e8e7:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUxZjAwZDZjZTdiNmNiOGY3MDFiZWJkZjZmMzUxZWNhZDlhMDEwOGZlOWZlNWM1YzJmYTU3ZThjODVjZGU1MjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU3N2E5NDQ0YTVlZDFmOGFhYmRlMzVhMDY4MmEyODA4MWQzODQzMmViNDhiZTQ1MjA0M2RiMjZhYzI0NDgxOWMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_72e505e66376403fbc71d113da1666ac",
+      "statement": "Storing raw term counts instead of BM25 weights was measurably wrong rather than merely suboptimal: over 56 pages of a real ingest the only page printing the searched phrase ranked ninth behind pages that repeated a common word, and the measurement is held in a test so the regression cannot recur quietly.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/sparse.py#L9-L19",
+          "version": "repo-lines-v1:sha256:c0157733f91bb3543dd5c098e3135c5c38de6244106374eb2644d16d8253fa3e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNmZDFiYWZhZTM4ZTVjNWM0NjFlYmFmZmMwOGJmODBhOTg0ODRmMTQ4MjBhMmQ0ZjM1NzZkZjU1NDUyZTQ5ZDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM0N2FiNzVlOTM3NTk4ZTdhZDRmNjQzZWU5YmY1NmE3ZGE0YzJiODE5NDdmMDNmN2VlMTU4ZjhiZjk0YzAzZDEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_78e90b77e56649888da98b2917a4080e",
+      "statement": "The BM25 average-length figure is a released pin rather than a live measurement, so ingesting a document changes no stored value; the resulting drift is corrected by a release that bumps the sparse version.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/sparse.py#L21-L31",
+          "version": "repo-lines-v1:sha256:3100ce17fff979d0ceaabf99e58972a0cb2580db0af128481c2b8557d6989976:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM2MjljYjZjODIwZGE0YTdkNjk4NDU0ZWUyYjcyMmQzOWIxMDk4YTkzNzRjNzUxNGQ2NjY4MTAyNmQ2M2UyZGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVlNzI1ZDYyNzI3ZGYyYTYwOTBiNjI5Njg0MDBhNDg2ODMxYTQyMzIyYjRkMjdhZWE3NDNmMTlhMGRjOTgyMDAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_715250646efb4b0fba8c3edcda309228",
+      "statement": "There is deliberately no shared sparse build function: the document side saturates and the query side assigns 1.0 per distinct term, because a query built with document weights would apply k1 twice and a document built with query weights would lose saturation — and both mistakes present identically as worse neighbours.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/sparse.py#L129-L142",
+          "version": "repo-lines-v1:sha256:4c616ff692d71dffabdebf296db6adba7535c8191a0df1ef36b24e1b63a51df2:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBlYzhkNGJmN2RiMTFkOTI5YWM2ZGMxMDYxMjFiM2Q2MGRiMGVlZTgwODdkMzMxMDQ4OTgwNzljNWJmZjEwODgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZmZTBjOWI3YTk1N2EwNDc4NTdjOGNjNDNjNjI5M2Q5MDdkMTM2OWNhMzk1ZmQ5NmNmODAzNGYxMThkY2E2MWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjkyYTFhN2ExOTFmZmUwMTE5NDk1NzdlMzI4Y2U2ZjFiNTFkOWQ1NTU1NzExZGEwYTQyZmVlMzI5ZjNiMzcwNTgifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/ingest/sparse.py#L33-L39",
+          "version": "repo-lines-v1:sha256:e90a465141500d5cc26fbcf769fe9ce9850adedc63b56a3725fd29d5a6bb63e5:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTk3ZjA2NzY5MWRmOGI5ZTJkYmY2YWQ4MTk4YjM5ODliMDMyMjM3ODk1MjA0YzQ5NTgyMjllZDJjNmQzMzNmYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNGI3MDRmMGM4YTU1ZGZhNGI1NDdjMGM3Zjk2OTlkMjAzZWFlNGM4M2ZhN2Q2MGM2NWQ1NDNiMzFhN2MzZWQwNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMGE1YTEyYTk2NjVmODc1OTk0NDk1NjUwMWIwMjAxNjAyMGNmNjdhOTlhNzBlMzc4ODcxMTY0MjYyMDUzMzRlOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOGJmZTk5MGM3OTQ1ZDVlMGIxOTI1YTU4ZGYzNTVjNTIzNGE2YjQ5YjZiOTllMDY5OWM3ZGZhNjMxNjMyYTU3NiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_8ffeb91cd9ed483e9392a15d69a80050",
+      "statement": "Sparse tokenisation uses the project's own tokeniser rather than Qdrant's server-side BM25, because these vectors and the phrase index must agree about what a token is and the server-side implementation brings its own stemmer, stopword list and ASCII folding.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/sparse.py#L40-L46",
+          "version": "repo-lines-v1:sha256:60b98ffdf4890e8fbf0e1e8e2323d2e348be2ba10de7bd964906b341656d4f62:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMWViMzk1NjI0YWQ5NTZhMzU1Y2Q5NGNhNWU4ZDVhOWI4YjE2MGIyYzdkZGRiYTU2YmEzZDNlYjQ0NGEzYzk1ZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiM2IzZWEzY2RjNzA2OGE5ZTk3Y2ZjZGRiY2Q5ZDhlMGM1NGZlNGQwNjgzNDdiODBiMTU4ZmRkOGIxNDY3NmUzYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMmFkMWQ0ZDdhMzRlMjAzOTM3NDkyYzc3NDYwNWQ1NTI4NWEyNjEyNjhkODY5NDA0NzZhNWVmNTgyZDQ5NTgxMSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjM5ODNlYzBiOTkzZDZmZWVjMjRmYzY4NjkzNDdhMmU2NjNlYzVhMzNkNTA0MmE0ZDEwMThlMWRjMjdhZDY0YSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_60748723f2c242b6a0abecb198942e8f",
+      "statement": "Colliding hash slots sum their saturated weights rather than their raw counts, because two distinct terms sharing a slot each saturate on their own and summing counts first would over-saturate the pair.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/sparse.py#L100-L128",
+          "version": "repo-lines-v1:sha256:dc5d577d5faf5f6f999005be41d9786fc7bad42e0d8bdcbf95a8f5f89987dac6:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA1ODY0YzQ2MDAzZTMwNWJlZDk0MmQzNjg1NTU5ZWEwNDUzYWZjOTk5NDM0OWRlZTY2NzQ5NzNmZWVhMDVjZjIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYyNjZmNzY0OTg5M2ZhZjYwNDFkYTQ4YmZjOTYzYTQxNTE1M2YwYTdlZGFjZTUzNTI4NjFlZDU2MjljNTc3MTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYxMjE3MzhlODg3NjRjZWY5MGFiNjQyMTAxNWJiNmRkMjQ4NWE3MzgxYWM3YjllYWZhZGYxM2Y5MWVkN2Y4NTYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0943dea262124d15aecc082b1d7feed3",
+      "statement": "The captions surface is deduped against the page's own verbatim text before it is built, because otherwise a page enters fusion twice for one piece of evidence with the generated copy weighted like printed text.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/sparse.py#L144-L155",
+          "version": "repo-lines-v1:sha256:8c71bf7af905729ac72306a229744575fce2e40c8f0d06e060db8e4941a8f85f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImExMTZhZGQ3NmEwYWQxYmEwYTVkMWJmNTdiMGQ5ZmYyMDg0ZmQwZjhkOGNkN2MwYTczMzRjNzU3YmQxNjUwYTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjViMzY3YzQ1MzY2ZTkwYTgxOWFiMWY4OWVmZmVmMGYwODg3MGU0ZDQ4MmVhOGE2YTNjMmNlMzI3ZDU2NzEzZTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a2beecb5d04944b5816cb5634203c517",
+      "statement": "A sparse surface with nothing to say is omitted rather than written as an all-zero vector, because a zero vector is not \"no keywords\" but a vector Qdrant still stores, indexes and scores.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/index.py#L118-L140",
+          "version": "repo-lines-v1:sha256:595217808d9c6eee3adf098940cf0e6dfab949bb60a1a50054984829071cde21:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI5YmEzZWZlZjkzMDdiOWY2ZTMzMjg4NTE0OWVhYmEwYTlkMWNkOWNkOTUxNzliMWZiYjg5ZTEyNmE0ZDk5NzAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBmMzkzZDZjOWFlY2UzZGI1M2VmYjI5OTE4ODhmN2YxN2VmY2IxZjE4Mjg1ZmFiNGE5ZDhjMDE1NzUxNzJlOWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNiZWI4OWIzYzM1ODU1ZTI5Yjc3NGEwZmY5MmIxNTVkMzgzZDhiMjE3OGMwODc5ZWZhMzMzYjc1Y2NjYWM5YWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjljNjViNjM3Zjk1YWVhM2E0MmQwOTNjOWRjYmUwNTI1ZTQzYjNkNWIwMTUzMDFmOGM2NjEyODcxODM5Y2Q5M2EifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_413be6f34aca4692ba6f88243d66f3f9",
+      "statement": "Both sparse surfaces are derived by a single function that the in-place migration also calls, because a second implementation of the recipe would agree on the day it was written and drift on the day the recipe changed — the only day it is used.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/index.py#L125-L130",
+          "version": "repo-lines-v1:sha256:94c704c850026d8c0c335d1c81d6db1f9cd5ab130c8c6e974a020d9e7ee17216:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjEzYmU1ZjA0M2RiNTllZmMxYjk1NzM5YzQwM2RhNjVhZGQyOTNiOTk5MDc5NWYwNDM4OGNiNWIyM2VhY2U0MCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTZhNzE1MjU3MmVlODRmMTA5MDZjNzRiOWYyYTkyNDM0ZGRhYjBlM2M0MjgxM2IwNGU1OTdlZmNlYzk1MWIyNiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNTYzMTQ0NDAwZmJmM2E3YWYzNjEyZWJkMDlkZmUyYWEyZGRlZmJmNWQxNjVlZTliMGIzNWIxYmI2ZDQ5YjJlYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMjkxOGFkMjE1ZTBjOGQ5ZjgyNmY5YmM2ZWE1NDNjMjAyOGRjYzI0NmE4ODg3MzQ1MGI1NGMzYWIyMzVlZjJjNiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_9f19f80723dd48af8b5eff3191c59e09",
+      "statement": "The collection fingerprint lives as a point in the control plane rather than inside the pages collection, because Qdrant has no collection metadata and a sentinel page point would corrupt a point count that is itself an assertion.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/fingerprint.py#L29-L36",
+          "version": "repo-lines-v1:sha256:2737e72a2eb959d4e3f416f05dec3545e004684b1d4a06a77038439936fdd366:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNjY2MTU0MjU3MTI1ZmZiODIwNzYzNTAwZTBjNzViMzNlYmRmZGRmMGI1Y2I2YzJmYWE5MjRhMWM1MzY4ZjFiMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNTNiNmIyNzliZWRmNTQ1NDdiMDUzMjViNDJkYjAxZTcxMDEwODZkNTgyMmY5OTY2ZDk4NjY2MjY4MDA0ZTk4YiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiY2NmMzIxOGFiNDU5NWNlOGUzYzEzOGY0MzcwMTViNzZlZTU0Y2JlZTU2ODUzZjU2MjJjZDlmZWEzMDU0YjIxZiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_e7a62ee7c5844bc0a54c171cc99160ef",
+      "statement": "The fingerprint carries composition_version and sparse_version beyond the obvious model, dim and distance, because reordering the composition or changing the sparse recipe changes every vector's meaning without changing the model id — and a BM25 collection and a raw-count collection are byte-identical in shape and pass every schema check.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/fingerprint.py#L14-L28",
+          "version": "repo-lines-v1:sha256:f3324a6705738e861f93f65ea1557e1f7e5e214d5003e4dcd095defeca94ae52:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM1MjkzYTJlMmE5MDc4ZWRhZTQ4MDllM2VhNTIxYTViMDY3MTlhODFkOTE5MTBkMTZiODQzOWY0OWI0MDJlMTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE3NGFlOWEzMzY0N2I5NTI1MTI4ZTY5ODM2NDc3OGMxYjdkODFjZWRmY2NiYzBmMGEyNGQwOTE1ZTQ1ZWQyNjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjlkYWE3MGU0YzkzZTU4NDZjMDQ4MDQ1MDQ2MWViZjlhNTZlMDdlYmI1ZThmMWRmOGIxNDU2OTQwM2JjZWVmNzcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_082004607a5b42dcb39a23bc5d3d09d9",
+      "statement": "The fingerprint gate takes this release's recipe only when the collection has none recorded — the first-ingest case — and refuses every disagreement while writing nothing; there is no path that updates a stored fingerprint in place.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/fingerprint.py#L204-L226",
+          "version": "repo-lines-v1:sha256:d432330269b8f50850af25efb3b22964d5af7b25bb10fcab0098513ed6c507ca:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgzYWEwYzI5OGU0NDdiZDY3NTAxMjQ5NDVhMzI5Nzg5NWRiODdjNDMxNmJmZmM3OTk2NWQ2Nzk2YjMxOWU1NTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3ODBmZDZjNjcxNGMxODIxZmVjZTMxMDA4Njg3YjEwOWVmMzQ3Mjk4YjU1ZWVhYzhiY2M4NzA4YzRhOTMxZDQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY0Y2ExZDU0MWM2ODIyOGNkN2VmN2JmY2JkZjgxOGM3NTVkZDE1MDVlNmYyOGU1YTA4ZWRlMDMzNTdiMzMwOWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVhNjlkNTU0ZjUzYTM2MzNiYWVhNzdjNDhlYjY1OTBiOTgxOGQzYjdjNTYwMThiN2UyNDE5NzZhNWYzNWIzYTIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_83c7b5b8c59e4c1abe251c32ffd24b0c",
+      "statement": "vsir migrate sparse rebuilds both sparse surfaces from payload the collection already holds — no model call, no raster, no spend, and the dense vector is never read — because the alternative, delete-and-re-ingest, destroys the embedding cache and turns a change touching no embedding into a full re-embed.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/resparse.py#L1-L23",
+          "version": "repo-lines-v1:sha256:0443d804d9c55a3c186e6dd97243f9a98eb2ab6105e6967dec48e4841fbf96c6:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIyMWM2MzI5ZTc5NjY5ODBjZGFiYmRkMmIyMDU4OTkwNDBjNGJjNWI3YzEzNWMxZTgxM2FkYWE4NDdmM2ZjNjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI2ZTA2MDJkYmM1MzgyOTRjNzk0MzIwMzk4ODg1MGNlMzI2Y2RlYjI4MGFiYWNiOWU3NmI5MDIyODg3NzY1MmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImExZWEyYzc5ODUyMTMyNzM1MjU2NmVkMDcyZTJiMTY2ZTU0YzdjYTZkYTYxMjAzZGVlYTRjOGFhOGE1ZmZkY2QifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3c394bce5f1a45b0bb31022d57ea11bb",
+      "statement": "The sparse migration proceeds only when sparse_version is the sole fingerprint difference and refuses every other change as migration_unsupported, because rebuilding sparse vectors under a dense-recipe change would stamp the new recipe onto vectors made by a different model.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/resparse.py#L24-L33",
+          "version": "repo-lines-v1:sha256:9794411ea699c1f64953a22d5bc724bf9d86972e9cb9965342da9e2dcf2770f5:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZkZDAwZmI4ZTU5MjU5OWUxZjIxMWRjODU3YWJmZDdmYTM2ZjNkNDNiZmIwNzk2MjhjMjkyMDBiYjBjMTU4MDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMxNDY3MjY4YmI1YmYzMmIzYmEwMTA2YmQ3MWI4N2NlNTM4OTQ5Y2E4YWYyMjZlOTg4NDcyNThlZjU2N2MwOTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM4MDQyZjEzYzNhNjRlYTc2ZTdiMDQ5MzBiMDU5YTY2ZWQyMmQ4ODIxMjQyYTYzMDRjNmVmYmM4MDc5MjgyNGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZiZmQxYjE5N2Y0ODE4M2M4MzIzMTJmYzIyZTIzMjRhYWUzN2Q0M2Y5ZWI2ZTMzYWJlMTdlNzNlNTQzZmI5OGEifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/ingest/resparse.py#L57-L61",
+          "version": "repo-lines-v1:sha256:9a6bc486e92133ae3bc24df174cd9d89f06f0959f367b6bda84f34a6c6d1d7c9:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjIwZTg3MzE4OTI5MmRhZjJiNWEyZmZkZjVkYjllOWEwZWE2OTViODUzMWExMmM1NzhkYjAzOTc4OGY3ODBjYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMWU2ZGYxMTUwOGVlOTQ5MWI0YmNhZTFmZTRiOGJkMjYyZjZlYWI2OGZlMzhkOTk3ZjI0NmZhMzhjMTczYmFiMyJ9"
+        },
+        {
+          "resource": "repo://backend/vsir/ingest/resparse.py#L82-L86",
+          "version": "repo-lines-v1:sha256:e441d129cfd2c3d0f57f190207d4ee8992315751a9c719e5e14dfdbdd3f0846f:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTFkMjA2OGJlYzg1Y2RlZjhjMzMxYTBiNGEwZThhMTQ5MzFmZGM0ZDNkMzViODk4NmQ1ODIyMzM2NGUyMTNjYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNTc0MDcxNzkxZjdlMzVjOTEwZGUxZGU0ZTU5OWJlYWFkNzMxMjQ1NzM5Y2EzYWRhMTQ5NDk0ZTBmMWVjZWM2ZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDQxMGQ4MzFjYzVjOWRiMzM3NTlmZjljZjQzNzBiZDg1MGQ2MTJmM2UyYmY4MTg5M2E3OWZiMGM2Y2I3ZDM5NyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_e5ffed8389ae42ed9c8d600002e1d8f4",
+      "statement": "The migration rewrites the fingerprint point last, after every page, so a kill partway leaves the old fingerprint over a partly rebuilt collection — the boot check keeps refusing, nothing serves a mixed index, and re-running is safe because deriving a sparse vector from payload is idempotent.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/resparse.py#L34-L42",
+          "version": "repo-lines-v1:sha256:709207e90fdd94714983f86775c793b33682db6a4fa54414f3ebb5272f7e2feb:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNzI3ZmJjYjdjZDNlNmJmMGIxMjI1MmU0OTNkNTg2OGY3MGZiNDAzN2JiZmQ1YTZiNzJlNjE2YTE5YjBkYjU3NCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTMwM2VjZGQ0YTRkMTBmMTljNzNmZDQyZmQxMjQzN2ZkMzM1NGE4MjY4MTYwNWRhNTI1NWE5N2EzOTA2OGRiYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYWQ3ZTViODk3ODIzNzM0ZDFiNDM3ZmE1YTgxYjU2NjhmOTM5YWIxOGRkZjU1Yzg2ZDQzYzVjZjJiOWVmODMxZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiN2NkZjc0OWRjMDI0NmNhMTQ2YTE4ODllMjVhYzEzNGMwN2Y4OWI3YjAzZjRiYjA3Mzk2ZTY0MDhkY2M5Y2FjYyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_87f087c04af243f3ab2644e2ab84812a",
+      "statement": "Both sparse surfaces are derived by a single shared function in the index module, which the ingest point builder and the sparse migration both call, so the recipe cannot diverge between the path that writes vectors and the path that rebuilds them.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/index.py#L118-L146",
+          "version": "repo-lines-v1:sha256:64d55997863a2dc1da9b583f573fddf3ce76d63d1d6a6e557594ccf58b47885e:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI5YmEzZWZlZjkzMDdiOWY2ZTMzMjg4NTE0OWVhYmEwYTlkMWNkOWNkOTUxNzliMWZiYjg5ZTEyNmE0ZDk5NzAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNiZWI4OWIzYzM1ODU1ZTI5Yjc3NGEwZmY5MmIxNTVkMzgzZDhiMjE3OGMwODc5ZWZhMzMzYjc1Y2NjYWM5YWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdiZTIyODBiY2RlZmYzMjdjOTNmMDhhYTM0MGZlOTZjZmZkNjUxMTNjMWQ1MmM3MzRmYTkzZDc4MzNiZGYyODUifQ"
+        },
+        {
+          "resource": "repo://backend/vsir/ingest/resparse.py#L240-L256",
+          "version": "repo-lines-v1:sha256:f64aff31b83aee7a0d39768515d94ad792756651ab22f9bd504464a1e4545473:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBjYjcwMmEwMzQzYWM0NTVjM2Y4YjUyMWQ3ODQ2NDFlNDY2ZDA1MjU1N2M0YzVmNjY4YmRmMjA5MWQxY2VhZDQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdmNDYxMTFjZmQ3ZmI4ZjdkYzBjZTBhYjNiZmNlYmM2ZDQ4MTlmNDQ5NGZmYjRkZTU5MWFlNzgwZmQzYzc5OTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMxNzYyNzRkYjdmYjE2Y2Q2NDdlZDAxYjNlNjU0MzU0Y2NjMmJiMmYyM2JiNTg2NmFiNzZhNzkzNzYzMWFlYTcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ecc49b442ace4ad69c30d7aff954429a",
+      "statement": "The sparse migration re-validates each stored payload into a page record before re-deriving its vectors, and a payload this release cannot validate raises a typed refusal that writes nothing further and leaves the fingerprint unchanged, rather than skipping the page and leaving it on the old recipe under a new stamp.",
+      "evidence": [
+        {
+          "resource": "repo://backend/vsir/ingest/resparse.py#L160-L172",
+          "version": "repo-lines-v1:sha256:7c2deee1f721244b343e5fea259277417dbe49c3b4a5709017a9e3f48fd8dc88:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZTFkMDk0ZDRhNjhiMzJiNjJkYTJkM2M5ZjE4OWM2ZTVjMzEzYmMzNTdjMGQ5M2MzNzc1YjVlMmJiMTg3ZmEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU3NTlmMGE2NzNhYzFkZWIyNjdhOTg5MzAzOGVlN2FhZGU0MDIyODQxNjkzMjhiYTEzOTYwNjY5ODc4ZjczYTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYzNzMyYWExOGE2OGViODBiZWQzODU1MzA0NmJiMzgxZTg1MTQzMWUzZmEwODdmNDMzYjNiMjYxNmRjM2RjOGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEyZDNmMmRjYThiZTFkMDhhZTc2MWJkNmQ1MzMyMmM3ZTEzNzc2MmQ4M2IwYTQyZmEyZGU3YWVjOGMxMTBjMGMifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.1",
+    "at": "2026-09-12T16:01:50.652Z"
+  }
+}
